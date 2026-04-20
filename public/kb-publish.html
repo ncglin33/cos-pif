@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>COSPIF KB｜已接受文章</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <style>
+    .container{ max-width: 1750px; }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.85rem 1rem; background:#fff;
+      border:1px solid var(--line); border-radius:16px;
+      margin:.9rem 0 1rem;
+    }
+    .topbar .left{ display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
+    .topbar a{ text-decoration:none; color:var(--ink); font-weight:800; }
+    .badge{
+      display:inline-flex; align-items:center; gap:.35rem;
+      border:1px solid var(--line); border-radius:999px;
+      padding:.25rem .6rem; font-size:.82rem; background:#fff; color:var(--muted);
+    }
+    .card{
+      background:#fff; border:1px solid var(--line);
+      border-radius:16px; box-shadow:0 1px 3px rgba(0,0,0,.05);
+      padding: 1rem 1rem;
+    }
+    .toolbar{
+      display:flex; gap:.6rem; align-items:center; flex-wrap:wrap;
+      margin-top:.25rem;
+    }
+    .input, select{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:.5rem .6rem;
+      font-size:.95rem;
+      outline:none;
+      background:#fff;
+    }
+    .input{ min-width: 240px; width: min(520px, 100%); }
+    .input:focus, select:focus{
+      border-color:#bfdbfe; box-shadow:0 0 0 3px rgba(59,130,246,.15);
+    }
+    .btnx{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius: 12px;
+      padding:.48rem .7rem;
+      cursor:pointer;
+      font-weight:800;
+      display:inline-flex; align-items:center; gap:.4rem;
+      text-decoration:none; color:var(--ink);
+    }
+    .btnx:hover{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+    .muted{ color:var(--muted); }
+    .small{ font-size:.86rem; }
+    .hr{ border:none; border-top:1px solid #eef2f7; margin: .9rem 0; }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(260px, 1fr));
+      gap: .9rem;
+      align-items:start;
+    }
+    @media (max-width: 1200px){ .grid{ grid-template-columns: repeat(2, minmax(260px, 1fr)); } }
+    @media (max-width: 760px){ .grid{ grid-template-columns: 1fr; } }
+
+    .article{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:.9rem .9rem;
+      background:#fff;
+      display:flex;
+      flex-direction:column;
+      gap:.55rem;
+    }
+    .title{
+      font-weight:900;
+      font-size:1.08rem;
+      line-height:1.25;
+    }
+    .meta{
+      display:flex; flex-wrap:wrap; gap:.35rem .6rem; align-items:center;
+      font-size:.86rem;
+      color:var(--muted);
+    }
+    .pill{
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:.18rem .55rem;
+      background:#fff;
+      color:var(--muted);
+      font-size:.82rem;
+      display:inline-flex;
+      gap:.35rem;
+      align-items:center;
+    }
+    .abs{
+      color:var(--ink);
+      font-size:.94rem;
+      line-height:1.45;
+      white-space:pre-wrap;
+    }
+    .actions{ display:flex; flex-wrap:wrap; gap:.5rem; align-items:center; margin-top:.15rem; }
+    .link{ color:#1d4ed8; text-decoration:none; font-weight:800; }
+    .link:hover{ text-decoration:underline; }
+    .empty{ padding:.9rem; border:1px dashed var(--line); border-radius:16px; background:#fff; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="left">
+        <a href="index.html"><i class="fa-solid fa-house"></i> 首頁</a>
+        <a href="kb-issue.html"><i class="fa-solid fa-newspaper"></i> 月刊/週刊</a>
+        <span class="badge"><i class="fa-solid fa-circle-check"></i> 已接受文章</span>
+      </div>
+      <div class="toolbar">
+        <span class="muted small" id="hint"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; gap:.8rem; flex-wrap:wrap; align-items:flex-end;">
+        <div>
+          <h2 style="margin:.1rem 0 .25rem;">已接受文章列表</h2>
+          <div class="muted small">顯示已由管理端「發表到前台」的文章（題目 / 作者 / 接受日期 / 摘要）。</div>
+        </div>
+        <div class="toolbar">
+          <select id="issueFilter" title="發表月份（issue）">
+            <option value="all">全部月份</option>
+          </select>
+          <input class="input" id="q" placeholder="搜尋：題目 / 作者 / 摘要 / issue…" />
+          <button class="btnx" id="btnReload"><i class="fa-solid fa-rotate"></i> 重新載入</button>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div id="msg"></div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { db } from "./firebase-config.js";
+
+    const $ = (s) => document.querySelector(s);
+    const COL = "kb_articles";
+
+    function esc(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+    }
+    function normalize(s){ return String(s||"").trim(); }
+    function toDateStr(v){
+      try{
+        const d = v?.toDate ? v.toDate() : (v ? new Date(v) : null);
+        if (!d || isNaN(d.getTime())) return "";
+        return d.toLocaleDateString();
+      }catch{ return ""; }
+    }
+    function authorsText(a, corr){
+      const arr = Array.isArray(a) ? a : [];
+      const names = arr.map(x => x?.name).filter(Boolean);
+      if (names.length) return names.slice(0,6).join("、") + (names.length>6 ? "…" : "");
+      const cn = corr?.name || "";
+      return cn || "（未填作者）";
+    }
+    function setMsg(html, kind="ok"){
+      $("#msg").innerHTML = `<div class="${kind==="ok" ? "ok" : "warn"}" style="margin-bottom:.8rem;">${html}</div>`;
+      if (html) setTimeout(() => { if ($("#msg").innerHTML) $("#msg").innerHTML = ""; }, 4500);
+    }
+
+    let all = [];
+    let issues = [];
+
+    function buildIssueOptions(){
+      const sel = $("#issueFilter");
+      const current = sel.value || "all";
+      sel.innerHTML = `<option value="all">全部月份</option>` + issues
+        .sort((a,b) => String(b).localeCompare(String(a)))
+        .map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join("");
+      sel.value = issues.includes(current) ? current : "all";
+    }
+
+    function render(){
+      const q = normalize($("#q").value).toLowerCase();
+      const issue = $("#issueFilter").value || "all";
+
+      const filtered = all.filter(x => {
+        if (issue !== "all" && String(x.issue||"") !== String(issue)) return false;
+        if (!q) return true;
+        const txt = [
+          x.issue,
+          x.title,
+          authorsText(x.authors, x.corresponding),
+          x.abstract,
+          x.submissionId
+        ].filter(Boolean).join(" ").toLowerCase();
+        return txt.includes(q);
+      });
+
+      $("#hint").textContent = filtered.length ? `共 ${filtered.length} 篇` : "（無資料）";
+
+      const box = $("#grid");
+      box.innerHTML = "";
+      if (!filtered.length){
+        box.innerHTML = `<div class="empty muted">目前沒有符合條件的已接受文章。</div>`;
+        return;
+      }
+
+      filtered.forEach(x => {
+        const div = document.createElement("div");
+        div.className = "article";
+
+        const accepted = toDateStr(x.acceptedAt || x.acceptedAtIso || x.publishedAt || x.publishedAtIso);
+        const abs = String(x.abstract || "");
+        const absShort = abs.length > 320 ? abs.slice(0, 320) + "…" : abs;
+
+        const pdfLink = x.pdfUrl ? `<a class="btnx" href="${esc(x.pdfUrl)}" target="_blank" rel="noopener"><i class="fa-solid fa-file-pdf"></i> PDF</a>` : "";
+        const issuePill = x.issue ? `<span class="pill"><i class="fa-solid fa-calendar"></i> ${esc(x.issue)}</span>` : "";
+
+        div.innerHTML = `
+          <div class="title">${esc(x.title || "（未命名）")}</div>
+          <div class="meta">
+            ${issuePill}
+            <span class="pill"><i class="fa-solid fa-user"></i> ${esc(authorsText(x.authors, x.corresponding))}</span>
+            ${accepted ? `<span class="pill"><i class="fa-solid fa-circle-check"></i> 接受：${esc(accepted)}</span>` : ""}
+          </div>
+          <div class="abs" data-full="${esc(abs)}" data-short="${esc(absShort)}">${esc(absShort || "（未提供摘要）")}</div>
+          <div class="actions">
+            ${abs.length > 320 ? `<a class="link" href="#" data-action="toggle">展開摘要</a>` : `<span class="muted small">　</span>`}
+            <span style="flex:1 1 auto;"></span>
+            ${pdfLink}
+          </div>
+        `;
+
+        const toggle = div.querySelector('[data-action="toggle"]');
+        if (toggle){
+          toggle.addEventListener("click", (e) => {
+            e.preventDefault();
+            const p = div.querySelector(".abs");
+            const isShort = p.textContent === p.dataset.short;
+            p.textContent = isShort ? p.dataset.full : p.dataset.short;
+            toggle.textContent = isShort ? "收合摘要" : "展開摘要";
+          });
+        }
+        box.appendChild(div);
+      });
+    }
+
+    async function load(){
+      $("#hint").textContent = "讀取中…";
+      try{
+        let snaps;
+        try{
+          // Most published/accepted articles have publishedAt (Timestamp)
+          snaps = await getDocs(query(collection(db, COL), orderBy("publishedAt", "desc"), limit(200)));
+        }catch(e1){
+          // Legacy fallback: use updatedAt when publishedAt/acceptedAt is missing
+          snaps = await getDocs(query(collection(db, COL), orderBy("updatedAt", "desc"), limit(200)));
+        }
+        all = snaps.docs.map(d => ({ id: d.id, ...d.data() }))
+          .filter(x => x && (x.isPublic === true || String(x.visibility||"").toLowerCase() === "public" || String(x.status||"").toLowerCase() === "published" || String(x.status||"").toLowerCase() === "accepted"));
+
+        issues = Array.from(new Set(all.map(x => x.issue).filter(Boolean)));
+        buildIssueOptions();
+        render();
+      }catch(e){
+        console.error(e);
+        setMsg("讀取失敗：" + esc(e.message || e), "warn");
+        $("#grid").innerHTML = `<div class="empty">讀取失敗：${esc(e.message || e)}</div>`;
+      }
+    }
+
+    $("#q").addEventListener("input", render);
+    $("#issueFilter").addEventListener("change", render);
+    $("#btnReload").addEventListener("click", load);
+
+    load();
+  </script>
+</body>
+</html>

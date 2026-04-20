@@ -1,0 +1,4 @@
+inciName,cas,state,color,odor,solubility_water,ph,melting_point,boiling_point,flash_point,density,viscosity
+Aqua,7732-18-5,Liquid,Colorless,Odorless,Soluble,7.0,-,100°C,-,1.0,1 mPa·s
+Glycerin,56-81-5,Liquid,Colorless,Odorless,Soluble,-,18.2°C,290°C,160°C,1.26,1412 mPa·s
+Butylene Glycol,107-88-0,Liquid,Colorless,Odorless,Miscible,-,-,207.5°C,113°C,1.004,129.5 mPa·s

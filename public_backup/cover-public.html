@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PIF 封面 (公開版)</title>
+<style>
+  :root{
+    --fg:#111; --muted:#666; --line:#e5e7eb; --brand:#2563eb;
+  }
+  html, body{background:#fff;color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei",Segoe UI,Roboto,Arial,sans-serif;line-height:1.5}
+  .toolbar{position:sticky;top:0;background:rgba(255,255,255,.95);backdrop-filter:blur(4px);border-bottom:1px solid var(--line);z-index:50}
+  .toolbar .wrap{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;padding:.6rem .8rem}
+  button, .btn {border:1px solid var(--line);background:#fff;padding:.45rem .7rem;border-radius:.5rem;cursor:pointer}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .container{max-width:800px;margin:0 auto;padding:1rem .8rem 3rem}
+  .cover-page { border: 1px solid var(--line); padding: 3rem 2.5rem; border-radius: .5rem; }
+  h1 { font-size: 2.2rem; text-align: center; letter-spacing: .05em; margin: 1rem 0; }
+  .field-group { margin: 2.5rem 0; }
+  .field-group label { display: block; font-size: 1rem; color: var(--muted); margin-bottom: .5rem; }
+  .field-group .value { font-size: 1.25rem; border-bottom: 1px solid var(--line); padding-bottom: .5rem; }
+  textarea.value { width: 100%; font-size: 1.25rem; border: none; border-bottom: 1px solid var(--line); padding: 0 0 .5rem 0; resize: vertical; font-family: inherit; }
+  .input-with-btn { display: flex; align-items: center; gap: .5rem; }
+  .input-with-btn .value { flex-grow: 1; }
+  .no-print{}
+  .help-text { font-size: .85rem; color: var(--muted); margin-top: .5rem; }
+  @media print{
+    .toolbar, .no-print{display:none!important}
+    .container{max-width:none; padding: 2rem;}
+    .cover-page { border:none; padding: 2rem; }
+    h1 { font-size: 2.5rem; margin: 2rem 0 3rem; }
+    .field-group { margin: 3rem 0; }
+    textarea.value { resize: none; background: transparent; }
+  }
+</style>
+</head>
+<body>
+  <div class="toolbar no-print">
+    <div class="wrap">
+      <a href="pifs-public.html" style="text-decoration:none; color:inherit;"><button>返回入口</button></a>
+      <button id="btnGenerateCode" class="btn">產生新編碼</button>
+      <button onclick="window.print()" class="primary">列印 / 匯出 PDF</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="cover-page">
+      <h1>產品資訊檔案</h1>
+
+      <div class="field-group">
+        <label for="pifCode">PIF 編碼</label>
+        <div class="input-with-btn">
+            <textarea id="pifCode" class="value" rows="1" placeholder="點擊上方按鈕產生編碼"></textarea>
+            <button id="btnCopyCode" class="btn no-print" title="複製編碼">複製</button>
+        </div>
+        <p class="help-text no-print">為每份PIF產生獨立編碼，建議將此編碼用於所有相關文件。</p>
+      </div>
+      
+      <div class="field-group">
+        <label for="productName">產品名稱</label>
+        <textarea id="productName" class="value" rows="2" placeholder="請填寫產品完整名稱"></textarea>
+      </div>
+      
+      <div class="field-group">
+        <label for="companyName">公司名稱</label>
+        <textarea id="companyName" class="value" rows="1" placeholder="請填寫責任業者/公司名稱"></textarea>
+      </div>
+
+      <div class="field-group">
+        <label for="pifVersion">檔案版本</label>
+        <textarea id="pifVersion" class="value" rows="1" placeholder="例：Version 1.0"></textarea>
+      </div>
+
+      <div class="field-group">
+        <label for="date">日期</label>
+        <textarea id="date" class="value" rows="1" placeholder="請填寫建檔日期"></textarea>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function() {
+    const KEY = 'pif_cover_public_v1';
+    const fields = ['pifCode', 'productName', 'companyName', 'pifVersion', 'date'];
+
+    function saveState() {
+        const state = {};
+        fields.forEach(id => {
+            state[id] = document.getElementById(id).value;
+        });
+        localStorage.setItem(KEY, JSON.stringify(state));
+    }
+
+    function loadState() {
+        try {
+            const savedState = JSON.parse(localStorage.getItem(KEY));
+            if (savedState) {
+                fields.forEach(id => {
+                    if (savedState[id]) {
+                        document.getElementById(id).value = savedState[id];
+                    }
+                });
+            }
+        } catch (e) {
+            console.error("Failed to load state from localStorage", e);
+        }
+    }
+
+    function generatePifCode() {
+        const d = new Date();
+        const dateStr = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+        const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
+        return `PIF-${dateStr}-${randomStr}`;
+    }
+
+    function copyToClipboard(text) {
+        if (!navigator.clipboard) {
+            alert("瀏覽器不支援或未啟用剪貼簿功能。");
+            return;
+        }
+        navigator.clipboard.writeText(text).then(() => {
+            alert("PIF 編碼已複製到剪貼簿！");
+        }, () => {
+            alert("複製失敗。");
+        });
+    }
+
+    fields.forEach(id => {
+        document.getElementById(id).addEventListener('input', saveState);
+    });
+
+    document.getElementById('btnGenerateCode').addEventListener('click', () => {
+        const newCode = generatePifCode();
+        document.getElementById('pifCode').value = newCode;
+        saveState();
+    });
+
+    document.getElementById('btnCopyCode').addEventListener('click', () => {
+        const code = document.getElementById('pifCode').value;
+        if (code) {
+            copyToClipboard(code);
+        } else {
+            alert("請先產生編碼。");
+        }
+    });
+
+    // Auto-fill date on first load if empty
+    document.addEventListener('DOMContentLoaded', (event) => {
+        loadState(); // Load saved data first
+        const dateField = document.getElementById('date');
+        if (!dateField.value) {
+          const d = new Date();
+          dateField.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          saveState();
+        }
+    });
+})();
+</script>
+
+</body>
+</html>

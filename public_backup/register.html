@@ -1,0 +1,141 @@
+
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>註冊新帳號</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f2f5;
+        }
+        .card {
+            width: 100%;
+            max-width: 400px;
+            padding: 2rem;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: .5rem;
+            font-weight: 500;
+        }
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: .75rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        .btn.primary {
+            width: 100%;
+            padding: .75rem;
+            font-size: 1rem;
+            background-color: var(--brand, #2563eb);
+            color: #fff;
+            border: none;
+        }
+        .message {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+        .message.success { color: var(--ok, #16a34a); }
+        .message.error { color: var(--err, #dc2626); }
+        .login-link { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>註冊 PIF 系統帳號</h1>
+        <div id="register-form">
+            <div class="form-group">
+                <label for="email">電子郵件</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">密碼 (至少 6 個字元)</label>
+                <input type="password" id="password" required>
+            </div>
+            <button id="btnRegister" class="btn primary">註冊</button>
+            <div id="register-message" class="message"></div>
+        </div>
+        <div class="login-link">
+            已經有帳號了？ <a href="login.html">點此登入</a>
+        </div>
+    </div>
+
+    <script type="module">
+        import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { auth, db } from './firebase-config.js';
+
+        const $ = sel => document.querySelector(sel);
+
+        $('#btnRegister').addEventListener('click', async () => {
+            const email = $('#email').value.trim();
+            const password = $('#password').value.trim();
+            const messageEl = $('#register-message');
+            const btn = $('#btnRegister');
+
+            if (!email || password.length < 6) {
+                messageEl.textContent = '請輸入有效的 Email 和至少 6 個字元的密碼。';
+                messageEl.className = 'message error';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = '註冊中...';
+            messageEl.textContent = '';
+
+            try {
+                // 1. Create user in Firebase Auth
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // 2. Create user profile in Firestore for admin review
+                await setDoc(doc(db, 'users', user.uid), {
+                    email: user.email,
+                    registrationDate: serverTimestamp(),
+                    status: 'pending', // 'pending', 'active', 'rejected', 'expired'
+                    role: 'user',
+                    expires: null
+                });
+
+                // 3. Show success message to user
+                $('#register-form').innerHTML = `
+                    <h2><i class="fa-solid fa-check-circle"></i> 感謝您的註冊！</h2>
+                    <p>您的帳號已成功建立，目前狀態為「待審核」。</p>
+                    <p>我們將會盡快進行審核，並透過電子郵件通知您審核結果。在帳號被批准之前，您將無法存取 PIF 製作功能。</p>
+                `;
+                $('.card').style.textAlign = 'center';
+
+            } catch (error) {
+                if (error.code === 'auth/email-already-in-use') {
+                    messageEl.textContent = '這個 Email 已經被註冊過了。';
+                } else {
+                    messageEl.textContent = `註冊失敗：${error.message}`;
+                }
+                messageEl.className = 'message error';
+                btn.disabled = false;
+                btn.textContent = '註冊';
+            }
+        });
+    </script>
+</body>
+</html>

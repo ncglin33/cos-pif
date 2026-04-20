@@ -1,0 +1,369 @@
+
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>廠商資料庫管理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        :root{--bg:#fff;--ink:#111;--muted:#666;--line:#e2e8f0;--brand:#2563eb;--ok:#16a34a;--warn:#b45309;--err:#dc2626}
+        *{box-sizing:border-box}
+        body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC",Helvetica,Arial,sans-serif;color:var(--ink);background:#f8fafc;margin:0;padding:0;line-height:1.5;}
+        .app-wrap{max-width:1200px; margin: 0 auto; padding: 24px;}
+        header{background:#fff; border-bottom: 1px solid var(--line); padding: 12px 24px; display: flex; align-items: center; gap: 16px; }
+        h1{font-size:1.5rem;margin:0; flex-grow: 1;}
+        .toolbar{padding:12px;background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:8px;}
+        .btn{padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer; font-size: 14px; display: inline-flex; align-items: center; gap: 6px;}
+        .btn.primary{background:var(--brand);color:#fff;border-color:var(--brand);}
+        .section{border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;background:#fff}
+        .section-title{font-weight:700;margin:4px 0 12px 0; font-size: 1.1rem;}
+        .table-wrap{border:1px solid var(--line);border-radius:12px;overflow-x:auto;margin:8px 0}
+        .table{width:100%;border-collapse:collapse;}
+        .table th,.table td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top; white-space: nowrap;}
+        .table th{background:#f8fafc;text-align:left;font-size:.9rem;color:#374151; font-weight: 600;}
+        .table tr:last-child td { border-bottom: none; }
+        .table tr:hover td{background:#fafafa}
+        input[type=text],input[type=tel],input[type=search]{width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff; font-size: 1rem;}
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+        .status-bar { font-size: 0.9rem; color: var(--muted); padding: 8px; text-align: center; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1><i class="fa-solid fa-database"></i> 中央廠商資料庫管理</h1>
+        <a href="pif-i.html" class="btn"><i class="fa-solid fa-arrow-left"></i> 返回 PIF 儀表板</a>
+    </header>
+
+    <div class="app-wrap">
+        <div id="admin-sections">
+            <div class="section">
+                <h2 class="section-title">新增廠商</h2>
+                <div class="form-grid">
+                    <input type="text" id="newTaxId" placeholder="統一編號 (ID)">
+                    <input type="text" id="newName" placeholder="廠商名稱 (companyName)">
+                    <input type="text" id="newAddress" placeholder="地址">
+                    <input type="tel" id="newPhone" placeholder="電話">
+                </div>
+                <div style="text-align: right; margin-top: 12px;">
+                    <button id="btnAddVendor" class="btn primary"><i class="fa-solid fa-plus"></i> 手動新增</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">批次作業</h2>
+                <div class="toolbar">
+                    <label for="import-json-input" class="btn"><i class="fa-solid fa-file-import"></i> 匯入 JSON</label>
+                    <input type="file" id="import-json-input" accept=".json" style="display:none;">
+                    
+                    <label for="import-csv-input" class="btn"><i class="fa-solid fa-file-csv"></i> 匯入 CSV</label>
+                    <input type="file" id="import-csv-input" accept=".csv" style="display:none;">
+                    
+                    <button id="btnExport" class="btn"><i class="fa-solid fa-file-export"></i> 匯出全部為 JSON</button>
+                </div>
+                <div class="status-bar" id="importStatus">CSV 格式：taxId, companyName, address, phone (第一行為表頭)</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">現有廠商列表</h2>
+            <div class="toolbar">
+                 <input type="search" id="searchInput" placeholder="篩選廠商名稱或統一編號..." style="width: 300px; display: inline-block;">
+            </div>
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>統一編號</th>
+                            <th>廠商名稱</th>
+                            <th>地址</th>
+                            <th>電話</th>
+                            <th style="width: 80px;" id="actions-header">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vendorsTbody">
+                        <!-- Data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="status-bar" id="tableStatus">正在載入資料...</div>
+        </div>
+    </div>
+
+<script type="module">
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { collection, getDocs, doc, setDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { auth, db } from './firebase-config.js';
+
+    const $ = sel => document.querySelector(sel);
+
+    let allVendors = [];
+    let isAdmin = false;
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            try {
+                const idTokenResult = await user.getIdTokenResult();
+                isAdmin = idTokenResult.claims.admin === true;
+                
+                updateUIForPermissions();
+                await loadVendors();
+                setupEventListeners();
+
+            } catch (error) {
+                console.error("Error getting user token:", error);
+                $('#tableStatus').textContent = '無法驗證您的權限，請重新整理。';
+            }
+        } else {
+            window.location.href = 'login.html';
+        }
+    });
+
+    function updateUIForPermissions() {
+        if (!isAdmin) {
+            $('#admin-sections').classList.add('hidden');
+            $('#actions-header').classList.add('hidden');
+        }
+    }
+
+    function setupEventListeners() {
+        $('#searchInput').addEventListener('input', handleSearch);
+
+        if (isAdmin) {
+            $('#btnAddVendor').addEventListener('click', addVendor);
+            $('#btnExport').addEventListener('click', exportVendors);
+            $('#import-json-input').addEventListener('change', handleFileUpload);
+            $('#import-csv-input').addEventListener('change', handleFileUpload);
+        }
+    }
+    
+    async function loadVendors() {
+        const statusEl = $('#tableStatus');
+        const tbody = $('#vendorsTbody');
+        statusEl.textContent = '正在載入資料...';
+        tbody.innerHTML = '';
+        
+        try {
+            const querySnapshot = await getDocs(collection(db, "vendors"));
+            allVendors = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            allVendors.sort((a, b) => (a.id || '').localeCompare(b.id || ''));
+            
+            renderTable(allVendors);
+
+            statusEl.textContent = `共 ${allVendors.length} 筆廠商資料`;
+        } catch (error) {
+            console.error("Error loading vendors:", error);
+            statusEl.textContent = `載入失敗: ${error.message}`;
+             if (error.code === 'permission-denied') {
+                statusEl.textContent = '權限不足，無法讀取廠商列表。如果您認為這是錯誤，請聯絡系統管理員。';
+            }
+        }
+    }
+
+    function renderTable(vendors) {
+        const tbody = $('#vendorsTbody');
+        tbody.innerHTML = '';
+        if (vendors.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">資料庫中尚無任何廠商。</td></tr>';
+            return;
+        }
+        
+        vendors.forEach(vendor => {
+            const tr = tbody.insertRow();
+            let actionsHtml = '';
+            if (isAdmin) {
+                actionsHtml = `<td><button class="btn del-btn" data-id="${vendor.id}"><i class="fa-solid fa-trash"></i></button></td>`;
+            }
+
+            tr.innerHTML = `
+                <td>${vendor.id}</td>
+                <td>${vendor.companyName || ''}</td>
+                <td>${vendor.address || ''}</td>
+                <td>${vendor.phone || ''}</td>
+                ${actionsHtml}
+            `;
+        });
+        
+        if (isAdmin) {
+            tbody.querySelectorAll('.del-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    if (confirm(`確定要刪除統一編號為 ${id} 的廠商嗎？此操作無法復原。`)) {
+                        try {
+                            await deleteDoc(doc(db, "vendors", id));
+                            await loadVendors(); // Refresh the list
+                        } catch (error) {
+                            alert(`刪除失敗: ${error.message}`);
+                        }
+                    }
+                });
+            });
+        }
+    }
+
+    function handleSearch(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        if (!searchTerm) {
+            renderTable(allVendors);
+            return;
+        }
+        const filteredVendors = allVendors.filter(v => 
+            v.id.toLowerCase().includes(searchTerm) || 
+            (v.companyName && v.companyName.toLowerCase().includes(searchTerm))
+        );
+        renderTable(filteredVendors);
+    }
+    
+    async function addVendor() {
+        if (!isAdmin) return;
+        const taxId = $('#newTaxId').value.trim();
+        const name = $('#newName').value.trim();
+        if (!taxId || !name) {
+            alert('「統一編號」和「廠商名稱」為必填欄位。');
+            return;
+        }
+
+        const btn = $('#btnAddVendor');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 新增中...';
+
+        try {
+            await setDoc(doc(db, "vendors", taxId), {
+                companyName: name,
+                address: $('#newAddress').value.trim(),
+                phone: $('#newPhone').value.trim(),
+            });
+            
+            // Clear fields
+            $('#newTaxId').value = '';
+            $('#newName').value = '';
+            $('#newAddress').value = '';
+            $('#newPhone').value = '';
+
+            await loadVendors(); // Refresh the list
+        } catch (error) {
+            alert(`新增失敗: ${error.message}`);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-plus"></i> 手動新增';
+        }
+    }
+
+    function handleFileUpload(event) {
+        if (!isAdmin) return;
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const text = e.target.result;
+            try {
+                let vendorsToImport;
+                if (file.name.endsWith('.json')) {
+                    vendorsToImport = JSON.parse(text);
+                } else if (file.name.endsWith('.csv')) {
+                    vendorsToImport = parseCsv(text);
+                } else {
+                    throw new Error("不支援的檔案格式，請上傳 .json 或 .csv 檔案。");
+                }
+                
+                if (!Array.isArray(vendorsToImport) || vendorsToImport.length === 0) {
+                    throw new Error("檔案內容格式不符或為空。");
+                }
+                
+                await importVendors(vendorsToImport);
+
+            } catch (error) {
+                $('#importStatus').textContent = `匯入失敗: ${error.message}`;
+                alert(`匯入失敗: ${error.message}`);
+            }
+        };
+        reader.readAsText(file);
+        
+        // Reset file input
+        event.target.value = '';
+    }
+
+    function parseCsv(text) {
+        const lines = text.trim().split(/\r?\n/);
+        const header = lines.shift().split(',').map(h => h.trim());
+        const requiredHeaders = ['taxId', 'companyName'];
+        if (!requiredHeaders.every(h => header.includes(h))) {
+            throw new Error(`CSV 表頭缺少必要欄位。必須包含: ${requiredHeaders.join(', ')}`);
+        }
+        
+        const vendors = lines.map(line => {
+            const values = line.split(',');
+            const obj = {};
+            header.forEach((h, i) => {
+                obj[h] = values[i] ? values[i].trim() : '';
+            });
+            return obj;
+        });
+        return vendors;
+    }
+
+    async function importVendors(vendors) {
+        if (!isAdmin) return;
+        const statusEl = $('#importStatus');
+        if (!confirm(`即將匯入 ${vendors.length} 筆廠商資料。系統會以「統一編號」作為唯一識別碼，重複的資料將會被覆蓋。確定要繼續嗎？`)) {
+            return;
+        }
+
+        statusEl.textContent = `正在匯入 ${vendors.length} 筆資料...`;
+        
+        try {
+            const batch = writeBatch(db);
+            let count = 0;
+            
+            for (const vendor of vendors) {
+                const taxId = vendor.taxId || vendor.id; // Support both taxId and id
+                if (!taxId) {
+                    console.warn("Skipping vendor with no taxId:", vendor);
+                    continue; // Skip entries without a taxId
+                }
+                const docRef = doc(db, "vendors", taxId);
+                const data = {
+                    companyName: vendor.companyName || vendor.name || '',
+                    address: vendor.address || '',
+                    phone: vendor.phone || '',
+                };
+                batch.set(docRef, data, { merge: true });
+                count++;
+            }
+            
+            await batch.commit();
+            statusEl.textContent = `成功匯入 ${count} 筆廠商資料！`;
+            alert(`成功匯入 ${count} 筆廠商資料！`);
+            await loadVendors(); // Refresh the list
+        } catch (error) {
+            statusEl.textContent = `匯入過程中發生錯誤: ${error.message}`;
+            alert(`匯入過程中發生錯誤: ${error.message}`);
+        }
+    }
+
+    function exportVendors() {
+        if (allVendors.length === 0) {
+            alert("目前沒有任何廠商資料可供匯出。");
+            return;
+        }
+        
+        const jsonString = JSON.stringify(allVendors, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+        a.download = `vendors-export-${timestamp}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+</script>
+</body>
+</html>

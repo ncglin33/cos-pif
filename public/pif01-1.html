@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>產品資訊檔案 Product Information File (PIF)</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="./pif01-3.css">
+
+<style>
+  /* A4 視覺版面 */
+  body {
+    background-color: #f0f2f5;
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+  }
+  .app-wrap {
+    max-width: 210mm;
+    margin: 1.5rem auto 2rem;
+    padding: 1.5rem 2rem 2rem;
+    background-color: #ffffff;
+    box-shadow: 0 0 6px rgba(0,0,0,0.08);
+    min-height: 297mm;
+    box-sizing: border-box;
+  }
+
+  /* 頁首 */
+  .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+  }
+  .page-header-main {
+      flex: 1;
+  }
+  .page-main-title {
+      margin-bottom: 0.25rem;
+  }
+  .page-en-subtitle {
+      font-size: 1.1rem;
+      color: #6c757d;
+      margin-top: 0;
+  }
+  .page-header-meta {
+      flex-shrink: 0;
+      margin-left: 2rem;
+      font-size: 0.9rem;
+      color: #495057;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.4rem 0.5rem;
+      align-items: baseline;
+  }
+  .meta-item-label {
+      grid-column: 1;
+      font-weight: 600;
+      text-align: left;
+  }
+  .meta-item-value {
+      grid-column: 2;
+      min-width: 160px;
+      text-align: left;
+  }
+
+  /* 基本資料 */
+  .cover-basic-info {
+    margin-top: 2.5rem;
+  }
+  .info-card {
+    max-width: 550px;
+    margin: 0 auto;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+  .basic-info-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+  .info-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 1rem;
+    align-items: baseline;
+  }
+  .info-row > label {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    white-space: nowrap;
+    text-align: left;
+    color: #495057;
+  }
+  .info-row .value,
+  .info-row .value-input {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    padding: 2px 0;
+    margin: 0;
+    color: #333;
+    background-color: transparent;
+    border: none;
+    width: 100%;
+  }
+  .info-row .value {
+    min-height: calc(1.5em + 4px); 
+  }
+  .info-row .value-input {
+    border-bottom: 1px solid #e0e0e0;
+    padding: 2px 4px;
+  }
+  .info-row .value-input:focus {
+      outline: none;
+      border-bottom-color: #6d28d9;
+  }
+
+  /* 責任廠商 */
+  .vendor-info-container {
+    max-width: 550px; /* 與上方 info-card 同寬 */
+    margin: 0 auto; /* 置中 */
+  }
+  .vendor-block {
+    margin-top: 4rem;
+  }
+  .vendor-block-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.75rem;
+  }
+  .vendor-details-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+  }
+  .vendor-details-grid .field-line {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 1rem;
+      align-items: baseline;
+  }
+  .vendor-details-grid .field-label {
+    font-weight: normal;
+    margin-right: 0;
+    color: #495057;
+  }
+
+  /* 把可能從舊版來的黑底樣式覆蓋掉，讓責任廠商區塊保持白底 */
+  #responsible-vendor-container {
+    background: transparent !important;
+    color: #343a40 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+  }
+  #responsible-vendor-container .vendor-block-title {
+    color: #495057 !important;
+  }
+  #responsible-vendor-container .field-label {
+    color: #495057 !important;
+  }
+  #responsible-vendor-container .field-value {
+    color: #343a40 !important;
+  }
+
+  #upload-status { 
+      display: none; 
+      padding: 0.75rem 1.25rem; 
+      margin-top: 1rem; 
+      border-radius: 8px; 
+      font-weight: 500; 
+      text-align: center; 
+  }
+  .status-info { background-color: #e0e7ff; color: #3730a3; }
+  .status-success { background-color: #dcfce7; color: #166534; }
+  .status-error { background-color: #fee2e2; color: #991b1b; }
+  #upload-status i { margin-right: 0.5rem; }
+
+  /* 專為列印設計的頁首：預設隱藏 */
+  .print-header {
+    display: none;
+  }
+
+  /* 列印樣式 */
+  @media print {
+    body {
+      background-color: #ffffff;
+    }
+    .app-wrap {
+      max-width: none;
+      min-height: 0;
+      margin: 0;
+      padding: 1rem;
+      box-shadow: none;
+    }
+    /* 隱藏所有不需要列印的元素 */
+    .no-print, .toolbar, .status-bar, .page-header {
+      display: none !important;
+    }
+    /* 顯示並設定列印頁首樣式 */
+    .print-header {
+      display: block;
+      position: relative;
+      text-align: center;
+      margin: 0 0 2rem;
+      padding-top: 2rem;
+    }
+    .print-header .logo {
+      position: absolute;
+      left: 0;
+      top: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: bold;
+    }
+    .print-header-top-right {
+        position: absolute;
+        right: 0;
+        top: 0;
+        font-size: 1rem;
+    }
+    .print-header .logo img.logo-img-print {
+      height: 28px;
+      width: auto;
+    }
+    .print-header h1 {
+      margin: 1rem 0 0;
+      font-size: 1.8rem;
+      line-height: 1.4;
+    }
+    .print-header .en-title {
+      font-size: 1.1rem;
+      font-weight: 400;
+    }
+    .print-header .project-info {
+      display: none !important;
+    }
+    .info-card, .vendor-info-container {
+      max-width: none;
+      margin: 0; 
+    }
+    .cover-basic-info {
+        margin-top: 0;
+    }
+    .value-input {
+      border: none !important;
+      padding: 2px 0;
+    }
+    .basic-info-grid, .vendor-details-grid {
+        gap: 0.6rem;
+    }
+    .info-row, .vendor-details-grid .field-line {
+        grid-template-columns: 160px 1fr;
+        padding: 0.2rem 0;
+    }
+    .vendor-block {
+        margin-top: 2rem;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- 新：共用頂端導覽列，與 pif01-2 相同 -->
+<pif-nav class="no-print"></pif-nav>
+
+<div id="app-container" style="display: none;">
+    <div class="toolbar no-print">
+        <a id="back-link" href="#" class="btn"><i class="fa-solid fa-arrow-left"></i> 返回 PIF 列表</a>
+        <button id="btnSaveChanges" class="btn primary"><i class="fa-solid fa-cloud-arrow-up"></i> 儲存變更至雲端</button>
+    </div>
+
+    <div class="app-wrap">
+        <div class="print-header">
+          <div class="logo">
+            <img src="img/cospif-logo.png" alt="CosPIF Logo" class="logo-img-print">
+            <span>CosPIF</span>
+          </div>
+          <div class="print-header-top-right">
+            <strong>PIF ID：</strong><span id="print-pif-id"></span>
+          </div>
+          <h1>
+            <span class="zh-title">產品資訊檔案</span><br>
+            <span class="en-title">Product Information File (PIF)</span>
+          </h1>
+          <div class="project-info">
+            <div class="info-item"><strong>PIF 版本：</strong><span id="print-pif-version"></span></div>
+            <div class="info-item"><strong>製作日期：</strong><span id="print-pif-date"></span></div>
+          </div>
+        </div>
+
+        <header class="page-header">
+            <div class="page-header-main">
+                <h1 class="page-main-title"><i class="fa-solid fa-id-card"></i> 產品資訊檔案 PIF</h1>
+                <h2 class="page-en-subtitle">Product Information File</h2>
+            </div>
+            <div id="page-header-meta-container" class="page-header-meta"></div>
+        </header>
+
+        <div class="status-bar no-print">
+            <div>
+                <span id="status-light" class="status-light"></span>
+                <span id="status-text">正在初始化...</span>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button id="btnUploadPdf" class="btn"><i class="fa-solid fa-file-arrow-up"></i> 上傳本頁 PDF</button>
+                <input type="file" id="pdfUploader" accept="application/pdf" style="display:none;">
+                <button onclick="window.print()" class="btn"><i class="fa-solid fa-print"></i> 列印 / 匯出 PDF</button>
+            </div>
+        </div>
+        <div id="upload-status" class="no-print"></div>
+
+        <div id="product-info-container" class="cover-basic-info"></div>
+        <div class="vendor-info-container">
+            <div id="responsible-vendor-container"></div>
+            <div id="sites-container"></div>
+        </div>
+    </div>
+</div>
+
+<div id="global-error" style="display:none;"></div>
+
+<script type="module">
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { ref, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+  import { auth, db, storage } from './firebase-config.js';
+  import "./components.js";
+
+  const $ = sel => document.querySelector(sel);
+  let pifDocRef;
+  let pageContext = {};
+  let hasUnsavedChanges = false;
+  let currentPifData = {};
+
+  const status = {
+      light: $("#status-light"),
+      text: $("#status-text"),
+      set(state, msg) {
+          if (this.light) this.light.className = `status-light ${state}`;
+          if (this.text) this.text.textContent = msg;
+          const saveBtn = $('#btnSaveChanges');
+          if (saveBtn) saveBtn.disabled = (state !== 'syncing' && !hasUnsavedChanges);
+          if (state === 'synced' || state === 'error') {
+              setTimeout(() => {
+                  if (hasUnsavedChanges) {
+                      this.set('syncing', '有未儲存的變更');
+                  } else {
+                      this.set('ready', '就緒');
+                  }
+              }, 3000);
+          }
+      },
+      markUnsaved() {
+          if (hasUnsavedChanges) return;
+          hasUnsavedChanges = true;
+          this.set('syncing', '有未儲存的變更');
+          const saveBtn = $('#btnSaveChanges');
+          if (saveBtn) saveBtn.disabled = false;
+      }
+  };
+
+  function startAuthFlow() {
+      onAuthStateChanged(auth, user => {
+          if (user) {
+              try {
+                  pageContext = setupPageContext();
+                  pifDocRef = doc(db, 'pifs', pageContext.pifId);
+                  setupUIForUser();
+                  initializeData();
+                  $('#app-container').style.display = 'block';
+              } catch (e) {
+                  $('#global-error').textContent = `啟動錯誤：${e.message}。請確認網址是否正確。`;
+                  $('#global-error').style.display = 'block';
+              }
+          } else {
+              window.location.href = `login.html?redirect=${encodeURIComponent(window.location.href)}`;
+          }
+          document.body.style.opacity = '1';
+      });
+  }
+
+  function setupPageContext() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const context = {
+          pifId: urlParams.get('id'),
+          companyName: urlParams.get('companyName'),
+          productName: urlParams.get('productName')
+      };
+      if (!context.pifId) throw new Error('網址中缺少專案 ID');
+      return context;
+  }
+
+  function setupUIForUser() {
+      const params = new URLSearchParams({
+        id: pageContext.pifId,
+        companyName: pageContext.companyName || '',
+        productName: pageContext.productName || ''
+      });
+      $('#back-link').href = `pif-i.html?${params.toString()}`;
+      $('#btnSaveChanges').addEventListener('click', saveData);
+      $('#btnSaveChanges').disabled = true;
+      $('#btnUploadPdf').addEventListener('click', () => $('#pdfUploader').click());
+      $('#pdfUploader').addEventListener('change', handlePdfUpload);
+      window.addEventListener('beforeunload', e => {
+          if (hasUnsavedChanges) {
+              e.preventDefault();
+              e.returnValue = '';
+          }
+      });
+  }
+
+  async function initializeData() {
+      status.set('syncing', '正在從雲端讀取資料...');
+      try {
+          const docSnap = await getDoc(pifDocRef);
+          if (docSnap.exists()) {
+              currentPifData = docSnap.data();
+              renderBasicInfo(currentPifData.pif01 || {}, currentPifData);
+              status.set('synced', '資料讀取成功');
+          } else {
+              console.warn("在資料庫中找不到對應的專案文件，將會建立新的。");
+              status.set('ready', '就緒 (新檔案)');
+          }
+      } catch (err) {
+          console.error("Initialization failed: ", err);
+          status.set('error', `讀取失敗: ${err.message}`);
+      }
+  }
+
+  function renderBasicInfo(pif01Data, rootData) {
+      const escape = str => str ? String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])) : '';
+
+      const basicInfo = pif01Data.basic || {};
+      const rootInfo = {
+          productName: rootData.productName || basicInfo.name || '',
+          productNameEn: rootData.productNameEn || basicInfo.productNameEn || '',
+          category: basicInfo.category || '',
+          form: basicInfo.form || '',
+          safetyAssessor: basicInfo.safetyAssessor || '',
+          pifMaker: basicInfo.pifMaker || '',
+          pifVersion: basicInfo.pifVersion || '',
+          pifDate: basicInfo.pifDate || basicInfo.createdDate || '',
+      };
+      const companyName = rootData.companyName || pageContext.companyName || '';
+
+      // 右上角 Meta
+      const metaContainer = $('#page-header-meta-container');
+      if (metaContainer) {
+          metaContainer.innerHTML = `
+              <span class="meta-item-label">廠商名稱:</span>
+              <span class="meta-item-value">${escape(companyName)}</span>
+              <span class="meta-item-label">產品名稱:</span>
+              <span class="meta-item-value">${escape(rootInfo.productName)}</span>
+              <span class="meta-item-label">PIF ID:</span>
+              <span class="meta-item-value">${escape(pageContext.pifId)}</span>
+          `;
+      }
+
+      const fields = [
+          { label: '產品中文名稱', value: rootInfo.productName, type: 'text' },
+          { label: '產品英文名稱', value: rootInfo.productNameEn, type: 'text' },
+          { label: '產品類別', value: rootInfo.category, type: 'text' },
+          { label: '產品形式', value: rootInfo.form, type: 'text' },
+          { label: '安全評估人員', id: 'safetyAssessor', value: rootInfo.safetyAssessor, type: 'input' },
+          { label: 'PIF 製作人員', id: 'pifMaker', value: rootInfo.pifMaker, type: 'input' },
+          { label: 'PIF 版本', id: 'pifVersion', value: rootInfo.pifVersion, type: 'input' },
+          { label: '製作日期', id: 'pifDate', value: rootInfo.pifDate, type: 'input' },
+      ];
+
+      const productInfoContainer = $('#product-info-container');
+      productInfoContainer.innerHTML = `
+          <div class="info-card">
+              <div class="basic-info-grid">
+                ${fields.map(field => {
+                    if (field.type === 'input') {
+                        return `
+                          <div class="info-row">
+                            <label for="${field.id}">${escape(field.label)}</label>
+                            <input type="text" id="${field.id}" class="value-input" value="${escape(field.value)}">
+                          </div>
+                        `;
+                    }
+                    return `
+                      <div class="info-row">
+                        <label>${escape(field.label)}</label>
+                        <div class="value">${escape(field.value) || '—'}</div>
+                      </div>
+                    `;
+                }).join('')}
+              </div>
+          </div>
+      `;
+
+      // 綁定輸入事件
+      fields.forEach(field => {
+          if (field.type === 'input') {
+              const el = $(`#${field.id}`);
+              if (el) el.addEventListener('input', status.markUnsaved.bind(status));
+          }
+      });
+
+      // 責任廠商
+      const escapeOrEmpty = v => v ? escape(v) : '';
+      const createField = (label, value) =>
+        value ? `<div class="field-line"><span class="field-label">${escape(label)}</span><span class="field-value">${escapeOrEmpty(value)}</span></div>` : '';
+
+      const maker = pif01Data.maker;
+      const respVendorContainer = $('#responsible-vendor-container');
+      if (respVendorContainer) {
+          if (maker) {
+              respVendorContainer.innerHTML = `
+                  <div class="vendor-block">
+                      <h3 class="vendor-block-title"><i class="fa-solid fa-user-tie"></i> 責任廠商</h3>
+                      <div class="vendor-details-grid">
+                          ${createField('名稱', maker.name || maker.companyName)}
+                          ${createField('地址', maker.addr)}
+                          ${createField('電話', maker.tel)}
+                          ${createField('統一編號', maker.tax)}
+                      </div>
+                  </div>`;
+          } else {
+              respVendorContainer.innerHTML = '';
+          }
+      }
+
+      // 列印用資訊
+      $('#print-pif-id').textContent = pageContext.pifId || '';
+      $('#print-pif-version').textContent = escape(rootInfo.pifVersion) || '';
+      $('#print-pif-date').textContent = escape(rootInfo.pifDate) || '';
+  }
+
+  async function saveData() {
+      status.set('syncing', '正在儲存至雲端...');
+
+      const dataToSave = {
+          'pif01.basic.safetyAssessor': $('#safetyAssessor')?.value || '',
+          'pif01.basic.pifMaker': $('#pifMaker')?.value || '',
+          'pif01.basic.pifVersion': $('#pifVersion')?.value || '',
+          'pif01.basic.pifDate': $('#pifDate')?.value || ''
+      };
+
+      try {
+          await setDoc(pifDocRef, {
+            pif01: {
+              ...(currentPifData.pif01 || {}),
+              basic: {
+                ...(currentPifData.pif01?.basic || {}),
+                safetyAssessor: dataToSave['pif01.basic.safetyAssessor'],
+                pifMaker: dataToSave['pif01.basic.pifMaker'],
+                pifVersion: dataToSave['pif01.basic.pifVersion'],
+                pifDate: dataToSave['pif01.basic.pifDate'],
+              }
+            }
+          }, { merge: true });
+
+          hasUnsavedChanges = false;
+          status.set('synced', '資料已成功儲存！');
+          await initializeData();
+      } catch (err) {
+          status.set('error', `資料庫儲存失敗: ${err.message}`);
+          console.error("Firestore save failed: ", err);
+      }
+  }
+
+  function handlePdfUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      if (file.type !== "application/pdf") return alert("請選擇一個 PDF 檔案。");
+      uploadFile(file, `pifs/${pageContext.pifId}/01-1.pdf`);
+  }
+
+  function uploadFile(file, storagePath) {
+      const uploadTask = uploadBytesResumable(ref(storage, storagePath), file);
+      const button = $('#btnUploadPdf');
+      button.disabled = true;
+
+      uploadTask.on('state_changed', 
+          (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              setUploadStatus(`<i class="fa-solid fa-upload"></i> 正在上傳 PDF... ${Math.round(progress)}%`, 'status-info');
+          }, 
+          (error) => {
+              console.error("Upload failed:", error);
+              setUploadStatus(`<i class="fa-solid fa-triangle-exclamation"></i> 上傳失敗: ${error.code}`, 'status-error');
+              button.disabled = false;
+          }, 
+          () => {
+              setUploadStatus('<i class="fa-solid fa-check-circle"></i> PDF 已成功上傳！儀表板狀態將會更新。', 'status-success');
+              button.disabled = false;
+              $('#pdfUploader').value = '';
+              setTimeout(() => setUploadStatus('', 'none'), 5000);
+          }
+      );
+  }
+
+  function setUploadStatus(msg, styleClass) {
+      const statusEl = $('#upload-status');
+      if (!msg || styleClass === 'none') {
+          statusEl.style.display = 'none';
+      } else {
+          statusEl.innerHTML = msg;
+          statusEl.className = `no-print ${styleClass}`;
+          statusEl.style.display = 'block';
+      }
+  }
+
+  startAuthFlow();
+</script>
+</body>
+</html>

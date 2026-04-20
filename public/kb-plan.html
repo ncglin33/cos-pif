@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KB 發表月份｜排程與清單</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <style>
+    .container{ max-width: 1750px; }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.85rem 1rem; background:#fff;
+      border:1px solid var(--line); border-radius:16px;
+      margin:.9rem 0 1rem;
+      gap: .8rem;
+    }
+    .topbar .left{ display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
+    .topbar .right{ display:flex; gap:.55rem; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+    .topbar a{ text-decoration:none; color:var(--ink); font-weight:800; }
+    .badge{
+      display:inline-flex; align-items:center; gap:.35rem;
+      border:1px solid var(--line); border-radius:999px;
+      padding:.25rem .6rem; font-size:.82rem; background:#fff; color:var(--muted);
+    }
+    .card{
+      background:#fff; border:1px solid var(--line);
+      border-radius:16px; box-shadow:0 1px 3px rgba(0,0,0,.05);
+      padding: 1rem 1rem;
+    }
+    .row{ display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+    .grow{ flex: 1 1 auto; min-width: 180px; }
+    .muted{ color:var(--muted); }
+    .small{ font-size:.86rem; }
+    .input, select{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:.5rem .6rem;
+      font-size:.95rem;
+      outline:none;
+      background:#fff;
+    }
+    .btnx{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius: 12px;
+      padding:.48rem .7rem;
+      cursor:pointer;
+      font-weight:800;
+      display:inline-flex; align-items:center; gap:.4rem;
+    }
+    .btnx:hover{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+
+    .list{ display:flex; flex-direction:column; gap:.45rem; margin-top:.7rem; }
+    .item{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:.65rem .75rem;
+      background:#fff;
+    }
+    .item .t{ font-weight:900; display:flex; gap:.45rem; align-items:center; flex-wrap:wrap; }
+    .item .m{ color:var(--muted); font-size:.85rem; margin-top:.2rem; line-height:1.35; }
+    .status{
+      display:inline-flex; align-items:center; gap:.35rem;
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:.15rem .55rem;
+      font-size:.82rem;
+      color:var(--muted);
+      background:#fff;
+    }
+    .ok{
+      padding:.6rem .7rem;
+      border:1px solid #bbf7d0;
+      background:#f0fdf4;
+      border-radius:12px;
+      color:#166534;
+      margin-top:.7rem;
+    }
+    .warn{
+      padding:.6rem .7rem;
+      border:1px solid #fde68a;
+      background:#fffbeb;
+      border-radius:12px;
+      color:#92400e;
+      margin-top:.7rem;
+    }
+    .danger{
+      padding:.6rem .7rem;
+      border:1px solid #fecaca;
+      background:#fef2f2;
+      border-radius:12px;
+      color:#991b1b;
+      margin-top:.7rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="left">
+        <a href="index.html"><i class="fa-solid fa-house"></i> 首頁</a>
+        <a href="kb-issue.html"><i class="fa-solid fa-newspaper"></i> 月刊/週刊</a>
+        <a href="kb-submit.html"><i class="fa-solid fa-file-arrow-up"></i> 投稿</a>
+        <span class="badge"><i class="fa-solid fa-calendar"></i> 發表月份排程</span>
+      </div>
+      <div class="right">
+        <span class="muted small" id="hint"></span>
+        <button class="btnx" id="btnLogin" title="前往登入"><i class="fa-solid fa-right-to-bracket"></i> 登入</button>
+        <button class="btnx" id="btnLogout" title="登出"><i class="fa-solid fa-arrow-right-from-bracket"></i> 登出</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <div class="grow">
+          <label class="muted small">選擇月份（YYYY-MM）</label>
+          <input class="input" id="month" type="month" />
+        </div>
+        <div style="width:260px; max-width:100%;">
+          <label class="muted small">狀態</label>
+          <select id="st">
+            <option value="accepted,published">accepted + published</option>
+            <option value="accepted">accepted</option>
+            <option value="published">published</option>
+          </select>
+        </div>
+        <div>
+          <label class="muted small">&nbsp;</label>
+          <button class="btnx" id="btnLoad"><i class="fa-solid fa-magnifying-glass"></i> 載入</button>
+        </div>
+      </div>
+
+      <div id="msg"></div>
+      <div class="list" id="list"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { collection, getDocs, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { auth, db } from "./firebase-config.js";
+
+    const $ = (s) => document.querySelector(s);
+    const COL = "kb_submissions";
+
+    let currentUser = null;
+    let isStaff = false;
+
+    function esc(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+    }
+    function normalize(s){ return String(s||"").trim(); }
+
+    function statusIcon(st){
+      const s = String(st||"").toLowerCase();
+      if (s === "accepted") return "fa-solid fa-circle-check";
+      if (s === "published") return "fa-solid fa-newspaper";
+      return "fa-regular fa-circle";
+    }
+
+    async function resolveStaff(user){
+      // Force-refresh token claims (after admin/bootstrap sometimes needs refresh)
+      let tok;
+      try{
+        tok = await user.getIdTokenResult(true);
+      }catch{
+        tok = await user.getIdTokenResult();
+      }
+      const claims = tok?.claims || {};
+      const roles = claims.roles || {};
+      const has = (k) => !!roles[k] || !!claims[k];
+
+      const staff = has("admin") || has("systemAdmin") || has("secretary") || has("kbEditor") || has("editor");
+      return { staff, claims, roles };
+    }
+
+    function setAuthUI(user, staff){
+      $("#btnLogin").style.display = user ? "none" : "inline-flex";
+      $("#btnLogout").style.display = user ? "inline-flex" : "none";
+
+      if (!user){
+        $("#hint").textContent = "未登入";
+        $("#msg").innerHTML = `<div class="warn">此頁僅供 KB 編輯/秘書/管理者使用。請先登入。</div>`;
+        $("#list").innerHTML = "";
+        return;
+      }
+
+      $("#hint").textContent = `${user.email || user.uid}${staff ? " · role: staff" : ""}`;
+
+      if (!staff){
+        $("#msg").innerHTML = `<div class="danger">你已登入，但目前帳號不具 KB 編輯/秘書/管理者權限，無法查看排程清單。</div>`;
+        $("#list").innerHTML = "";
+        return;
+      }
+
+      $("#msg").innerHTML = "";
+    }
+
+    async function load(){
+      if (!currentUser){
+        $("#msg").innerHTML = `<div class="warn">請先登入後再載入。</div>`;
+        return;
+      }
+      if (!isStaff){
+        $("#msg").innerHTML = `<div class="danger">需要 KB 編輯/秘書/管理者權限才能載入排程清單。</div>`;
+        return;
+      }
+
+      const month = normalize($("#month").value);
+      const st = normalize($("#st").value);
+      $("#msg").innerHTML = "";
+      $("#list").innerHTML = `<div class="muted small">讀取中…</div>`;
+
+      if (!month){
+        $("#list").innerHTML = "";
+        $("#msg").innerHTML = `<div class="warn">請先選擇月份</div>`;
+        return;
+      }
+
+      const statuses = st.split(",").map(x => x.trim()).filter(Boolean);
+
+      // Primary query (fast, needs composite index: plannedMonth + status + updatedAt)
+      try{
+        const qy = query(
+          collection(db, COL),
+          where("plannedMonth","==", month),
+          where("status","in", statuses),
+          orderBy("updatedAt","desc"),
+          limit(80)
+        );
+        const snaps = await getDocs(qy);
+        const rows = snaps.docs.map(d => ({ id: d.id, ...d.data() }));
+        render(rows, month, statuses);
+        return;
+      }catch(e){
+        console.warn("primary query failed:", e);
+
+        // If missing index, fallback to a query that does NOT require composite index:
+        // plannedMonth == month only, then filter/sort in client.
+        const msg = String(e?.message || e || "");
+        const code = e?.code || "";
+
+        if (code === "permission-denied" || msg.includes("Missing or insufficient permissions")){
+          $("#list").innerHTML = "";
+          $("#msg").innerHTML = `<div class="danger">讀取失敗：權限不足。請確認已登入，且此帳號具 admin/systemAdmin/secretary/kbEditor/editor 權限，並且 Firestore rules 已部署。</div>`;
+          return;
+        }
+
+        if (code === "failed-precondition" || msg.includes("requires an index")){
+          $("#msg").innerHTML = `<div class="warn">提示：此查詢需要 composite index（plannedMonth + status + updatedAt）。我已改用「備援查詢」先顯示資料（可能排序/筆數略有差異）。</div>`;
+        }else{
+          $("#msg").innerHTML = `<div class="warn">提示：發生錯誤，將改用備援查詢嘗試讀取。</div>`;
+        }
+
+        try{
+          const q2 = query(
+            collection(db, COL),
+            where("plannedMonth","==", month),
+            limit(200)
+          );
+          const snaps2 = await getDocs(q2);
+          let rows2 = snaps2.docs.map(d => ({ id: d.id, ...d.data() }));
+          rows2 = rows2.filter(r => statuses.includes(String(r.status||"").trim()));
+          rows2.sort((a,b) => {
+            const ta = a?.updatedAt?.toMillis ? a.updatedAt.toMillis() : (a?.updatedAt?.seconds ? a.updatedAt.seconds*1000 : 0);
+            const tb = b?.updatedAt?.toMillis ? b.updatedAt.toMillis() : (b?.updatedAt?.seconds ? b.updatedAt.seconds*1000 : 0);
+            return tb - ta;
+          });
+          render(rows2.slice(0,80), month, statuses);
+        }catch(e2){
+          console.warn("fallback query failed:", e2);
+          $("#list").innerHTML = "";
+          $("#msg").innerHTML = `<div class="danger">讀取失敗：${esc(e2?.message || e2)}</div>`;
+        }
+      }
+    }
+
+    function render(rows, month, statuses){
+      $("#hint").textContent = `${currentUser?.email || currentUser?.uid || "未登入"} · month=${month} · status=${statuses.join("+")}`;
+      if (!rows.length){
+        $("#list").innerHTML = `<div class="muted small">（此月份尚無排程稿件）</div>`;
+        return;
+      }
+      $("#msg").innerHTML = `<div class="ok">共 ${rows.length} 篇稿件</div>`;
+      $("#list").innerHTML = rows.map(r => {
+        const corr = r.corresponding || {};
+        const pdf = r.latestManuscriptUrl ? `<a href="${esc(r.latestManuscriptUrl)}" target="_blank" rel="noopener"><i class="fa-solid fa-file-pdf"></i> PDF</a>` : "";
+        return `
+          <div class="item">
+            <div class="t">
+              <span class="status"><i class="${statusIcon(r.status)}"></i> ${esc(r.status || "")}</span>
+              <span>${esc(r.title || "（未命名）")}</span>
+            </div>
+            <div class="m">${esc([`submissionId:${r.id}`, r.topic ? `topic:${r.topic}` : ""].filter(Boolean).join(" · "))}</div>
+            <div class="m">通訊作者：${esc(corr.name || "")} · ${esc(corr.email || "")}${pdf ? " · " + pdf : ""}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    // Buttons
+    $("#btnLoad").addEventListener("click", load);
+
+    $("#btnLogin").addEventListener("click", () => {
+      // Keep return path
+      const next = encodeURIComponent(location.pathname.split("/").pop() + location.search);
+      location.href = `login.html?next=${next}`;
+    });
+
+    $("#btnLogout").addEventListener("click", async () => {
+      try{
+        await signOut(auth);
+      }catch(e){
+        console.warn(e);
+      }
+    });
+
+    // init defaults from query
+    const url = new URL(location.href);
+    const qm = url.searchParams.get("month");
+    const qs = url.searchParams.get("st");
+    if (qm) $("#month").value = qm;
+    if (qs) $("#st").value = qs;
+
+    // default month = current month
+    if (!$("#month").value){
+      const now = new Date();
+      const m = String(now.getMonth()+1).padStart(2,"0");
+      $("#month").value = `${now.getFullYear()}-${m}`;
+    }
+
+    // Auth gate
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user;
+      if (!user){
+        isStaff = false;
+        setAuthUI(null, false);
+        return;
+      }
+      const r = await resolveStaff(user);
+      isStaff = !!r.staff;
+      setAuthUI(user, isStaff);
+      if (isStaff) load();
+    });
+  </script>
+</body>
+</html>

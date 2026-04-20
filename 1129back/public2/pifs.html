@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PIF 製作入口</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="style.css">
+    <style>
+      body {
+        opacity: 0;
+        transition: opacity 0.4s ease-in-out;
+        background-color: #f9fafb;
+      }
+
+      .project-header {
+          background-color: #fff;
+          padding: 1.5rem 2rem;
+          border-bottom: 1px solid var(--line-color);
+          margin-bottom: 2rem;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      }
+
+      .project-header h1 {
+          font-size: 1.5rem;
+          font-weight: 600;
+          margin: 0 0 0.25rem 0;
+      }
+
+      .project-header p {
+          margin: 0;
+          color: var(--text-muted);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+        padding: 0 2rem 2rem 2rem;
+      }
+
+      .controls-bar {
+          display: flex;
+          justify-content: flex-end;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0 2rem 1.5rem 2rem;
+      }
+      
+      .btn-submit:disabled {
+        background-color: #d1d5db; 
+        cursor: not-allowed;
+        border-color: #d1d5db;
+        color: #9ca3af;
+      }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo"><i class="fa-solid fa-shield-halved"></i> CosPIF</a>
+                <ul class="nav-links">
+                    <li><a href="pif-i.html">我的PIF文件櫃</a></li>
+                    <li><a href="vendors.html">廠商資料庫</a></li>
+                </ul>
+                <div class="nav-actions" style="display: flex; align-items: center;">
+                    <span id="user-info" style="margin-right: 1.5rem; color: var(--text-muted);"></span>
+                    <button id="btnSignOut" class="btn-login btn-danger">登出</button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+  <main>
+    <div class="project-header">
+        <h1 id="product-name-title">讀取中...</h1>
+        <p id="company-name-subtitle">讀取中...</p>
+    </div>
+
+    <div class="controls-bar">
+        <button id="btnSaveChanges" class="btn-submit" style="display: none;"><i class="fa-solid fa-save"></i> 儲存名稱變更</button>
+        <a id="btnAdmin" href="admin.html" class="btn-secondary" style="display: none;"><i class="fa-solid fa-user-shield"></i> 管理後台</a>
+        <a href="pif-i.html" class="btn-secondary">返回PIF文件櫃</a>
+    </div>
+
+    <div id="grid" class="grid"></div>
+    <div id="error-message" class="container" style="text-align: center; padding: 2rem;"></div>
+  </main>
+
+  <script type="module">
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, getDocs, doc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+    import { auth, db, storage } from './firebase-config.js';
+
+    let currentUser = null;
+    let isAdmin = false;
+    let pendingTitleChanges = new Map();
+
+    class PIFCard extends HTMLElement { 
+        constructor() { 
+            super(); 
+            this.attachShadow({ mode: 'open' }); 
+            this._originalTitle = '';
+        }
+        connectedCallback() { 
+            this._originalTitle = this.getAttribute('title') || '未命名';
+            this.render(); 
+            this.addEventListeners();
+        }
+        static get observedAttributes() { return ['no', 'title', 'href', 'editable', 'status', 'download-url']; }
+        attributeChangedCallback(name, oldValue, newValue) { 
+            if (name === 'title' && oldValue !== newValue) {
+                 this._originalTitle = newValue;
+            }
+            this.render(); 
+            this.addEventListeners();
+        }
+        
+        addEventListeners() {
+            const titleDiv = this.shadowRoot.querySelector('.title');
+            if (titleDiv && this.hasAttribute('editable')) {
+                if (!this.listenerAttached) {
+                     titleDiv.addEventListener('blur', this.handleTitleBlur.bind(this));
+                     this.listenerAttached = true;
+                }
+            }
+        }
+
+        handleTitleBlur(e) {
+            const newTitle = e.target.innerText.trim();
+            const eventName = (newTitle && newTitle !== this._originalTitle) ? 'title-changed' : 'title-unchanged';
+            this.dispatchEvent(new CustomEvent(eventName, {
+                bubbles: true,
+                composed: true,
+                detail: {
+                    no: this.getAttribute('no'),
+                    newTitle: newTitle
+                }
+            }));
+        }
+
+        render() {
+            const no = this.getAttribute('no') || '';
+            const title = this.getAttribute('title') || '未命名';
+            const href = this.getAttribute('href') || '#';
+            const editable = this.hasAttribute('editable');
+            const status = this.getAttribute('status') || 'not_started';
+            const downloadUrl = this.getAttribute('download-url');
+
+            const statusMap = {
+                not_started: { text: '尚未完成', color: '#6b7280', background: '#f3f4f6' },
+                in_progress: { text: '進行中', color: '#d97706', background: '#fef3c7' },
+                completed: { text: '已完成', color: '#16a34a', background: '#dcfce7' },
+            };
+            const currentStatus = statusMap[status] || statusMap.not_started;
+            const actionText = status === 'completed' ? '前往頁面' : '開始編輯';
+
+            const downloadBtnHtml = downloadUrl ? `
+                <a href="${downloadUrl}" class="btn-download" target="_blank" rel="noopener noreferrer" download>
+                    <i class="fa-solid fa-download"></i> 下載檔案
+                </a>
+            ` : '';
+
+            this.shadowRoot.innerHTML = `
+                <style>
+                    :host { display: flex; }
+                    .card {
+                        background: #fff;
+                        border: 1px solid var(--line-color);
+                        border-radius: var(--border-radius);
+                        box-shadow: var(--shadow-sm);
+                        transition: all 0.2s ease-out;
+                        flex: 1;
+                        display: flex;
+                        flex-direction: column;
+                        color: inherit;
+                        text-decoration: none;
+                        border: 2px solid transparent; /* Placeholder for highlight */
+                    }
+                    .card.changed {
+                        border-color: #16a34a; /* Green border for changed items */
+                        box-shadow: 0 0 8px rgba(22, 163, 74, 0.3);
+                    }
+                    .card:hover {
+                        transform: translateY(-4px);
+                        box-shadow: var(--shadow-md);
+                        border-color: var(--primary-color-light);
+                    }
+                     .card.changed:hover {
+                        border-color: #15803d; /* Darker green on hover */
+                    }
+                    .card-body {
+                        padding: 1.25rem;
+                        flex-grow: 1;
+                    }
+                    .card-header {
+                        display: flex; 
+                        justify-content: space-between;
+                        align-items: flex-start;
+                        margin-bottom: 0.75rem;
+                    }
+                    .title {
+                        font-weight: 600;
+                        font-size: 1rem;
+                        line-height: 1.4;
+                        flex-grow: 1;
+                    }
+                     .title[contenteditable="true"] { cursor: text; }
+                    .badge-no {
+                        font-variant-numeric: tabular-nums;
+                        background: var(--primary-color-lightest);
+                        color: var(--primary-color);
+                        border-radius: 999px;
+                        padding: 0.25rem 0.75rem;
+                        font-size: 0.8rem;
+                        font-weight: 500;
+                    }
+                    .status-badge {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 0.375rem;
+                        font-size: 0.75rem;
+                        font-weight: 500;
+                        padding: 0.25rem 0.625rem;
+                        border-radius: 999px;
+                        color: ${currentStatus.color};
+                        background-color: ${currentStatus.background};
+                    }
+                    .status-dot {
+                        width: 6px;
+                        height: 6px;
+                        border-radius: 50%;
+                        background-color: ${currentStatus.color};
+                    }
+                    .actions {
+                        padding: 0.75rem 1.25rem;
+                        background-color: #f9fafb;
+                        border-top: 1px solid var(--line-color);
+                        display: flex;
+                        justify-content: flex-end;
+                        align-items: center;
+                        gap: 0.75rem;
+                        transition: background-color 0.2s ease;
+                    }
+                    .card:hover .actions {
+                        background-color: #eef2ff;
+                    }
+                    .btn-go, .btn-download {
+                        font-weight: 600;
+                        text-decoration: none;
+                        font-size: 0.9rem;
+                        padding: 0.25rem 0.5rem;
+                        border-radius: 0.375rem;
+                        transition: background-color 0.2s ease;
+                    }
+                    .btn-go {
+                         color: var(--primary-color);
+                    }
+                    .btn-download {
+                        color: #374151;
+                    }
+                    .btn-go:hover { background-color: rgba(99, 102, 241, 0.1); }
+                    .btn-download:hover { background-color: rgba(209, 213, 219, 0.5); }
+                    .btn-go i, .btn-download i {
+                        margin-right: 0.375rem;
+                    }
+                    [contenteditable="true"]:focus {
+                        outline: 2px solid var(--primary-color);
+                        box-shadow: 0 0 0 4px var(--primary-color-lightest);
+                        border-radius: 4px;
+                        background: #fefce8;
+                    }
+                </style>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="card-header">
+                            <span class="badge-no">${no}</span>
+                            <span class="status-badge">
+                                <span class="status-dot"></span>
+                                <span>${currentStatus.text}</span>
+                            </span>
+                        </div>
+                        <div class="title" ${editable ? 'contenteditable="true"' : ''}>${title}</div>
+                    </div>
+                    <div class="actions">
+                        ${downloadBtnHtml}
+                        <a href="${href}" class="btn-go">${actionText}<i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    customElements.define('pif-card', PIFCard);
+    
+    async function startApp() {
+        const grid = document.getElementById('grid');
+
+        grid.addEventListener('title-changed', (e) => {
+            const { no, newTitle } = e.detail;
+            pendingTitleChanges.set(no, newTitle);
+            e.target.shadowRoot.querySelector('.card').classList.add('changed');
+        });
+
+        grid.addEventListener('title-unchanged', (e) => {
+            const { no } = e.detail;
+            pendingTitleChanges.delete(no);
+            e.target.shadowRoot.querySelector('.card').classList.remove('changed');
+        });
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+
+                const idTokenResult = await user.getIdTokenResult();
+                isAdmin = idTokenResult.claims.admin || false;
+
+                const projectData = setupProjectContext();
+                if (projectData) {
+                    setupUIForUser(projectData);
+                    await renderGrid(projectData);
+                }
+                document.body.style.opacity = '1';
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+    }
+
+    function setupProjectContext() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const pifId = urlParams.get('id');
+        const companyName = urlParams.get('companyName');
+        const productName = urlParams.get('productName');
+        const errorMessageEl = document.getElementById('error-message');
+        
+        if (!pifId || !companyName || !productName) {
+            errorMessageEl.innerHTML = `
+                <div class="card error" style="padding: 2rem;">
+                    <h3><i class="fa-solid fa-exclamation-triangle"></i> 載入錯誤</h3>
+                    <p>網址中缺少必要的專案資訊，無法讀取 PIF 模組。</p>
+                    <a href="pif-i.html" class="btn-primary">返回PIF文件櫃</a>
+                </div>`;
+            document.body.style.opacity = '1';
+            return null;
+        }
+
+        return {
+            pifId: pifId,
+            companyName: decodeURIComponent(companyName),
+            productName: decodeURIComponent(productName)
+        };
+    }
+
+    function setupUIForUser(projectData) {
+        document.getElementById('product-name-title').textContent = projectData.productName;
+        document.getElementById('company-name-subtitle').textContent = projectData.companyName;
+        document.title = `製作 PIF - ${projectData.productName}`;
+        document.getElementById('user-info').textContent = `歡迎, ${currentUser.displayName || currentUser.email}`;
+        document.getElementById('btnSignOut').addEventListener('click', () => {
+            signOut(auth).then(() => { 
+                window.location.href = 'login.html';
+            });
+        });
+        
+        if (isAdmin) {
+            document.getElementById('btnAdmin').style.display = 'inline-flex';
+            const saveButton = document.getElementById('btnSaveChanges');
+            saveButton.style.display = 'inline-flex';
+            saveButton.addEventListener('click', saveTitleChanges);
+        }
+    }
+
+    async function initializePifModules() {
+        const modulesRef = collection(db, "pif_modules");
+        const snapshot = await getDocs(modulesRef);
+        let modules = [];
+        if (snapshot.empty) {
+             // Data initialization can be done here
+        } else {
+          snapshot.forEach(doc => modules.push(doc.data()));
+        }
+        return modules.sort((a, b) => a.order - b.order);
+    }
+    
+    async function checkPdfStatus(pifId, rawModuleId) {
+        const moduleId = rawModuleId.replace(/PIF\s*/i, '');
+        const pdfPath = `pifs/${pifId}/${moduleId}.pdf`;
+        const pdfRef = ref(storage, pdfPath);
+
+        try {
+            const url = await getDownloadURL(pdfRef);
+            return { status: 'completed', url: url };
+        } catch (error) {
+            if (error.code === 'storage/object-not-found') {
+                return { status: 'not_started', url: null };
+            }
+            console.error(`Error checking PDF status for ${pdfPath}:`, error);
+            return { status: 'not_started', url: null };
+        }
+    }
+
+    async function renderGrid(projectData) {
+        const grid = document.getElementById('grid');
+        grid.innerHTML = ''; 
+        if (!projectData || !projectData.pifId) return;
+
+        const pifModules = await initializePifModules();
+        const { pifId, companyName, productName } = projectData;
+        const companyNameEncoded = encodeURIComponent(companyName);
+        const productNameEncoded = encodeURIComponent(productName);
+
+        for (const pif of pifModules) {
+            const card = document.createElement('pif-card');
+            card.setAttribute('no', pif.no);
+            card.setAttribute('title', pif.title);
+            
+            const { status, url } = await checkPdfStatus(pifId, pif.no);
+            card.setAttribute('status', status);
+            if (url) {
+                card.setAttribute('download-url', url);
+            }
+
+            let href = pif.href || '#'; 
+            if (pif.no === '01-1') {
+                href = 'pif01-1.html';
+            } else if (pif.no === '01-2') {
+                href = 'pif01-2.html';
+            }
+            
+            const newHref = `${href}?id=${pifId}&companyName=${companyNameEncoded}&productName=${productNameEncoded}`;
+            card.setAttribute('href', newHref);
+            
+            if (isAdmin) {
+                card.setAttribute('editable', '');
+            }
+            
+            grid.appendChild(card);
+        }
+    }
+    
+    async function saveTitleChanges() {
+        if (pendingTitleChanges.size === 0) {
+            alert('沒有偵測到任何待儲存的變更。');
+            return;
+        }
+
+        const btn = document.getElementById('btnSaveChanges');
+        const grid = document.getElementById('grid');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 儲存中...';
+        
+        const batch = writeBatch(db);
+        pendingTitleChanges.forEach((title, no) => {
+            const docRef = doc(db, "pif_modules", no);
+            batch.update(docRef, { title: title });
+        });
+
+        try {
+            await batch.commit();
+            
+            pendingTitleChanges.forEach((title, no) => {
+                const card = grid.querySelector(`pif-card[no="${no}"]`);
+                if (card) {
+                    card.setAttribute('title', title);
+                    card.shadowRoot.querySelector('.card').classList.remove('changed');
+                }
+            });
+
+            pendingTitleChanges.clear();
+            alert('標題已成功更新！');
+        } catch (error) {
+            console.error("Error saving title changes: ", error);
+            alert('儲存失敗，請稍後再試。錯誤：' + error.message);
+        } finally {
+           btn.innerHTML = '<i class="fa-solid fa-save"></i> 儲存名稱變更';
+           btn.disabled = false;
+        }
+    }
+
+    startApp();
+
+  </script>
+</body>
+</html>

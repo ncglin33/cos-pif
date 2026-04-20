@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CosPIF 公司歸戶升級版 服務合約書 Online Service Agreement</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="./pif01-3.css">
+
+<style>
+  body { background-color: #f0f2f5; }
+  .app-wrap{
+    max-width: 210mm;
+    margin: 1.5rem auto 2rem;
+    padding: 1.5rem 2rem 2rem;
+    background-color: #ffffff;
+    box-shadow: 0 0 6px rgba(0,0,0,0.08);
+    min-height: 297mm;
+    box-sizing: border-box;
+  }
+
+  .page-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+  }
+  .page-header-main{ flex:1; }
+  .page-main-title{ margin-bottom:0.25rem; }
+  .page-en-subtitle{
+    font-size:1.05rem;
+    color:#6c757d;
+    margin-top:0;
+  }
+  .page-header-meta{
+    flex-shrink:0;
+    margin-left:2rem;
+    font-size:0.9rem;
+    color:#495057;
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:0.4rem 0.5rem;
+    align-items:baseline;
+  }
+  .meta-item-label{
+    grid-column:1;
+    font-weight:600;
+    text-align:left;
+    white-space:nowrap;
+  }
+  .meta-item-value{
+    grid-column:2;
+    min-width:160px;
+    text-align:left;
+  }
+
+  #upload-status{
+    display:none;
+    padding:0.75rem 1.25rem;
+    margin-top:1rem;
+    border-radius:8px;
+    font-weight:500;
+    text-align:center;
+  }
+  .status-info{ background-color:#e0e7ff; color:#3730a3; }
+  .status-success{ background-color:#dcfce7; color:#166534; }
+  .status-error{ background-color:#fee2e2; color:#991b1b; }
+  #upload-status i{ margin-right:0.5rem; }
+
+  /* 合約內文 */
+  .contract-container{ margin-top:2.5rem; }
+  .contract-card{
+    max-width: 740px;
+    margin: 0 auto;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    padding: 1.6rem 1.9rem;
+    box-shadow: 0 4px 12px rgba(15,23,42,.04);
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+  .contract-card h2{
+    margin: 0 0 0.3rem;
+    font-size: 1.35rem;
+    text-align: center;
+  }
+  .contract-card .en-subtitle{
+    text-align:center;
+    color:#6b7280;
+    font-size:0.9rem;
+    margin-bottom:1rem;
+  }
+  .contract-body p{ margin:0 0 0.6rem; text-align:justify; }
+  .contract-body ol{ padding-left:1.1rem; margin:0 0 0.6rem; }
+  .contract-body li{ margin-bottom:0.45rem; }
+
+  .contract-section-title{
+    margin: 1.1rem 0 0.6rem;
+    font-weight: 700;
+    color: #111827;
+    font-size: 1rem;
+  }
+
+  .contract-identity-grid{
+    margin-top: 1.2rem;
+    border-top: 1px dashed #e5e7eb;
+    padding-top: 1rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    row-gap: 0.6rem;
+  }
+  .contract-field-row{
+    display:grid;
+    grid-template-columns: 150px 1fr;
+    column-gap: 0.8rem;
+    align-items:center;
+  }
+  .contract-field-label{
+    color:#4b5563;
+    white-space:nowrap;
+  }
+  .contract-field-value{ min-height:1.5rem; }
+
+  .contract-input, .contract-textarea, .contract-select{
+    width:100%;
+    font-size:0.92rem;
+    border-radius:6px;
+    border:1px solid #d1d5db;
+    padding:0.32rem 0.45rem;
+    box-sizing:border-box;
+    background:#fff;
+  }
+  .contract-input:focus, .contract-textarea:focus, .contract-select:focus{
+    outline:none;
+    border-color:#6366f1;
+    box-shadow:0 0 0 1px rgba(99,102,241,.2);
+  }
+  .contract-textarea{
+    min-height:60px;
+    resize:vertical;
+  }
+
+  .contract-confirm-row{
+    margin-top: 1rem;
+    padding: 0.75rem 0.75rem;
+    border-radius: 8px;
+    background: #f9fafb;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+  }
+  .contract-confirm-row input[type="checkbox"]{ margin-top:0.15rem; }
+
+  .contract-status{
+    margin-top:0.75rem;
+    font-size:0.85rem;
+    color:#6b7280;
+  }
+  .contract-status strong{ color:#111827; }
+
+  .installment-grid{
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap:0.6rem 0.8rem;
+  }
+  .installment-item{
+    display:grid;
+    grid-template-columns: 70px 1fr;
+    column-gap:0.4rem;
+    align-items:center;
+    font-size:0.9rem;
+  }
+  .installment-item-label{
+    color:#6b7280;
+    white-space:nowrap;
+  }
+
+@media print{
+  body{ background-color:#ffffff; }
+  .app-wrap{
+    max-width:none;
+    min-height:0;
+    margin:0;
+    padding:1rem;
+    box-shadow:none;
+  }
+  .no-print, .toolbar, .status-bar, .page-header{
+    display:none !important;
+  }
+  .contract-card{
+    box-shadow:none;
+    border-color:#d1d5db;
+  }
+  .contract-input, .contract-textarea, .contract-select{
+    border:none !important;
+    padding:0;
+  }
+  .contract-status, .contract-notes-row{
+    display:none !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div id="app-container" style="display:none;">
+  <div class="toolbar no-print">
+    <a id="back-link" href="#" class="btn"><i class="fa-solid fa-arrow-left"></i> 返回 PIF 列表</a>
+    <button id="btnSaveChanges" class="btn primary"><i class="fa-solid fa-file-contract"></i> 確認送出合約</button>
+    <div class="right">
+      <div id="user-info" style="display:inline-block;margin-right:1rem;font-size:.9rem;"></div>
+      <button id="btnSignOut" class="btn danger">登出</button>
+    </div>
+  </div>
+
+  <div class="app-wrap">
+    <!-- 螢幕顯示用頁首 -->
+    <header class="page-header">
+      <div class="page-header-main">
+        <h1 class="page-main-title"><i class="fa-solid fa-file-contract"></i> CosPIF 公司歸戶升級版 服務合約書</h1>
+        <h2 class="page-en-subtitle">Online Service Agreement for CosPIF Company Account Upgrade</h2>
+      </div>
+      <div id="page-header-meta-container" class="page-header-meta"></div>
+    </header>
+
+    <div class="status-bar no-print">
+      <div>
+        <span id="status-light" class="status-light"></span>
+        <span id="status-text">正在初始化...</span>
+      </div>
+      <div style="display:flex;gap:0.5rem;">
+        <button id="btnUploadPdf" class="btn"><i class="fa-solid fa-file-arrow-up"></i> 上傳簽名合約 PDF</button>
+        <input type="file" id="pdfUploader" accept="application/pdf" style="display:none;">
+        <button onclick="window.print()" class="btn"><i class="fa-solid fa-print"></i> 列印 / 匯出 PDF</button>
+      </div>
+    </div>
+    <div id="upload-status" class="no-print"></div>
+
+    <div id="contract-container" class="contract-container"></div>
+  </div>
+</div>
+
+<div id="global-error" style="display:none;"></div>
+
+<script type="module">
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { doc, getDoc, setDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { ref, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+  import { auth, db, storage } from './firebase-config.js';
+
+  const $ = sel => document.querySelector(sel);
+
+  let pifDocRef;
+  let pageContext = {};
+  let hasUnsavedChanges = false;
+  let contractLocked = false;
+  let currentUser = null;
+  let currentContractData = {};
+  let currentRootData = {};
+
+  const status = {
+    light: $("#status-light"),
+    text: $("#status-text"),
+    set(state, msg) {
+      if (!this.light || !this.text) return;
+      this.light.className = `status-light ${state}`;
+      this.text.textContent = msg;
+
+      if (state === 'syncing') {
+        $('#btnSaveChanges').disabled = true;
+      } else if (!contractLocked) {
+        $('#btnSaveChanges').disabled = !hasUnsavedChanges;
+      }
+
+      if (state === 'synced' || state === 'error') {
+        setTimeout(() => {
+          if (hasUnsavedChanges) {
+            this.set('syncing', '有未送出的變更');
+          } else {
+            this.set('ready', contractLocked ? '合約已送出（唯讀）' : '就緒');
+          }
+        }, 3000);
+      }
+    },
+    markUnsaved() {
+      if (contractLocked) return;
+      hasUnsavedChanges = true;
+      this.set('syncing', '有未送出的變更');
+      $('#btnSaveChanges').disabled = false;
+    }
+  };
+
+  function startAuthFlow() {
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        currentUser = user;
+        try {
+          pageContext = setupPageContext();
+          pifDocRef = doc(db, 'pifs', pageContext.pifId);
+          setupUIForUser(user);
+          initializeData();
+          $('#app-container').style.display = 'block';
+        } catch (e) {
+          $('#global-error').textContent = `啟動錯誤：${e.message}。請確認網址是否正確。`;
+          $('#global-error').style.display = 'block';
+        }
+      } else {
+        window.location.href = `login.html?redirect=${encodeURIComponent(window.location.href)}`;
+      }
+      document.body.style.opacity = '1';
+    });
+  }
+
+  function setupPageContext() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const ctx = {
+      pifId: urlParams.get('id'),
+      companyName: urlParams.get('companyName'),
+      productName: urlParams.get('productName')
+    };
+    if (!ctx.pifId) throw new Error('網址中缺少專案 ID');
+    return ctx;
+  }
+
+  function setupUIForUser(user) {
+    $('#user-info').textContent = user.email;
+    $('#btnSignOut').addEventListener('click', () => signOut(auth));
+
+    const params = new URLSearchParams({
+      id: pageContext.pifId,
+      companyName: pageContext.companyName || '',
+      productName: pageContext.productName || ''
+    });
+    $('#back-link').href = `pif-i.html?${params.toString()}`;
+
+    $('#btnSaveChanges').addEventListener('click', saveContract);
+    $('#btnSaveChanges').disabled = true;
+
+    $('#btnUploadPdf').addEventListener('click', () => $('#pdfUploader').click());
+    $('#pdfUploader').addEventListener('change', handlePdfUpload);
+
+    window.addEventListener('beforeunload', e => {
+      if (hasUnsavedChanges && !contractLocked) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+  }
+
+  async function initializeData() {
+    status.set('syncing', '正在從雲端讀取合約資料...');
+    try {
+      const snap = await getDoc(pifDocRef);
+      if (snap.exists()) {
+        currentRootData = snap.data() || {};
+        currentContractData = currentRootData.contract || {};
+      } else {
+        currentRootData = {};
+        currentContractData = {};
+      }
+      renderContractForm(currentContractData, currentRootData);
+      contractLocked = !!currentContractData.submitted;
+      hasUnsavedChanges = false;
+      $('#btnSaveChanges').disabled = contractLocked;
+      status.set('ready', contractLocked ? '合約已送出（唯讀）' : '請確認內容後送出合約');
+    } catch (err) {
+      console.error('初始化合約資料失敗：', err);
+      status.set('error', `讀取失敗：${err.message}`);
+    }
+  }
+
+  function renderContractForm(contractData, rootData) {
+    const escape = str =>
+      str ? String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])) : '';
+
+    const companyName =
+      contractData.companyName || rootData.companyName || pageContext.companyName || '';
+    const productName =
+      contractData.productName || rootData.productName || pageContext.productName || '';
+
+    const authorizedPerson = contractData.authorizedPerson || '';
+    const title = contractData.title || '';
+    const tel = contractData.tel || '';
+    const email = contractData.email || (currentUser ? currentUser.email : '');
+    const signDate =
+      contractData.signDate || new Date().toISOString().slice(0, 10);
+
+    // 金額與付款相關欄位
+    const amount = contractData.amount ?? '';
+    const currency = contractData.currency || 'TWD';
+    const paymentMethod = contractData.paymentMethod || 'bank_transfer';
+    const paymentDeadline = contractData.paymentDeadline || '';
+
+    const inst1Percent = contractData.inst1Percent ?? '';
+    const inst1Due = contractData.inst1Due || '';
+    const inst2Percent = contractData.inst2Percent ?? '';
+    const inst2Due = contractData.inst2Due || '';
+    const installmentNote = contractData.installmentNote || '';
+
+    const scope = contractData.scope || 'CosPIF 公司歸戶升級版：包含以公司統一編號/公司代碼為核心之帳號歸戶設定、歷史及新建 PIF 之串接與列表、專案進度查詢與篩選、指定聯絡人帳號管理、基本操作說明與線上諮詢等。';
+    const notes = contractData.notes || '';
+    const confirmed = !!contractData.confirmed;
+
+    const submittedAt = contractData.submittedAt && contractData.submittedAt.toDate
+      ? contractData.submittedAt.toDate()
+      : null;
+
+    const metaContainer = $('#page-header-meta-container');
+    if (metaContainer) {
+      metaContainer.innerHTML = `
+        <span class="meta-item-label">廠商名稱:</span>
+        <span class="meta-item-value">${escape(companyName)}</span>
+        <span class="meta-item-label">產品/專案名稱:</span>
+        <span class="meta-item-value">${escape(productName)}</span>
+        <span class="meta-item-label">PIF ID:</span>
+        <span class="meta-item-value">${escape(pageContext.pifId)}</span>
+      `;
+    }
+
+    const container = $('#contract-container');
+    container.innerHTML = `
+      <div class="contract-card">
+        <h2>CosPIF 公司歸戶升級版 服務合約書</h2>
+        <div class="en-subtitle">Service Agreement for CosPIF Company Account Upgrade</div>
+
+        <div class="contract-body">
+          <p>本合約由下列雙方就「CosPIF 公司歸戶升級版」（以下簡稱本服務）之使用與相關權利義務，達成如下約定：</p>
+          <ol>
+            <li><strong>甲方（委託方/企業客戶）：</strong>${escape(companyName || '（由下方填寫）')}</li>
+            <li><strong>乙方（受託方/服務提供單位）：</strong>嘉南藥理大學 CosPIF 智慧科技整合團隊（含相關合作單位）</li>
+          </ol>
+
+          <div class="contract-section-title">第一條 服務內容與範圍</div>
+          <ol>
+            <li>乙方提供之「公司歸戶升級版」服務，係以甲方之公司統一編號或指定公司代碼為核心，協助歸戶並整合甲方於 CosPIF 系統內之各項 PIF 專案資料。</li>
+            <li>服務內容原則包括：
+              <ol>
+                <li>建立或調整甲方公司歸戶帳號與權限設定。</li>
+                <li>將既有及未來新增之 PIF 專案，依甲方公司代碼歸戶至同一帳號下供查詢。</li>
+                <li>提供線上專案列表、審核狀態與基本查詢篩選功能。</li>
+                <li>提供必要之系統操作說明與基本線上諮詢。</li>
+              </ol>
+            </li>
+            <li>若甲方另行要求客製化報表、額外系統開發、進階資料分析或第三方整合等，雙方得以書面或電子文件另訂費用與時程。</li>
+          </ol>
+
+          <div class="contract-section-title">第二條 帳號、資料與責任</div>
+          <ol>
+            <li>甲方應提供正確之公司名稱、統一編號/公司代碼、聯絡人基本資料及授權文件，以供乙方建立或調整歸戶設定。</li>
+            <li>甲方所提供之配方、原料、產品標示及相關文件，其真實性、合法性與完整性由甲方自行負責；乙方僅就系統建置與資料格式化提供協助，不對資料內容本身負擔實質保證責任。</li>
+            <li>甲方應妥善保管登入帳號與密碼，若因帳號管理不當致第三人未經授權使用本服務，相關風險與責任由甲方自負。</li>
+          </ol>
+
+          <div class="contract-section-title">第三條 費用、付款方式與期限</div>
+          <ol>
+            <li>甲方同意就本服務支付乙方服務費用，總額以本合約「服務費金額」欄位所載為準；若主管機關新增要求致需追加試驗或文件，雙方得另行議價。</li>
+            <li>付款方式、一次付款期限或分期付款約定，依本合約所填載之「付款方式」、「付款期限」及「分期付款約定」欄位為準；如約定分期付款，甲方應依各期約定比例及到期日支付。</li>
+            <li>甲方未依約定期限付款者，乙方得暫停提供部分或全部服務，至補足應付金額為止；經催告逾合理期限仍未付款者，乙方得終止合約，並得就既完成之服務向甲方請求相當報酬。</li>
+          </ol>
+
+          <div class="contract-section-title">第四條 服務期間與終止</div>
+          <ol>
+            <li>本服務之基本使用期間，除雙方另有約定外，原則為自合約生效日起一年；期滿如需續約，得另行簽訂或以書面/電子方式確認延長條件。</li>
+            <li>任一方如有重大違約或違反誠信原則，經他方催告改善而仍未改善者，他方得終止本合約。</li>
+            <li>合約終止或期滿後，乙方得依相關法令與校內規定，在合理期間內保留必要之系統紀錄及統計資料，但不再提供甲方帳號登入與新資料建置服務。</li>
+          </ol>
+
+          <div class="contract-section-title">第五條 資訊安全與保密</div>
+          <ol>
+            <li>乙方對甲方提供之非公開資料負有合理保密義務，除依法令、主管機關要求或為完成本服務目的之必要揭露外，不得任意提供予第三人。</li>
+            <li>乙方將於合理範圍內維護系統安全與穩定，但對於不可抗力、第三方惡意攻擊或電信中斷等非可歸責於乙方之因素所致之服務中斷，僅負合理協助與修復之義務。</li>
+          </ol>
+
+          <div class="contract-section-title">第六條 智慧財產權與使用限制</div>
+          <ol>
+            <li>CosPIF 系統之程式碼、介面設計、資料庫結構及相關技術資料之智慧財產權，均屬乙方或其合法授權人所有。</li>
+            <li>甲方僅得於合約期間內，依本合約約定之目的及範圍使用本服務，不得逕自重製、散布、轉售、出租、逆向工程或用於未經授權之第三方服務。</li>
+          </ol>
+
+          <div class="contract-section-title">第七條 準據法與爭議處理</div>
+          <ol>
+            <li>本合約以中華民國法律為準據法。</li>
+            <li>因本合約所生之爭議，雙方應先本於誠信協商解決；協商不成時，以乙方所在之臺灣臺南地方法院為第一審管轄法院。</li>
+          </ol>
+
+          <p>甲方已充分閱讀並理解本合約條款，並同意依本合約內容辦理。</p>
+        </div>
+
+        <div class="contract-identity-grid">
+          <div class="contract-field-row">
+            <div class="contract-field-label">廠商名稱（甲方）</div>
+            <div class="contract-field-value">
+              <input id="c-company" class="contract-input" type="text" value="${escape(companyName)}">
+            </div>
+          </div>
+
+          <div class="contract-field-row">
+            <div class="contract-field-label">產品/專案名稱</div>
+            <div class="contract-field-value">
+              <input id="c-product" class="contract-input" type="text" value="${escape(productName)}">
+            </div>
+          </div>
+
+          <div class="contract-field-row">
+            <div class="contract-field-label">PIF ID</div>
+            <div class="contract-field-value">
+              <input id="c-pifid" class="contract-input" type="text" value="${escape(pageContext.pifId || '')}" readonly>
+            </div>
+          </div>
+
+          <div class="contract-field-row">
+            <div class="contract-field-label">服務方案</div>
+            <div class="contract-field-value">
+              <input class="contract-input" type="text" value="CosPIF 公司歸戶升級版" readonly>
+            </div>
+          </div>
+
+          <div class="contract-field-row">
+            <div class="contract-field-label">授權代表/聯絡人</div>
+            <div class="contract-field-value">
+              <input id="c-person" class="contract-input" type="text" value="${escape(authorizedPerson)}">
+            </div>
+          </div>
+
+          <div class="contract-field-row">
+            <div class="contract-field-label">職稱</div>
+            <div class="contract-field-value">
+              <input id="c-title" class="contract-input" type="text" value="${escape(title)}">
+            </div>
+          </div>
+
+          <div class="contract-field-row">
+            <div class="contract-field-label">聯絡電話</div>
+            <div class="contract-field-value">
+              <input id="c-tel" class="contract-input" type="text" value="${escape(tel)}">
+            </div>
+          </div>
+
+          <div class="contract-field-row">
+            <div class="contract-field-label">聯絡 Email</div>
+            <div class="contract-field-value">
+              <input id="c-email" class="contract-input" type="email" value="${escape(email)}">
+            </div>
+          </div>
+
+          <!-- 總金額 -->
+          <div class="contract-field-row">
+            <div class="contract-field-label">服務費金額（總額）</div>
+            <div class="contract-field-value" style="display:flex;gap:0.5rem;align-items:center;">
+              <select id="c-currency" class="contract-select" style="max-width:110px;">
+                <option value="TWD" ${currency==='TWD'?'selected':''}>TWD</option>
+                <option value="USD" ${currency==='USD'?'selected':''}>USD</option>
+                <option value="CNY" ${currency==='CNY'?'selected':''}>CNY</option>
+                <option value="JPY" ${currency==='JPY'?'selected':''}>JPY</option>
+              </select>
+              <input id="c-amount" class="contract-input" type="number" min="0" step="1" placeholder="例如 30000" value="${escape(amount)}">
+            </div>
+          </div>
+
+          <!-- 付款方式 -->
+          <div class="contract-field-row">
+            <div class="contract-field-label">付款方式</div>
+            <div class="contract-field-value">
+              <select id="c-pay-method" class="contract-select">
+                <option value="bank_transfer" ${paymentMethod==='bank_transfer'?'selected':''}>匯款/轉帳</option>
+                <option value="credit_card" ${paymentMethod==='credit_card'?'selected':''}>信用卡</option>
+                <option value="invoice" ${paymentMethod==='invoice'?'selected':''}>開立請款/發票後付款</option>
+                <option value="cash" ${paymentMethod==='cash'?'selected':''}>現金</option>
+                <option value="other" ${paymentMethod==='other'?'selected':''}>其他（請於備註或分期約定說明）</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 單次付款期限（如有） -->
+          <div class="contract-field-row">
+            <div class="contract-field-label">付款期限（單次）</div>
+            <div class="contract-field-value">
+              <input id="c-pay-deadline" class="contract-input" type="date" value="${escape(paymentDeadline)}">
+            </div>
+          </div>
+
+          <!-- 分期付款欄位 -->
+          <div class="contract-field-row">
+            <div class="contract-field-label">分期付款約定</div>
+            <div class="contract-field-value">
+              <div class="installment-grid">
+                <div class="installment-item">
+                  <div class="installment-item-label">第 1 期</div>
+                  <div>
+                    <div style="display:flex;gap:0.4rem;align-items:center;margin-bottom:0.25rem;">
+                      <input id="c-inst1-percent" class="contract-input" type="number" min="0" max="100" step="1" placeholder="%"
+                        style="max-width:90px;display:inline-block;" value="${escape(inst1Percent)}">
+                      <span style="font-size:0.85rem;color:#6b7280;">%</span>
+                    </div>
+                    <input id="c-inst1-due" class="contract-input" type="date" value="${escape(inst1Due)}">
+                  </div>
+                </div>
+                <div class="installment-item">
+                  <div class="installment-item-label">第 2 期</div>
+                  <div>
+                    <div style="display:flex;gap:0.4rem;align-items:center;margin-bottom:0.25rem;">
+                      <input id="c-inst2-percent" class="contract-input" type="number" min="0" max="100" step="1" placeholder="%"
+                        style="max-width:90px;display:inline-block;" value="${escape(inst2Percent)}">
+                      <span style="font-size:0.85rem;color:#6b7280;">%</span>
+                    </div>
+                    <input id="c-inst2-due" class="contract-input" type="date" value="${escape(inst2Due)}">
+                  </div>
+                </div>
+              </div>
+              <textarea id="c-installment-note" class="contract-textarea" style="margin-top:0.5rem;"
+                placeholder="（選填）例如：第 1 期 50% 於合約簽訂後 7 日內；第 2 期 50% 於服務驗收前 7 日內。">${escape(installmentNote)}</textarea>
+            </div>
+          </div>
+
+          <div class="contract-field-row">
+            <div class="contract-field-label">服務範圍說明</div>
+            <div class="contract-field-value">
+              <textarea id="c-scope" class="contract-textarea">${escape(scope)}</textarea>
+            </div>
+          </div>
+
+          <div class="contract-field-row contract-notes-row">
+            <div class="contract-field-label">備註</div>
+            <div class="contract-field-value">
+              <textarea id="c-notes" class="contract-textarea" placeholder="（選填）例如：指定匯款帳戶、發票抬頭與統編、續約條件等。">${escape(notes)}</textarea>
+            </div>
+          </div>
+
+          <div class="contract-field-row">
+            <div class="contract-field-label">簽署日期</div>
+            <div class="contract-field-value">
+              <input id="c-sign-date" class="contract-input" type="date" value="${escape(signDate)}">
+            </div>
+          </div>
+        </div>
+
+        <div class="contract-confirm-row">
+          <input type="checkbox" id="c-confirm" ${confirmed ? 'checked' : ''}>
+          <label for="c-confirm">
+            本人/本公司已詳閱並同意本合約全部內容，並確認上述填寫之公司、費用與付款條件正確無誤。
+          </label>
+        </div>
+
+        <div class="contract-status" id="contract-status-text">
+          ${contractData.submitted
+            ? `<strong>狀態：</strong>合約已於 ${submittedAt ? submittedAt.toLocaleString() : ''} 由 ${contractData.submittedBy || ''} 送出，資料僅供閱覽，無法再修改。`
+            : `<strong>狀態：</strong>尚未正式送出合約。請確認資料與內容無誤後，勾選上方同意方塊並點選「確認送出合約」。`}
+        </div>
+      </div>
+    `;
+
+    const readOnly = !!contractData.submitted;
+    contractLocked = readOnly;
+    bindContractInputs(readOnly);
+  }
+
+  function bindContractInputs(readOnly) {
+    const ids = [
+      'c-company','c-product','c-person','c-title','c-tel','c-email',
+      'c-amount','c-currency','c-pay-method','c-pay-deadline',
+      'c-inst1-percent','c-inst1-due','c-inst2-percent','c-inst2-due',
+      'c-installment-note',
+      'c-scope','c-notes','c-sign-date'
+    ];
+
+    const pifIdEl = $('#c-pifid');
+    if (pifIdEl) {
+      pifIdEl.readOnly = true;
+      pifIdEl.disabled = true;
+    }
+
+    ids.forEach(id => {
+      const el = $('#' + id);
+      if (!el) return;
+      el.readOnly = readOnly;
+      el.disabled = readOnly;
+
+      if (!readOnly) {
+        const evt = (el.tagName === 'SELECT' || el.type === 'date') ? 'change' : 'input';
+        el.addEventListener(evt, () => status.markUnsaved());
+      }
+    });
+
+    const chk = $('#c-confirm');
+    if (chk) {
+      chk.disabled = readOnly;
+      if (!readOnly) chk.addEventListener('change', () => status.markUnsaved());
+    }
+
+    if (readOnly) $('#btnSaveChanges').disabled = true;
+  }
+
+  async function saveContract() {
+    if (contractLocked) return;
+
+    const company = $('#c-company')?.value.trim() || '';
+    const product = $('#c-product')?.value.trim() || '';
+    const person  = $('#c-person')?.value.trim() || '';
+    const title   = $('#c-title')?.value.trim() || '';
+    const tel     = $('#c-tel')?.value.trim() || '';
+    const email   = $('#c-email')?.value.trim() || '';
+    const signDate = $('#c-sign-date')?.value.trim() || '';
+
+    const currency = $('#c-currency')?.value || 'TWD';
+    const amountRaw = $('#c-amount')?.value;
+    const amount = amountRaw === '' ? '' : Number(amountRaw);
+
+    const paymentMethod = $('#c-pay-method')?.value || 'bank_transfer';
+    const paymentDeadline = $('#c-pay-deadline')?.value.trim() || '';
+
+    const inst1PercentRaw = $('#c-inst1-percent')?.value;
+    const inst1Percent = inst1PercentRaw === '' ? '' : Number(inst1PercentRaw);
+    const inst1Due = $('#c-inst1-due')?.value.trim() || '';
+
+    const inst2PercentRaw = $('#c-inst2-percent')?.value;
+    const inst2Percent = inst2PercentRaw === '' ? '' : Number(inst2PercentRaw);
+    const inst2Due = $('#c-inst2-due')?.value.trim() || '';
+
+    const installmentNote = $('#c-installment-note')?.value.trim() || '';
+
+    const scope = $('#c-scope')?.value.trim() || '';
+    const notes = $('#c-notes')?.value.trim() || '';
+    const confirmed = $('#c-confirm')?.checked || false;
+
+    if (!company || !person || !confirmed) {
+      alert('請至少填寫「廠商名稱」、「授權代表/聯絡人」，並勾選「已閱讀並同意」後再送出。');
+      return;
+    }
+
+    if (!window.confirm('送出後合約將鎖定為唯讀，無法再次修改。\n\n確定要送出嗎？')) return;
+
+    status.set('syncing', '正在送出合約並寫入雲端...');
+    try {
+      const payload = {
+        companyName: company,
+        productName: product,
+        authorizedPerson: person,
+        title,
+        tel,
+        email,
+        signDate,
+        currency,
+        amount,
+        paymentMethod,
+        paymentDeadline,
+        inst1Percent,
+        inst1Due,
+        inst2Percent,
+        inst2Due,
+        installmentNote,
+        scope,
+        notes,
+        confirmed: true,
+        submitted: true,
+        submittedAt: Timestamp.now(),
+        submittedBy: currentUser ? currentUser.email : '',
+      };
+
+      await setDoc(pifDocRef, { contract: payload }, { merge: true });
+
+      hasUnsavedChanges = false;
+      contractLocked = true;
+      await initializeData();
+      status.set('synced', '合約已成功送出並鎖定（唯讀）。');
+    } catch (err) {
+      console.error('儲存合約資料失敗：', err);
+      status.set('error', `儲存失敗：${err.message}`);
+    }
+  }
+
+  function handlePdfUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+      alert('請選擇一個 PDF 檔案。');
+      return;
+    }
+    uploadFile(file, `pifs/${pageContext.pifId}/contract.pdf`);
+  }
+
+  function uploadFile(file, storagePath) {
+    const uploadTask = uploadBytesResumable(ref(storage, storagePath), file);
+    const button = $('#btnUploadPdf');
+    if (button) button.disabled = true;
+
+    uploadTask.on(
+      'state_changed',
+      snapshot => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        setUploadStatus(
+          `<i class="fa-solid fa-upload"></i> 正在上傳簽名合約 PDF... ${Math.round(progress)}%`,
+          'status-info'
+        );
+      },
+      error => {
+        console.error('Upload failed:', error);
+        setUploadStatus(
+          `<i class="fa-solid fa-triangle-exclamation"></i> 上傳失敗: ${error.code}`,
+          'status-error'
+        );
+        if (button) button.disabled = false;
+      },
+      () => {
+        setUploadStatus(
+          '<i class="fa-solid fa-check-circle"></i> PDF 已成功上傳！',
+          'status-success'
+        );
+        if (button) button.disabled = false;
+        $('#pdfUploader').value = '';
+        setTimeout(() => setUploadStatus('', 'none'), 5000);
+      }
+    );
+  }
+
+  function setUploadStatus(msg, styleClass) {
+    const statusEl = $('#upload-status');
+    if (!statusEl) return;
+    if (!msg || styleClass === 'none') {
+      statusEl.style.display = 'none';
+    } else {
+      statusEl.innerHTML = msg;
+      statusEl.className = `no-print ${styleClass}`;
+      statusEl.style.display = 'block';
+    }
+  }
+
+  startAuthFlow();
+</script>
+</body>
+</html>

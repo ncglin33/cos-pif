@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>聯絡我們 - 後台回覆</title>
+
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    .cell-wrap{
+      max-width: 260px;
+      white-space: normal;
+      word-break: break-word;
+    }
+    .cell-sm{
+      font-size: .85rem;
+      color: var(--text-muted);
+    }
+    .status-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:.35rem;
+      padding:.18rem .6rem;
+      border-radius:999px;
+      font-weight:700;
+      font-size:.82rem;
+    }
+    .status-new{ background:#FEF3C7; color:#92400E; }
+    .status-in{ background:#DBEAFE; color:#1E40AF; }
+    .status-closed{ background:#DCFCE7; color:#166534; }
+
+    /* ====== Edit/Reply Modal ====== */
+    #reply-modal{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 9999;
+    }
+    #reply-modal .modal-card{
+      background: #fff;
+      border-radius: 14px;
+      max-width: 640px;
+      width: 100%;
+      box-shadow: 0 16px 40px rgba(0,0,0,.2);
+      padding: 1.25rem 1.5rem;
+    }
+    #reply-modal .modal-title{
+      font-size: 1.15rem;
+      margin-bottom: .75rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    #reply-modal .form-row{ margin-bottom: 1rem; }
+    #reply-modal label{
+      display:block;
+      font-size:.9rem;
+      margin-bottom:.35rem;
+      color:#374151;
+    }
+    #reply-modal select,
+    #reply-modal textarea,
+    #reply-modal input[type="text"]{
+      width: 100%;
+      padding: .5rem .6rem;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: .95rem;
+      background: #fff;
+    }
+    #reply-modal textarea{
+      min-height: 140px;
+      resize: vertical;
+    }
+    #reply-modal .checkbox-inline{
+      display:flex;
+      align-items:center;
+      gap:.5rem;
+      font-size:.95rem;
+    }
+    #reply-modal .hint{
+      font-size:.82rem;
+      color: var(--text-muted);
+      margin-top:.35rem;
+    }
+    #reply-modal .modal-actions{
+      display:flex;
+      justify-content:flex-end;
+      gap:.5rem;
+      margin-top: 1rem;
+    }
+    @media print {
+      #reply-modal{ display:none !important; }
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="container">
+    <nav>
+      <a href="index.html" class="logo">
+        <i class="fa-solid fa-shield-halved"></i> CosPIF
+      </a>
+
+      <ul id="nav-links" class="nav-links">
+        <li><a href="pif-i.html">我的專案</a></li>
+      </ul>
+
+      <div class="nav-actions" style="display:flex; align-items:center;">
+        <span id="user-info" style="margin-right:1.5rem; color: var(--text-muted);"></span>
+        <button id="btnSignOut" class="btn-login btn-danger">登出</button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<div class="main-content">
+  <div class="page-header">
+    <h1><i class="fa-solid fa-envelope-open-text"></i> 聯絡我們 - 後台回覆</h1>
+    <p class="text-muted">
+      上方為「待處理聯絡單」，下方為「已處理聯絡單」（<code>contact_messages</code>）。
+      <br>※ 回覆時可更新狀態並填寫「管理回覆」，可選擇是否寄出回覆信。
+      <br>※ 通知信優先寄送至「聯絡 Email」，若無則使用「提交者 Email」。
+    </p>
+  </div>
+
+  <div id="admin-only-content" style="display:none;">
+    <!-- ====== Pending ====== -->
+    <div class="card">
+      <div class="card-body">
+        <h2 class="card-title" style="margin-bottom: .75rem;">待處理聯絡單</h2>
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>聯絡單編號</th>
+                <th>廠商/單位</th>
+                <th>公司歸戶</th>
+                <th>聯絡人</th>
+                <th>電話</th>
+                <th>聯絡 Email</th>
+                <th>諮詢類型</th>
+                <th>主旨</th>
+                <th>內容摘要</th>
+                <th>送出時間</th>
+                <th>狀態頁</th>
+                <th style="width:140px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="pendingTbody"></tbody>
+          </table>
+        </div>
+        <div id="pendingStatus" class="status-bar">正在載入待處理聯絡單...</div>
+      </div>
+    </div>
+
+    <!-- ====== Reviewed ====== -->
+    <div class="card" style="margin-top: 1.5rem;">
+      <div class="card-body">
+        <h2 class="card-title" style="margin-bottom: .25rem;">已處理聯絡單</h2>
+        <p class="text-muted" style="margin-bottom: .75rem;">
+          包含狀態為「處理中 / 已結案」。按「編修/回覆」可更新狀態與管理回覆，並可選擇重寄回覆信。
+        </p>
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>聯絡單編號</th>
+                <th>廠商/單位</th>
+                <th>公司歸戶</th>
+                <th>聯絡人</th>
+                <th>電話</th>
+                <th>聯絡 Email</th>
+                <th>諮詢類型</th>
+                <th>主旨</th>
+                <th>狀態</th>
+                <th>最後回覆</th>
+                <th>回覆時間</th>
+                <th>狀態頁</th>
+                <th style="width:120px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="reviewedTbody"></tbody>
+          </table>
+        </div>
+        <div id="reviewedStatus" class="status-bar">正在載入已處理聯絡單...</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="permission-denied" class="card" style="display:none; text-align:center; padding: 3rem;">
+    <div class="card-body">
+      <h2 style="color: var(--danger-color);">
+        <i class="fa-solid fa-exclamation-triangle"></i> 權限不足
+      </h2>
+      <p>只有管理員才能存取此頁面。</p>
+      <a href="pif-i.html" class="btn-submit">返回我的專案</a>
+    </div>
+  </div>
+</div>
+
+<!-- ====== Reply Modal ====== -->
+<div id="reply-modal" aria-hidden="true">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="reply-modal-title">
+    <div class="modal-title" id="reply-modal-title">
+      <i class="fa-solid fa-reply"></i> 編修 / 回覆聯絡單
+    </div>
+
+    <div class="form-row">
+      <label for="edit-id">聯絡單編號</label>
+      <input id="edit-id" type="text" readonly
+             style="background:#f9fafb; border:1px solid #e5e7eb;">
+    </div>
+
+    <div class="form-row">
+      <label for="edit-status">狀態</label>
+      <select id="edit-status">
+        <option value="new">新建立（待處理）</option>
+        <option value="in_progress">處理中</option>
+        <option value="closed">已結案</option>
+      </select>
+      <div class="hint">建議：首次回覆可改為「處理中」，結案再改為「已結案」。</div>
+    </div>
+
+    <div class="form-row">
+      <label for="edit-reply">管理回覆（可對應需求、下一步與資料請求）</label>
+      <textarea id="edit-reply"
+                placeholder="例：已收到您的合作諮詢。請提供產品類別、預計上市時程與初步配方方向，方便我們安排後續 PIF 與安全評估規劃。"></textarea>
+    </div>
+
+    <div class="form-row">
+      <label class="checkbox-inline">
+        <input type="checkbox" id="edit-resend">
+        寄出回覆信（含管理回覆）
+      </label>
+      <div class="hint">
+        通知信優先寄至「聯絡 Email」，若無則寄至「提交者 Email」。
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button id="edit-cancel" class="btn-secondary btn-sm">取消</button>
+      <button id="edit-save" class="btn-success btn-sm">
+        <i class="fa-solid fa-save"></i> 儲存
+      </button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import {
+    collection, getDocs, getDoc, doc, updateDoc, addDoc, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { auth, db } from "./firebase-config.js";
+
+  const $ = sel => document.querySelector(sel);
+
+  let currentUser = null;
+  let isAdmin = false;
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    currentUser = user;
+    $("#user-info").textContent = `歡迎, ${user.displayName || user.email}`;
+    $("#btnSignOut").addEventListener("click", () =>
+      auth.signOut().then(() => window.location.href = "login.html")
+    );
+
+    try {
+      const idTokenResult = await user.getIdTokenResult(true);
+      isAdmin = idTokenResult.claims.admin === true;
+      renderNavLinks();
+
+      if (isAdmin) {
+        $("#admin-only-content").style.display = "block";
+        await loadContactMessages();
+      } else {
+        $("#permission-denied").style.display = "block";
+      }
+    } catch (err) {
+      console.error("Permission check failed:", err);
+      $("#permission-denied").style.display = "block";
+      const ps = $("#pendingStatus");
+      const rs = $("#reviewedStatus");
+      if (ps) ps.textContent = "無法驗證您的權限。";
+      if (rs) rs.textContent = "無法驗證您的權限。";
+    }
+  });
+
+  function renderNavLinks() {
+    if (!isAdmin) return;
+    const adminLinks = `
+      <li><a href="vendors.html">廠商資料庫</a></li>
+      <li><a href="review.html">廠商申請審核</a></li>
+      <li><a href="eva-review.html">功效試算審核</a></li>
+      <li><a href="contact-review.html" class="active">聯絡回覆</a></li>
+    `;
+    $("#nav-links").insertAdjacentHTML("beforeend", adminLinks);
+  }
+
+  function formatDateTime(date) {
+    if (!date) return "—";
+    const d = (date instanceof Date) ? date : (date.toDate ? date.toDate() : null);
+    if (!d) return "—";
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth()+1).padStart(2,"0");
+    const dd = String(d.getDate()).padStart(2,"0");
+    const hh = String(d.getHours()).padStart(2,"0");
+    const mi = String(d.getMinutes()).padStart(2,"0");
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+  }
+
+  function escapeHtml(str) {
+    return (str || "").replace(/[&<>"']/g, s => ({
+      "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+    }[s]));
+  }
+
+  function toSafeHtmlWithBr(text) {
+    const t = (text ?? "").toString().trim();
+    if (!t) return "";
+    return escapeHtml(t).replace(/\n/g, "<br>");
+  }
+
+  function safeCell(value, max = 60) {
+    const v = (value ?? "").toString().trim();
+    if (!v) return "—";
+    const clipped = v.length > max ? v.slice(0, max) + "…" : v;
+    return escapeHtml(clipped);
+  }
+
+  function statusPill(status) {
+    const s = status || "new";
+    if (s === "in_progress") return `<span class="status-pill status-in"><i class="fa-solid fa-headset"></i>處理中</span>`;
+    if (s === "closed") return `<span class="status-pill status-closed"><i class="fa-solid fa-circle-check"></i>已結案</span>`;
+    return `<span class="status-pill status-new"><i class="fa-solid fa-clock"></i>新建立</span>`;
+  }
+
+  function typeLabel(type) {
+    const map = {
+      system: "系統功能／帳號問題",
+      pif_flow: "PIF 流程／合作諮詢",
+      price: "功效／安全評估報價",
+      bug: "問題回報／改善建議",
+      other: "其他"
+    };
+    return map[type] || type || "—";
+  }
+
+  function companyLabel(rec) {
+    if (rec.companyTaxId) return `統編：${escapeHtml(rec.companyTaxId)}`;
+    if (rec.companyKeyType === "mobile" && rec.companyKey) return `手機歸戶：${escapeHtml(rec.companyKey)}`;
+    if (rec.companyMobileKey) return `手機歸戶：${escapeHtml(rec.companyMobileKey)}`;
+    return "—";
+  }
+
+  async function loadContactMessages() {
+    const pendingStatusEl = $("#pendingStatus");
+    const reviewedStatusEl = $("#reviewedStatus");
+    const pendingTbody = $("#pendingTbody");
+    const reviewedTbody = $("#reviewedTbody");
+
+    pendingTbody.innerHTML = "";
+    reviewedTbody.innerHTML = "";
+    if (pendingStatusEl) pendingStatusEl.textContent = "正在載入待處理聯絡單...";
+    if (reviewedStatusEl) reviewedStatusEl.textContent = "正在載入已處理聯絡單...";
+
+    try {
+      const snap = await getDocs(collection(db, "contact_messages"));
+      const pending = [];
+      const reviewed = [];
+
+      snap.forEach(docSnap => {
+        const data = docSnap.data() || {};
+        const rec = { id: docSnap.id, ...data };
+
+        const st = data.status || "new";
+        if (st === "new") pending.push(rec);
+        else reviewed.push(rec);
+      });
+
+      const sortBySubmittedDesc = (a, b) => {
+        const ta = a.submittedAt?.toMillis ? a.submittedAt.toMillis() : 0;
+        const tb = b.submittedAt?.toMillis ? b.submittedAt.toMillis() : 0;
+        return tb - ta;
+      };
+      pending.sort(sortBySubmittedDesc);
+      reviewed.sort(sortBySubmittedDesc);
+
+      // ====== Pending render ======
+      if (pending.length === 0) {
+        pendingTbody.innerHTML =
+          `<tr><td colspan="12" style="text-align:center; padding:2rem; color: var(--text-muted);">
+            目前沒有待處理的聯絡單。
+          </td></tr>`;
+        if (pendingStatusEl) pendingStatusEl.textContent = "目前沒有待處理的聯絡單。";
+      } else {
+        for (const rec of pending) {
+          const tr = pendingTbody.insertRow();
+
+          // dataset for modal usage
+          tr.dataset.id = rec.id;
+
+          tr.innerHTML = `
+            <td><span class="text-sm">${rec.id}</span></td>
+            <td>${safeCell(rec.vendorName)}</td>
+            <td><span class="cell-sm">${companyLabel(rec)}</span></td>
+            <td>${safeCell(rec.contactName)}</td>
+            <td>${safeCell(rec.contactPhone)}</td>
+            <td>${safeCell(rec.contactEmail)}</td>
+            <td>${typeLabel(rec.contactType)}</td>
+            <td class="cell-wrap">${safeCell(rec.subject, 80)}</td>
+            <td class="cell-wrap">${safeCell(rec.message, 120)}</td>
+            <td><span class="cell-sm">${formatDateTime(rec.submittedAt)}</span></td>
+            <td>
+              <a class="btn-link" target="_blank" href="contact.html?id=${rec.id}">
+                <i class="fa-solid fa-up-right-from-square"></i> 開啟
+              </a>
+            </td>
+            <td>
+              <button class="btn-secondary btn-sm reply-btn">
+                <i class="fa-solid fa-reply"></i> 回覆
+              </button>
+            </td>
+          `;
+        }
+
+        pendingTbody.querySelectorAll(".reply-btn")
+          .forEach(btn => btn.addEventListener("click", (e) => {
+            const row = e.currentTarget.closest("tr");
+            openReplyModalById(row.dataset.id);
+          }));
+
+        if (pendingStatusEl) pendingStatusEl.textContent = `共 ${pending.length} 筆待處理聯絡單。`;
+      }
+
+      // ====== Reviewed render ======
+      if (reviewed.length === 0) {
+        reviewedTbody.innerHTML =
+          `<tr><td colspan="13" style="text-align:center; padding:2rem; color: var(--text-muted);">
+            尚無已處理聯絡單。
+          </td></tr>`;
+        if (reviewedStatusEl) reviewedStatusEl.textContent = "尚無已處理聯絡單。";
+      } else {
+        // sort by repliedAt desc if exists, else submittedAt
+        reviewed.sort((a, b) => {
+          const ta = a.repliedAt?.toMillis ? a.repliedAt.toMillis()
+                   : (a.submittedAt?.toMillis ? a.submittedAt.toMillis() : 0);
+          const tb = b.repliedAt?.toMillis ? b.repliedAt.toMillis()
+                   : (b.submittedAt?.toMillis ? b.submittedAt.toMillis() : 0);
+          return tb - ta;
+        });
+
+        for (const rec of reviewed) {
+          const tr = reviewedTbody.insertRow();
+          tr.dataset.id = rec.id;
+
+          tr.innerHTML = `
+            <td><span class="text-sm">${rec.id}</span></td>
+            <td>${safeCell(rec.vendorName)}</td>
+            <td><span class="cell-sm">${companyLabel(rec)}</span></td>
+            <td>${safeCell(rec.contactName)}</td>
+            <td>${safeCell(rec.contactPhone)}</td>
+            <td>${safeCell(rec.contactEmail)}</td>
+            <td>${typeLabel(rec.contactType)}</td>
+            <td class="cell-wrap">${safeCell(rec.subject, 80)}</td>
+            <td>${statusPill(rec.status)}</td>
+            <td class="cell-wrap">${safeCell(rec.adminReply, 120)}</td>
+            <td><span class="cell-sm">${formatDateTime(rec.repliedAt)}</span></td>
+            <td>
+              <a class="btn-link" target="_blank" href="contact.html?id=${rec.id}">
+                <i class="fa-solid fa-up-right-from-square"></i> 開啟
+              </a>
+            </td>
+            <td>
+              <button class="btn-secondary btn-sm edit-btn">
+                <i class="fa-solid fa-pen"></i> 編修/回覆
+              </button>
+            </td>
+          `;
+        }
+
+        reviewedTbody.querySelectorAll(".edit-btn")
+          .forEach(btn => btn.addEventListener("click", (e) => {
+            const row = e.currentTarget.closest("tr");
+            openReplyModalById(row.dataset.id);
+          }));
+
+        if (reviewedStatusEl) reviewedStatusEl.textContent = `共 ${reviewed.length} 筆已處理聯絡單。`;
+      }
+
+    } catch (err) {
+      console.error("Error loading contact_messages:", err);
+      if (pendingStatusEl) pendingStatusEl.textContent = `載入失敗：${err.message}`;
+      if (reviewedStatusEl) reviewedStatusEl.textContent = `載入失敗：${err.message}`;
+      pendingTbody.innerHTML =
+        `<tr><td colspan="12" style="text-align:center; color: var(--danger-color);">${err.message}</td></tr>`;
+      reviewedTbody.innerHTML =
+        `<tr><td colspan="13" style="text-align:center; color: var(--danger-color);">${err.message}</td></tr>`;
+    }
+  }
+
+  // ====== Modal state ======
+  const replyModal = $("#reply-modal");
+  const editIdInput = $("#edit-id");
+  const editStatusSel = $("#edit-status");
+  const editReplyTa = $("#edit-reply");
+  const editResendChk = $("#edit-resend");
+  const editCancelBtn = $("#edit-cancel");
+  const editSaveBtn = $("#edit-save");
+
+  let editingId = null;
+  let editingData = null;
+
+  function openModal() {
+    replyModal.style.display = "flex";
+    replyModal.setAttribute("aria-hidden", "false");
+  }
+  function closeModal() {
+    replyModal.style.display = "none";
+    replyModal.setAttribute("aria-hidden", "true");
+    editingId = null;
+    editingData = null;
+    editResendChk.checked = false;
+    editSaveBtn.disabled = false;
+    editSaveBtn.innerHTML = `<i class="fa-solid fa-save"></i> 儲存`;
+  }
+
+  replyModal.addEventListener("click", (e) => {
+    if (e.target === replyModal) closeModal();
+  });
+  editCancelBtn.addEventListener("click", closeModal);
+
+  async function openReplyModalById(id) {
+    try {
+      editingId = id;
+      editIdInput.value = id;
+      editResendChk.checked = false;
+
+      openModal();
+      editSaveBtn.disabled = true;
+      editSaveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 載入中...`;
+
+      const ref = doc(db, "contact_messages", id);
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) {
+        alert("找不到這筆聯絡單資料。");
+        closeModal();
+        return;
+      }
+
+      editingData = snap.data() || {};
+      editStatusSel.value = editingData.status || "new";
+      editReplyTa.value = editingData.adminReply || "";
+
+      editSaveBtn.disabled = false;
+      editSaveBtn.innerHTML = `<i class="fa-solid fa-save"></i> 儲存`;
+      editReplyTa.focus();
+    } catch (err) {
+      console.error("openReplyModalById error:", err);
+      alert(`載入編修資料失敗：${err.message}`);
+      closeModal();
+    }
+  }
+
+  async function handleReplySave(){
+    if (!editingId || !editingData) return;
+
+    const newStatus = editStatusSel.value;
+    const newReply = (editReplyTa.value || "").trim();
+    const wantResend = editResendChk.checked;
+
+    editSaveBtn.disabled = true;
+    editSaveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 儲存中...`;
+
+    try {
+      const ref = doc(db, "contact_messages", editingId);
+
+      await updateDoc(ref, {
+        status: newStatus,
+        adminReply: newReply || null,
+        repliedBy: currentUser?.uid || null,
+        repliedAt: serverTimestamp()
+      });
+
+      // optional email
+      if (wantResend) {
+        const contactEmail = (editingData.contactEmail || "").trim();
+        const submitterEmail = (editingData.submittedEmail || "").trim();
+        const notifyTo = contactEmail || submitterEmail;
+
+        if (!notifyTo) {
+          alert("找不到可通知的 Email（聯絡 Email / 提交者 Email）。");
+        } else {
+          const statusTextMap = {
+            new: "新建立（待處理）",
+            in_progress: "處理中",
+            closed: "已結案"
+          };
+          const statusText = statusTextMap[newStatus] || newStatus;
+          const adminReplyHtml = toSafeHtmlWithBr(newReply);
+
+          const emailContent = {
+            to: notifyTo,
+            message: {
+              subject: `【CosPIF 聯絡我們】您的聯絡單「${editingId}」狀態更新`,
+              html: `
+                <p>您好：</p>
+                <p>我們已收到您透過 CosPIF「聯絡我們」提交的訊息（編號：<strong>${editingId}</strong>）。</p>
+                <p>目前狀態：<strong>${escapeHtml(statusText)}</strong></p>
+
+                <p>
+                  <strong>廠商／單位：</strong> ${escapeHtml(editingData.vendorName || "—")}<br>
+                  <strong>聯絡人：</strong> ${escapeHtml(editingData.contactName || "—")}<br>
+                  <strong>主旨：</strong> ${escapeHtml(editingData.subject || "—")}
+                </p>
+
+                ${adminReplyHtml ? `
+                  <hr>
+                  <p><strong>管理回覆：</strong><br>${adminReplyHtml}</p>
+                ` : ""}
+
+                <p>您可使用以下連結查看聯絡單狀態：</p>
+                <p><a href="${"contact.html?id=" + editingId}">${"contact.html?id=" + editingId}</a></p>
+
+                <p>此為系統自動發送的郵件，請勿直接回覆。</p>
+                <br>
+                <p>CosPIF 智慧科技整合系統 敬上</p>
+              `
+            }
+          };
+
+          await addDoc(collection(db, "mail"), emailContent);
+        }
+      }
+
+      closeModal();
+      await loadContactMessages();
+
+      if (wantResend) {
+        alert("已更新聯絡單並加入回覆信寄送佇列。");
+      } else {
+        alert("已更新聯絡單。");
+      }
+
+    } catch (err) {
+      console.error("handleReplySave error:", err);
+      alert(`儲存失敗：${err.message}`);
+      editSaveBtn.disabled = false;
+      editSaveBtn.innerHTML = `<i class="fa-solid fa-save"></i> 儲存`;
+    }
+  }
+
+  editSaveBtn.addEventListener("click", handleReplySave);
+
+  // expose function to buttons
+  window.openReplyModalById = openReplyModalById;
+</script>
+</body>
+</html>

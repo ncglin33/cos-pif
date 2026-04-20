@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最新消息總覽 - CosPIF 智慧科技整合系統</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+       body { background:#f9fafb; }
+        .page-header {
+            background: #fff;
+            padding: 2rem 0;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 2rem;
+        }
+        .page-header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .page-header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+        .page-header p {
+            margin: .25rem 0 0;
+            color: #6b7280;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            color: #4b5563;
+            text-decoration: none;
+            font-size: .9rem;
+        }
+        .back-link:hover { color: #111827; }
+
+        .news-list-container .container {
+            max-width: 900px;
+        }
+        .news-filter-info {
+            font-size: .9rem;
+            color: #6b7280;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .list-item {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+        }
+        .list-item-meta {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            font-size: .85rem;
+            margin-bottom: .5rem;
+            color: #6b7280;
+        }
+        .list-item-date {
+            font-weight: 500;
+        }
+        .list-item-tag {
+            padding: .15rem .5rem;
+            border-radius: 999px;
+            font-size: .75rem;
+            background: #eef2ff;
+            color: #4338ca;
+            border: 1px solid #c7d2fe;
+        }
+        .list-item h2 {
+            margin: 0 0 .5rem;
+            font-size: 1.3rem;
+        }
+        .list-item-content p {
+            margin: 0;
+            color: #374151;
+            line-height: 1.6;
+            white-space: pre-wrap; /* Preserve line breaks from textarea */
+        }
+
+        .empty-text {
+            font-size:.9rem;
+            color:#6b7280;
+            padding:1.5rem 0;
+        }
+    
+        .list-item-meta { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+        .list-item-tags { display:inline-flex; align-items:center; gap:8px; }
+        .list-item-pin{
+            display:inline-flex; align-items:center; gap:.35rem;
+            font-size:.8rem; padding:.18rem .55rem; border-radius:999px;
+            background:#fff7ed; border:1px solid #fed7aa; color:#9a3412;
+        }
+        .list-item.is-pinned{ border-color:#fed7aa; box-shadow:0 8px 24px rgba(234,88,12,.12); }
+        .list-item-pin i{ font-size:.85em; }
+
+</style>
+</head>
+<body>
+
+    <!-- 簡單沿用首頁的導覽列 -->
+    <header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo">
+                    <img src="img/cospif-logo.png" alt="CosPIF Logo">
+                </a>
+                <ul class="nav-links">
+                    <li><a href="index.html#features">核心功能</a></li>
+                    <li><a href="index.html#about">關於我們</a></li>
+                    <li><a href="news-list.html">最新消息</a></li>
+                    <li><a href="contact.html">聯絡我們</a></li>
+                </ul>
+                <div class="nav-auth" style="display:flex; align-items:center; gap:10px;">
+                    <a href="login.html" class="btn-login" id="authEntryBtn">登入系統</a>
+                    <button class="btn-login" id="btnSignOut" style="display:none; padding:.55rem .85rem; border-radius:999px;">
+                        <i class="fa-solid fa-right-from-bracket"></i> 登出
+                    </button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="page-header">
+        <div class="container">
+            <div>
+                <h1>最新消息總覽</h1>
+                <p>顯示 CosPIF 已發布的系統公告、功能更新與教學資訊。</p>
+            </div>
+            <a href="index.html#news-qa" class="back-link">
+                <i class="fa-solid fa-arrow-left"></i> 返回首頁
+            </a>
+        </div>
+    </section>
+
+    <main class="news-list-container">
+        <div class="container">
+            <div class="news-filter-info" id="news-info">
+                載入中…
+            </div>
+            <div id="news-list"></div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 CosPIF 化妝品 PIF 智慧科技整合系統. 勝美生技有限公司 All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <!-- 從 Firestore 讀取 news 集合 -->
+    <script type="module">
+        import { collection, getDocs, query, where, limit } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+        import { db, auth } from "./firebase-config.js";
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+        const newsListDiv = document.getElementById('news-list');
+        const newsInfoDiv = document.getElementById('news-info');
+
+        // ---- Header：登入狀態顯示（與 index 同步邏輯）
+        const authEntryBtn = document.getElementById('authEntryBtn');
+        const btnSignOut = document.getElementById('btnSignOut');
+
+        function pickPortalByClaims(claims){
+            const rolesObj = (claims?.roles && typeof claims.roles === 'object') ? claims.roles : {};
+            const roles = {
+                admin: !!claims?.admin || !!rolesObj.admin,
+                systemAdmin: !!claims?.systemAdmin || !!rolesObj.systemAdmin,
+                secretary: !!claims?.secretary || !!rolesObj.secretary,
+                editor: !!claims?.editor || !!rolesObj.editor,
+                reviewer: !!claims?.reviewer || !!rolesObj.reviewer,
+                client: !!claims?.client || !!rolesObj.client,
+                user: !!claims?.user || !!rolesObj.user
+            };
+            if (roles.admin || roles.systemAdmin) return { href: "admin.html", roleLabel: "admin" };
+            if (roles.client) return { href: "index-c-company.html", roleLabel: "client" };
+            return { href: "index.html", roleLabel: roles.user ? "user" : "member" };
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!authEntryBtn || !btnSignOut) return;
+
+            if (!user){
+                authEntryBtn.textContent = "登入系統";
+                authEntryBtn.href = "login.html";
+                authEntryBtn.title = "";
+                btnSignOut.style.display = "none";
+                return;
+            }
+
+            try{
+                const token = await user.getIdTokenResult(true);
+                const { href, roleLabel } = pickPortalByClaims(token?.claims || {});
+                const email = user.email || "已登入";
+
+                authEntryBtn.textContent = email;
+                authEntryBtn.href = href;
+                authEntryBtn.title = `已登入｜role: ${roleLabel}｜點此進入`;
+                btnSignOut.style.display = "inline-flex";
+                btnSignOut.onclick = async () => {
+                    try{ await signOut(auth); location.href = "index.html"; }catch(e){ console.error(e); }
+                };
+            }catch(e){
+                console.error(e);
+                authEntryBtn.textContent = user.email || "已登入";
+                authEntryBtn.href = "index.html";
+                btnSignOut.style.display = "inline-flex";
+            }
+        });
+
+
+        function toMillis(ts) {
+            try {
+                if (!ts) return 0;
+                if (typeof ts.toMillis === 'function') return ts.toMillis();
+                if (typeof ts.toDate === 'function') return ts.toDate().getTime();
+                return 0;
+            } catch {
+                return 0;
+            }
+        }
+
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        async function loadAllNews() {
+            try {
+                const newsCol = collection(db, 'news');
+
+                // ✅ 公開前台：只讀 published（避免觸發 Rules 的 permission-denied）
+                // 不使用 orderBy + where 的複合查詢（避免需要複合索引）
+                const q = query(
+                    newsCol,
+                    where('status', '==', 'published'),
+                    limit(100)
+                );
+
+                const snapshot = await getDocs(q);
+let items = [];
+                snapshot.forEach(docSnap => {
+                    const data = docSnap.data() || {};
+                    items.push({ id: docSnap.id, ...data });
+                });
+
+                if (!items.length) {
+                    newsInfoDiv.textContent = '目前沒有任何已發布的消息。';
+                    newsListDiv.innerHTML = '';
+                    return;
+                }
+// pinned 置頂優先，其次依 pinnedAt / createdAt 排序
+                items.sort((a, b) => {
+                    const ap = !!a.pinned;
+                    const bp = !!b.pinned;
+                    if (ap !== bp) return (bp ? 1 : 0) - (ap ? 1 : 0);
+
+                    if (ap && bp) {
+                        const at = toMillis(a.pinnedAt) || toMillis(a.createdAt);
+                        const bt = toMillis(b.pinnedAt) || toMillis(b.createdAt);
+                        if (bt !== at) return bt - at;
+                    }
+
+                    const ac = toMillis(a.createdAt);
+                    const bc = toMillis(b.createdAt);
+                    return bc - ac;
+                });
+
+                newsInfoDiv.textContent = `共找到 ${items.length} 則已發布的消息。`;
+                newsListDiv.innerHTML = '';
+
+                for (const data of items) {
+                    const createdAt = data.createdAt?.toDate?.().toLocaleDateString?.() || '未知日期';
+                    const title = escapeHtml(data.title || '無標題');
+                    const category = escapeHtml(data.category || '公告');
+
+                    // 內容以文字為主（保留換行）；pre-wrap 會呈現換行
+                    const contentText = escapeHtml(data.content || '');
+
+                    const item = document.createElement('article');
+                    item.className = 'list-item' + (data.pinned ? ' is-pinned' : '');
+                    item.innerHTML = `
+                        <div class="list-item-meta">
+                            <span class="list-item-date">${createdAt}</span>
+                            <div class="list-item-tags">
+                                ${data.pinned ? `<span class="list-item-pin"><i class="fa-solid fa-thumbtack"></i>置頂</span>` : ``}
+                                <span class="list-item-tag">${category}</span>
+                            </div>
+                        </div>
+                        <h2>${title}</h2>
+                        <div class="list-item-content">
+                            <p>${contentText}</p>
+                        </div>
+                    `;
+                    newsListDiv.appendChild(item);
+                }
+
+            } catch (err) {
+                console.error("Error loading news:", err);
+                newsInfoDiv.textContent = '讀取消息時發生錯誤。';
+                if (err?.code === 'permission-denied') {
+                    newsListDiv.innerHTML = '<p class="empty-text">權限不足，無法讀取最新消息。請檢查 Firestore 安全規則。</p>';
+                } else {
+                    newsListDiv.innerHTML = '<p class="empty-text">無法載入最新消息，請稍後再試。</p>';
+                }
+            }
+        }
+
+        loadAllNews();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,407 @@
+
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PIF 01 產品基本資料</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<style>
+:root{--bg:#fff;--ink:#111;--muted:#666;--line:#e2e8f0;--brand:#2563eb;--ok:#16a34a;--warn:#b45309;--err:#dc2626}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC",Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);padding:0;line-height:1.5; opacity: 0; transition: opacity 0.4s ease-in-out;}
+.app-wrap{max-width:900px; margin: 0 auto; padding: 24px;}
+header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px}
+h1{font-size:1.5rem;margin:0}
+.meta{font-size:.85rem;color:var(--muted)}
+a.meta { color: var(--brand); text-decoration: none; }
+.badge{font-size:.8rem;padding:2px 8px;border-radius:9999px;background:#eef2ff;color:#3730a3; border: 1px solid #c7d2fe;}
+.toolbar{position:sticky;top:0;background:rgba(255,255,255,.95);backdrop-filter:blur(4px);z-index:10;border-bottom:1px solid var(--line);padding:8px 16px;display:flex;flex-wrap:wrap;gap:8px;}
+.btn{padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer; font-size: 14px; display: inline-flex; align-items: center; gap: 6px;}
+.btn.primary{background:var(--brand);color:#fff;border-color:var(--brand);}
+.section{border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;background:#fff}
+.section-title{font-weight:700;margin:4px 0 12px 0; font-size: 1.1rem;}
+.table-wrap{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:8px 0}
+.table{width:100%;border-collapse:collapse;table-layout:auto;}
+.table th,.table td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.table th{background:#f8fafc;text-align:left;font-size:.9rem;color:#374151; font-weight: 600;}
+.table tr:last-child td { border-bottom: none; }
+.table tr:hover td{background:#fafafa}
+.col-idx{width:40px;text-align:center}
+input[type=text],input[type=tel], textarea, select{width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff; font-size: 1rem;}
+select[disabled] { background-color: #f3f4f6; color: #9ca3af; }
+textarea{resize:vertical; min-height: 60px;}
+.flex-group { display: flex; gap: 8px; align-items: center; }
+.right{margin-left:auto}
+.small{font-size:.85rem;color:var(--muted)}
+#global-error { text-align: center; padding: 2rem; color: red; }
+</style>
+</head>
+<body>
+
+<div id="app-container" style="display: none;">
+    <div class="toolbar no-print">
+        <a id="back-link" href="pif-i.html" class="btn"><i class="fa-solid fa-arrow-left"></i> 返回儀表板</a>
+        <button id="btnSave" class="btn primary"><i class="fa-solid fa-save"></i> 儲存資料</button>
+        <span id="autosaveHint" class="small muted" style="display: flex; align-items: center;"></span>
+        <div class="right">
+            <button id="btnPrint" class="btn"><i class="fa-solid fa-print"></i> 列印 / 匯出 PDF</button>
+        </div>
+    </div>
+    <div class="app-wrap">
+        <header>
+            <div>
+                <h1 id="page-title">01 產品基本資料</h1>
+                <div id="project-subtitle" class="meta"></div>
+            </div>
+            <div>
+                <span class="badge">PIF 模組 01</span>
+            </div>
+        </header>
+
+        <div class="section">
+          <div class="section-title">(1) 產品基本資料</div>
+          <div class="table-wrap">
+            <table class="table">
+              <tbody>
+                <tr><th style="width:160px">產品名稱</th><td><input type="text" id="productName"></td></tr>
+                <tr><th>公司名稱</th><td><input type="text" id="companyName"></td></tr>
+                <tr><th>PIF ID</th><td><input type="text" id="pifId" readonly placeholder="儲存後自動產生"></td></tr>
+                <tr><th>PIF 字首</th><td><input type="text" id="pifPrefix" placeholder="請輸入 2 位大寫英文字母代碼" maxlength="2" style="text-transform: uppercase;"></td></tr>
+                <tr><th>用途</th><td><input id="prodUse" type="text" placeholder="例：防曬、清潔、保濕…"></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">製造作業場所資訊</div>
+          <div class="table-wrap"><table class="table" id="tblMfg"><thead><tr><th class="col-idx">#</th><th>製造廠名稱</th><th>地址</th><th style="width:120px">國別</th><th style="width:60px" class="no-print"></th></tr></thead><tbody id="mfgBody"></tbody></table></div>
+          <button id="btnAddMfg" class="btn no-print"><i class="fa-solid fa-plus"></i> 新增製造場所</button>
+        </div>
+
+        <div class="section">
+          <div class="section-title">包裝作業場所資訊</div>
+          <div class="table-wrap"><table class="table" id="tblPkg"><thead><tr><th class="col-idx">#</th><th>包裝廠名稱</th><th>地址</th><th style="width:120px">國別</th><th style="width:60px" class="no-print"></th></tr></thead><tbody id="pkgBody"></tbody></table></div>
+          <button id="btnAddPkg" class="btn no-print"><i class="fa-solid fa-plus"></i> 新增包裝場所</button>
+        </div>
+
+        <div class="section">
+          <div class="section-title">產品責任業者資訊</div>
+          <div class="table-wrap">
+            <table class="table">
+              <tbody>
+                <tr><th style="width:160px">責任業者名稱</th><td><input id="makerName" type="text" placeholder="可由統一編號查詢帶入"></td></tr>
+                <tr><th>地址</th><td><textarea id="makerAddr" rows="2" placeholder="可由統一編號查詢帶入"></textarea></td></tr>
+                <tr><th>聯絡電話</th><td><input id="makerTel" type="tel" placeholder="可由統一編號查詢帶入"></td></tr>
+                <tr>
+                  <th>統一編號</th>
+                  <td>
+                    <div class="flex-group">
+                      <input id="makerTax" type="text" placeholder="輸入統一編號後點擊查詢">
+                      <button type="button" id="lookup-maker-btn" class="btn"><i class="fa-solid fa-search"></i> 查詢帶入</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+    </div>
+</div>
+
+<div id="global-error"></div>
+
+<script type="module">
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
+    import { auth, db, functions } from './firebase-config.js';
+
+    const $ = sel => document.querySelector(sel);
+    
+    // --- Page State ---
+    let pageMode = 'loading'; // loading, create, edit
+    let currentPifId = null;
+    let isSaving = false;
+
+    // --- Firebase Callable Functions ---
+    const generatePifId = httpsCallable(functions, 'generatePifId');
+    const createPifProject = httpsCallable(functions, 'createPifProject');
+
+    // --- App Initialization ---
+    function startApp() {
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                try {
+                    initializePage();
+                } catch (e) {
+                    console.error("Error during page initialization:", e);
+                    showGlobalError(`頁面初始化錯誤：${e.message}`);
+                }
+                document.body.style.opacity = '1';
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+    }
+
+    async function initializePage() {
+        const urlParams = new URLSearchParams(window.location.search);
+        currentPifId = urlParams.get('id');
+
+        if (currentPifId) {
+            pageMode = 'edit';
+            await loadAndRenderPifData();
+        } else {
+            pageMode = 'create';
+            renderForCreateMode();
+        }
+        
+        setupEventListeners();
+        $('#app-container').style.display = 'block';
+    }
+
+    // --- Data Loading and Rendering ---
+    async function loadAndRenderPifData() {
+        $('#page-title').textContent = '編輯產品資料';
+        const docRef = doc(db, 'pifs', currentPifId);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+            throw new Error(`找不到 PIF 專案 (ID: ${currentPifId})。`);
+        }
+
+        const pifData = docSnap.data();
+        const pif01Data = pifData.pif01 || {};
+
+        // Render header and static content
+        document.title = `PIF 01 - ${pifData.productName}`;
+        $('#project-subtitle').textContent = `${pifData.companyName} - ${pifData.productName}`;
+        const backLinkParams = new URLSearchParams({id: currentPifId, companyName: pifData.companyName, productName: pifData.productName });
+        $('#back-link').href = `pifs.html?${backLinkParams.toString()}`;
+
+        // Render form fields
+        $('#productName').value = pifData.productName || '';
+        $('#companyName').value = pifData.companyName || '';
+        $('#pifId').value = pifData.pifId || currentPifId;
+
+        // In edit mode, company, product name and prefix are read-only
+        $('#productName').readOnly = true;
+        $('#companyName').readOnly = true;
+        $('#pifPrefix').readOnly = true;
+        $('#pifPrefix').style.background = '#f3f4f6'; // visual cue for readonly
+
+        renderForm(pif01Data);
+    }
+
+    function renderForCreateMode() {
+        document.title = "建立新 PIF 專案";
+        $('#page-title').textContent = "建立新 PIF 專案";
+        $('#project-subtitle').textContent = "請填寫以下產品資訊，儲存後將自動產生 PIF ID。";
+        
+        // Unlock fields for creation
+        $('#productName').readOnly = false;
+        $('#companyName').readOnly = false;
+        $('#pifPrefix').readOnly = false;
+
+        renderForm({}); // Render an empty form
+    }
+
+    function renderForm(pif01Data) {
+        const state = {
+            basic: pif01Data.basic || { use: '' },
+            mfg: pif01Data.mfg && pif01Data.mfg.length > 0 ? pif01Data.mfg : [{name: '', addr: '', country: ''}],
+            pkg: pif01Data.pkg && pif01Data.pkg.length > 0 ? pif01Data.pkg : [{name: '', addr: '', country: ''}],
+            maker: pif01Data.maker || {}
+        };
+
+        // Populate basic info
+        $('#prodUse').value = state.basic.use || '';
+        // If in edit mode, populate the prefix from the PIF ID itself
+        if (pageMode === 'edit' && currentPifId) {
+            const prefixMatch = currentPifId.match(/^[A-Z]{2}/);
+            if (prefixMatch) {
+                $('#pifPrefix').value = prefixMatch[0];
+            }
+        }
+        
+        // Populate tables and maker info
+        renderTable('mfg', state.mfg);
+        renderTable('pkg', state.pkg);
+        $('#makerName').value = state.maker.name || '';
+        $('#makerAddr').value = state.maker.addr || '';
+        $('#makerTel').value = state.maker.tel || '';
+        $('#makerTax').value = state.maker.tax || '';
+    }
+
+    // --- UI and Event Listeners ---
+    function setupEventListeners() {
+        $('#btnAddMfg').addEventListener('click', () => addRow('mfg'));
+        $('#btnAddPkg').addEventListener('click', () => addRow('pkg'));
+        $('#btnSave').addEventListener('click', saveController);
+        $('#btnPrint').addEventListener('click', () => window.print());
+        $('#lookup-maker-btn').addEventListener('click', lookupMaker);
+    }
+
+    function renderTable(kind, items) {
+        const tbody = $(`#${kind}Body`);
+        tbody.innerHTML = '';
+        items.forEach((item, index) => addRow(kind, item, index));
+    }
+
+    function addRow(kind, item = {}, index = -1) {
+        const tbody = $(`#${kind}Body`);
+        const newIndex = index === -1 ? tbody.rows.length : index;
+        const tr = tbody.insertRow(index);
+        tr.innerHTML = `
+            <td class="col-idx">${newIndex + 1}</td>
+            <td><input type="text" class="name" placeholder="${kind === 'mfg' ? '製造廠名稱' : '包裝廠名稱'}" value="${item.name || ''}"></td>
+            <td><textarea class="addr" rows="1" placeholder="地址">${item.addr || ''}</textarea></td>
+            <td><input type="text" class="country" placeholder="國別" value="${item.country || ''}"></td>
+            <td class="no-print"><button class="btn del"><i class="fa-solid fa-trash"></i></button></td>
+        `;
+        tr.querySelector('.del').addEventListener('click', () => {
+            tr.remove();
+            Array.from(tbody.rows).forEach((r, i) => r.cells[0].textContent = i + 1);
+        });
+    }
+
+    // --- Main Save Controller ---
+    async function saveController() {
+        if (isSaving) return;
+        isSaving = true;
+        setSaveHint('儲存中...', '#2563eb');
+
+        try {
+            if (pageMode === 'create') {
+                await createNewPif();
+            } else {
+                await updateExistingPif();
+            }
+        } catch (error) {
+            console.error("Save failed:", error);
+            setSaveHint(`儲存失敗: ${error.message}`, 'var(--err)');
+            alert(`儲存失敗: ${error.message}`);
+        } finally {
+            isSaving = false;
+        }
+    }
+
+    async function createNewPif() {
+        // 1. Validate required fields
+        const productName = $('#productName').value.trim();
+        const companyName = $('#companyName').value.trim();
+        const pifPrefix = $('#pifPrefix').value.trim().toUpperCase();
+
+        if (!productName || !companyName) {
+            throw new Error("請務必填寫「產品名稱」和「公司名稱」。");
+        }
+        if (!pifPrefix || !/^[A-Z]{2}$/.test(pifPrefix)) {
+            throw new Error("請務必填寫 2 位大寫英文字母的「PIF 字首」。");
+        }
+
+        // 2. Call cloud function to get a new PIF ID
+        setSaveHint('正在產生專案 ID...');
+        const idResult = await generatePifId({ prefix: pifPrefix });
+        if (!idResult.data.success || !idResult.data.pifId) {
+            const errorMsg = idResult.data.error || '從後端獲取新 PIF ID 失敗。';
+            throw new Error(errorMsg);
+        }
+        const newPifId = idResult.data.pifId;
+
+        // 3. Prepare all data for creation
+        const fullPifData = {
+            pifId: newPifId,
+            productName: productName,
+            companyName: companyName,
+            pif01: getPif01DataFromForm(newPifId, productName, companyName)
+        };
+
+        // 4. Call cloud function to create the project document
+        setSaveHint('正在建立專案...');
+        const createResult = await createPifProject(fullPifData);
+        if (!createResult.data.success) {
+            throw new Error(createResult.data.error || '建立專案時後端發生錯誤。');
+        }
+
+        // 5. Success: redirect to the pifs.html (project entry page)
+        setSaveHint('專案建立成功！正在導向專案入口...', 'var(--ok)');
+        alert('專案已成功建立！');
+        const params = new URLSearchParams({
+            id: newPifId,
+            companyName: encodeURIComponent(companyName),
+            productName: encodeURIComponent(productName)
+        });
+        window.location.href = `pifs.html?${params.toString()}`;
+    }
+
+    async function updateExistingPif() {
+        setSaveHint('正在更新資料...');
+        const pif01Data = getPif01DataFromForm(currentPifId, $('#productName').value, $('#companyName').value);
+        const docRef = doc(db, "pifs", currentPifId);
+        await setDoc(docRef, { pif01: pif01Data }, { merge: true });
+        setSaveHint('所有變更已儲存！', 'var(--ok)');
+    }
+
+    // --- Data Gathering from Form ---
+    function getPif01DataFromForm(pifId, productName, companyName) {
+        const pifPrefix = $('#pifPrefix').value.trim().toUpperCase();
+        return {
+            basic: {
+                pifId: pifId,
+                prefix: pifPrefix,
+                name: productName,
+                use: $('#prodUse').value
+            },
+            mfg: Array.from($('#mfgBody').rows).map(row => ({ name: row.querySelector('.name').value, addr: row.querySelector('.addr').value, country: row.querySelector('.country').value })),
+            pkg: Array.from($('#pkgBody').rows).map(row => ({ name: row.querySelector('.name').value, addr: row.querySelector('.addr').value, country: row.querySelector('.country').value })),
+            maker: { name: $('#makerName').value, addr: $('#makerAddr').value, tel: $('#makerTel').value, tax: $('#makerTax').value }
+        };
+    }
+
+    // --- Utility Functions ---
+    function setSaveHint(text, color = 'var(--muted)') {
+        const hintEl = $('#autosaveHint');
+        hintEl.textContent = text;
+        hintEl.style.color = color;
+    }
+
+    function showGlobalError(message) {
+        $('#app-container').style.display = 'none';
+        $('#global-error').innerHTML = `<strong>錯誤：</strong> ${message}`;
+        $('#global-error').style.display = 'block';
+    }
+    
+    async function lookupMaker() {
+        const taxId = $('#makerTax').value.trim();
+        if (!taxId) { alert('請先輸入統一編號。'); return; }
+        const lookupBtn = $('#lookup-maker-btn');
+        lookupBtn.disabled = true;
+        lookupBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 查詢中...';
+        try {
+            const vendorRef = doc(db, 'vendors', taxId);
+            const docSnap = await getDoc(vendorRef);
+            if (docSnap.exists()) {
+                const vendor = docSnap.data();
+                $('#makerName').value = vendor.companyName || '';
+                $('#makerAddr').value = vendor.address || '';
+                $('#makerTel').value = vendor.phone || '';
+                alert('廠商資料已成功帶入！');
+            } else {
+                alert('在中央廠商資料庫中找不到此統一編號的資料。');
+            }
+        } catch (error) {
+            console.error("Error looking up vendor: ", error);
+            alert('查詢時發生錯誤。');
+        } finally {
+            lookupBtn.disabled = false;
+            lookupBtn.innerHTML = '<i class="fa-solid fa-search"></i> 查詢帶入';
+        }
+    }
+
+    // --- Start the app ---
+    startApp();
+</script>
+</body>
+</html>

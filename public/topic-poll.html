@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CosPIF化妝品智慧月刊｜下期月刊主題票選</title>
+    <!-- Social preview (Open Graph / Twitter) -->
+    <link rel="canonical" href="https://cos-pif.web.app/topic-poll.html">
+    <meta name="description" content="票選下期《CosPIF化妝品智慧月刊》主題：最多可選 3 個，並可補充建議主題。">
+    <meta property="og:locale" content="zh_TW">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="CosPIF化妝品智慧月刊">
+    <meta property="og:title" content="CosPIF化妝品智慧月刊｜下期月刊主題票選">
+    <meta property="og:description" content="票選下期《CosPIF化妝品智慧月刊》主題：最多可選 3 個，並可補充建議主題。">
+    <meta property="og:url" content="https://cos-pif.web.app/topic-poll.html">
+    <meta property="og:image" content="https://cos-pif.web.app/og/cospif-monthly-share.jpg">
+    <meta property="og:image:alt" content="CosPIF化妝品智慧月刊 - 下期月刊主題票選">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="CosPIF化妝品智慧月刊｜下期月刊主題票選">
+    <meta name="twitter:description" content="票選下期《CosPIF化妝品智慧月刊》主題：最多可選 3 個，並可補充建議主題。">
+    <meta name="twitter:image" content="https://cos-pif.web.app/og/cospif-monthly-share.jpg">
+    
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <style>
+    .container{ max-width: 1700px; }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.85rem 1rem; background:#fff;
+      border:1px solid var(--line); border-radius:16px;
+      margin:.9rem 0 1rem;
+    }
+    .topbar .left{ display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
+    .topbar a{ text-decoration:none; color:var(--ink); font-weight:900; }
+    .badge{
+      display:inline-flex; align-items:center; gap:.35rem;
+      border:1px solid var(--line); border-radius:999px;
+      padding:.25rem .6rem; font-size:.82rem; background:#fff; color:var(--muted);
+    }
+    .btnx{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius: 12px;
+      padding:.48rem .7rem;
+      cursor:pointer;
+      font-weight:900;
+      display:inline-flex; align-items:center; gap:.45rem;
+      text-decoration:none;
+      color: var(--ink);
+    }
+    .btnx:hover{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+    /* share menu */
+.shareWrap{ position: relative; display:inline-block; }
+.shareMenu{
+  position:absolute;
+  right:0;
+  top: calc(100% + .35rem);
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:.35rem;
+  min-width: 220px;
+  box-shadow: 0 14px 34px rgba(0,0,0,.14);
+  display:none;
+  z-index: 80;
+}
+.shareMenu.open{ display:block; }
+.shareItem{
+  width:100%;
+  border:0;
+  background:transparent;
+  padding:.55rem .6rem;
+  border-radius:12px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+  font-weight:900;
+  color: var(--ink);
+}
+.shareItem:hover{ background:#f3f4f6; }
+.shareSep{ height:1px; background: var(--line); margin:.25rem 0; border-radius: 999px; }
+.btn-primary{
+      background: linear-gradient(135deg, #111827, #2563eb);
+      border-color:#2563eb; color:#fff;
+      box-shadow: 0 12px 35px rgba(37,99,235,.22);
+    }
+    .btn-primary:hover{ background: linear-gradient(135deg, #0b1220, #1d4ed8); color:#fff; border-color:#1d4ed8; }
+
+    .grid{
+      display:grid; grid-template-columns: 520px 1fr; gap: 1rem; align-items:start;
+    }
+    @media (max-width: 1200px){ .grid{ grid-template-columns: 1fr; } }
+
+    .card{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:16px;
+      box-shadow:0 1px 3px rgba(0,0,0,.05);
+      padding: 1rem 1rem;
+    }
+    .muted{ color:var(--muted); }
+    .small{ font-size:.88rem; }
+    .hr{ border:none; border-top:1px solid #eef2f7; margin: .9rem 0; }
+
+    .statusLine{
+      display:flex; gap:.5rem; align-items:center; flex-wrap:wrap;
+      margin-top:.45rem;
+    }
+    .pill{
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:.25rem .6rem;
+      font-weight:900;
+      font-size:.82rem;
+      color: var(--muted);
+      background:#fff;
+    }
+    .pill.ok{ background:#f0fdf4; border-color:#bbf7d0; color:#166534; }
+    .pill.warn{ background:#fffbeb; border-color:#fde68a; color:#92400e; }
+    .pill.bad{ background:#fff1f2; border-color:#fecaca; color:#9f1239; }
+
+    .cands{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: .75rem;
+    }
+    @media (max-width: 980px){ .cands{ grid-template-columns: 1fr; } }
+
+    .cand{
+      border:1px solid var(--line);
+      border-radius: 16px;
+      padding:.75rem .8rem;
+      background:#fff;
+      cursor:pointer;
+      transition: transform .06s ease, border-color .12s ease, background .12s ease;
+      display:flex; gap:.65rem; align-items:flex-start;
+    }
+    .cand:hover{ background:#eff6ff; border-color:#bfdbfe; }
+    .cand.disabled{ opacity:.6; pointer-events:none; }
+    .cand .chk{
+      width: 22px; height: 22px;
+      border:2px solid #cbd5e1;
+      border-radius: 6px;
+      display:grid; place-items:center;
+      flex:none;
+      margin-top: 2px;
+      background:#fff;
+    }
+    .cand.checked .chk{
+      border-color:#2563eb;
+      background:#2563eb;
+      color:#fff;
+    }
+    .cand .t{ font-weight:950; }
+    .cand .d{ color:var(--muted); font-size:.88rem; line-height:1.45; margin-top:.15rem; }
+
+    textarea, input{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius: 12px;
+      padding:.6rem .7rem;
+      font-size:.95rem;
+      outline:none;
+      background:#fff;
+    }
+    textarea{ min-height: 120px; resize: vertical; }
+    textarea:focus, input:focus{
+      border-color:#bfdbfe; box-shadow:0 0 0 3px rgba(59,130,246,.15);
+    }
+
+    .msgOk{
+      padding:.6rem .7rem;
+      border:1px solid #bbf7d0;
+      background:#f0fdf4;
+      border-radius:12px;
+      color:#166534;
+      margin-top:.65rem;
+      white-space: pre-wrap;
+    }
+    .msgWarn{
+      padding:.6rem .7rem;
+      border:1px solid #fde68a;
+      background:#fffbeb;
+      border-radius:12px;
+      color:#92400e;
+      margin-top:.65rem;
+      white-space: pre-wrap;
+    }
+    .msgBad{
+      padding:.6rem .7rem;
+      border:1px solid #fecaca;
+      background:#fff1f2;
+      border-radius:12px;
+      color:#9f1239;
+      margin-top:.65rem;
+      white-space: pre-wrap;
+    }
+
+    .kpi{
+      display:flex; gap:.6rem; flex-wrap:wrap; align-items:center;
+    }
+    .kpi .box{
+      border:1px solid var(--line);
+      border-radius: 14px;
+      padding:.55rem .65rem;
+      background:#fff;
+      min-width: 140px;
+    }
+    .kpi .box b{ font-size: 1.1rem; }
+    .footerNote{
+      margin-top: .85rem;
+      color: var(--muted);
+      font-size:.86rem;
+      line-height:1.6;
+    }
+    .disabledAll{
+      opacity:.65;
+      pointer-events:none;
+      filter: grayscale(0.1);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="left">
+        <a href="index.html"><i class="fa-solid fa-house"></i> 首頁</a>
+        <a href="kb-issue.html" style="margin-left:.25rem;"><i class="fa-solid fa-newspaper"></i> 月刊</a>
+        <span class="badge" id="authBadge">未登入</span>
+        <span class="badge" id="pollBadge">poll: —</span>
+      </div>
+      <div class="left">
+        <span class="badge" id="userBadge">—</span>
+        <a class="btnx" id="adminLink" href="topic-poll-admin.html" style="display:none;"><i class="fa-solid fa-gear"></i> 主辦設定</a>
+        <a class="btnx" id="btnLogin" href="login.html?redirect=topic-poll.html"><i class="fa-solid fa-right-to-bracket"></i> 登入</a>
+        <button class="btnx" id="btnLogout" style="display:none;"><i class="fa-solid fa-right-from-bracket"></i> 登出</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- left: poll info -->
+      <section class="card">
+        <h2 style="margin:.1rem 0 .25rem;" id="pollTitle">CosPIF化妝品智慧月刊-下期月刊主題票選</h2>
+        <div class="muted small" id="pollDesc">請登入後投票。你可以從候選主題中勾選（最多 N 個），並可補充建議主題。</div>
+
+        <div class="statusLine">
+          <span class="pill" id="pillOpen">狀態：—</span>
+          <span class="pill" id="pillWindow">投票期間：—</span>
+          <span class="pill" id="pillMax">可選：—</span>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="kpi">
+          <div class="box">
+            <div class="muted small">已勾選</div>
+            <div><b id="kpiPick">0</b> / <span id="kpiMax">0</span></div>
+          </div>
+          <div class="box">
+            <div class="muted small">候選主題</div>
+            <div><b id="kpiCand">0</b></div>
+          </div>
+          <div class="box">
+            <div class="muted small">你的投票</div>
+            <div><b id="kpiMy">—</b></div>
+          </div>
+        </div>
+
+        <div id="msgBox"></div>
+
+        <div class="hr"></div>
+
+        <h3 style="margin:.2rem 0 .35rem;">建議新主題（可選）</h3>
+        <div class="muted small">若你有想看的主題，請在此補充（最多 200 字）。</div>
+        <textarea id="suggest" placeholder="例如：『2026 化妝品 AI 法規與實務』、『外泌體功效驗證設計』…"></textarea>
+
+        <div class="row" style="margin-top:.7rem; display:flex; gap:.55rem; flex-wrap:wrap;">
+          <button class="btnx btn-primary" id="btnSubmit"><i class="fa-solid fa-paper-plane"></i> 送出／更新我的投票</button>
+          <button class="btnx" id="btnClear"><i class="fa-regular fa-eraser"></i> 清除勾選</button>
+        
+          <div class="shareWrap">
+            <button class="btnx" id="btnShare" type="button"><i class="fa-solid fa-share-nodes"></i> 分享主題票選</button>
+            <div class="shareMenu" id="shareMenu" aria-label="分享選單">
+              <button class="shareItem" type="button" data-act="copy"><i class="fa-regular fa-copy"></i> 複製連結</button>
+              <div class="shareSep"></div>
+              <button class="shareItem" type="button" data-act="line"><i class="fa-brands fa-line"></i> 分享到 LINE</button>
+              <button class="shareItem" type="button" data-act="fb"><i class="fa-brands fa-facebook"></i> 分享到 Facebook</button>
+              <button class="shareItem" type="button" data-act="x"><i class="fa-brands fa-x-twitter"></i> 分享到 X</button>
+            </div>
+          </div>
+</div>
+
+        <div class="footerNote">
+          規則：需登入；同一帳號每一期只保留一份投票（可於投票期間內更新）。<br/>
+          若看不到候選主題，請主辦單位先到「主辦設定」建立本期 poll 與候選清單。
+        </div>
+      </section>
+
+      <!-- right: candidates -->
+      <section class="card">
+        <div style="display:flex; align-items:end; justify-content:space-between; gap:.75rem; flex-wrap:wrap;">
+          <div>
+            <h2 style="margin:.1rem 0 .2rem;">候選主題</h2>
+            <div class="muted small">點選卡片勾選；超過上限會提示。</div>
+          </div>
+          <div class="muted small" id="hintRight"></div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="cands" id="candGrid"></div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { doc, getDoc, setDoc, serverTimestamp, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { db, auth } from "./firebase-config.js";
+
+    const $ = (s)=>document.querySelector(s);
+
+    // Ensure login link returns back to this page (keeps same origin, keeps poll/query)
+    const _backTo = (location.pathname.replace(/^\//,"") || "topic-poll.html") + location.search + location.hash;
+    const _loginA = document.getElementById("btnLogin");
+    if (_loginA) _loginA.href = `login.html?redirect=${encodeURIComponent(_backTo)}`;
+
+
+    // Collections
+    const POLLS = "kb_topic_polls";
+
+    // URL params
+    const params = new URLSearchParams(location.search);
+    const forcedPoll = (params.get("poll") || "").trim();
+
+    // Public config: which poll is "published" to front as default
+    const PUBLIC_CFG_COL = "kb_public_config";
+    const PUBLIC_CFG_DOC = "topic_poll";
+    const PUBLIC_CFG_REF = doc(db, PUBLIC_CFG_COL, PUBLIC_CFG_DOC);
+
+    function pad2(n){ return String(n).padStart(2,"0"); }
+    function nextMonthId(){
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = d.getMonth()+1;
+      const ny = (m === 12) ? (y+1) : y;
+      const nm = (m === 12) ? 1 : (m+1);
+      return `${ny}-${pad2(nm)}`;
+    }
+
+    let pollId = forcedPoll || "";
+    async function resolveDefaultPollId(u){
+      // Ensure ID token is ready before Firestore reads (avoids fallback to wrong pollId)
+      try{ if(u) await u.getIdToken(); }catch(_){ }
+
+      if (pollId) return pollId;
+
+      // 1) read published/default pollId from public config
+      try{
+        const csnap = await getDoc(PUBLIC_CFG_REF);
+        const data = csnap.exists() ? (csnap.data() || {}) : {};
+        const active = (typeof data.activePollId === "string") ? data.activePollId.trim() : "";
+        if (active) return active;
+      }catch(e){
+        console.warn("public config read failed:", e);
+      }
+
+      // 2) otherwise, auto-pick the latest poll by pollId (YYYY-MM) desc
+      try{
+        const qs = query(collection(db, POLLS), orderBy("pollId","desc"), limit(1));
+        const ds = await getDocs(qs);
+        if (!ds.empty){
+          const d0 = ds.docs[0];
+          const pid = String((d0.data()?.pollId || d0.id || "")).trim();
+          if (pid) return pid;
+        }
+      }catch(e){
+        console.warn("poll list query failed:", e);
+      }
+
+      // 3) fallback: next calendar month
+      return nextMonthId();
+    }
+
+    async function ensurePollId(){
+      pollId = await resolveDefaultPollId(user);
+      $("#pollBadge").textContent = `poll: ${pollId}`;
+    }
+
+    // state
+    let user = null;
+    let poll = null; // poll doc data
+    let myVote = null; // vote doc data
+    let picks = new Set();
+    let maxSelections = 3;
+    let isOpen = false;
+
+    // helper
+    function esc(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;").replaceAll("'","&#39;");
+    }
+    function fmtTs(ts){
+      try{
+        if (!ts) return "—";
+        const d = ts.toDate ? ts.toDate() : (ts instanceof Date ? ts : null);
+        if (!d) return "—";
+        const y = d.getFullYear();
+        const mo = pad2(d.getMonth()+1);
+        const da = pad2(d.getDate());
+        const hh = pad2(d.getHours());
+        const mm = pad2(d.getMinutes());
+        return `${y}-${mo}-${da} ${hh}:${mm}`;
+      }catch(_){ return "—"; }
+    }
+    function setMsg(kind, text){
+      const box = $("#msgBox");
+      if (!text){
+        box.innerHTML = "";
+        return;
+      }
+      const cls = kind === "ok" ? "msgOk" : kind === "warn" ? "msgWarn" : "msgBad";
+      box.innerHTML = `<div class="${cls}">${esc(text)}</div>`;
+    }
+
+    function computeOpenState(){
+      const now = new Date();
+      const from = poll?.openFrom?.toDate?.() || null;
+      const until = poll?.openUntil?.toDate?.() || null;
+
+      if (from && now < from) return { state: "notyet", open:false };
+      if (until && now > until) return { state: "closed", open:false };
+      return { state: "open", open:true };
+    }
+
+    function applyOpenUI(){
+      const s = computeOpenState();
+      isOpen = s.open;
+
+      const pillOpen = $("#pillOpen");
+      const pillWindow = $("#pillWindow");
+
+      const fromTxt = fmtTs(poll?.openFrom);
+      const untilTxt = fmtTs(poll?.openUntil);
+
+      $("#pollTitle").textContent = poll?.title || `CosPIF化妝品智慧月刊-下期月刊主題票選（${pollId}）`;
+      $("#pollDesc").textContent = poll?.desc || "請登入後投票。你可以從候選主題中勾選（最多 N 個），並可補充建議主題。"
+        .replace("N", String(maxSelections));
+
+      $("#pillMax").textContent = `可選：${maxSelections} 個`;
+      $("#kpiMax").textContent = String(maxSelections);
+
+      pillWindow.textContent = `投票期間：${fromTxt} ～ ${untilTxt}`;
+      if (s.state === "open"){
+        pillOpen.textContent = "狀態：開放投票中";
+        pillOpen.className = "pill ok";
+        $("#hintRight").textContent = "✅ 開放中：可勾選候選主題並送出。";
+        setMsg("", "");
+      }else if (s.state === "notyet"){
+        pillOpen.textContent = "狀態：尚未開放";
+        pillOpen.className = "pill warn";
+        $("#hintRight").textContent = "⏳ 尚未開放：投票開始後才能送出。";
+        setMsg("warn", "目前尚未到投票開始時間。");
+      }else{
+        pillOpen.textContent = "狀態：已結束";
+        pillOpen.className = "pill bad";
+        $("#hintRight").textContent = "🔒 已結束：僅可查看你當時的投票內容。";
+        setMsg("warn", "投票已結束。你仍可查看自己的投票內容。");
+      }
+
+      // enable/disable actions
+      const disableAll = !user || !poll || !isOpen;
+      $("#btnSubmit").disabled = disableAll;
+      $("#btnClear").disabled = disableAll;
+      $("#suggest").disabled = !user || !poll || !isOpen;
+      $("#candGrid").classList.toggle("disabledAll", !poll);
+    }
+
+    function renderCandidates(){
+      const grid = $("#candGrid");
+      grid.innerHTML = "";
+
+      const candidates = Array.isArray(poll?.candidates) ? poll.candidates : [];
+      $("#kpiCand").textContent = String(candidates.length);
+
+      if (!candidates.length){
+        grid.innerHTML = `<div class="muted small">尚未設定候選主題。請主辦單位到「主辦設定」建立候選清單。</div>`;
+        return;
+      }
+
+      candidates.forEach((c, idx) => {
+        const id = (c.id || c.key || `cand_${idx+1}`).trim();
+        const title = (c.title || c.name || id).trim();
+        const desc = (c.desc || c.description || "").trim();
+
+        const div = document.createElement("div");
+        div.className = "cand";
+        div.dataset.id = id;
+        div.innerHTML = `
+          <div class="chk"><i class="fa-solid fa-check" style="font-size:.85rem; opacity:${picks.has(id) ? 1 : 0};"></i></div>
+          <div>
+            <div class="t">${esc(title)}</div>
+            ${desc ? `<div class="d">${esc(desc)}</div>` : ``}
+          </div>
+        `;
+
+        function updateCard(){
+          const checked = picks.has(id);
+          div.classList.toggle("checked", checked);
+          const icon = div.querySelector(".chk i");
+          if (icon) icon.style.opacity = checked ? "1" : "0";
+        }
+
+        div.addEventListener("click", () => {
+          if (!user){ setMsg("warn","請先登入後投票。"); return; }
+          if (!isOpen){ setMsg("warn","目前非投票期間，無法更新投票。"); return; }
+
+          if (picks.has(id)){
+            picks.delete(id);
+          }else{
+            if (picks.size >= maxSelections){
+              setMsg("warn", `最多只能勾選 ${maxSelections} 個主題。`);
+              return;
+            }
+            picks.add(id);
+          }
+          updateCard();
+          syncPickKpi();
+        });
+
+        updateCard();
+        grid.appendChild(div);
+      });
+    }
+
+    function syncPickKpi(){
+      $("#kpiPick").textContent = String(picks.size);
+    }
+
+    async function loadPoll(){
+      poll = null;
+      const ref = doc(db, POLLS, pollId);
+      const snap = await getDoc(ref);
+      if (!snap.exists()){
+        setMsg("warn", `尚未建立本期投票設定（pollId=${pollId}）。請主辦單位到「主辦設定」建立。`);
+        $("#pollTitle").textContent = `下期月刊主題票選（${pollId}）`;
+        $("#pillWindow").textContent = "投票期間：—";
+        $("#pillMax").textContent = "可選：—";
+        $("#kpiCand").textContent = "0";
+        $("#kpiMax").textContent = "0";
+        $("#kpiMy").textContent = "—";
+        $("#candGrid").innerHTML = `<div class="muted small">尚未建立本期 poll。</div>`;
+        applyOpenUI();
+        return;
+      }
+      poll = snap.data() || {};
+      maxSelections = Number(poll.maxSelections || 3);
+      applyOpenUI();
+      renderCandidates();
+    }
+
+    async function loadMyVote(){
+      myVote = null;
+      picks = new Set();
+      $("#suggest").value = "";
+      $("#kpiMy").textContent = user ? "未投票" : "—";
+      syncPickKpi();
+
+      if (!user) return;
+      if (!poll) return;
+
+      const vref = doc(db, POLLS, pollId, "votes", user.uid);
+      const vsnap = await getDoc(vref);
+      if (!vsnap.exists()) {
+        $("#kpiMy").textContent = "未投票";
+        return;
+      }
+      myVote = vsnap.data() || {};
+      const arr = Array.isArray(myVote.picks) ? myVote.picks : [];
+      arr.forEach(x => picks.add(String(x)));
+      $("#suggest").value = myVote.suggestion || "";
+      $("#kpiMy").textContent = "已投票";
+      syncPickKpi();
+
+      // re-render to reflect checks
+      renderCandidates();
+    }
+
+    async function submitVote(){
+      if (!user){ setMsg("warn","請先登入。"); return; }
+      if (!poll){ setMsg("warn","尚未建立本期 poll。"); return; }
+      if (!isOpen){ setMsg("warn","目前非投票期間，無法送出。"); return; }
+
+      const pickArr = Array.from(picks);
+      const suggestion = ($("#suggest").value || "").trim();
+
+      if (pickArr.length === 0 && !suggestion){
+        setMsg("warn", "請至少勾選 1 個候選主題，或輸入一個建議新主題。");
+        return;
+      }
+      if (pickArr.length > maxSelections){
+        setMsg("warn", `最多只能勾選 ${maxSelections} 個主題。`);
+        return;
+      }
+      if (suggestion.length > 200){
+        setMsg("warn", "建議主題最多 200 字。");
+        return;
+      }
+
+      setMsg("", "");
+      $("#btnSubmit").disabled = true;
+
+      try{
+        const vref = doc(db, POLLS, pollId, "votes", user.uid);
+        const payload = {
+          uid: user.uid,
+          email: user.email || "",
+          displayName: user.displayName || "",
+          picks: pickArr,
+          suggestion,
+          updatedAt: serverTimestamp(),
+        };
+        if (!myVote) payload.createdAt = serverTimestamp();
+
+        await setDoc(vref, payload, { merge:true });
+        setMsg("ok", "✅ 已送出你的投票（可於投票期間內再更新）。");
+        await loadMyVote();
+      }catch(e){
+        console.error(e);
+        setMsg("bad", "送出失敗：可能是權限或投票期間限制。\n" + (e?.message || String(e)));
+      }finally{
+        $("#btnSubmit").disabled = !isOpen;
+      }
+    }
+
+    function clearPicks(){
+      picks.clear();
+      syncPickKpi();
+      renderCandidates();
+      setMsg("", "");
+    }
+
+    // ---- login/logout UI
+    $("#btnLogout").addEventListener("click", async () => {
+      try{ await signOut(auth); }catch(e){ console.error(e); }
+    });
+
+    // determine whether admin link visible (claims)
+    async function refreshAdminLink(u){
+      $("#adminLink").style.display = "none";
+      if (!u) return;
+      try{
+        const token = await u.getIdTokenResult(true);
+        const claims = token?.claims || {};
+        const rolesObj = (claims.roles && typeof claims.roles === "object") ? claims.roles : {};
+        const roles = {
+          admin: !!claims.admin,
+          systemAdmin: !!claims.systemAdmin,
+          secretary: !!claims.secretary,
+          editor: !!claims.editor,
+          ...rolesObj
+        };
+        const ok = !!(roles.admin || roles.systemAdmin || roles.editor || roles.secretary);
+        if (ok) $("#adminLink").style.display = "inline-flex";
+      }catch(_){}
+    }
+
+    // bind
+    $("#btnSubmit").addEventListener("click", (e)=>{ e.preventDefault(); submitVote(); });
+    $("#btnClear").addEventListener("click", (e)=>{ e.preventDefault(); clearPicks(); });
+
+// share
+const DEFAULT_PUBLIC_BASE = "https://cos-pif.web.app"; // 若你有自訂網域，改成你的公開網域
+function getPublicBase(){
+  const qp = new URLSearchParams(location.search).get("publicBase");
+  if(qp) return qp.replace(/\/+$/,"");
+  const ls = localStorage.getItem("PUBLIC_BASE_URL");
+  if(ls) return String(ls).replace(/\/+$/,"");
+  if(location.hostname.includes("cloudworkstations") || location.hostname.includes("cloud.google.com")){
+    return DEFAULT_PUBLIC_BASE;
+  }
+  return location.origin;
+}
+function buildShareUrl(){
+  const base = getPublicBase();
+  const u = new URL(base.replace(/\/+$/,"") + "/topic-poll.html");
+  if(pollId) u.searchParams.set("poll", pollId);
+  return u.toString();
+}
+function shareTitleText(){
+  const t = (poll && poll.title) ? poll.title : (pollId ? `下期月刊主題票選（${pollId}）` : "下期月刊主題票選");
+  const maxN = poll && poll.maxSelections ? poll.maxSelections : maxSelections || 3;
+  return { title: t, text: `${t}｜歡迎投票（最多 ${maxN} 個）` };
+}
+function closeShareMenu(){ $("#shareMenu")?.classList?.remove("open"); }
+function toggleShareMenu(){
+  const m = $("#shareMenu");
+  if(!m) return;
+  m.classList.toggle("open");
+}
+async function doShare(){
+  const url = buildShareUrl();
+  const { title, text } = shareTitleText();
+  // Native Web Share (手機最順)
+  if(navigator.share){
+    try{
+      await navigator.share({ title, text, url });
+      return;
+    }catch(e){
+      // 使用者取消時不顯示錯誤
+      if(String(e?.name || "").toLowerCase().includes("abort")) return;
+    }
+  }
+  // Desktop fallback: open menu
+  toggleShareMenu();
+}
+async function doCopyLink(){
+  const url = buildShareUrl();
+  try{
+    await navigator.clipboard.writeText(url);
+    setMsg("ok", "✅ 已複製分享連結");
+  }catch(_){
+    window.prompt("複製這個連結：", url);
+  }
+}
+function openShare(kind){
+  const url = buildShareUrl();
+  const { title, text } = shareTitleText();
+  const enc = encodeURIComponent;
+  let shareUrl = "";
+  if(kind==="fb") shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${enc(url)}`;
+  else if(kind==="line") shareUrl = `https://social-plugins.line.me/lineit/share?url=${enc(url)}`;
+  else if(kind==="x") shareUrl = `https://twitter.com/intent/tweet?text=${enc(text)}&url=${enc(url)}`;
+  if(shareUrl) window.open(shareUrl, "_blank", "noopener,noreferrer,width=720,height=720");
+}
+
+$("#btnShare")?.addEventListener("click", (e)=>{ e.preventDefault(); doShare(); });
+
+// share menu actions
+$("#shareMenu")?.addEventListener("click", (e)=>{
+  const btn = e.target.closest("button[data-act]");
+  if(!btn) return;
+  const act = btn.getAttribute("data-act");
+  if(act==="copy") return void(doCopyLink(), closeShareMenu());
+  if(act==="fb" || act==="line" || act==="x"){ openShare(act); closeShareMenu(); return; }
+});
+
+// click outside closes menu
+document.addEventListener("click", (e)=>{
+  const inWrap = e.target.closest(".shareWrap");
+  if(!inWrap) closeShareMenu();
+});
+
+    // init
+    
+    onAuthStateChanged(auth, async (u) => {
+      user = u || null;
+
+      // If no ?poll= is provided, always follow the admin-published month (kb_public_config/topic_poll.activePollId)
+      if (!forcedPoll) pollId = "";
+      if (!user){
+        $("#authBadge").textContent = "未登入";
+        $("#userBadge").textContent = "請登入後投票";
+        $("#btnLogin").style.display = "inline-flex";
+        $("#btnLogout").style.display = "none";
+        $("#pollBadge").textContent = "poll: —";
+        $("#candGrid").innerHTML = `<div class="muted small">請先登入後查看候選主題並投票。</div>`;
+        setMsg("warn", "此頁已設定為：需登入才可讀取候選主題與投票。請先登入。");
+        applyOpenUI();
+        return; // ★ 未登入時不進行任何 Firestore 讀取，避免 permission-denied
+      }else{
+        $("#authBadge").textContent = "已登入";
+        $("#userBadge").textContent = user.email || user.uid;
+        $("#btnLogin").style.display = "none";
+        $("#btnLogout").style.display = "inline-flex";
+        setMsg("", "");
+      }
+
+      await refreshAdminLink(user);
+
+      await ensurePollId();
+      await loadPoll();
+      await loadMyVote();
+      applyOpenUI();
+    });
+
+    setInterval(() => { if (poll) applyOpenUI(); }, 60 * 1000);
+
+  </script>
+</body>
+</html>

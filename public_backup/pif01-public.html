@@ -1,0 +1,404 @@
+
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PIF 01 產品基本資料</title>
+<style>
+:root{--bg:#fff;--ink:#111;--muted:#666;--line:#ddd;--brand:#2563eb;--ok:#16a34a;--warn:#b45309;--err:#dc2626}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC",Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);padding:24px;line-height:1.5}
+header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px}
+h1{font-size:1.5rem;margin:0}
+.meta{font-size:.85rem;color:var(--muted)}
+.badge{font-size:.8rem;padding:2px 8px;border-radius:9999px;background:#eef2ff;color:#3730a3}
+.toolbar{position:sticky;top:0;background:#fafafa;border:1px solid var(--line);padding:8px;border-radius:12px;display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.btn{padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafc;cursor:pointer}
+.btn.primary{background:#e6f0ff;border-color:#bcd4ff}
+.section{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px;background:#fff}
+.section-title{font-weight:700;margin:4px 0 8px 0}
+.table-wrap{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:8px 0}
+.table{width:100%;border-collapse:collapse;table-layout:fixed}
+.table th,.table td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.table th{background:#f8fafc;text-align:left;font-size:.9rem;color:#374151}
+.table tr:hover td{background:#fafafa}
+.col-idx{width:40px;text-align:center}
+.col-narrow{width:120px}
+input[type=text], textarea, select{width:100%;padding:7px;border:1px solid var(--line);border-radius:8px;background:#fff}
+textarea{resize:vertical}
+label{font-size:.85rem;color:var(--muted);display:block;margin-bottom:4px}
+.flex{display:flex;gap:8px;align-items:center}
+.right{margin-left:auto}
+.small{font-size:.85rem;color:var(--muted)}
+.print-clone{display:none; white-space:pre-wrap; word-break:break-word; overflow-wrap:anywhere;}
+@media print{
+  .toolbar,.no-print,button,.btn,input[type=file]{display:none!important}
+  body{padding:0 12px}
+  .table-wrap{border:none}
+  .table th,.table td{border-color:#aaa}
+  input, textarea { border:none !important; background:transparent !important; padding:0 !important; outline:none !important; box-shadow:none !important; }
+  textarea{ white-space:pre-wrap !important; overflow:visible !important; height:auto !important; resize:none !important; pointer-events:none !important; }
+  .print-clone{ display:block !important; }
+  [data-print-hidden]{ display:none !important; }
+  table{ page-break-inside:auto; break-inside:auto; }
+  thead{ display:table-header-group; }
+  tfoot{ display:table-footer-group; }
+  tr{ page-break-inside:avoid; break-inside:avoid; }
+}
+</style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script>
+        // Your web app\'s Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAPI7reR6cmRiI_UJjnOzTWzGghJUNATS0",
+            authDomain: "cos-pif.firebaseapp.com",
+            projectId: "cos-pif",
+            storageBucket: "cos-pif.appspot.com",
+            messagingSenderId: "993332237817",
+            appId: "1:993332237817:web:3bb33b97c60fd033441928",
+            measurementId: "G-JB7D5M3KK7"
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+    </script>
+</head>
+<body>
+<header>
+  <div>
+    <h1>01 產品基本資料</h1>
+    <div class="meta">依範例表格建立輸入表單：基本資訊、製造\/包裝場所與責任業者資訊。列印時以純文字呈現每字可見。</div>
+  </div>
+  <div>
+    <span class="badge">PIF 模組 01</span><br>
+    <a href="pifs.html" class="meta">返回主控台</a>
+  </div>
+</header>
+
+<div class="toolbar">
+  <button id="btnSave" class="btn primary">儲存資料</button>
+  <button id="btnPrint" class="btn">列印 / 匯出 PDF</button>
+  <label for="imp" class="btn">匯入 JSON</label><input id="imp" type="file" accept=".json" hidden>
+  <button id="btnExport" class="btn">匯出 JSON</button>
+  <span class="right small">提示：可新增多個製造/包裝場所</span>
+</div>
+
+<!-- Content Sections... -->
+
+<div class="section">
+  <div class="section-title">(1) 產品基本資料</div>
+  <div class="table-wrap">
+    <table class="table">
+      <colgroup>
+        <col class="col-narrow" style="width:140px" />
+        <col />
+      </colgroup>
+      <tbody>
+        <tr>
+          <th>產品名稱</th>
+          <td>
+            <textarea id="prodName" rows="2" placeholder="例：清爽型防曬乳 50 ml"></textarea>
+          </td>
+        </tr>
+        <tr>
+          <th>PIF 編碼</th>
+          <td>
+            <textarea id="pifCode" rows="1" placeholder="請從封面頁複製 PIF 編碼並貼於此處" readonly></textarea>
+          </td>
+        </tr>
+        <tr>
+          <th>產品類別</th>
+          <td>
+            <select id="prodCategory" title="依官方14類別選擇">
+              <option value="">— 請選擇類別 —</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <th>產品形式</th>
+          <td>
+            <select id="prodForm" title="依所選類別顯示形式" disabled>
+              <option value="">— 請先選擇類別 —</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <th>用途</th>
+          <td>
+            <input id="prodUse" type="text" placeholder="例：防曬、清潔、保濕…" />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">製造作業場所資訊</div>
+  <div class="table-wrap">
+    <table class="table" id="tblMfg">
+      <colgroup>
+        <col class="col-idx" />
+        <col />
+        <col />
+        <col style="width:120px" />
+        <col style="width:60px" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>製造廠名稱</th>
+          <th>地址</th>
+          <th>國別</th>
+          <th class="no-print">操作</th>
+        </tr>
+      </thead>
+      <tbody id="mfgBody"></tbody>
+    </table>
+  </div>
+  <button id="btnAddMfg" class="btn primary no-print">新增製造場所</button>
+</div>
+
+<div class="section">
+  <div class="section-title">包裝作業場所資訊</div>
+  <div class="table-wrap">
+    <table class="table" id="tblPkg">
+      <colgroup>
+        <col class="col-idx" />
+        <col />
+        <col />
+        <col style="width:120px" />
+        <col style="width:60px" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>包裝廠名稱</th>
+          <th>地址</th>
+          <th>國別</th>
+          <th class="no-print">操作</th>
+        </tr>
+      </thead>
+      <tbody id="pkgBody"></tbody>
+    </table>
+  </div>
+  <button id="btnAddPkg" class="btn primary no-print">新增包裝場所</button>
+</div>
+
+<div class="section">
+  <div class="section-title">產品責任業者資訊</div>
+  <div class="table-wrap">
+    <table class="table">
+      <colgroup>
+        <col class="col-narrow" style="width:160px" />
+        <col />
+      </colgroup>
+      <tbody>
+        <tr>
+          <th>責任業者名稱</th>
+          <td><input id="makerName" type="text" placeholder="例：A/B 化粧品股份有限公司" /></td>
+        </tr>
+        <tr>
+          <th>地址</th>
+          <td><textarea id="makerAddr" rows="2" placeholder="例：○○市 ○○區 ○○路 ○○段 XX 號"></textarea></td>
+        </tr>
+        <tr>
+          <th>聯絡電話</th>
+          <td><input id="makerTel" type="text" placeholder="例：02-2XXX-XXXX" /></td>
+        </tr>
+        <tr>
+          <th>統一編號</th>
+          <td><input id="makerTax" type="text" placeholder="例：01234567" /></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+(async function(){
+  const $ = s => document.querySelector(s);
+  const $$ = s => document.querySelectorAll(s);
+
+  let pifCode = null;
+  let pifDocRef = null;
+
+  var state={
+    basic:{pifCode:\'\', name:\'\',category:\'\',form:\'\',use:\'\'},
+    mfg:[],
+    pkg:[],
+    maker:{name:\'\',addr:\'\',tel:\'\',tax:\'\'}
+  };
+
+  const CATS=[
+    {n:'洗髮用化粧品類', f:['洗髮精','洗髮乳','洗髮霜','洗髮凝膠','洗髮粉','其他']},
+    {n:'洗臉卸粧用化粧品類', f:['洗面乳','洗面霜','洗面凝膠','洗面泡沫','洗面粉','卸粧油','卸粧乳','卸粧液','其他']},
+    {n:'沐浴用化粧品類', f:['沐浴油','沐浴乳','沐浴凝膠','沐浴泡沫','沐浴粉','浴鹽','其他']},
+    {n:'香皂類', f:['香皂','其他']},
+    {n:'頭髮用化粧品類', f:['頭髮滋養液','護髮乳','護髮霜','護髮凝膠','護髮油','造型噴霧','定型髮霜','髮膠','髮蠟','髮油','潤髮劑','髮表著色劑','染髮劑','脫色/脫染劑','燙髮劑','其他']},
+    {n:'化粧水/油/面霜乳液類', f:['化粧水','化粧用油','保養皮膚用乳液','保養皮膚用乳霜','保養皮膚用凝膠','保養皮膚用油','剃鬍水','剃鬍膏','剃鬍泡沫','剃後化粧水','剃後面霜','護手乳','護手霜','護手凝膠','護手油','助曬乳','助曬霜','助曬凝膠','助曬油','糊狀(泥膏狀)面膜','面膜','其他']},
+    {n:'香氛用化粧品類', f:['香水','香膏','香粉','爽身粉','腋臭防止劑','其他']},
+    {n:'止汗制臭劑類', f:['止汗劑','制臭劑','其他']},
+    {n:'唇用化粧品類', f:['唇膏','唇蜜','唇油','唇膜','其他']},
+    {n:'覆敷用化粧品類', f:['粉底液','粉底霜','粉膏','粉餅','蜜粉','臉部用彩粧品','定粧定色粉/劑','其他']},
+    {n:'眼部用化粧品類', f:['眼霜','眼膠','眼影','眼線','眼部用卸粧油','眼部用卸粧乳','眼膜','睫毛膏','眉筆','眉粉','眉膏','眉膠','其他']},
+    {n:'指甲用化粧品類', f:['指甲油','指甲油卸除液','指甲用乳','指甲用霜','其他']},
+    {n:'美白牙齒類', f:['牙齒美白劑','牙齒美白牙膏']},
+    {n:'非藥用牙膏、漱口水類', f:['非藥用牙膏','非藥用漱口水']}
+  ];
+
+  async function save(){
+    if (!pifDocRef) return;
+    try {
+        collectStateFromUI();
+        await pifDocRef.set(state, { merge: true });
+        console.log("PIF data saved to Firestore");
+        alert("資料已成功儲存至雲端！");
+    } catch (error) {
+        console.error("Error saving PIF data: ", error);
+        alert("儲存失敗，請檢查網路連線或稍後再試。");
+    }
+  }
+
+  async function load(){
+    if (!pifDocRef) return;
+    try {
+        const docSnap = await pifDocRef.get();
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            Object.assign(state, data);
+            if (!state.mfg || state.mfg.length === 0) state.mfg = [{name:\'\',addr:\'\',country:\'\'}];
+            if (!state.pkg || state.pkg.length === 0) state.pkg = [{name:\'\',addr:\'\',country:\'\'}];
+            renderAll();
+            console.log("PIF data loaded from Firestore");
+        } else {
+            console.log("No such document! Initializing with default state.");
+            state.basic.pifCode = pifCode;
+            renderAll();
+        }
+    } catch (error) {
+        console.error("Error loading PIF data: ", error);
+    }
+  }
+  
+  function collectStateFromUI() {
+      state.basic.pifCode = $('#pifCode').value || \'\';
+      state.basic.name = $('#prodName').value || \'\';
+      state.basic.category = $('#prodCategory').value || \'\';
+      state.basic.form = $('#prodForm').value || \'\';
+      state.basic.use = $('#prodUse').value || \'\';
+      state.maker.name = $('#makerName').value || \'\';
+      state.maker.addr = $('#makerAddr').value || \'\';
+      state.maker.tel = $('#makerTel').value || \'\';
+      state.maker.tax = $('#makerTax').value || \'\';
+  }
+
+  function renderAll(){
+      bindBasic();
+      render('mfg');
+      render('pkg');
+      bindMaker();
+  }
+
+  function bindBasic(){
+    var b=state.basic;
+    $('#pifCode').value=b.pifCode||\'\';
+    $('#prodName').value=b.name||\'\';
+    $('#prodUse').value=b.use||\'\';
+    var catSel=$('#prodCategory'); catSel.innerHTML='<option value="">— 請選擇類別 —</option>' + CATS.map(function(c){return '<option>'+c.n+'</option>';}).join(\'\');
+    if(b.category){ catSel.value=b.category; }
+    buildFormSelect();
+    catSel.addEventListener('change', function(e){ state.basic.category=e.target.value; 
+      if(!state.basic.category){ state.basic.form=\'\'; }
+      buildFormSelect();
+    });
+    $('#prodForm').addEventListener('change', function(e){ state.basic.form=e.target.value; });
+  }
+
+  function buildFormSelect(){
+    var formSel=$('#prodForm'); var cat=$('#prodCategory').value; var catObj=CATS.find(function(c){return c.n===cat});
+    if(!catObj){ formSel.innerHTML='<option value="">— 請先選擇類別 —</option>'; formSel.disabled=true; return; }
+    formSel.disabled=false;
+    formSel.innerHTML='<option value="">— 請選擇形式 —</option>' + catObj.f.map(function(n){return '<option>'+n+'</option>';}).join(\'\');
+    if(state.basic.form){ formSel.value=state.basic.form; }
+  }
+
+  function rowTpl(kind, it, idx){
+    var nameLabel = kind==='mfg'? '製造廠名稱':'包裝廠名稱';
+    var tbody = kind==='mfg'? $('#mfgBody'):$('#pkgBody');
+    var tr=document.createElement('tr');
+    function esc(s){return (s||\'\').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/\'/g,'&#39;')}
+    tr.innerHTML=
+      '<td class="col-idx">'+(idx+1)+'</td>'+
+      '<td><input type="text" class="name" placeholder="'+nameLabel+'" value="'+esc(it.name)+'"></td>'+
+      '<td><textarea class="addr" rows="2" placeholder="地址">'+esc(it.addr)+'</textarea></td>'+
+      '<td><input type="text" class="country" placeholder="國別" value="'+esc(it.country)+'"></td>'+
+      '<td class="no-print"><button class="btn del">刪除</button></td>';
+    tbody.appendChild(tr);
+    $('.name',tr).addEventListener('input',e=>{ it.name=e.target.value; });
+    $('.addr',tr).addEventListener('input',e=>{ it.addr=e.target.value; });
+    $('.country',tr).addEventListener('input',e=>{ it.country=e.target.value; });
+    $('.del',tr).addEventListener('click',()=>{ var a=(kind==='mfg'? state.mfg:state.pkg); a.splice(idx,1); render(kind); });
+  }
+
+  function render(kind){
+    if(!kind || kind==='mfg'){ var mb=$('#mfgBody'); mb.innerHTML=\'\'; state.mfg.forEach((x,i)=>rowTpl('mfg',x,i)); }
+    if(!kind || kind==='pkg'){ var pb=$('#pkgBody'); pb.innerHTML=\'\'; state.pkg.forEach((x,i)=>rowTpl('pkg',x,i)); }
+    var m=state.maker; $('#makerName').value=m.name||\'\'; $('#makerAddr').value=m.addr||\'\'; $('#makerTel').value=m.tel||\'\'; $('#makerTax').value=m.tax||\'\';
+  }
+
+  function bindMaker(){
+      var m = state.maker;
+      $('#makerName').value = m.name || \'\';
+      $('#makerAddr').value = m.addr || \'\';
+      $('#makerTel').value = m.tel || \'\';
+      $('#makerTax').value = m.tax || \'\';
+  }
+
+  function add(kind){ var a=(kind==='mfg'? state.mfg:state.pkg); a.push({name:\'\',addr:\'\',country:\'\'}); render(kind); }
+
+  function exportJSON(){ collectStateFromUI(); var blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json;charset=utf-8'}); var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='PIF_01_'+pifCode+'.json'; a.click(); URL.revokeObjectURL(a.href); }
+  function importJSON(file){ var r=new FileReader(); r.onload=async function(e){ try{ var obj=JSON.parse(e.target.result); if(obj&&obj.basic){ Object.assign(state, obj); renderAll(); await save(); alert('已從 JSON 匯入並儲存至資料庫。'); } else { alert('格式不符，未找到 basic 欄位。'); } }catch(err){ alert('匯入失敗：JSON 格式不正確。'); } }; r.readAsText(file,'utf-8'); }
+
+  function preparePrintClones(){
+    var fields=document.querySelectorAll('textarea, input[type=text], select');
+    Array.prototype.forEach.call(fields,function(t){
+      if(t.nextElementSibling && t.nextElementSibling.classList && t.nextElementSibling.classList.contains('print-clone')) return;
+      var d=document.createElement('div'); d.className='print-clone'; d.textContent=(t.tagName==='SELECT'? (t.options[t.selectedIndex]? t.options[t.selectedIndex].text: \'\') : (t.value||\'\')); t.parentNode.insertBefore(d,t.nextSibling); t.setAttribute('data-print-hidden','1');
+    });
+  }
+  function refreshPrintClones(){ collectStateFromUI(); var fields=document.querySelectorAll('textarea, input[type=text], select'); Array.prototype.forEach.call(fields,function(t){ var n=t.nextElementSibling; if(n && n.classList && n.classList.contains('print-clone')) n.textContent=(t.tagName==='SELECT'? (t.options[t.selectedIndex]? t.options[t.selectedIndex].text: \'\') : (t.value||\'\')); }); }
+  function cleanupPrintClones(){ Array.prototype.forEach.call(document.querySelectorAll('.print-clone'),d=>d.remove()); Array.prototype.forEach.call(document.querySelectorAll('[data-print-hidden]'),el=>el.removeAttribute('data-print-hidden')); }
+  window.addEventListener('beforeprint', function(){ refreshPrintClones(); preparePrintClones(); });
+  window.addEventListener('afterprint', cleanupPrintClones);
+
+  async function init() {
+      const urlParams = new URLSearchParams(window.location.search);
+      pifCode = urlParams.get('pifCode');
+      if (pifCode) {
+        pifDocRef = db.collection("pifs").doc(pifCode);
+        $('#pifCode').value = pifCode;
+        await load();
+      } else {
+        alert("錯誤：缺少 PIF 編碼。正在返回列表頁。");
+        window.location.href = "pifs.html";
+      }
+      $('#btnAddMfg').addEventListener('click',()=>add('mfg'));
+      $('#btnAddPkg').addEventListener('click',()=>add('pkg'));
+      $('#btnSave').addEventListener('click', save);
+      $('#btnExport').addEventListener('click',exportJSON);
+      $('#imp').addEventListener('change',e=>{var f=e.target.files&&e.target.files[0]; if(f) importJSON(f); e.target.value=\'\';});
+      $('#btnPrint').addEventListener('click',()=>window.print());
+  }
+
+  init();
+
+})();
+</script>
+</body>
+</html>

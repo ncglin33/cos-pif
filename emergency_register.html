@@ -1,0 +1,69 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency UID Retriever</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: #f0f0f0; color: #333; }
+        #container { background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center; }
+        button { font-size: 1.2rem; padding: 0.8rem 1.5rem; border: none; background-color: #4285F4; color: white; border-radius: 4px; cursor: pointer; }
+        #result { margin-top: 2rem; font-size: 1.1rem; background: #eee; padding: 1rem; border-radius: 4px; word-break: break-all; }
+        h1 { margin-top: 0; }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>緊急使用者 ID 獲取工具</h1>
+        <p>請點擊下方按鈕，使用您的 Google 帳號登入。</p>
+        <button id="login-btn">使用 Google 帳號登入</button>
+        <div id="result" style="display:none;">
+            <h2>登入成功！</h2>
+            <p>請複製下方的 UID，並將其提供給 AI 助理：</p>
+            <pre><code id="uid-output"></code></pre>
+            <p>Email: <span id="email-output"></span></p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCwlaU1as4KQQABJYCfudKCwUt38TbaNek",
+            authDomain: "my-pif-64857823-900de.firebaseapp.com",
+            projectId: "my-pif-64857823-900de",
+            storageBucket: "my-pif-64857823-900de.appspot.com",
+            messagingSenderId: "143235873399",
+            appId: "1:143235873399:web:536efc772d9c29706c6472"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        const loginBtn = document.getElementById('login-btn');
+        const resultDiv = document.getElementById('result');
+        const uidOutput = document.getElementById('uid-output');
+        const emailOutput = document.getElementById('email-output');
+
+        loginBtn.addEventListener('click', async () => {
+            const provider = new GoogleAuthProvider();
+            try {
+                const userCredential = await signInWithPopup(auth, provider);
+                const user = userCredential.user;
+                
+                // Display UID and email
+                uidOutput.textContent = user.uid;
+                emailOutput.textContent = user.email;
+                resultDiv.style.display = 'block';
+                loginBtn.style.display = 'none';
+
+            } catch (error) {
+                console.error("Login failed:", error);
+                alert(`登入失敗: ${error.message}`);
+            }
+        });
+    </script>
+</body>
+</html>

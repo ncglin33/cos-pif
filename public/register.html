@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CosPIF 註冊</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    :root{--pink:#f02c8c;--bg:#f6f7fb;--card:#fff;--text:#111827;--muted:#6b7280;--border:#e5e7eb;}
+    body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--text);}
+main{max-width:980px;margin:32px auto;padding:0 16px;}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:0 10px 30px rgba(17,24,39,.06);padding:26px;}
+    h1{margin:0 0 8px 0;font-size:28px}
+    p.lead{margin:0 0 18px 0;color:var(--muted)}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    @media (max-width:780px){.grid{grid-template-columns:1fr;}}
+    label{display:block;font-size:13px;color:var(--muted);margin:10px 0 6px}
+    input,select,textarea{width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:12px;padding:12px 12px;font-size:15px;background:#fff;outline:none}
+    input:focus,textarea:focus{border-color:#c7d2fe;box-shadow:0 0 0 3px rgba(99,102,241,.15)}
+    .row{display:flex;gap:10px;align-items:center;margin-top:10px}
+    .row input[type="checkbox"]{width:auto}
+    .actions{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap}
+    button{border:0;border-radius:12px;padding:12px 16px;font-weight:800;cursor:pointer}
+    button.primary{background:var(--pink);color:#fff}
+    button.ghost{background:#fff;border:1px solid var(--border)}
+    .msg{margin-top:12px;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:#fff}
+    .msg.error{border-color:#fecaca;background:#fff1f2;color:#991b1b}
+    .msg.ok{border-color:#bbf7d0;background:#f0fdf4;color:#166534}
+    .hint{font-size:12px;color:var(--muted);margin-top:6px}
+    .divider{height:1px;background:var(--border);margin:18px 0}
+  </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo"><i class="fa-solid fa-shield-halved"></i> CosPIF</a>
+                <ul class="nav-links">
+                    <li><a href="index.html#features">核心功能</a></li>
+                    <li><a href="index.html#about">關於我們</a></li>
+                    <li><a href="contact.html">聯絡我們</a></li>
+                </ul>
+                <a href="login.html" class="btn-login">登入系統</a>
+            </nav>
+        </div>
+    </header>
+<main>
+    <div class="card">
+      <h1>建立您的 CosPIF 帳戶</h1>
+      <p class="lead">註冊完成後帳號將進入審核流程，審核通過會另寄通知信。</p>
+
+      <div id="msg" class="msg" style="display:none"></div>
+
+      <form id="form">
+        <div class="grid">
+          <div>
+            <label>姓名 *</label>
+            <input id="name" required />
+          </div>
+          <div>
+            <label>公司名稱 *</label>
+            <input id="company" required />
+          </div>
+          <div>
+            <label>公司統編（8 碼）</label>
+            <input id="taxId" inputmode="numeric" maxlength="8" placeholder="例：12345678" />
+            <div class="row">
+              <input id="noTaxId" type="checkbox" />
+              <label for="noTaxId" style="margin:0;color:var(--text);font-size:13px;">尚無統編，改用「手機號碼」作為公司歸戶代碼</label>
+            </div>
+            <div class="hint">若勾選「尚無統編」，系統會以手機號碼作為 companyKey。</div>
+          </div>
+          <div>
+            <label>手機號碼（無統編者必填）</label>
+            <input id="phone" inputmode="tel" placeholder="例：0912345678" />
+          </div>
+          <div>
+            <label>Email *</label>
+            <input id="email" type="email" required />
+          </div>
+          <div>
+            <label>密碼 *</label>
+            <input id="password" type="password" minlength="6" required />
+            <div class="hint">至少 6 碼。</div>
+          </div>
+          <div>
+            <label>確認密碼 *</label>
+            <input id="password2" type="password" minlength="6" required />
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="actions">
+          <button type="submit" class="primary" id="btnSubmit">送出註冊</button>
+          <button type="button" class="ghost" id="btnReset">清除</button>
+        </div>
+      </form>
+
+      <div class="hint" style="margin-top:14px;">
+        若你先前遇到：<b>Expected first argument to collection()</b>，
+        這版已改成 <code>setDoc(doc(db, "users", uid), ...)</code>，不再使用錯誤的 collection 參數。
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    // ✅ 使用同一套 firebase-config.js（你其他頁面也在用）
+    import { auth, db } from "./firebase-config.js";
+    import { createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const $ = (id) => document.getElementById(id);
+    const msgEl = $("msg");
+
+    function showMsg(text, type = "error") {
+      msgEl.style.display = "block";
+      msgEl.className = "msg " + (type === "ok" ? "ok" : "error");
+      msgEl.textContent = text;
+    }
+    function clearMsg() {
+      msgEl.style.display = "none";
+      msgEl.textContent = "";
+      msgEl.className = "msg";
+    }
+
+    $("noTaxId").addEventListener("change", () => {
+      const noTax = $("noTaxId").checked;
+      $("taxId").disabled = noTax;
+      if (noTax) $("taxId").value = "";
+    });
+
+    $("btnReset").addEventListener("click", () => {
+      clearMsg();
+      $("form").reset();
+      $("taxId").disabled = false;
+    });
+
+    $("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearMsg();
+
+      const name = $("name").value.trim();
+      const company = $("company").value.trim();
+      const taxIdRaw = $("taxId").value.trim();
+      const noTax = $("noTaxId").checked;
+      const phone = $("phone").value.trim();
+      const email = $("email").value.trim().toLowerCase();
+      const pw = $("password").value;
+      const pw2 = $("password2").value;
+
+      if (!name || !company || !email) return showMsg("請填寫必填欄位（姓名/公司/Email）。");
+      if (pw.length < 6) return showMsg("密碼至少 6 碼。");
+      if (pw !== pw2) return showMsg("兩次密碼不一致，請重新確認。");
+
+      const taxId = taxIdRaw.replace(/\D/g, "");
+      if (!noTax) {
+        if (taxId && taxId.length !== 8) return showMsg("公司統編需為 8 碼，或勾選「尚無統編」。");
+        if (!taxId) return showMsg("請填公司統編，或勾選「尚無統編」。");
+      } else {
+        if (!phone) return showMsg("已勾選「尚無統編」時，手機號碼必填。");
+      }
+
+      const companyKey = noTax ? phone : taxId;
+
+      const btn = $("btnSubmit");
+      btn.disabled = true;
+      btn.textContent = "註冊中…";
+
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, pw);
+        const user = cred.user;
+
+        // 更新 Auth profile（可選）
+        try { await updateProfile(user, { displayName: name }); } catch {}
+
+        // ✅ 關鍵：用 setDoc/doc，避免 collection() 第一參數錯誤
+        await setDoc(doc(db, "users", user.uid), {
+          name,
+          company,
+          taxId: noTax ? "" : taxId,
+          phone: phone || "",
+          companyKey,
+          email,
+          status: "pending",
+          createdAt: serverTimestamp()
+        }, { merge: true });
+
+        showMsg("註冊成功！帳號已送出審核，請稍候管理員審核通知。", "ok");
+
+        // 2.2 秒後導向登入
+        setTimeout(() => {
+          window.location.href = "login.html";
+        }, 2200);
+
+      } catch (err) {
+        console.error(err);
+        const code = (err && err.code) ? String(err.code) : "";
+        const msg = (err && err.message) ? String(err.message) : "註冊失敗";
+        if (code.includes("auth/email-already-in-use")) {
+          showMsg("此 Email 已註冊，請直接登入或使用其他 Email。");
+        } else if (code.includes("auth/invalid-email")) {
+          showMsg("Email 格式不正確。");
+        } else if (code.includes("auth/weak-password")) {
+          showMsg("密碼強度不足，請至少 6 碼。");
+        } else {
+          showMsg("註冊失敗：" + msg);
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "送出註冊";
+      }
+    });
+  </script>
+</body>
+</html>

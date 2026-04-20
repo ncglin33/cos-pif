@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PIF 16 SA｜產品安全評估總結與SA簽署</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="./style.css">
+<style>
+  .toolbar .wrap { display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 1rem; }
+  .toolbar-group { display: flex; gap: .5rem; align-items: center; }
+  .toolbar-group.user-info { display: none; align-items: center; gap: .75rem; }
+  .user-email { font-size: 0.9rem; color: #6c757d; }
+  button.danger-ghost { background: transparent; border: 1px solid #dc3545; color: #dc3545; }
+  button.danger-ghost:hover { background: #dc3545; color: #fff; }
+
+  .upload-status { 
+      padding: 0.5rem 1rem; 
+      margin-top: .5rem; 
+      border-radius: 6px; 
+      font-weight: 500;
+      font-size: 0.9rem;
+      display: none;
+  }
+  .status-info { background-color: #e0e7ff; color: #3730a3; }
+  .status-success { background-color: #dcfce7; color: #166534; }
+  .status-error { background-color: #fee2e2; color: #991b1b; }
+  .upload-status i { margin-right: 0.5rem; }
+
+  /* 統一 PDF 狀態列（本頁 PDF） */
+  #upload-status-pdf { margin-bottom: 0.75rem; }
+
+  .sa-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+  }
+  .file-upload-section {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+  }
+  .pdf-preview {
+      display: none;
+      width: 100%;
+      height: 700px;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      margin-top: 1rem;
+  }
+
+  /* 🔹 簽名欄外框 */
+  .signature-box{
+    border:1px solid #9ca3af;
+    border-radius:6px;
+    height:70px;
+    padding:4px 8px;
+    display:flex;
+    align-items:flex-end;
+    justify-content:flex-start;
+    font-size:0.8rem;
+    color:#9ca3af;
+  }
+
+  /* 🔹 結論欄位自動撐高、不顯示拉軸（畫面用） */
+  textarea.auto-expand{
+    overflow-y:hidden;
+    resize:vertical;
+  }
+
+  /* 🔹 列印用結論區塊（整段顯示，不拉軸） */
+  #summary-print{
+    white-space:pre-wrap;
+    border:1px solid #e5e7eb;
+    border-radius:6px;
+    padding:8px 10px;
+    line-height:1.5;
+    min-height:80px;
+  }
+
+  /* 🔹 列印統一表頭 */
+  .print-only { display: none; }
+
+  #print-header{
+    border:1px solid #e5e7eb;
+    border-radius:10px;
+    padding:10px 12px;
+    margin:0 0 12px 0;
+    background:#fff;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+  .print-header-grid{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .ph-left{flex:1;min-width:0;}
+  .ph-right{text-align:right;min-width:220px;}
+  .ph-title{
+    font-size:1.28rem;
+    font-weight:800;
+    letter-spacing:.3px;
+    color:#111827;
+    margin:0 0 4px 0;
+    line-height:1.2;
+  }
+  .ph-sub{
+    font-size:.98rem;
+    color:#111827;
+    line-height:1.35;
+    margin:0;
+    white-space:nowrap;
+  }
+  .ph-label{
+    font-weight:700;
+    color:#374151;
+  }
+
+  @media print {
+    body { font-size: 9px; }
+    .no-print { display: none !important; }
+    .print-only { display:block !important; }
+    .container { max-width: 100%; padding: 0; margin: 0 auto; }
+    input, textarea, select { 
+      border: none !important; 
+      background: transparent !important; 
+      box-shadow: none !important; 
+    }
+    th, td { white-space: normal; }
+    .page-title { display: none !important; } /* 避免與列印表頭重複 */
+    textarea.auto-expand{
+      height:auto !important;
+      overflow:visible !important;
+    }
+  }
+</style>
+</head>
+<body>
+  <!-- 列印時不顯示 nav -->
+  <pif-nav class="no-print"></pif-nav>
+
+  <div class="toolbar no-print">
+    <div class="wrap">
+      <div class="toolbar-group">
+        <a id="back-to-list-link" href="/pifs.html" class="ghost" style="text-decoration:none; color:inherit">
+          <button><i class="fa-solid fa-chevron-left"></i> 回 PIF 列表</button>
+        </a>
+        <a id="back-to-pif16-link" href="pif16.html" class="ghost" style="text-decoration:none; color:inherit">
+          <button class="ghost"><i class="fa-solid fa-file-invoice"></i> PIF16</button>
+        </a>
+      </div>
+      <div class="toolbar-group">
+        <!-- 🔹 本頁 PDF 上傳按鈕（參照 pif16） -->
+        <button id="btnUploadPdf" class="ghost"><i class="fa-solid fa-file-arrow-up"></i> 上傳本頁 PDF</button>
+        <input type="file" id="pdfUploader" accept="application/pdf" hidden>
+        <button onclick="window.print()" class="ghost"><i class="fa-solid fa-print"></i> 列印</button>
+        <button id="save-to-cloud-btn" class="primary"><i class="fa-solid fa-cloud-arrow-up"></i> 儲存至雲端</button>
+      </div>
+      <div class="toolbar-group user-info" id="user-info-group">
+        <span class="user-email" id="user-email-display"></span>
+        <button id="logout-btn" class="danger-ghost"><i class="fa-solid fa-right-from-bracket"></i> 登出</button>
+      </div>
+      <span class="muted small" id="autosave-hint"></span>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- 🔹 本頁 PDF 上傳狀態 -->
+    <div id="upload-status-pdf" class="upload-status no-print"></div>
+
+    <!-- 🔹 列印用表頭（畫面上不顯示） -->
+    <div id="print-header" class="print-only">
+      <div class="print-header-grid">
+        <div class="ph-left">
+          <div class="ph-title" id="printTitle"></div>
+          <p class="ph-sub" id="printProductName"></p>
+        </div>
+        <div class="ph-right">
+          <p class="ph-sub">
+            <span class="ph-label">PIFID：</span>
+            <span id="printPifId"></span>
+          </p>
+          <p class="ph-sub" id="printCompanyName"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 螢幕用標題（列印時隱藏） -->
+    <h1 class="page-title">PIF 16-SA｜產品安全評估總結與SA人員</h1>
+
+    <div class="grid-top">
+      <div class="top-left">
+        <label>產品名稱</label>
+        <input data-path="product.name" type="text" readonly>
+      </div>
+      <div class="top-right">
+        <div class="meta">
+          <div><label>PIF 編號</label><input data-path="product.pifId" type="text" readonly></div>
+          <div><label>廠商名稱</label><input data-path="product.brandName" type="text" readonly></div>
+          <div><label>報告日期</label><input data-path="product.rptDate" type="date"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>安全評估結論</h3>
+      <div class="body">
+        <!-- 🔹 螢幕：textarea，自動撐高；列印時隱藏 -->
+        <textarea
+          class="auto-expand no-print"
+          data-path="pif16sa.summary"
+          rows="15"
+          placeholder="建議依下列架構分段撰寫： 
+一、評估資料來源與範圍（說明引用之 PIF 章節及族群/使用情境）
+二、理化性質與產品設計（pH、黏度、外觀、包材相容性等）
+三、毒理學與暴露評估（NOAEL、DA%、物種差異修正係數、SED/MoS 結果）
+四、微生物品質與防腐系統（微生物檢驗、PET 防腐挑戰試驗結果）
+五、安定性試驗與使用安全（加速/常溫安定性、運輸與儲存情境）
+六、整體風險評估結論與限制（一般族群安全性、特殊族群與再次評估條件）
+
+可先使用系統自動帶入之範例內容，再依實際產品資料增修。"></textarea>
+
+        <!-- 🔹 列印：顯示完整結論文字，無捲軸 -->
+        <div id="summary-print" class="print-only"></div>
+      </div>
+    </div>
+
+    <div class="card">
+        <h3>安全評估人員資料 (Safety Assessor)</h3>
+        <div class="body">
+            <div class="two-col">
+                <div><label>評估人員姓名</label><input data-path="pif16sa.assessorName" type="text" readonly></div>
+                <div><label>畢業學校與科系</label><input data-path="pif16sa.schoolMajor" type="text" placeholder="例如：嘉南藥理大學 藥學系"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🔹 SA 親簽區 + 畢業/訓練證書上傳（都放在 SA 簽署欄內） -->
+    <div class="card">
+      <h3>SA 簽署欄</h3>
+      <div class="body">
+        <div class="two-col">
+          <div>
+            <label>安全評估人員簽章 (Signature)</label>
+            <div class="signature-box">
+              <span class="small muted">由安全評估人員親簽</span>
+            </div>
+          </div>
+          <div>
+            <label>簽署日期</label>
+            <input data-path="pif16sa.signDate" type="date">
+          </div>
+        </div>
+
+        <hr style="margin: 1.5rem 0;">
+
+        <div class="sa-grid">
+            <div class="file-upload-section">
+                <label style="font-weight:600">畢業證書 (PDF)</label>
+                <p class="small muted" style="margin:.2rem 0 .8rem">請上傳經認證之國內、外大學以上相關科系畢業證書。</p>
+                <button id="btnUploadDiploma" class="ghost"><i class="fa-solid fa-file-arrow-up"></i> 上傳畢業證書</button>
+                <input type="file" id="diplomaUploader" accept="application/pdf" hidden>
+                <div id="diploma-status" class="upload-status"></div>
+                <iframe id="diploma-preview" class="pdf-preview"></iframe>
+            </div>
+            <div class="file-upload-section">
+                <label style="font-weight:600">訓練證書 (PDF)</label>
+                 <p class="small muted" style="margin:.2rem 0 .8rem">請上傳經主管機關或其認可機構舉辦之相關訓練合格證書。</p>
+                <button id="btnUploadTraining" class="ghost"><i class="fa-solid fa-file-arrow-up"></i> 上傳訓練證書</button>
+                <input type="file" id="trainingUploader" accept="application/pdf" hidden>
+                <div id="training-status" class="upload-status"></div>
+                <iframe id="training-preview" class="pdf-preview"></iframe>
+            </div>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+  import "./components.js";
+
+  const firebaseConfig = JSON.parse(atob('eyJwcm9qZWN0SWQiOiJjb3MtcGlmIiwiYXBwSWQiOiIxOjk5MzMzMjIzNzgxNzpjZWI6M2JiMzNiOTdjNjBmZDAzMzQ0MTkyOCIsInN0b3JhZ2VCdWNrZXQiOiJjb3MtcGlmLmZpcmViYXNlc3RvcmFnZS5hcHAiLCJhcGlLZXkiOiJBSXphU3lBUEk3cmVSNmNtUmlJX1VKam5PelRXekdnaEpVTkFUUzAiLCJhdXRoRG9tYWluIjoiY29zLXBpZi5maXJlYmFzZWFwcC5jb20iLCJtZXNzYWdpbmdTZW5kZXJJZCI6Ijk5MzMzMjIzNzgxNyJ9'));
+  
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const storage = getStorage(app);
+  const $ = sel => document.querySelector(sel);
+  const byId = id => document.getElementById(id);
+
+  let state = {
+    product:{ name:"", brandName:"", pifId:"", rptDate:new Date().toISOString().slice(0,10) },
+    pif16sa:{ assessorName: "", schoolMajor: "", diplomaUrl: "", trainingUrl: "", summary: "", signDate:"" }
+  };
+
+  const fmt = (v) => v ?? "";
+
+  // 統一組出帶參數的 query string
+  function buildPifQuery() {
+    const params = new URLSearchParams();
+    if (state.product.pifId) params.set('id', state.product.pifId);
+    if (state.product.name) params.set('productName', state.product.name);
+    if (state.product.brandName) params.set('companyName', state.product.brandName);
+    return params.toString();
+  }
+
+  function autoResizeTextareas(){
+    document.querySelectorAll('textarea.auto-expand').forEach(el=>{
+      el.style.height = 'auto';
+      el.style.height = (el.scrollHeight + 2) + 'px';
+    });
+  }
+
+  function render() {
+    document.querySelectorAll('[data-path]').forEach(el => {
+      const path = el.dataset.path.split('.');
+      let value = state;
+      for (const key of path) {
+        value = value?.[key];
+      }
+      if (el.type === 'date' && value) {
+        el.value = new Date(value).toISOString().slice(0,10);
+      } else {
+        el.value = fmt(value);
+      }
+    });
+
+    // 列印用結論區塊同步內容
+    const summaryPrint = document.getElementById('summary-print');
+    if (summaryPrint) {
+      summaryPrint.textContent = state.pif16sa.summary || '';
+    }
+
+    updatePdfPreview('diploma', state.pif16sa.diplomaUrl);
+    updatePdfPreview('training', state.pif16sa.trainingUrl);
+    
+    const ts = localStorage.getItem(`${KEY_PREFIX}${state.product.pifId}_ts`);
+    $("#autosave-hint").textContent = ts ? `本機草稿於 ${new Date(parseInt(ts)).toLocaleString()} 已自動保存` : "";
+
+    // 導覽按鈕 URL 參數
+    const query = buildPifQuery();
+
+    const backListLink = document.getElementById('back-to-list-link');
+    if (backListLink) {
+      backListLink.href = query ? `/pifs.html?${query}` : `/pifs.html`;
+    }
+
+    const backPif16Link = document.getElementById('back-to-pif16-link');
+    if (backPif16Link) {
+      backPif16Link.href = query ? `pif16.html?${query}` : `pif16.html`;
+    }
+
+    // 🔹 填入列印表頭
+    const titleEl = document.getElementById('printTitle');
+    if (titleEl) {
+      titleEl.textContent = 'PIF16-SA 產品安全評估總結與SA人員';
+      const pifEl = document.getElementById('printPifId');
+      const prodEl = document.getElementById('printProductName');
+      const compEl = document.getElementById('printCompanyName');
+      if (pifEl) pifEl.textContent = state.product.pifId || '';
+      if (prodEl) prodEl.textContent = state.product.name || '';
+      if (compEl) compEl.textContent = state.product.brandName || '';
+    }
+
+    // 🔹 讓結論欄位自動撐高（畫面上）
+    autoResizeTextareas();
+  }
+
+  function updatePdfPreview(type, url) {
+    const previewEl = byId(`${type}-preview`);
+    if (url) {
+        setUploadStatus(type, `<i class="fa-solid fa-check-circle"></i> 文件已載入`, 'status-success');
+        previewEl.src = url;
+        previewEl.style.display = 'block';
+    } else {
+        previewEl.style.display = 'none';
+    }
+  }
+
+  function handleStateChange(e) {
+    const el = e.target;
+    const path = el.dataset.path;
+    if (!path || el.readOnly) return;
+
+    // auto-expand textarea
+    if (el.classList.contains('auto-expand')) {
+      el.style.height = 'auto';
+      el.style.height = (el.scrollHeight + 2) + 'px';
+    }
+
+    const keys = path.split('.');
+    let target = state;
+    for (let i = 0; i < keys.length - 1; i++) {
+      target = target[keys[i]];
+    }
+    const finalKey = keys[keys.length - 1];
+    
+    target[finalKey] = el.value;
+    
+    saveLocal();
+    render();
+  }
+
+  // ★ 自動產生範例結論（同之前版本）
+  function getAIConclusion() {
+    const name = state.product.name || "本產品";
+    const pifId = state.product.pifId || "";
+    const brand = state.product.brandName || "";
+    const dateStr = state.product.rptDate
+      ? new Date(state.product.rptDate).toISOString().slice(0,10)
+      : new Date().toISOString().slice(0,10);
+
+    return `一、評估資料來源與範圍
+本安全評估係針對【${name}】（PIF 編號：${pifId}，責任廠商：${brand}）所建立之產品資訊檔案（PIF）進行整體審視，資料來源包含：配方與原料毒理學資料（PIF 03、PIF 16／16pro）、理化性質與成品規格（PIF 04）、製造流程與品管紀錄（PIF 05／06）、微生物品質與防腐挑戰試驗結果（PIF 07／11／15），以及安定性試驗報告等。評估範圍主要針對一般健康成人族群，在正常、合理且可預見之使用情境下之安全性。
+
+二、理化性質與產品設計
+根據 PIF 所載，產品之外觀、色澤、氣味、pH、黏度及充填量等理化性質均在配方設計目標與責任廠商自訂規格範圍內，未見分層、析出、明顯變色或異味等異常紀錄。包材與內容物之相容性測試未出現顯著吸色、脆化、鼓罐或揮發量異常，推估在標示保存條件下，產品可維持適當的使用感受與品質穩定性。
+
+三、毒理學與系統性暴露評估
+依據各成分之 NOAEL、吸收率（DA%）、物種差異修正係數及產品暴露參數（A、F、RF、BW 等），計算所得之 SED（系統性暴露劑量）及 MoS（安全係數）均高於預設門檻值，且配方未使用國內外法規所列之禁用或高度關注之 CMR 物質。綜合原料毒理學資料庫及文獻（NOAEL-ref），在標示建議用量與合理使用頻率下，本產品對一般健康消費者之全身性毒性風險評估屬可接受。
+
+四、微生物品質與防腐系統
+成品放行批次之微生物檢驗結果，總生菌數及黴菌／酵母菌均符合化粧品相關標準，且未檢出法規規範之指標致病菌。防腐系統經防腐效力試驗（Preservative Efficacy Test）評估，於觀察期間內對接種菌株具足夠抑菌／殺菌效果，亦未發現菌數反彈或異常生長現象。綜合判斷，在正常使用與標示儲存條件下，產品具備適當之微生物安全保護。
+
+五、安定性試驗與使用安全
+本產品已完成加速及常溫安定性試驗，在模擬運輸、儲存與日常使用條件下，於試驗期間內外觀、氣味、pH 值、黏度及有效成分含量保持於可接受範圍內，包材亦未見明顯洩漏、變形或相容性異常。綜合試驗結果推估，在標示保存期限內，產品應可維持規格品質與使用安全性。
+
+六、整體風險評估結論與建議
+綜合理化性質、毒理學與暴露評估、微生物品質及防腐挑戰試驗、安定性試驗與製程品管等多項證據，判定【${name}】在標示建議用量及正常、合理、可預見之使用情境下，對一般健康成人消費者而言，其風險屬可接受，符合目前我國化粧品安全評估與相關法規要求。敏感性肌膚、特殊醫療需求族群或非預期使用情境（例如誤食、長時間眼部接觸等）仍建議依產品標示警語與一般醫療建議處理，必要時尋求專業醫療協助。
+
+本安全評估結論係依截至評估日（${dateStr}）之前可取得之配方、毒理學資料及法規資訊作成；若未來產品配方、製程、標示對象或相關毒理／法規資訊有重大變更，宜適時重新檢討並更新本安全評估。`;
+  }
+
+  async function loadCloudData(pifId) {
+    if (!pifId) return;
+    try {
+        const pifDoc = await getDoc(doc(db, "pifs", pifId));
+        if (!pifDoc.exists()) throw new Error(`在雲端找不到 PIF ID 為 ${pifId} 的專案。`);
+        
+        const cloudData = pifDoc.data();
+        const pif01 = cloudData.pif01 || {};
+        const pif16sa_cloud = cloudData.pif16sa;
+
+        Object.assign(state.product, pif01);
+        if (pif16sa_cloud) {
+            Object.assign(state.pif16sa, pif16sa_cloud);
+        }
+
+        // Sync assessor name from pif01
+        if (pif01.assessor) {
+            state.pif16sa.assessorName = pif01.assessor;
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        state.product.pifId = params.get('id') || state.product.pifId;
+        state.product.name = params.get('productName') || state.product.name;
+        state.product.brandName = params.get('companyName') || state.product.brandName;
+
+        if (!state.pif16sa.summary) {
+          state.pif16sa.summary = getAIConclusion();
+        }
+
+        saveLocal(); 
+        render();
+
+    } catch (error) {
+        console.error("從 Firestore 載入資料時發生錯誤:", error);
+        alert(`自動同步雲端資料時發生錯誤：${error.message}`);
+    }
+  }
+
+  async function saveToCloud() {
+    if (!state.product.pifId) return alert("錯誤：缺少 PIF ID，無法儲存至雲端。");
+    const btn = $("#save-to-cloud-btn");
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 儲存中...`;
+    
+    try {
+      const pifRef = doc(db, "pifs", state.product.pifId);
+      await setDoc(pifRef, { 
+        pif16sa: state.pif16sa, 
+        lastModified: serverTimestamp() 
+      }, { merge: true });
+      
+      alert("您的 PIF 16-SA 安全評估報告已成功儲存至雲端！");
+      localStorage.removeItem(KEY_PREFIX + state.product.pifId);
+      localStorage.removeItem(`${KEY_PREFIX}${state.product.pifId}_ts`);
+      $("#autosave-hint").textContent = `雲端同步於 ${new Date().toLocaleString()} 完成`;
+
+    } catch (error) {
+      console.error("儲存至雲端時發生錯誤:", error);
+      alert(`儲存至雲端時發生嚴重錯誤：${error.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> 儲存至雲端`;
+    }
+  }
+
+  function uploadSaFile(file, type) {
+      if (!file) return;
+      if (file.type !== "application/pdf") {
+          alert("請僅上傳 PDF 檔案。");
+          return;
+      }
+      if (!state.product.pifId) {
+          alert("錯誤：缺少 PIF ID，無法決定 PDF 儲存路徑。");
+          return;
+      }
+      const storagePath = `pifs/${state.product.pifId}/sa/${type}-${Date.now()}.pdf`;
+      const fileRef = ref(storage, storagePath);
+      const uploadTask = uploadBytesResumable(fileRef, file);
+      
+      const buttonId = type === 'diploma' ? 'btnUploadDiploma' : 'btnUploadTraining';
+      byId(buttonId).disabled = true;
+
+      uploadTask.on('state_changed', 
+          (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              setUploadStatus(type, `<i class="fa-solid fa-upload"></i> 正在上傳... ${Math.round(progress)}%`, 'status-info');
+          }, 
+          (error) => {
+              console.error(`${type} Upload failed:`, error);
+              setUploadStatus(type, `<i class="fa-solid fa-triangle-exclamation"></i> 上傳失敗: ${error.code}`, 'status-error');
+              byId(buttonId).disabled = false;
+          }, 
+          async () => {
+              try {
+                const downloadURL = await getDownloadURL(fileRef);
+                state.pif16sa[`${type}Url`] = downloadURL;
+                saveLocal();
+                updatePdfPreview(type, downloadURL);
+                await saveToCloud();
+              } catch (e) {
+                console.error(`無法取得 ${type} 下載連結:`, e);
+                setUploadStatus(type, `<i class="fa-solid fa-triangle-exclamation"></i> 處理失敗`, 'status-error');
+              } finally {
+                byId(buttonId).disabled = false;
+                byId(`${type}Uploader`).value = '';
+              }
+          }
+      );
+  }
+
+  function setUploadStatus(type, msg, styleClass) {
+      const statusEl = byId(`${type}-status`);
+      if (!statusEl) return;
+      statusEl.innerHTML = msg;
+      statusEl.className = `upload-status ${styleClass}`;
+      statusEl.style.display = 'block';
+  }
+
+  /* === 本頁 PDF 上傳：參考 pif16，檔名 16-SA.pdf === */
+  function handlePdfUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      if (file.type !== "application/pdf") {
+          alert("請僅上傳 PDF 檔案。");
+          return;
+      }
+      if (!state.product.pifId) {
+          alert("錯誤：缺少 PIF ID，無法決定 PDF 儲存路徑。請確認從 PIF 列表進入本頁。");
+          return;
+      }
+      uploadMainPdf(file, `pifs/${state.product.pifId}/16-SA.pdf`);
+  }
+
+  function uploadMainPdf(file, storagePath) {
+      const uploadTask = uploadBytesResumable(ref(storage, storagePath), file);
+      const button = byId('btnUploadPdf');
+      button.disabled = true;
+
+      uploadTask.on('state_changed', 
+          (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              setUploadStatusPdf(`<i class="fa-solid fa-upload"></i> 正在上傳 PDF... ${Math.round(progress)}%`, 'status-info');
+          }, 
+          (error) => {
+              console.error("Main PDF Upload failed:", error);
+              setUploadStatusPdf(`<i class="fa-solid fa-triangle-exclamation"></i> PDF 上傳失敗: ${error.code}`, 'status-error');
+              button.disabled = false;
+          }, 
+          () => {
+              setUploadStatusPdf('<i class="fa-solid fa-check-circle"></i> PDF 已成功上傳！', 'status-success');
+              button.disabled = false;
+              byId('pdfUploader').value = '';
+              setTimeout(() => setUploadStatusPdf('', 'none'), 5000);
+          }
+      );
+  }
+
+  function setUploadStatusPdf(msg, styleClass) {
+      const statusEl = byId('upload-status-pdf');
+      if (!statusEl) return;
+      if (!msg || styleClass === 'none') {
+          statusEl.style.display = 'none';
+          statusEl.innerHTML = '';
+      } else {
+          statusEl.innerHTML = msg;
+          statusEl.className = `upload-status no-print ${styleClass}`;
+          statusEl.style.display = 'block';
+      }
+  }
+  /* === 本頁 PDF 上傳 結束 === */
+
+  const KEY_PREFIX="pif16sa_state_v1.5_";
+  function saveLocal(){
+    if (!state.product.pifId) return;
+    const key = KEY_PREFIX + state.product.pifId;
+    try {
+      localStorage.setItem(key, JSON.stringify(state));
+      localStorage.setItem(`${key}_ts`, String(Date.now()));
+       $("#autosave-hint").textContent = `本機草稿於 ${new Date().toLocaleString()} 已自動保存`;
+    } catch(e) { console.warn("無法儲存本機草稿。", e); }
+  }
+  
+  function loadLocal(pifId){
+    if (!pifId) return false;
+    const key = KEY_PREFIX + pifId;
+    const s = localStorage.getItem(key);
+    if(s){
+      try {
+        state = JSON.parse(s);
+        return true;
+      } catch (e) {
+        console.error("解析本機草稿時發生錯誤:", e);
+        return false;
+      }
+    }
+    return false;
+  }
+
+  (function init(){
+    const params = new URLSearchParams(window.location.search);
+    const pifId = params.get('id');
+
+    if (!pifId) {
+        alert("錯誤：未提供 PIF ID。請從 PIF 列表頁面進入。");
+        document.body.innerHTML = "<h1>無效的頁面</h1><p>請返回 <a href='/pifs.html'>PIF 列表</a>並選擇一個項目。</p>";
+        return;
+    }
+    
+    loadLocal(pifId);
+    
+    const userInfoGroup = byId('user-info-group');
+    const userEmailDisplay = byId('user-email-display');
+
+    onAuthStateChanged(auth, user => {
+      if (user) {
+          userInfoGroup.style.display = 'flex';
+          userEmailDisplay.textContent = user.email;
+          loadCloudData(pifId);
+      } else {
+          userInfoGroup.style.display = 'none';
+          userEmailDisplay.textContent = '';
+          
+          const productName = params.get('productName');
+          const companyName = params.get('companyName');
+          state.product.pifId = pifId;
+          if (productName) state.product.name = productName;
+          if (companyName) state.product.brandName = companyName;
+
+          if (!state.pif16sa.summary) {
+            state.pif16sa.summary = getAIConclusion();
+          }
+          render();
+          alert("您目前為離線狀態，將載入本機草稿。登入後即可同步雲端資料。");
+      }
+    });
+    
+    document.addEventListener('input', handleStateChange);
+    $("#save-to-cloud-btn").addEventListener("click", saveToCloud);
+    
+    byId('logout-btn').addEventListener('click', () => {
+      if (confirm('您確定要登出嗎？')) {
+        signOut(auth).then(() => {
+          alert('您已成功登出。');
+          window.location.href = 'login.html';
+        }).catch((error) => {
+          console.error('登出時發生錯誤:', error);
+          alert('登出失敗，請稍後再試。');
+        });
+      }
+    });
+
+    byId('btnUploadDiploma').addEventListener('click', () => byId('diplomaUploader').click());
+    byId('diplomaUploader').addEventListener('change', (e) => uploadSaFile(e.target.files[0], 'diploma'));
+    
+    byId('btnUploadTraining').addEventListener('click', () => byId('trainingUploader').click());
+    byId('trainingUploader').addEventListener('change', (e) => uploadSaFile(e.target.files[0], 'training'));
+
+    // 🔹 綁定本頁 PDF 上傳
+    byId('btnUploadPdf').addEventListener('click', () => byId('pdfUploader').click());
+    byId('pdfUploader').addEventListener('change', handlePdfUpload);
+  })();
+</script>
+</body>
+</html>

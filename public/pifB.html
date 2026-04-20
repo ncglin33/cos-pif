@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PIF 附錄 B｜其他附件（標籤／彩盒／照片）</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="style.css">
+<style>
+  #status{
+    text-align: center;
+    padding: 2rem;
+    color: var(--muted);
+    border: 2px dashed var(--line);
+    border-radius: .75rem;
+    background: #fff;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1.25rem;
+  }
+
+  .file-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: .75rem;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    overflow: hidden;
+    break-inside: avoid;
+    position: relative;
+  }
+
+  .file-card .preview {
+    display: block;
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+  }
+
+  .file-card .icon-preview {
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #eee;
+    flex-direction:column;
+  }
+
+  .file-card .icon-preview i {
+    font-size: 48px;
+    color: #888;
+  }
+
+  .file-card .icon-preview span {
+    font-size: .9rem;
+    color:#555;
+    margin-top: .5rem;
+  }
+
+  .file-card-body {
+    padding: .8rem;
+  }
+
+  .file-card-title {
+    font-weight: 500;
+    margin: 0 0 .2rem;
+    word-break: break-all;
+  }
+
+  .file-card-meta {
+    font-size: .8rem;
+    color: var(--muted);
+  }
+
+  .file-card .delete-btn {
+    position: absolute;
+    top: .5rem;
+    right: .5rem;
+    background: rgba(0,0,0,.5);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+    line-height: 28px;
+    text-align: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity .2s;
+  }
+
+  .file-card:hover .delete-btn {
+    opacity: 1;
+  }
+
+  .progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    background: var(--brand);
+    width: 0%;
+    transition: width .3s;
+  }
+
+  #upload-status-pdf { 
+      display: none;
+      padding: 0.75rem 1.25rem;
+      margin-top: 1rem;
+      border-radius: 8px;
+      font-weight: 500;
+      text-align: center;
+  }
+  .status-info   { background-color: #e0e7ff; color: #3730a3; }
+  .status-success{ background-color: #dcfce7; color: #166534; }
+  .status-error  { background-color: #fee2e2; color: #991b1b; }
+  #upload-status-pdf i { margin-right: 0.5rem; }
+
+  .read-only .noprint-write { display: none!important; }
+
+  /* 只在列印時顯示的區塊 */
+  .print-only { display: none; }
+
+  /* 卡片式列印表頭（與其他 PIF 頁面一致） */
+  #print-header {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin: 0 0 12px 0;
+    background: #fff;
+  }
+
+  .print-header-grid {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .ph-left { flex: 1; min-width: 0; }
+  .ph-right { text-align: right; min-width: 220px; }
+
+  .ph-title {
+    font-size: 1.28rem;
+    font-weight: 800;
+    letter-spacing: .3px;
+    color: #111827;
+    margin: 0 0 4px 0;
+    line-height: 1.2;
+  }
+
+  .ph-sub {
+    font-size: .98rem;
+    color: #111827;
+    line-height: 1.35;
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  .ph-label {
+    font-weight: 700;
+    color: #374151;
+  }
+
+  @media print{
+    /* 不列印的東西 */
+    .noprint { display: none !important; }
+
+    body { background: #fff; }
+    .container { max-width: none; padding: 0; }
+
+    /* 列印表頭顯示 */
+    .print-only { display: block !important; }
+
+    .grid { grid-template-columns: repeat(2, 1fr); }
+    .file-card {
+      box-shadow: none;
+      border-radius: 0;
+      page-break-inside: avoid;
+    }
+
+    /* 列印用字級微調 */
+    .ph-title { font-size: 1.24rem !important; }
+    .ph-sub  { font-size: .95rem  !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 導覽／top-bar 在螢幕顯示，列印時隱藏 -->
+<pif-nav class="noprint"></pif-nav>
+<top-bar class="noprint"></top-bar>
+
+<div class="container">
+  <!-- ✅ 卡片式列印表頭：只在列印時出現 -->
+  <div id="print-header" class="print-only">
+    <div class="print-header-grid">
+      <div class="ph-left">
+        <div class="ph-title">附錄 B 其他附件</div>
+        <p class="ph-sub"><span id="print-product-name"></span></p>
+      </div>
+      <div class="ph-right">
+        <p class="ph-sub">
+          <span class="ph-label">PIFID：</span>
+          <span id="print-pif-id"></span>
+        </p>
+        <p class="ph-sub"><span id="print-company-name"></span></p>
+      </div>
+    </div>
+  </div>
+
+  <status-bar class="noprint"></status-bar>
+  
+  <div class="toolbar noprint">
+    <button id="btnUploadPifBPdf" class="noprint-write">
+      <i class="fa-solid fa-file-arrow-up"></i> 上傳附錄 B PDF
+    </button>
+    <input type="file" id="pifBPdfUploader" accept="application/pdf" hidden>
+
+    <label class="btn primary noprint-write">
+      <i class="fa-solid fa-cloud-arrow-up"></i> 上傳其他附件...
+      <input id="file-input" type="file" multiple hidden>
+    </label>
+
+    <div style="flex-grow: 1;"></div>
+
+    <button id="btnPrint">
+      <i class="fa-solid fa-print"></i> 列印本頁
+    </button>
+  </div>
+
+  <div id="upload-status-pdf" class="noprint"></div>
+
+  <div id="grid-container">
+    <div id="status">點擊按鈕或將檔案拖曳至此處，以開始上傳。</div>
+    <div id="grid" class="grid"></div>
+  </div>
+
+</div>
+
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL, listAll, deleteObject, getMetadata } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { db, auth } from './firebase-config.js';
+import "./components.js";
+
+const $ = sel => document.querySelector(sel);
+const showStatus = (message, type, duration) =>
+  document.querySelector('status-bar')?.show(message, type, duration);
+const storage = getStorage(auth.app);
+
+let pageContext = {};
+let pifDocRef;
+
+function main() {
+  onAuthStateChanged(auth, user => {
+    if (user) {
+      initPage(user);
+    } else {
+      const params = new URLSearchParams(window.location.search);
+      const pifId = params.get('id');
+      window.location.href = `login.html?redirect=pifB.html?id=${pifId}`;
+    }
+  });
+}
+
+function initPage(user) {
+  pageContext = setupPageContext();
+  if (!pageContext.pifId) {
+    showStatus("錯誤：URL 中缺少 PIF ID。", "error", -1);
+    $("#grid-container").innerHTML = "<p>無效的存取方式。</p>";
+    return;
+  }
+  pifDocRef = doc(db, "pifs", pageContext.pifId);
+  setupUI(user, pageContext);
+  initializeWorkspace(user);
+}
+
+function setupPageContext() {
+  const params = new URLSearchParams(window.location.search);
+  return { 
+    pifId: params.get("id"), 
+    companyName: decodeURIComponent(params.get("companyName")||''), 
+    productName: decodeURIComponent(params.get("productName")||'') 
+  };
+}
+
+function setupUI(user, context) {
+  customElements.whenDefined('top-bar').then(() => {
+    const topBar = document.querySelector('top-bar');
+    topBar.setInfo(context.pifId, context.companyName, context.productName, "附錄 B 其他附件");
+    topBar.setUser(user);
+  });
+  document.body.addEventListener('logout-request', () => auth.signOut());
+
+  // 填入列印表頭
+  const pidEl  = document.getElementById('print-pif-id');
+  const compEl = document.getElementById('print-company-name');
+  const prodEl = document.getElementById('print-product-name');
+  if (pidEl)  pidEl.textContent  = context.pifId || '';
+  if (compEl) compEl.textContent = context.companyName || '';
+  if (prodEl) prodEl.textContent = context.productName || '';
+
+  $('#btnPrint').addEventListener('click', () => window.print());
+
+  const fileInput = $('#file-input');
+  fileInput.addEventListener('change', (e) => handleAttachmentFiles(e.target.files));
+  
+  const body = $('body');
+  ['dragover', 'dragleave', 'drop'].forEach(eventName => {
+    body.addEventListener(eventName, e => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (eventName === 'drop') handleAttachmentFiles(e.dataTransfer.files);
+    });
+  });
+
+  $('#btnUploadPifBPdf').addEventListener('click', () => $('#pifBPdfUploader').click());
+  $('#pifBPdfUploader').addEventListener('change', handlePifBPdfUpload);
+}
+
+async function initializeWorkspace(user) {
+  showStatus("正在驗證權限與載入附件...", "loading", 0);
+  try {
+    const pifDocSnap = await getDoc(pifDocRef);
+    if (!pifDocSnap.exists()) throw new Error("找不到指定的 PIF 文件。");
+
+    const pifData = pifDocSnap.data();
+    const tokenResult = await user.getIdTokenResult();
+    const userClaims = tokenResult.claims;
+    
+    const hasPermission = 
+      userClaims.admin === true ||
+      pifData.owner === user.uid ||
+      (Array.isArray(pifData.editors) && pifData.editors.includes(user.email));
+
+    if (!hasPermission) {
+      setReadOnlyMode(true);
+    } else {
+      setReadOnlyMode(false);
+    }
+
+    updatePdfUploadStatus(pifData.pifB_pdfUrl);
+    await loadFiles();
+
+  } catch (error) {
+    console.error("Workspace Initialization failed:", error);
+    showStatus(`載入頁面失敗: ${error.message}`, "error", -1);
+    $("#status").textContent = error.message;
+  }
+}
+
+function setReadOnlyMode(isReadOnly) {
+  if (isReadOnly) {
+    document.body.classList.add('read-only');
+    $('#status').textContent = '您正在以唯讀模式瀏覽，僅提供檢視與下載功能。';
+    showStatus("唯讀模式：您沒有此文件的編輯權限。", "info", -1);
+  } else {
+    document.body.classList.remove('read-only');
+    $('#status').textContent = '點擊按鈕或將檔案拖曳至此處，以開始上傳。';
+  }
+}
+
+async function loadFiles() {
+  showStatus("正在從雲端載入附件列表...", "loading", 0);
+  const listRef = ref(storage, `pifs/${pageContext.pifId}/attachments`);
+  try {
+    const res = await listAll(listRef);
+    const isReadOnly = document.body.classList.contains('read-only');
+    
+    if (res.items.length === 0) {
+      if(!isReadOnly) $("#status").style.display = 'block';
+      $("#grid").innerHTML = '';
+      showStatus("尚未上傳任何附件。", "info");
+      return;
+    }
+
+    $("#status").style.display = 'none';
+    const filePromises = res.items.map(async itemRef => {
+      const url = await getDownloadURL(itemRef);
+      const metadata = await getMetadata(itemRef);
+      return {
+        name: itemRef.name,
+        url,
+        type: metadata.contentType,
+        size: metadata.size,
+        fullPath: itemRef.fullPath
+      };
+    });
+    
+    const files = await Promise.all(filePromises);
+    render(files);
+    showStatus(`已成功載入 ${files.length} 個附件。`, "success");
+
+  } catch (error) {
+    console.error("Error loading files:", error);
+    showStatus(`載入附件失敗: ${error.message}`, "error", -1);
+    $("#status").style.display = 'block';
+  }
+}
+
+function render(files) {
+  const grid = $('#grid');
+  grid.innerHTML = files.map(file => createFileCard(file)).join('');
+  grid.onclick = async e => {
+    if (document.body.classList.contains('read-only')) return;
+    const deleteBtn = e.target.closest('.delete-btn');
+    if (deleteBtn) {
+      const fullPath = deleteBtn.dataset.path;
+      const fileName = deleteBtn.dataset.name;
+      if (confirm(`確定要從雲端刪除附件「${fileName}」嗎？此操作無法復原。`)) {
+        try {
+          await deleteObject(ref(storage, fullPath));
+          showStatus(`已成功刪除附件：${fileName}`, 'success');
+          loadFiles();
+        } catch (error) {
+          console.error("Delete failed:", error);
+          showStatus(`刪除失敗: ${error.message}`, 'error');
+        }
+      }
+    }
+  };
+}
+
+function getFileIcon(type) {
+  if (!type) return 'fa-file';
+  if (type.startsWith('image/')) return 'fa-file-image';
+  if (type === 'application/pdf') return 'fa-file-pdf';
+  if (type.includes('word')) return 'fa-file-word';
+  if (type.includes('excel') || type.includes('spreadsheet')) return 'fa-file-excel';
+  return 'fa-file';
+}
+
+function createFileCard(file, isUploading = false) {
+  const { name, url, type, size, fullPath } = file;
+  const isImage = type && type.startsWith('image/');
+  const previewHtml = isImage
+    ? `<a href="${url}" target="_blank"><img src="${url}" class="preview" alt="${name}"></a>`
+    : `<a href="${url}" target="_blank" class="icon-preview">
+         <i class="fa-solid ${getFileIcon(type)}"></i>
+         <span>${type || '未知類型'}</span>
+       </a>`;
+
+  const cardId = `card-${name.replace(/[^a-zA-Z0-9]/g, '-')}`;
+
+  return `
+  <div class="file-card" id="${cardId}">
+    ${previewHtml}
+    <div class="file-card-body">
+      <h3 class="file-card-title">${name}</h3>
+      <p class="file-card-meta">${size ? (size / 1024).toFixed(1) + ' KB' : ''}</p>
+    </div>
+    ${!isUploading ? `<button class="delete-btn noprint noprint-write" data-path="${fullPath}" data-name="${name}"><i class="fa-solid fa-trash-can"></i></button>` : ''}
+    ${isUploading ? '<div class="progress-bar"></div>' : ''}
+  </div>`;
+}
+
+function handleAttachmentFiles(files) {
+  if (document.body.classList.contains('read-only')) return;
+  if (!files || files.length === 0) return;
+  $("#status").style.display = 'none';
+
+  [...files].forEach(file => {
+    const storageRef = ref(storage, `pifs/${pageContext.pifId}/attachments/${file.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+    
+    const cardId = `card-attachment-${Date.now()}-${Math.random()}`;
+    const cardHTML = createFileCard({ name: file.name, type: file.type, size: file.size, url: '#' }, true);
+    $("#grid").insertAdjacentHTML('beforeend', `<div id="${cardId}">${cardHTML}</div>`);
+    const cardElement = $(`#${cardId}`);
+    const progressBar = cardElement.querySelector('.progress-bar');
+
+    uploadTask.on('state_changed',
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        if(progressBar) progressBar.style.width = progress + '%';
+      },
+      (error) => {
+        console.error("Upload failed:", error);
+        showStatus(`檔案 ${file.name} 上傳失敗: ${error.message}`, 'error');
+        cardElement.remove();
+      },
+      async () => {
+        showStatus(`檔案 ${file.name} 已成功上傳。`, 'success');
+        loadFiles();
+      }
+    );
+  });
+}
+
+function handlePifBPdfUpload(event) {
+  if (document.body.classList.contains('read-only')) return;
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.type !== "application/pdf") {
+    setUploadStatusPdf("檔案格式錯誤，請僅上傳 PDF 檔案。", "status-error");
+    return;
+  }
+  uploadPifBPdf(file);
+}
+
+function uploadPifBPdf(file) {
+  const storagePath = `pifs/${pageContext.pifId}/B.pdf`;
+  const uploadTask = uploadBytesResumable(ref(storage, storagePath), file);
+  const button = $('#btnUploadPifBPdf');
+  button.disabled = true;
+
+  uploadTask.on('state_changed', 
+    (snapshot) => {
+      const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      setUploadStatusPdf(`<i class="fa-solid fa-upload"></i> 正在上傳附錄 B PDF... ${Math.round(progress)}%`, 'status-info');
+    }, 
+    (error) => {
+      setUploadStatusPdf(`<i class="fa-solid fa-triangle-exclamation"></i> PDF 上傳失敗: ${error.code}`, 'status-error');
+      button.disabled = false;
+    }, 
+    async () => {
+      const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+      try {
+        await setDoc(pifDocRef, { pifB_pdfUrl: downloadURL, lastModified: serverTimestamp() }, { merge: true });
+        setUploadStatusPdf('<i class="fa-solid fa-check-circle"></i> 附錄 B 的 PDF 已成功上傳！儀表板狀態將會更新。', 'status-success');
+      } catch (dbError) {
+        setUploadStatusPdf(`<i class="fa-solid fa-triangle-exclamation"></i> PDF 上傳成功，但更新資料庫紀錄時失敗: ${dbError.message}`, 'status-error');
+      }
+      button.disabled = false;
+      $('#pifBPdfUploader').value = ''; 
+    }
+  );
+}
+
+function updatePdfUploadStatus(url) {
+  if (url) {
+    setUploadStatusPdf(
+      `<i class="fa-solid fa-check-circle"></i> 附錄 B PDF 已上傳。<a href="${url}" target="_blank">預覽 <i class="fa-solid fa-arrow-up-right-from-square"></i></a>`,
+      'status-success'
+    );
+  } else {
+    setUploadStatusPdf('', 'none');
+  }
+}
+
+function setUploadStatusPdf(msg, styleClass) {
+  const statusEl = $('#upload-status-pdf');
+  if (!msg || styleClass === 'none') {
+    statusEl.style.display = 'none';
+    statusEl.innerHTML = '';
+  } else {
+    statusEl.innerHTML = msg;
+    statusEl.className = `noprint ${styleClass}`;
+    statusEl.style.display = 'block';
+  }
+}
+
+main();
+</script>
+
+</body>
+</html>

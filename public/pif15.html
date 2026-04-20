@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>PIF 15｜與產品接觸之包裝材質資料</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<style>
+  .container { max-width: 1600px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 1rem; }
+  .card h2 { font-size: 1.1rem; margin: 0; padding: 1rem 1.1rem; border-bottom: 1px solid var(--line); }
+  .card .body { padding: 1rem 1.1rem; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+  label { font-size: .9rem; color: var(--muted); display: block; margin-bottom: 4px; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { position: sticky; top: 0; z-index: 1; background: #f8fafc; }
+  th, td { border: 1px solid var(--line); padding: .5rem; text-align: left; vertical-align: top; white-space: nowrap; font-size: .9rem; }
+  td input, td select { width: 100%; border: 1px solid var(--line); border-radius: .4rem; padding: .3rem .4rem; background: transparent; }
+  .cards-view { display: none; }
+  body.card-mode .table-view { display: none; }
+  body.card-mode .cards-view { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+  .card-item { border: 1px solid var(--line); border-radius: 12px; padding: 1rem; break-inside: avoid; }
+  .card-item h3 { margin: 0 0 .8rem; font-size: 1.1rem; }
+  .card-item .grid-item { display: grid; grid-template-columns: 120px 1fr; gap: .5rem 1rem; }
+  .card-item .k { color: var(--muted); }
+
+  #upload-status-pdf { 
+      display: none; 
+      padding: 0.75rem 1.25rem; 
+      margin-top: 1rem; 
+      border-radius: 8px; 
+      font-weight: 500; 
+      text-align: center; 
+  }
+  .status-info { background-color: #e0e7ff; color: #3730a3; }
+  .status-success { background-color: #dcfce7; color: #166534; }
+  .status-error { background-color: #fee2e2; color: #991b1b; }
+  #upload-status-pdf i { margin-right: 0.5rem; }
+
+  /* 🔹 統一列印表頭用 */
+  .print-only { display: none; }
+
+  #print-header{
+    border:1px solid #e5e7eb;
+    border-radius:10px;
+    padding:10px 12px;
+    margin:0 0 12px 0;
+    background:#fff;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+  .print-header-grid{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .ph-left{flex:1;min-width:0;}
+  .ph-right{text-align:right;min-width:220px;}
+  .ph-title{
+    font-size:1.28rem;
+    font-weight:800;
+    letter-spacing:.3px;
+    color:#111827;
+    margin:0 0 4px 0;
+    line-height:1.2;
+  }
+  .ph-sub{
+    font-size:.98rem;
+    color:#111827;
+    line-height:1.35;
+    margin:0;
+    white-space:nowrap;
+  }
+  .ph-label{
+    font-weight:700;
+    color:#374151;
+  }
+
+  @media print {
+    body { font-size: 9px; }
+    .noprint { display: none !important; }
+    .print-only { display:block !important; }
+    .container { max-width: 100%; padding: 0; }
+    th, td { white-space: normal; }
+    td input, td select { border: none !important; background: transparent !important; }
+    body:not(.card-mode) .table-view { display: block; }
+    body.card-mode .cards-view { display: grid; }
+    .card-item .grid-item { grid-template-columns: 100px 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 列印時隱藏導覽 / top-bar -->
+<pif-nav class="noprint"></pif-nav>
+<top-bar class="noprint"></top-bar>
+
+<div class="container">
+  <status-bar class="noprint"></status-bar>
+
+  <!-- 🔹 統一列印表頭（只在列印時顯示） -->
+  <div id="print-header" class="print-only">
+    <div class="print-header-grid">
+      <div class="ph-left">
+        <div class="ph-title" id="printTitle"></div>
+        <p class="ph-sub" id="printProductName"></p>
+      </div>
+      <div class="ph-right">
+        <p class="ph-sub">
+          <span class="ph-label">PIFID：</span>
+          <span id="printPifId"></span>
+        </p>
+        <p class="ph-sub" id="printCompanyName"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="toolbar noprint">
+    <button id="btnSave" class="primary"><i class="fa-solid fa-cloud-arrow-up"></i> 儲存變更</button>
+    <button id="btnAdd"><i class="fa-solid fa-plus"></i> 新增部件</button>
+    <button id="btnAiDemo"><i class="fa-solid fa-wand-magic-sparkles"></i> 依產品類別推薦包材版本</button>
+    <div style="flex-grow:1"></div>
+    <button id="btnUploadPdf"><i class="fa-solid fa-file-arrow-up"></i> 上傳本頁 PDF</button>
+    <input type="file" id="pdfUploader" accept="application/pdf" style="display:none;">
+    <button id="btnExportJSON"><i class="fa-solid fa-file-code"></i> 匯出 JSON</button>
+    <button id="btnExportCSV"><i class="fa-solid fa-file-csv"></i> 匯出 CSV</button>
+    <label class="noprint" style="display:flex;align-items:center;gap:6px; margin: 0 .5rem;"><input type="checkbox" id="cardModeToggle"> 卡片式列印</label>
+    <button id="btnPrint"><i class="fa-solid fa-print"></i> 列印</button>
+  </div>
+  <div id="upload-status-pdf" class="noprint"></div>
+
+  <div class="card">
+    <div class="body grid">
+        <div><label>產品名稱</label><input id="prodName" readonly></div>
+        <div>
+          <label>產品類別</label>
+          <select id="prodCategory">
+            <option value="">-- 請選擇產品類別 --</option>
+            <option value="乳液/乳霜">乳液 / 乳霜</option>
+            <option value="洗髮精/沐浴乳">洗髮精 / 沐浴乳</option>
+            <option value="精華液/安瓶">精華液 / 安瓶</option>
+            <option value="面膜">面膜</option>
+            <option value="一般">一般用途（未分類）</option>
+          </select>
+        </div>
+        <div><label>建檔日期</label><input id="dt" type="date"></div>
+    </div>
+  </div>
+
+  <div class="table-view">
+    <div class="card">
+      <div class="body" style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>部位</th><th>接觸</th><th>材質</th><th>等級/標準</th><th>供應商</th><th>型號/規格</th><th>顏色/添加劑</th><th>回收碼</th><th>OTR</th><th>WVTR</th><th>測試/證明</th><th>相容性</th><th>備註</th><th class="noprint">刪除</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="cards-view"></div>
+
+  <div class="card">
+    <h2>人員資料</h2>
+    <div class="body grid">
+        <div><label>建檔人員</label><input id="tester" placeholder="輸入姓名"></div>
+        <div><label>建檔日期</label><input id="testDate" type="date"></div>
+        <div><label>複核人員</label><input id="reviewer" placeholder="輸入姓名"></div>
+        <div><label>複核日期</label><input id="reviewDate" type="date"></div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+import { auth, db, storage } from "./firebase-config.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { ref, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+import "./components.js";
+
+const byId = id => document.getElementById(id);
+const showStatus = (message, type, duration) => customElements.whenDefined('status-bar').then(() => document.querySelector('status-bar').show(message, type, duration));
+
+
+function safeDecode(v) {
+    if (v == null) return "";
+    try { return decodeURIComponent(String(v)); } catch { return String(v); }
+}
+
+let pifId, user, pifDocRef, companyName, pifProductName;
+
+const state = {
+    meta: { prodName: "", category: "", date: new Date().toISOString().slice(0, 10) },
+    signer: { tester: "", testDate: "", reviewer: "", reviewDate: "" },
+    items: []
+};
+
+const fields = [
+    { key: 'part', name: '部位', type: 'select', options: ['容器本體', '瓶蓋', '內塞', '封膜', '墊片/O-ring', '泵頭/噴頭', '管身', '其他'] },
+    { key: 'contact', name: '接觸', type: 'select', options: ['直接', '間接'] },
+    { key: 'material', name: '材質', type: 'select', options: ['PET', 'PETG', 'HDPE', 'LDPE', 'PP', 'PS', 'PVC', '玻璃', '鋁', '不鏽鋼', '矽膠', 'TPE', '紙材', '其他'] },
+    { key: 'grade', name: '等級/標準', type: 'text' },
+    { key: 'vendor', name: '供應商', type: 'text' },
+    { key: 'model', name: '型號/規格', type: 'text' },
+    { key: 'additives', name: '顏色/添加劑', type: 'text' },
+    { key: 'recycle', name: '回收碼', type: 'text' },
+    { key: 'otr', name: 'OTR', type: 'number' },
+    { key: 'wvtr', name: 'WVTR', type: 'number' },
+    { key: 'tests', name: '測試/證明', type: 'text' },
+    { key: 'compat', name: '相容性', type: 'select', options: ['相容 (無異狀)', '需觀察 (輕微風險)', '不相容'] },
+    { key: 'notes', name: '備註', type: 'text' },
+];
+
+/* 🔹 設定列印表頭內容 */
+function setupPrintHeader() {
+    const titleEl = byId('printTitle');
+    const pifEl   = byId('printPifId');
+    const prodEl  = byId('printProductName');
+    const compEl  = byId('printCompanyName');
+
+    if (titleEl) titleEl.textContent = 'PIF15 包裝材質資料';
+    if (pifEl)   pifEl.textContent   = pifId || '';
+    if (prodEl)  prodEl.textContent  = pifProductName || '';
+    if (compEl)  compEl.textContent  = companyName || '';
+}
+
+async function initPage() {
+    const params = new URLSearchParams(window.location.search);
+    pifId = params.get("id");
+    companyName = safeDecode(params.get("companyName"));
+    pifProductName = safeDecode(params.get("productName"));
+
+    // 先填好列印表頭
+    setupPrintHeader();
+
+    onAuthStateChanged(auth, u => {
+        user = u;
+        if (user) {
+            pifDocRef = doc(db, 'pifs', pifId);
+            setupPage();
+            loadData();
+        } else {
+            window.location.href = `login.html?redirect=${encodeURIComponent(window.location.href)}`;
+        }
+    });
+}
+
+function setupPage() {
+    if (!pifId) {
+        showStatus("錯誤：URL 中缺少 PIF ID。", "error", -1);
+        document.querySelector('.container').innerHTML = '<p style="text-align:center; padding: 2rem;">無效的連結。</p>';
+        return;
+    }
+    customElements.whenDefined('top-bar').then(async () => {
+const topBar = document.querySelector('top-bar');
+        topBar.setInfo(pifId, companyName, pifProductName, "PIF 15 包裝材質資料");
+            try {
+        const tokenResult = await user.getIdTokenResult();
+        user.claims = tokenResult.claims || {};
+    } catch (e) {
+        user.claims = user.claims || {};
+    }
+    topBar.setUser(user);
+});
+    document.body.addEventListener('logout-request', () => auth.signOut());
+    bindEvents();
+    byId('dt').value = state.meta.date;
+}
+
+async function loadData() {
+    showStatus("正在載入資料...", "loading", 0);
+    try {
+        const docSnap = await getDoc(pifDocRef);
+        if (docSnap.exists() && docSnap.data().pif15) {
+            const data = docSnap.data().pif15;
+            Object.assign(state.meta, data.meta || {});
+            Object.assign(state.signer, data.signer || {});
+            state.items = data.items || [];
+        }
+        if (state.items.length === 0) addRow(); // Add one row if empty
+        render();
+        showStatus("資料載入完成！", "success");
+    } catch (error) {
+        console.error("Load error:", error);
+        showStatus(`載入失敗: ${error.message}`, "error", -1);
+        if (state.items.length === 0) addRow();
+        render();
+    }
+}
+
+async function saveData() {
+    showStatus("正在儲存變更...", "loading", 0);
+    byId('btnSave').disabled = true;
+    try {
+        syncStateFromUI();
+        await setDoc(pifDocRef, { 
+            pif15: { ...state },
+            lastModified: serverTimestamp()
+        }, { merge: true });
+        showStatus("所有變更已成功儲存！", "success");
+    } catch (error) {
+        console.error("Save error:", error);
+        showStatus(`儲存失敗: ${error.message}`, "error", -1);
+    } finally {
+        byId('btnSave').disabled = false;
+    }
+}
+
+function syncStateFromUI() {
+    state.meta.prodName = byId('prodName').value;
+    state.meta.category = byId('prodCategory').value;
+    state.meta.date = byId('dt').value;
+    state.signer.tester = byId('tester').value;
+    state.signer.testDate = byId('testDate').value;
+    state.signer.reviewer = byId('reviewer').value;
+    state.signer.reviewDate = byId('reviewDate').value;
+}
+
+function render() {
+    byId('prodName').value = pifProductName;
+    byId('prodCategory').value = state.meta.category || "";
+    byId('dt').value = state.meta.date;
+    byId('tester').value = state.signer.tester || "";
+    byId('testDate').value = state.signer.testDate || "";
+    byId('reviewer').value = state.signer.reviewer || "";
+    byId('reviewDate').value = state.signer.reviewDate || "";
+    renderTable();
+    if (document.body.classList.contains('card-mode')) renderCards();
+}
+
+function renderTable() {
+    const tbody = byId('tbody');
+    tbody.innerHTML = "";
+    state.items.forEach((item, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${i + 1}</td>
+            ${fields.map(f => { 
+                let control;
+                if(f.type === 'select'){
+                    control = `<select data-k="${f.key}">${f.options.map(o => `<option value="${o}" ${item[f.key] === o ? 'selected' : ''}>${o}</option>`).join('')}</select>`;
+                } else {
+                    control = `<input data-k="${f.key}" value="${item[f.key] || ''}" type="${f.type === 'number' ? 'number' : 'text'}">`;
+                }
+                return `<td>${control}</td>`;
+            }).join('')}
+            <td class="noprint"><button onclick="window.deleteRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
+        `;
+        tbody.appendChild(tr);
+    });
+    bindTableEvents();
+}
+
+function bindTableEvents(){
+    byId('tbody').querySelectorAll('input, select').forEach(el => {
+        el.addEventListener('change', (e) => {
+            const tr = e.target.closest('tr');
+            const index = Array.from(tr.parentNode.children).indexOf(tr);
+            const key = e.target.dataset.k;
+            state.items[index][key] = e.target.value;
+        });
+    });
+}
+
+window.deleteRow = (i) => { if(confirm('確定要刪除此部件嗎?')) { state.items.splice(i, 1); render(); } };
+function addRow() { state.items.push({}); render(); }
+
+function renderCards() {
+    const container = document.querySelector('.cards-view');
+    container.innerHTML = state.items.map((item, i) => `
+        <div class="card-item">
+            <h3>#${i + 1} ${item.part || '未命名部件'}</h3>
+            <div class="grid-item">
+                ${fields.map(f => `<div class="k">${f.name}</div><div class="v">${item[f.key] || '—'}</div>`).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+function exportData(format) {
+    syncStateFromUI();
+    const { meta, items } = state;
+    const productName = pifProductName || 'export';
+    if (format === 'json') {
+        download(JSON.stringify(state, null, 2), `pif15_包材資料_${productName}.json`, 'application/json;charset=utf-8;');
+    } else if (format === 'csv') {
+        const headers = fields.map(f => f.key);
+        const csvRows = [headers.join(',')];
+        items.forEach(item => {
+            csvRows.push(headers.map(h => `"${String(item[h] || '').replace(/"/g, '""')}"`).join(','));
+        });
+        download('\ufeff' + csvRows.join('\n'), `pif15_包材資料_${productName}.csv`, 'text/csv;charset=utf-8;');
+    }
+}
+
+// 依產品類別載入推薦包材版本（AI 示範）
+function loadAiExample() {
+    const categorySelect = byId('prodCategory');
+    const category = categorySelect ? (categorySelect.value || '一般') : '一般';
+
+    const templates = {
+        "乳液/乳霜": [
+            {
+                part: '容器本體',
+                contact: '直接',
+                material: 'PET',
+                grade: '化妝品級，BPA free',
+                vendor: '某某容器股份有限公司',
+                model: '120 mL 真空乳液瓶',
+                additives: '乳白色，添加二氧化鈦消光',
+                recycle: '1',
+                otr: '< 10 cm³/m²·day',
+                wvtr: '< 3 g/m²·day',
+                tests: '供應商提供食品接觸材質聲明與總遷移量試驗報告',
+                compat: '相容 (無異狀)',
+                notes: '室溫加速測試 40°C / 3 個月無變色、無滲漏'
+            },
+            {
+                part: '泵頭/噴頭',
+                contact: '間接',
+                material: 'PP',
+                grade: '化妝品級',
+                vendor: '某某包材有限公司',
+                model: '乳液壓頭 24/410，白色',
+                additives: '白色母粒，內含 SUS304 彈簧',
+                recycle: '混合',
+                otr: '—',
+                wvtr: '—',
+                tests: '開關 1000 次耐久測試，1 m 跌落測試無破裂',
+                compat: '相容 (無異狀)',
+                notes: '與瓶身螺牙鎖合良好，未見滲漏'
+            },
+            {
+                part: '標籤貼紙',
+                contact: '間接',
+                material: 'PP',
+                grade: '一般標籤級',
+                vendor: '某某印刷行',
+                model: 'PP 貼紙 + 亮膜',
+                additives: '彩色油墨、亮膜保護層',
+                recycle: '其他',
+                otr: '—',
+                wvtr: '—',
+                tests: '耐水性、耐酒精擦拭測試通過（字體不暈染）',
+                compat: '相容 (無異狀)',
+                notes: '建議避免長時間高溫曝曬以免標籤微黃'
+            }
+        ],
+        "洗髮精/沐浴乳": [
+            {
+                part: '容器本體',
+                contact: '直接',
+                material: 'HDPE',
+                grade: '化妝品級',
+                vendor: '某某塑膠容器廠',
+                model: '500 mL 白色按壓瓶',
+                additives: '白色母粒，耐沖擊配方',
+                recycle: '2',
+                otr: '—',
+                wvtr: '—',
+                tests: '跌落測試 1.2 m 無破裂；內容物耐鹼性評估通過',
+                compat: '相容 (無異狀)',
+                notes: '適合高起泡清潔品，未見瓶身軟化'
+            },
+            {
+                part: '泵頭/噴頭',
+                contact: '間接',
+                material: 'PP',
+                grade: '化妝品級',
+                vendor: '某某包裝企業',
+                model: '洗髮精按壓頭 28/410',
+                additives: '黑色母粒',
+                recycle: '混合',
+                otr: '—',
+                wvtr: '—',
+                tests: '連按 500 次壽命測試通過',
+                compat: '相容 (無異狀)',
+                notes: '配合 HDPE 瓶身鎖合穩定'
+            },
+            {
+                part: '標籤貼紙',
+                contact: '間接',
+                material: 'PP',
+                grade: '一般標籤級',
+                vendor: '某某印刷行',
+                model: 'PP 貼紙 + 霧膜',
+                additives: '彩色油墨、霧膜保護層',
+                recycle: '其他',
+                otr: '—',
+                wvtr: '—',
+                tests: '耐水浸泡 24 小時不脫落',
+                compat: '相容 (無異狀)',
+                notes: '瓶身擠壓時標籤不易起皺'
+            }
+        ],
+        "精華液/安瓶": [
+            {
+                part: '容器本體',
+                contact: '直接',
+                material: '玻璃',
+                grade: '化妝品級琥珀玻璃',
+                vendor: '某某玻璃容器廠',
+                model: '30 mL 琥珀玻璃瓶',
+                additives: '琥珀色防光配方',
+                recycle: '玻璃',
+                otr: '極低',
+                wvtr: '極低',
+                tests: '耐溫差測試、內表面鹼度測試通過',
+                compat: '相容 (無異狀)',
+                notes: '適合易氧化或光敏感配方'
+            },
+            {
+                part: '泵頭/噴頭',
+                contact: '間接',
+                material: 'PP',
+                grade: '化妝品級',
+                vendor: '某某包材公司',
+                model: '滴管頭 + 矽膠膠頭',
+                additives: '黑色噴漆表面',
+                recycle: '混合',
+                otr: '—',
+                wvtr: '—',
+                tests: '滴管吸取精度測試、密封性測試通過',
+                compat: '相容 (無異狀)',
+                notes: '實測 3 個月滴管與矽膠膠頭無膨潤'
+            },
+            {
+                part: '標籤貼紙',
+                contact: '間接',
+                material: 'PP',
+                grade: '一般標籤級',
+                vendor: '某某印刷行',
+                model: '小面積 PP 貼紙',
+                additives: '單色油墨',
+                recycle: '其他',
+                otr: '—',
+                wvtr: '—',
+                tests: '常溫下 6 個月不脫落',
+                compat: '相容 (無異狀)',
+                notes: '瓶身小，標籤設計以關鍵資訊為主'
+            }
+        ],
+        "面膜": [
+            {
+                part: '容器本體',
+                contact: '直接',
+                material: '其他',
+                grade: '化妝品級鋁塑複合膜',
+                vendor: '某某軟袋包材廠',
+                model: '單片式面膜袋',
+                additives: '鋁箔層 + PET/PE 結構',
+                recycle: '其他',
+                otr: '極低',
+                wvtr: '極低',
+                tests: '袋材完整性測試、熱封強度測試通過',
+                compat: '相容 (無異狀)',
+                notes: '適合含揮發性或高保濕精華液之面膜'
+            },
+            {
+                part: '封膜',
+                contact: '間接',
+                material: '其他',
+                grade: '熱封層 PE',
+                vendor: '同上',
+                model: '三邊封/四邊封',
+                additives: '—',
+                recycle: '其他',
+                otr: '—',
+                wvtr: '—',
+                tests: '耐壓、跌落測試通過',
+                compat: '相容 (無異狀)',
+                notes: '未見滲漏或封邊破損情形'
+            },
+            {
+                part: '其他',
+                contact: '間接',
+                material: '紙材',
+                grade: '彩盒用紙',
+                vendor: '某某紙盒廠',
+                model: '外盒（選配）',
+                additives: '彩色印刷油墨',
+                recycle: '紙類',
+                otr: '—',
+                wvtr: '—',
+                tests: '—',
+                compat: '相容 (無異狀)',
+                notes: '僅作外包裝，不與內容物直接接觸'
+            }
+        ],
+        "一般": [
+            {
+                part: '容器本體',
+                contact: '直接',
+                material: 'PET',
+                grade: '食品級，符合 FDA 21 CFR',
+                vendor: '宏展容器股份有限公司',
+                model: '200 mL 透明圓瓶',
+                additives: '透明無色，含 0.03% 抗 UV 劑',
+                recycle: '1',
+                otr: '< 10 cm³/m²·day',
+                wvtr: '< 3 g/m²·day',
+                tests: '供應商提供食品接觸材質聲明與總遷移量測試報告',
+                compat: '相容 (無異狀)',
+                notes: '室溫實瓶測試 3 個月：無變色、無異味、無滲漏'
+            },
+            {
+                part: '瓶蓋',
+                contact: '間接',
+                material: 'PP',
+                grade: '化妝品級',
+                vendor: '頂欣塑膠企業社',
+                model: '螺牙平蓋，白色',
+                additives: '二氧化鈦白色母粒',
+                recycle: '5',
+                otr: '—',
+                wvtr: '—',
+                tests: '開關 100 次耐久測試；跌落測試 1 m 無破裂',
+                compat: '相容 (無異狀)',
+                notes: '與本體瓶身螺牙鎖合良好，無滲漏'
+            },
+            {
+                part: '內塞',
+                contact: '直接',
+                material: 'LDPE',
+                grade: '食品級',
+                vendor: '禾昇包材有限公司',
+                model: '點滴口內塞',
+                additives: '透明無色',
+                recycle: '4',
+                otr: '—',
+                wvtr: '—',
+                tests: '供應商符合食品接觸材質規範聲明',
+                compat: '相容 (無異狀)',
+                notes: '長期接觸產品 3 個月未發現軟化或膨潤'
+            },
+            {
+                part: '標籤貼紙',
+                contact: '間接',
+                material: 'PP',
+                grade: '一般標籤級',
+                vendor: '興泰印刷行',
+                model: 'PP 貼紙 + 壓霧霧膜',
+                additives: '彩色油墨、壓霧保護膜',
+                recycle: '其他',
+                otr: '—',
+                wvtr: '—',
+                tests: '耐水性、耐酒精擦拭測試通過（字體不暈染）',
+                compat: '需觀察 (輕微風險)',
+                notes: '長期放置可能邊緣略有翹起，建議避開高溫高濕環境'
+            }
+        ]
+    };
+
+    const selectedTemplate = templates[category] || templates["一般"];
+    if (!selectedTemplate) {
+        showStatus('尚未設定此產品類別的包材範例，請自行輸入。', 'warning', 6000);
+        return;
+    }
+
+    const categoryLabel = category === '一般' ? '一般用途（未分類）' : category;
+    if (!confirm(`將依「${categoryLabel}」載入推薦包材版本，並覆蓋目前畫面資料，是否繼續？`)) return;
+
+    state.items = selectedTemplate.map(item => ({ ...item }));
+    render();
+    showStatus(`已依「${categoryLabel}」載入推薦包材版本（示意用，請依實際包材調整）。`, 'success', 8000);
+}
+
+function download(text, filename, mime) {
+    const blob = new Blob([text], { type: mime });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+function printPage() {
+    syncStateFromUI();
+    if (document.body.classList.contains('card-mode')) renderCards();
+    window.print();
+}
+
+function handlePdfUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+        showStatus("請僅上傳 PDF 檔案。", "warning");
+        return;
+    }
+    uploadMainPdf(file, `pifs/${pifId}/15.pdf`);
+}
+
+function uploadMainPdf(file, storagePath) {
+    const uploadTask = uploadBytesResumable(ref(storage, storagePath), file);
+    const button = byId('btnUploadPdf');
+    button.disabled = true;
+
+    uploadTask.on('state_changed', 
+        (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            setUploadStatusPdf(`<i class="fa-solid fa-upload"></i> 正在上傳 PDF... ${Math.round(progress)}%`, 'status-info');
+        }, 
+        (error) => {
+            console.error("Main PDF Upload failed:", error);
+            setUploadStatusPdf(`<i class="fa-solid fa-triangle-exclamation"></i> PDF 上傳失敗: ${error.code}`, 'status-error');
+            button.disabled = false;
+        }, 
+        () => {
+            setUploadStatusPdf('<i class="fa-solid fa-check-circle"></i> PDF 已成功上傳！儀表板狀態將會更新。', 'status-success');
+            button.disabled = false;
+            byId('pdfUploader').value = ''; // Reset file input
+            setTimeout(() => setUploadStatusPdf('', 'none'), 5000);
+        }
+    );
+}
+
+function setUploadStatusPdf(msg, styleClass) {
+    const statusEl = byId('upload-status-pdf');
+    if (!msg || styleClass === 'none') {
+        statusEl.style.display = 'none';
+    } else {
+        statusEl.innerHTML = msg;
+        statusEl.className = `noprint ${styleClass}`;
+        statusEl.style.display = 'block';
+    }
+}
+
+function bindEvents() {
+    byId('btnSave').addEventListener('click', saveData);
+    byId('btnAdd').addEventListener('click', addRow);
+    byId('btnAiDemo').addEventListener('click', loadAiExample);
+    byId('btnExportJSON').addEventListener('click', () => exportData('json'));
+    byId('btnExportCSV').addEventListener('click', () => exportData('csv'));
+    byId('btnPrint').addEventListener('click', printPage);
+    byId('cardModeToggle').addEventListener('change', (e) => {
+        document.body.classList.toggle('card-mode', e.target.checked);
+        if(e.target.checked) renderCards();
+    });
+    byId('btnUploadPdf').addEventListener('click', () => byId('pdfUploader').click());
+    byId('pdfUploader').addEventListener('change', handlePdfUpload);
+}
+
+initPage();
+
+</script>
+</body>
+</html>

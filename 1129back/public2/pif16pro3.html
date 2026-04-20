@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PIF 16 Pro｜進階毒理學分析</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="./style.css">
+<style>
+  body {
+    background-color: #f0f2f5;
+  }
+  .container {
+    max-width: 1400px;
+  }
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  .page-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0;
+  }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .analysis-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  .analysis-table th, .analysis-table td {
+    border: 1px solid var(--line-color);
+    padding: 0.75rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  .analysis-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+  }
+  .analysis-table td .form-input {
+      font-size: 0.9rem;
+      padding: 0.4rem 0.6rem;
+  }
+  .noael-data-source {
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: 4px;
+      display: block;
+  }
+  .inci-name {
+    font-weight: 600;
+  }
+  .final-noael {
+    font-weight: bold;
+    color: var(--primary-color);
+  }
+  #save-analysis-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+</style>
+</head>
+<body>
+
+<div id="app-container">
+  <header class="app-header no-print"></header>
+
+  <main class="container">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">進階毒理學分析 (MOS 計算)</h1>
+        <p class="text-secondary" id="pif-info">PIFID: Loading...</p>
+      </div>
+      <div>
+        <button class="btn btn-primary" id="save-analysis-btn" disabled><i class="fas fa-save"></i> 儲存分析</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-flask-vial"></i> 成分安全評估</h3>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="analysis-table">
+            <thead>
+              <tr>
+                <th>成分 (INCI)</th>
+                <th>濃度 (%)</th>
+                <th>RMS 既有 NOAEL 資料</th>
+                <th style="width: 150px;">選用 NOAEL (mg/kg/day)</th>
+                <th style="width: 120px;">生物轉換率</th>
+                <th style="width: 150px;">MOS 計算用 NOAEL</th>
+              </tr>
+            </thead>
+            <tbody id="analysis-tbody">
+              <!-- Rows will be injected by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const rms_noael_data = {
+    "GLYCERIN": [
+        { value: 1000, type: "Oral", duration: "90-day", species: "Rat", source: "ECHA" },
+        { value: 2000, type: "Dermal", duration: "28-day", species: "Rabbit", source: "CIR" }
+    ],
+    "PROPANEDIOL": [
+        { value: 1000, type: "Oral", duration: "90-day", species: "Rat", source: "ECHA" }
+    ],
+    "PHENOXYETHANOL": [
+        { value: 500, type: "Oral", duration: "90-day", species: "Rat", source: "SCCS" }
+    ]
+  };
+  
+  const firebaseConfig = {
+    apiKey: "AIzaSyB9Tx1T0AOgqKo4ptVMl1dB_1tItLEMN1Y",
+    authDomain: "cos-pif-48742662.firebaseapp.com",
+    projectId: "cos-pif-48742662",
+    storageBucket: "cos-pif-48742662.appspot.com",
+    messagingSenderId: "1029599292266",
+    appId: "1:1029599292266:web:3a27ff96d39f47596be9a5"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  let pifId = null;
+
+  async function getPifDataFromFirestore(pifId) {
+      console.log(`Fetching data for PIF ID: ${pifId} from Firestore.`);
+      const pifDocRef = doc(db, "pifs", pifId);
+      const pifDoc = await getDoc(pifDocRef);
+      if (pifDoc.exists()) {
+          return pifDoc.data();
+      }
+      console.warn(`No document found for PIF ID: ${pifId}`);
+      return null;
+  }
+
+  function renderAnalysisTable(ingredients, analysisData) {
+    const tbody = document.getElementById('analysis-tbody');
+    tbody.innerHTML = '';
+
+    if (!ingredients || ingredients.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="padding:2rem">此 PIFID 查無成分資料，請先至 PIF 03 頁面新增。</td></tr>';
+      return;
+    }
+
+    ingredients.forEach(ingredient => {
+      const row = document.createElement('tr');
+      const inci = ingredient.inci;
+      const concentration = ingredient.pct;
+      const noael_sources = rms_noael_data[inci] || [];
+      const savedAnalysis = analysisData ? analysisData[inci] : null;
+
+      const best_noael = savedAnalysis?.selectedNoael ?? (noael_sources.length > 0 ? noael_sources[0].value : '');
+      const conversion_ratio = savedAnalysis?.conversionRatio ?? 1.0;
+      const rowId = inci.replace(/[^a-zA-Z0-9]/g, '');
+
+      row.innerHTML = `
+        <td><span class="inci-name">${inci}</span></td>
+        <td>${concentration ? concentration.toFixed(2) + '%': 'N/A'}</td>
+        <td>
+          ${noael_sources.map(d => `<div>${d.value} mg/kg/day <span class="noael-data-source">(${d.type}, ${d.duration}, ${d.species}, ${d.source})</span></div>`).join('') || '<span class="text-secondary">無資料</span>'}
+        </td>
+        <td>
+          <input type="number" class="form-input selected-noael" value="${best_noael}" data-inci="${inci}">
+        </td>
+        <td>
+          <input type="number" class="form-input conversion-ratio" value="${conversion_ratio}" step="0.1" data-inci="${inci}">
+        </td>
+        <td><span class="final-noael" id="final-noael-${rowId}"></span></td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
+
+ function calculateFinalNOAEL(inci) {
+      const rowId = inci.replace(/[^a-zA-Z0-9]/g, '');
+      const row = document.querySelector(`[data-inci="${inci}"]`).closest('tr');
+      if (!row) return;
+
+      const selectedNoaelInput = row.querySelector('.selected-noael');
+      const conversionRatioInput = row.querySelector('.conversion-ratio');
+      const finalNoaelSpan = document.getElementById(`final-noael-${rowId}`);
+
+      const selectedValue = parseFloat(selectedNoaelInput.value);
+      const ratio = parseFloat(conversionRatioInput.value);
+
+      if (!isNaN(selectedValue) && !isNaN(ratio)) {
+          const finalValue = selectedValue * ratio;
+          finalNoaelSpan.textContent = `${finalValue.toFixed(2)} mg/kg/day`;
+      } else {
+          finalNoaelSpan.textContent = 'N/A';
+      }
+  }
+  async function saveAnalysis() {
+    const saveBtn = document.getElementById('save-analysis-btn');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 儲存中...';
+
+    const analysisData = {};
+    document.querySelectorAll('#analysis-tbody tr').forEach(row => {
+        const inciNameEl = row.querySelector('.inci-name');
+        if (!inciNameEl) return;
+        const inci = inciNameEl.textContent;
+        const selectedNoael = row.querySelector('.selected-noael').value;
+        const conversionRatio = row.querySelector('.conversion-ratio').value;
+        
+        if (selectedNoael || conversionRatio) {
+             analysisData[inci] = {
+                selectedNoael: parseFloat(selectedNoael) || null,
+                conversionRatio: parseFloat(conversionRatio) || null
+            };
+        }
+    });
+
+    try {
+        const pifDocRef = doc(db, "pifs", pifId);
+        await setDoc(pifDocRef, { pif16_pro_analysis: analysisData, lastModified: serverTimestamp() }, { merge: true });
+        alert('毒理學分析資料已成功儲存！');
+    } catch (error) {
+        console.error("儲存失敗:", error);
+        alert("儲存失敗，請檢查主控台錯誤訊息。");
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fas fa-save"></i> 儲存分析';
+    }
+  }
+
+  async function initPage(user) {
+    pifId = new URLSearchParams(window.location.search).get('id');
+    if (!pifId) {
+        document.getElementById('pif-info').textContent = "錯誤：網址中缺少 PIF ID。";
+        return;
+    }
+
+    document.getElementById('pif-info').textContent = `PIFID: ${pifId} | 讀取資料中...`;
+    const pifData = await getPifDataFromFirestore(pifId);
+
+    if (!pifData) {
+        document.getElementById('pif-info').textContent = `錯誤：在雲端找不到 PIF ID 為 ${pifId} 的資料。`;
+        return;
+    }
+
+    document.getElementById('pif-info').textContent = `PIFID: ${pifId} | 產品: ${pifData.productName || '未命名'}`;
+    
+    const ingredients = pifData.pif03?.recipe;
+    const analysisData = pifData.pif16_pro_analysis;
+    renderAnalysisTable(ingredients, analysisData);
+
+    const tableBody = document.getElementById('analysis-tbody');
+    tableBody.addEventListener('input', (e) => {
+        const target = e.target;
+        if(target.classList.contains('selected-noael') || target.classList.contains('conversion-ratio')) {
+            const inci = target.dataset.inci;
+            if(inci) calculateFinalNOAEL(inci);
+        }
+    });
+
+    if (ingredients) {
+        ingredients.forEach(ing => calculateFinalNOAEL(ing.inci));
+    }
+    
+    const saveBtn = document.getElementById('save-analysis-btn');
+    saveBtn.addEventListener('click', saveAnalysis);
+    saveBtn.disabled = false;
+  }
+
+  onAuthStateChanged(auth, user => {
+    const header = document.querySelector('.app-header');
+    const analysisTbody = document.getElementById('analysis-tbody');
+
+    // Clear previous state
+    analysisTbody.innerHTML = '';
+    document.getElementById('pif-info').textContent = 'PIFID: Loading...';
+    document.getElementById('save-analysis-btn').disabled = true;
+
+    if (user) {
+       header.innerHTML = `<div class="container">
+          <nav>
+              <a href="index.html" class="logo"><i class="fa-solid fa-shield-halved"></i> CosPIF</a>
+              <ul class="nav-links">
+                  <li><a href="pif-i.html">我的專案</a></li>
+                  <li><a href="vendors.html">廠商資料庫</a></li>
+              </ul>
+              <div class="nav-actions" style="display: flex; align-items: center;">
+                  <span id="user-info" style="margin-right: 1.5rem; color: var(--text-muted);">${user.email}</span>
+                  <button id="btnSignOut" class="btn btn-outline">登出</button>
+              </div>
+          </nav>
+      </div>`;
+      document.getElementById('btnSignOut').addEventListener('click', () => signOut(auth));
+      initPage(user);
+    } else {
+       header.innerHTML = `<div class="container">
+        <nav>
+          <a href="index.html" class="logo"><i class="fa-solid fa-shield-halved"></i> CosPIF</a>
+           <ul class="nav-links">
+              <li><a href="login.html">登入</a></li>
+              <li><a href="register.html">註冊</a></li>
+           </ul>
+        </nav>
+      </div>`;
+       analysisTbody.innerHTML = '<tr><td colspan="6" class="text-center" style="padding: 2rem;">請先<a href="login.html?redirect=pif16pro.html' + window.location.search + '">登入</a>以載入並編輯毒理學資料。</td></tr>';
+    }
+  });
+</script>
+</body>
+</html>

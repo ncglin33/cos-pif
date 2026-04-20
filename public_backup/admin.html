@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CosPIF資訊管理後台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="admin-test.css">
+    <style>
+        /* Header Layout Fix */
+        .header .wrap {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* Table Layout Adjustments */
+        .table-wrap {
+            overflow-x: auto; /* Allows horizontal scrolling */
+        }
+        .table {
+            width: 100%;
+        }
+        .table th,
+        .table td {
+            white-space: nowrap; /* Prevent text wrapping */
+        }
+        /* Set min-width for action columns */
+        /* 會員操作（倒數第3欄） */
+        .table th:nth-last-child(3),
+        .table td:nth-last-child(3) {
+             min-width: 220px;
+        }
+
+        /* Compact role/action buttons */
+        .action-cell{
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            white-space: normal; /* allow wrap in action columns */
+        }
+        .btn.role-mini{
+            padding: 6px 10px;
+            font-size: 0.85rem;
+            line-height: 1.1;
+            border-radius: 10px;
+        }
+        .btn.role-mini i{ margin-right: 6px; }
+
+        /* Allow wrap only in action columns (override global nowrap) */
+        .table td.action-cell,
+        .table th.action-col{
+            white-space: normal !important;
+        }
+
+        /* Make action columns narrower */
+        .table th:nth-last-child(2),
+        .table td:nth-last-child(2){ min-width: 150px; }
+        .table th:last-child,
+        .table td:last-child{ min-width: 180px; }
+</style>
+</head>
+<body>
+    <header class="header">
+        <div class="wrap">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <a href="pif-i.html" class="btn"><i class="fa-solid fa-arrow-left"></i> 返回PIF文件櫃</a>
+                <a href="index.html" class="btn"><i class="fa-solid fa-arrow-left"></i> 回前台首頁</a>
+                <a href="admin-finance.html" class="btn"><i class="fa-solid fa-sack-dollar"></i> 財務管理</a>
+                <a href="index-c-company.html" class="btn"><i class="fa-solid fa-sack-dollar"></i> 顧客前台</a>
+                <a href="kb-submit-admin.html" class="btn"><i class="fa-solid fa-sack-dollar"></i> 期刊審查管理</a>
+                <h1 style="font-size: 1.5rem; margin: 0;"><i class="fa-solid fa-users-cog"></i> PIF資訊管理後台</h1>
+            </div>
+            <div class="controls header-right">
+                <div id="user-info" style="display: inline-block; margin-right: 1rem;"></div>
+                <button id="btnSignOut" class="btn btn-danger">登出</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="app-wrap">
+        <div class="section" style="margin-bottom: 24px;">
+            <h2 class="section-title"><i class="fa-solid fa-screwdriver-wrench"></i> 重要資訊管理</h2>
+            <div style="display: flex; flex-wrap: wrap; gap: 1rem;">
+                <a href="admin-physchem-import.html" class="btn primary" style="font-size: 1rem; padding: 10px 16px;"><i class="fa-solid fa-file-import"></i> 批次匯入理化資料</a>
+                <a href="admin-toxic-import.html" class="btn primary" style="font-size: 1rem; padding: 10px 16px;"><i class="fa-solid fa-file-import"></i> 批次匯入毒理資料</a>
+                <a href="https://cos-pif.web.app/company-batch.html" class="btn primary" style="font-size: 1rem; padding: 10px 16px;"><i class="fa-solid fa-store"></i> 批次匯入廠商</a>
+                <a href="https://cos-pif.web.app/review.html" class="btn" style="font-size: 1rem; padding: 10px 16px; background-color: #d97706; color: white;"><i class="fa-solid fa-user-check"></i> 審核新增廠商資料</a>
+                <a href="eva-review.html" class="btn" style="font-size: 1rem; padding: 10px 16px; background-color: #16a34a; color: white;"><i class="fa-solid fa-calculator"></i> 功效試算審核</a>
+                <a href="pif-wish-review.html" class="btn" style="font-size: 1rem; padding: 10px 16px; background-color: #16a34a; color: white;"><i class="fa-solid fa-clipboard-check"></i> 意願審核</a>
+                <a href="pay-review.html" class="btn" style="font-size: 1rem; padding: 10px 16px; background-color: #a31616; color: white;"><i class="fa-solid fa-clipboard-check"></i> 付款審核</a>
+                <a href="contact-review.html" class="btn" style="font-size: 1rem; padding: 10px 16px; background-color: #16a34a; color: white;"><i class="fa-solid fa-clipboard-check"></i> 聯絡回覆</a>
+                <a href="https://cos-pif.web.app/vendors.html" class="btn" style="font-size: 1rem; padding: 10px 16px;background-color: #d97706; color: white;"><i class="fa-solid fa-database"></i> 廠商資料管理</a>
+                <a href="news.html" class="btn primary" style="font-size: 1rem; padding: 10px 16px;"><i class="fa-solid fa-newspaper"></i> 最新消息管理</a>
+                <a href="process-admin.html" class="btn primary" style="font-size: 1rem; padding: 10px 16px;"><i class="fa-solid fa-newspaper"></i> 製造摘要管理</a>
+                <a href="cs-import.html" class="btn primary" style="font-size: 1rem; padding: 10px 16px;"><i class="fa-solid fa-question-circle"></i> 化妝品知識庫匯入</a>
+                <a href="qa-import.html" class="btn primary" style="font-size: 1rem; padding: 10px 16px;"><i class="fa-solid fa-question-circle"></i> QA 資料庫匯入</a>
+            </div>
+        </div>
+
+        <div class="section" style="margin-bottom: 24px;">
+            <h2 class="section-title"><i class="fa-solid fa-envelope-open-text"></i> 通知設定</h2>
+            <div class="form-grid">
+                <div>
+                    <label for="adminEmail1">會員審核通知管理員信箱 1</label>
+                    <input type="email" id="adminEmail1" placeholder="接收新用戶註冊通知">
+                </div>
+                <div>
+                    <label for="adminEmail2">會員審核通知管理員信箱 2</label>
+                    <input type="email" id="adminEmail2" placeholder="可選填，用於備援通知">
+                </div>
+                <div>
+                    <label for="adminEmail3">會員審核通知管理員信箱 3</label>
+                    <input type="email" id="adminEmail3" placeholder="可選填，用於備援通知">
+                </div>
+            </div>
+            <div style="text-align: right; margin-top: 12px;">
+                <button id="btnSaveSettings" class="btn primary"><i class="fa-solid fa-save"></i> 儲存設定</button>
+                <span id="settingsStatus" style="margin-left: 1rem; font-size: 0.9rem;"></span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">會員帳號列表</h2>
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>公司</th>
+                            <th>姓名</th>
+                            <th>Email</th>
+                            <th>註冊日期</th>
+                            <th>到期日期</th>
+                            <th>狀態</th>
+                            <th>會員操作</th>
+                            <th>權限管理</th>
+</tr>
+                    </thead>
+                    <tbody id="usersTbody"></tbody>
+                </table>
+            </div>
+            <div id="tableStatus" class="status-bar" style="text-align: center; padding: 1rem;">正在載入資料...</div>
+        </div>
+    </div>
+
+    <script type="module" src="admin-test.js?v=20251230e"></script>
+</body>
+</html>

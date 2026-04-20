@@ -1,0 +1,44 @@
+[
+  {
+    "inciName": "Aqua",
+    "cas": "7732-18-5",
+    "state": "Liquid",
+    "color": "Colorless",
+    "odor": "Odorless",
+    "solubility_water": "Soluble",
+    "ph": "7.0",
+    "melting_point": "-",
+    "boiling_point": "100°C",
+    "flash_point": "-",
+    "density": "1.0",
+    "viscosity": "1 mPa·s"
+  },
+  {
+    "inciName": "Glycerin",
+    "cas": "56-81-5",
+    "state": "Liquid",
+    "color": "Colorless",
+    "odor": "Odorless",
+    "solubility_water": "Soluble",
+    "ph": "-",
+    "melting_point": "18.2°C",
+    "boiling_point": "290°C",
+    "flash_point": "160°C",
+    "density": "1.26",
+    "viscosity": "1412 mPa·s"
+  },
+  {
+    "inciName": "Butylene Glycol",
+    "cas": "107-88-0",
+    "state": "Liquid",
+    "color": "Colorless",
+    "odor": "Odorless",
+    "solubility_water": "Miscible",
+    "ph": "-",
+    "melting_point": "-",
+    "boiling_point": "207.5°C",
+    "flash_point": "113°C",
+    "density": "1.004",
+    "viscosity": "129.5 mPa·s"
+  }
+]

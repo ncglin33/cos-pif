@@ -1,0 +1,1159 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>KB 投稿管理 | CosPIF 化妝品智慧月刊</title>
+  <style>
+    :root{
+      --bg:#f6f7fb; --card:#fff; --text:#111827; --muted:#6b7280; --line:#e5e7eb;
+      --brand:#1d4ed8; --brand2:#0ea5e9; --ok:#16a34a; --warn:#f59e0b; --bad:#ef4444;
+      --shadow:0 10px 30px rgba(0,0,0,.06);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans TC",sans-serif}
+    a{color:var(--brand);text-decoration:none}
+    .wrap{max-width:1280px;margin:24px auto;padding:0 16px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+    .pillbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--line);background:var(--card);border-radius:999px;box-shadow:var(--shadow)}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--card);cursor:pointer}
+    .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));border:none;color:#fff}
+    .btn.danger{background:#fff;border:1px solid #fecaca;color:var(--bad)}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .grid{display:grid;grid-template-columns: 460px 1fr;gap:16px}
+    @media (max-width: 1020px){.grid{grid-template-columns:1fr}}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .card .hd{padding:16px 16px 10px;border-bottom:1px solid var(--line)}
+    .card .bd{padding:16px}
+    h1{margin:0;font-size:22px}
+    .sub{color:var(--muted);font-size:13px;margin-top:6px;line-height:1.4}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .input, textarea, select{
+      width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;
+      font-size:14px;outline:none;
+    }
+    textarea{min-height:110px;resize:vertical}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;font-size:12px;border:1px solid var(--line);background:#fff}
+    .badge.ok{border-color:#bbf7d0;color:var(--ok);background:#f0fdf4}
+    .badge.warn{border-color:#fde68a;color:#92400e;background:#fffbeb}
+    .badge.bad{border-color:#fecaca;color:var(--bad);background:#fef2f2}
+    .list{display:flex;flex-direction:column;gap:10px}
+    .item{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff;cursor:pointer}
+    .item:hover{border-color:#cbd5e1}
+    .item .t{font-weight:700}
+    .item .m{color:var(--muted);font-size:12px;margin-top:6px;line-height:1.4}
+    .item.active{border-color:rgba(29,78,216,.45);box-shadow:0 0 0 4px rgba(29,78,216,.08)}
+    .hr{height:1px;background:var(--line);margin:12px 0}
+    .hint{font-size:12px;color:var(--muted);line-height:1.5}
+    .err{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:10px 12px;border-radius:12px}
+    .okmsg{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;padding:10px 12px;border-radius:12px}
+    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+    .two{display:grid;grid-template-columns: 1fr 1fr; gap:12px}
+    @media (max-width: 720px){.two{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="pillbar">
+        <a class="pill" href="index.html">🏠 <strong>首頁</strong></a>
+        <a class="pill" href="kb-issue.html">📰 <strong>月刊/週刊</strong></a>
+        <span class="pill">🛠️ <strong>KB 投稿管理</strong></span>
+        <span class="pill" id="userPill">未登入</span>
+        <span class="pill" id="rolePill">role: —</span>
+      </div>
+      <div class="row">
+        <button class="btn" id="btnLogin">登入</button>
+        <button class="btn" id="btnLogout" style="display:none">登出</button>
+      </div>
+    </div>
+
+    <div id="guard" class="err" style="display:none;margin-bottom:12px">
+      此頁僅限 KB 編輯 / 秘書 / 管理者使用（需要 roles.kbEditor / secretary / admin）。
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="hd">
+          <h1>投稿清單</h1>
+          <div class="sub">可依狀態篩選，點選後在右側進行指派審稿、要求修訂、接受、排程、發布。</div>
+        </div>
+        <div class="bd">
+          <div class="row" style="justify-content:space-between">
+            <select class="input" id="statusFilter" style="max-width:220px">
+              <option value="">全部狀態</option>
+              <option>draft</option>
+              <option>submitted</option>
+              <option>under_review</option>
+              <option>revision_requested</option>
+              <option>accepted</option>
+              <option>rejected</option>
+              <option>scheduled</option>
+              <option>published</option>
+            </select>
+            <button class="btn" id="btnReload">↻ 重新整理</button>
+          </div>
+          <div style="height:10px"></div>
+          <input class="input" id="q" placeholder="搜尋：標題 / 作者Email / 狀態 / 投稿ID…" />
+          <div class="hr"></div>
+          <div id="list" class="list"></div>
+          <div class="hint" style="margin-top:10px">
+            刪除：只有 <span class="mono">admin</span> 可刪除（符合你要求）。<br/>
+            指派審稿：在右側填入 Reviewer UID（可多筆逗號分隔），儲存即可。
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="hd">
+          <h1 id="title">投稿管理面板</h1>
+          <div class="sub" id="sub">請先登入並選取一筆投稿。</div>
+        </div>
+        <div class="bd">
+          <div id="msg"></div>
+
+          <div class="two" style="margin-top:10px">
+            <div>
+              <div class="hint">投稿ID</div>
+              <input class="input mono" id="sid" readonly placeholder="—" />
+            </div>
+            <div>
+              <div class="hint">狀態</div>
+              <div class="row">
+                <span class="badge" id="statusBadge">—</span>
+                <span class="badge" id="timeBadge">—</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="two" style="margin-top:12px">
+            <div>
+              <div class="hint">作者</div>
+              <input class="input" id="ownerEmail" readonly placeholder="—" />
+            </div>
+            <div>
+              <div class="hint">PDF</div>
+              <a class="btn" id="pdfLink" href="#" target="_blank" style="display:none">查看 PDF</a>
+              <span class="hint" id="pdfNone">（尚未上傳）</span>
+            </div>
+          </div>
+
+          <div class="hr"></div>
+
+          <div class="two">
+            <div>
+              <div class="hint">審稿人 UID（逗號分隔）</div>
+              <input class="input mono" id="reviewerUids" placeholder="例如：uidA,uidB,uidC" />
+            </div>
+            <div>
+              <div class="hint">排程發表月份（YYYY-MM）</div>
+              <input class="input mono" id="scheduledMonth" placeholder="例如：2026-03" />
+            </div>
+          </div>
+
+          <div class="hr"></div>
+
+          <div>
+            <div class="hint" style="margin-bottom:6px">已指派審稿人（由 UID 解析）</div>
+            <div id="assignedReviewers" class="hint">（尚未指派）</div>
+          </div>
+
+          <div style="height:10px"></div>
+
+          <div class="hr"></div>
+
+          <div>
+            <div class="hint" style="margin-bottom:6px;font-weight:800">邀請審稿人（用 Email／姓名搜尋，不用找 UID）</div>
+            <div class="two">
+              <input class="input" id="reviewerSearch" placeholder="輸入 Email 或姓名關鍵字…" />
+              <button class="btn" id="btnReviewerSearch" type="button">搜尋</button>
+            </div>
+            <div style="height:10px"></div>
+            <div id="reviewerResults" class="list" style="max-height:260px;overflow:auto"></div>
+            <div class="hint" style="margin-top:8px">點「加入」會自動把該使用者的 UID 加到上方「審稿人 UID」欄位（逗號分隔）。</div>
+          </div>
+
+          <div style="height:10px"></div>
+          <div class="two">
+            <div>
+              <div class="hint">發布連結（published 用）</div>
+              <input class="input" id="publishUrl" placeholder="例如：kb-issue.html?issueId=2026-03 或外部網址" />
+            </div>
+            <div>
+              <div class="hint">（備用）</div>
+              <input class="input" id="spare" placeholder="—" disabled />
+            </div>
+          </div>
+
+          <div style="height:10px"></div>
+          <div class="two">
+            <div>
+              <div class="hint">編輯備註（內部）</div>
+              <textarea id="editorNote" placeholder="例如：已指派審稿、提醒期限、修訂重點…"></textarea>
+            </div>
+            <div>
+              <div class="hint">給作者的通知內容（revision / acceptance 可用）</div>
+              <textarea id="authorMessage" placeholder="例如：請補充毒理引用來源、修正圖表標註… / 恭喜錄取…"></textarea>
+            </div>
+          </div>
+
+          
+          <div class="hr"></div>
+
+          <h3 style="margin:0 0 10px">審稿通知郵件</h3>
+          <div class="hint">指派審稿人後，可在此直接寄送通知信給審稿人（支援指定 Email；若留空則使用已指派審稿人的 Email）。</div>
+          <div style="height:10px"></div>
+
+          <div class="two">
+            <div>
+              <div class="hint">收件人 Email（可選，逗號分隔；空白則自動帶入已指派審稿人）</div>
+              <input class="input" id="reviewerNotifyTo" placeholder="例如：reviewerA@mail.com, reviewerB@mail.com" />
+            </div>
+            <div>
+              <div class="hint">郵件主旨（可選）</div>
+              <input class="input" id="reviewerNotifySubject" placeholder="例如：您有一篇 CosPIF 月刊稿件需要審查" />
+            </div>
+          </div>
+
+          <div style="height:10px"></div>
+          <div>
+            <div class="hint">郵件內容（可選，留空則使用預設模板）</div>
+            <textarea id="reviewerMessage" placeholder="例如：請於 7 天內完成審查；重點關注：研究設計、數據呈現、引用格式…"></textarea>
+          </div>
+
+          <div style="height:10px"></div>
+          <div class="row">
+            <button class="btn" id="btnSendReviewerEmail">寄送審稿通知</button>
+            <span class="hint">會寫入 Firestore 的 <b>mail</b> 集合，由 Email Extension 寄送</span>
+          </div>
+
+
+<div class="hr"></div>
+
+          <div class="row">
+            <button class="btn primary" id="btnSaveMeta">儲存設定</button>
+            <button class="btn" id="btnToUnderReview">submitted → under_review</button>
+            <button class="btn" id="btnReqRevision">under_review → revision_requested</button>
+            <button class="btn" id="btnAccept">under_review → accepted</button>
+            <button class="btn" id="btnSchedule">accepted → scheduled</button>
+            <button class="btn" id="btnPublish">scheduled → published</button>
+            <button class="btn" id="btnSendEmail">寄送通知信</button>
+            <button class="btn danger" id="btnDelete" style="display:none">刪除（admin）</button>
+          
+</div>
+
+          <div style="height:10px"></div>
+          <div class="row" style="align-items:flex-end; gap:10px; flex-wrap:wrap">
+            <div style="min-width:220px; flex:1">
+              <div class="hint">手動設定狀態（管理端）</div>
+              <select class="input" id="manualStatus" style="max-width:320px">
+                <option value="">— 選擇狀態 —</option>
+                <option value="accepted">已接受（accepted）</option>
+                <option value="rejected">未獲審查通過（rejected）</option>
+              </select>
+            </div>
+            <div style="min-width:280px; flex:2">
+              <div class="hint">決議說明（可選；會寫入 decisionNote）</div>
+              <input class="input" id="decisionNote" placeholder="例如：資料不足、需補強引用、未符合刊物定位…" />
+            </div>
+            <button class="btn" id="btnSetManualStatus">套用狀態</button>
+          </div>
+
+          <div style="height:10px"></div>
+          <div class="hint">
+
+            建議作業：<br/>
+            1) 投稿 submitted 後 → 指派審稿人 & 轉 under_review。<br/>
+            2) 審稿完成後 → 要求修訂（revision_requested）或接受（accepted）。<br/>
+            3) 接受後 → 設定發表月份（scheduledMonth）並轉 scheduled。<br/>
+            4) 發布月刊後 → 補上 publishUrl 並轉 published。
+          </div>
+
+          <div class="hr"></div>
+          <h3 style="margin:0 0 10px">審稿回覆</h3>
+          <div id="reviews" class="hint">尚無審稿回覆。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase (modular v10) -->
+<script type="module">
+  import { auth, db } from "./firebase-config.js";
+
+  import {
+    collection, doc, getDoc, getDocs, query, where, orderBy, limit, updateDoc, deleteDoc, addDoc, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  import {
+    onAuthStateChanged,
+    signInWithEmailAndPassword,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+  // ---------- Helpers ----------
+  const $ = (id) => document.getElementById(id);
+
+  const escapeHtml = (s) =>
+    (s ?? "").toString().replace(/[&<>"']/g, (m) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[m]));
+
+  const toArrayCsv = (s) =>
+    (s || "")
+      .split(",")
+      .map(x => x.trim())
+      .filter(Boolean);
+
+  const tsVal = (t) => {
+    if (!t) return 0;
+    if (typeof t.toMillis === "function") return t.toMillis();
+    if (typeof t.seconds === "number") return t.seconds * 1000;
+    const d = new Date(t);
+    return isNaN(d.getTime()) ? 0 : d.getTime();
+  };
+
+  const fmtDate = (t) => {
+    const ms = tsVal(t);
+    if (!ms) return "—";
+    const d = new Date(ms);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const statusLabel = (s) => ({
+    draft: "draft",
+    submitted: "submitted",
+    under_review: "under_review",
+    revision_requested: "revision_requested",
+    accepted: "已接受",
+    rejected: "未獲審查通過",
+    scheduled: "scheduled",
+    published: "published"
+  }[s] || (s || "—"));
+
+  const statusClass = (s) => {
+    if (s === "published" || s === "accepted") return "ok";
+    if (s === "rejected") return "bad";
+    if (s === "revision_requested" || s === "under_review" || s === "scheduled") return "warn";
+    if (s === "draft") return "";
+    if (s === "submitted") return "";
+    return "";
+  };
+
+  function setMsg(kind, text) {
+    const box = $("msg");
+    if (!box) return;
+    if (!text) { box.innerHTML = ""; return; }
+    const cls = kind === "ok" ? "okmsg" : kind === "err" ? "err" : "hint";
+    box.innerHTML = `<div class="${cls}">${escapeHtml(text)}</div>`;
+  }
+
+  function setTopPills() {
+    const u = state.user;
+    $("userPill").textContent = u ? (u.email || u.uid) : "未登入";
+    const r = state.roles || {};
+    const roleNames = Object.keys(r).filter(k => r[k]).slice(0, 6);
+    $("rolePill").textContent = roleNames.length ? `role: ${roleNames.join(",")}` : "role: —";
+    $("btnLogin").style.display = u ? "none" : "";
+    $("btnLogout").style.display = u ? "" : "none";
+  }
+
+  function hasAccess() {
+    const r = state.roles || {};
+    return !!(r.admin || r.systemAdmin || r.secretary || r.kbEditor || r.editor);
+  }
+
+  function canDelete() {
+    const r = state.roles || {};
+    return !!(r.admin || r.systemAdmin);
+  }
+
+  function setGuard() {
+    const ok = state.user && hasAccess();
+    $("guard").style.display = ok ? "none" : "";
+    $("btnDelete").style.display = (ok && canDelete()) ? "" : "none";
+  }
+
+  // ---------- State ----------
+  const state = {
+    user: null,
+    roles: {},
+    all: [],
+    filtered: [],
+    selectedId: null,
+    selected: null,
+    userCache: new Map()
+  };
+
+  // ---------- Auth ----------
+  $("btnLogin").addEventListener("click", async () => {
+    const email = prompt("請輸入登入 Email：");
+    if (!email) return;
+    const pw = prompt("請輸入密碼：");
+    if (!pw) return;
+    try {
+      await signInWithEmailAndPassword(auth, email.trim(), pw);
+      setMsg("", "");
+    } catch (e) {
+      setMsg("err", e?.message || String(e));
+    }
+  });
+
+  $("btnLogout").addEventListener("click", async () => {
+    try { await signOut(auth); } catch (_) {}
+  });
+
+  onAuthStateChanged(auth, async (user) => {
+    state.user = user;
+    state.roles = {};
+    state.all = [];
+    state.filtered = [];
+    state.selectedId = null;
+    state.selected = null;
+
+    if (user) {
+      try {
+        // Force refresh once so newly-set custom claims (roles) take effect without requiring manual re-login.
+        const token = await user.getIdTokenResult(true);
+        const claims = (token && token.claims) || {};
+
+        // Support both claim styles:
+        // 1) nested: { roles: { admin: true, ... } }
+        // 2) flat:   { admin: true, secretary: true, ... }
+        const nested = (claims.roles && typeof claims.roles === "object") ? claims.roles : null;
+
+        if (nested) {
+          state.roles = nested;
+        } else {
+          const keys = ["admin", "systemAdmin", "secretary", "kbEditor", "editor", "reviewer"];
+          const r = {};
+          keys.forEach((k) => { if (claims[k]) r[k] = true; });
+          state.roles = r;
+        }
+      } catch (e) {
+        console.warn("getIdTokenResult failed:", e);
+        state.roles = {};
+      }
+    }
+
+    setTopPills();
+    setGuard();
+    await loadList();
+  });
+
+  // ---------- List ----------
+  $("btnReload").addEventListener("click", loadList);
+  $("statusFilter").addEventListener("change", loadList);
+  $("q").addEventListener("input", () => {
+    applyFilter();
+    renderList();
+  });
+
+  async function loadList() {
+    setMsg("", "");
+    state.all = [];
+    state.filtered = [];
+    state.selectedId = null;
+    state.selected = null;
+    renderList();
+    renderDetail();
+
+    if (!state.user) return;
+    if (!hasAccess()) {
+      setMsg("err", "此頁僅限 KB 編輯 / 秘書 / 管理者使用（需要 roles.kbEditor / secretary / admin）。");
+      return;
+    }
+
+    try {
+      const st = $("statusFilter").value.trim();
+      const base = collection(db, "kb_submissions");
+      const qRef = st ? query(base, where("status", "==", st)) : base;
+      const snap = await getDocs(qRef);
+      const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      rows.sort((a, b) => tsVal(b.updatedAt || b.createdAt) - tsVal(a.updatedAt || a.createdAt));
+      state.all = rows;
+      applyFilter();
+      renderList();
+    } catch (e) {
+      console.error(e);
+      setMsg("err", "讀取投稿清單失敗：" + (e?.message || e));
+    }
+  }
+
+  function applyFilter() {
+    const kw = $("q").value.trim().toLowerCase();
+    if (!kw) {
+      state.filtered = [...state.all];
+      return;
+    }
+    state.filtered = state.all.filter(it => {
+      const blob = [
+        it.id,
+        it.submissionNo,
+        it.status,
+        it.title,
+        it.topic,
+        it.authorName,
+        it.authorEmail,
+        it.createdByEmail
+      ].filter(Boolean).join(" ").toLowerCase();
+      return blob.includes(kw);
+    });
+  }
+
+  function renderList() {
+    const box = $("list");
+    box.innerHTML = "";
+
+    if (!state.user) {
+      box.innerHTML = `<div class="hint">請先登入。</div>`;
+      return;
+    }
+    if (!hasAccess()) {
+      box.innerHTML = `<div class="hint">需要 roles.kbEditor / secretary / admin 才能使用。</div>`;
+      return;
+    }
+    if (!state.filtered.length) {
+      box.innerHTML = `<div class="hint">尚無資料。</div>`;
+      return;
+    }
+
+    for (const it of state.filtered) {
+      const div = document.createElement("div");
+      div.className = "item" + (state.selectedId === it.id ? " active" : "");
+      const t = escapeHtml(it.title || it.topic || "(未命名)");
+      const meta = [
+        `狀態：${escapeHtml(statusLabel(it.status))}`,
+        it.authorEmail || it.createdByEmail ? `作者：${escapeHtml(it.authorEmail || it.createdByEmail)}` : "",
+        `更新：${escapeHtml(fmtDate(it.updatedAt || it.createdAt))}`
+      ].filter(Boolean).join(" · ");
+      div.innerHTML = `
+        <div class="t">${t}</div>
+        <div class="m">${meta}</div>
+      `;
+      div.addEventListener("click", () => selectItem(it.id));
+      box.appendChild(div);
+    }
+  }
+
+  async function selectItem(id) {
+    state.selectedId = id;
+    renderList();
+    await loadDetail(id);
+  }
+
+  // ---------- Detail ----------
+
+  // ---------- Reviewer directory (search by Email / Name) ----------
+  const pickDisplayName = (u) => (u.displayName || u.name || u.fullName || u.nickname || "");
+  const pickEmail = (u) => (u.email || u.mail || u.emailAddress || "");
+
+  const getUserByUid = async (uid) => {
+    if (!uid) return null;
+    if (state.userCache.has(uid)) return state.userCache.get(uid);
+
+    // Most projects store user profiles at users/{uid}
+    try {
+      const snap = await getDoc(doc(db, "users", uid));
+      if (snap.exists()) {
+        const u = { uid: snap.id, ...snap.data() };
+        state.userCache.set(uid, u);
+        return u;
+      }
+    } catch (e) {}
+
+    // Fallback: sometimes UID is stored as a field
+    try {
+      const qs = await getDocs(query(collection(db, "users"), where("uid", "==", uid)));
+      if (!qs.empty) {
+        const d = qs.docs[0];
+        const u = { uid: d.id, ...d.data() };
+        state.userCache.set(uid, u);
+        return u;
+      }
+    } catch (e) {}
+
+    const u = { uid, displayName: "", email: "" };
+    state.userCache.set(uid, u);
+    return u;
+  };
+
+  const renderAssignedReviewers = async () => {
+    const box = $("assignedReviewers");
+    if (!box) return;
+
+    const uids = toArrayCsv($("reviewerUids")?.value || "");
+    if (!uids.length) {
+      box.innerHTML = "（尚未指派）";
+      return;
+    }
+
+    box.innerHTML = "載入中…";
+    const users = await Promise.all(uids.map(getUserByUid));
+
+    const rows = users.map((u) => {
+      const nm = pickDisplayName(u) || "（未填姓名）";
+      const em = pickEmail(u) || "（未填 Email）";
+      return `
+        <div class="item" style="cursor:default">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(nm)}</div>
+            <div style="font-size:12px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(em)}</div>
+            <div style="font-size:12px;color:#9ca3af">UID: ${escapeHtml(u.uid)}</div>
+          </div>
+          <div style="margin-left:10px">
+            <button class="btn danger" type="button" data-remove-uid="${escapeHtml(u.uid)}">移除</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    box.innerHTML = `<div class="list">${rows}</div>`;
+
+    // Delegate remove clicks
+    box.querySelectorAll("[data-remove-uid]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const uid = btn.getAttribute("data-remove-uid");
+        const cur = toArrayCsv($("reviewerUids").value);
+        $("reviewerUids").value = cur.filter((x) => x !== uid).join(",");
+        renderAssignedReviewers();
+      });
+    });
+  };
+
+  const addReviewerUid = (uid) => {
+    const cur = toArrayCsv($("reviewerUids").value);
+    if (!cur.includes(uid)) cur.push(uid);
+    $("reviewerUids").value = cur.join(",");
+    renderAssignedReviewers();
+  };
+
+  const renderReviewerResults = (users) => {
+    const box = $("reviewerResults");
+    if (!box) return;
+
+    if (!users.length) {
+      box.innerHTML = `<div class="hint">找不到符合的註冊使用者。</div>`;
+      return;
+    }
+
+    const rows = users.slice(0, 80).map((u) => {
+      const nm = pickDisplayName(u) || "（未填姓名）";
+      const em = pickEmail(u) || "（未填 Email）";
+      return `
+        <div class="item" style="cursor:default">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(nm)}</div>
+            <div style="font-size:12px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(em)}</div>
+            <div style="font-size:12px;color:#9ca3af">UID: ${escapeHtml(u.uid || u.id || "")}</div>
+          </div>
+          <div style="margin-left:10px">
+            <button class="btn" type="button" data-add-uid="${escapeHtml(u.uid || u.id || "")}">加入</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    box.innerHTML = rows;
+
+    box.querySelectorAll("[data-add-uid]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const uid = btn.getAttribute("data-add-uid");
+        if (!uid) return;
+        addReviewerUid(uid);
+      });
+    });
+  };
+
+  const searchReviewers = async () => {
+    const kw = ($("reviewerSearch")?.value || "").trim();
+    const box = $("reviewerResults");
+    if (!box) return;
+
+    if (!kw) {
+      box.innerHTML = `<div class="hint">請輸入 Email 或姓名關鍵字。</div>`;
+      return;
+    }
+
+    box.innerHTML = `搜尋中…`;
+
+    const kwLower = kw.toLowerCase();
+    let users = [];
+
+    // 1) Try exact email match first (fast, no heavy scan)
+    const tryExact = async (field, value) => {
+      try {
+        const qs = await getDocs(query(collection(db, "users"), where(field, "==", value)));
+        if (!qs.empty) {
+          return qs.docs.map((d) => ({ uid: d.id, ...d.data() }));
+        }
+      } catch (e) {}
+      return [];
+    };
+
+    if (kw.includes("@")) {
+      users = await tryExact("email", kw);
+      if (!users.length) users = await tryExact("emailLower", kwLower);
+      if (!users.length) users = await tryExact("mail", kw);
+    }
+
+    // 2) Fallback: load a sample list and filter client-side by substring
+    if (!users.length) {
+      try {
+        const snap = await getDocs(query(collection(db, "users"), orderBy("email"), limit(300)));
+        users = snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
+      } catch (e) {
+        // If some docs don't have 'email', orderBy may fail → fallback to a smaller un-ordered scan
+        const snap = await getDocs(query(collection(db, "users"), limit(300)));
+        users = snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
+      }
+
+      users = users.filter((u) => {
+        const nm = pickDisplayName(u).toLowerCase();
+        const em = pickEmail(u).toLowerCase();
+        return nm.includes(kwLower) || em.includes(kwLower);
+      });
+    }
+
+    // Cache for later name resolving
+    users.forEach((u) => state.userCache.set(u.uid, u));
+
+    renderReviewerResults(users);
+  };
+
+
+  async function loadDetail(id) {
+    setMsg("", "");
+    state.selected = null;
+    renderDetail();
+
+    try {
+      const ref = doc(db, "kb_submissions", id);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) throw new Error("找不到該投稿資料");
+      state.selected = { id, ...snap.data() };
+      renderDetail();
+      await loadReviews();
+    } catch (e) {
+      console.error(e);
+      setMsg("err", e?.message || String(e));
+    }
+  }
+
+  async function renderDetail() {
+    const d = state.selected;
+    $("title").textContent = d ? (d.title || d.topic || "投稿管理面板") : "投稿管理面板";
+    $("sub").textContent = d ? "可在此指派審稿、要求修訂、接受、排程、發布。" : "請先登入並選取一筆投稿。";
+
+    $("sid").value = d ? (d.submissionNo || d.id) : "";
+    const st = d?.status || "";
+    $("statusBadge").className = "badge " + statusClass(st);
+    $("statusBadge").textContent = d ? statusLabel(st) : "—";
+    $("timeBadge").className = "badge";
+    $("timeBadge").textContent = d ? `更新：${fmtDate(d.updatedAt || d.createdAt)}` : "—";
+
+    $("ownerEmail").value = d ? (d.authorEmail || d.createdByEmail || "") : "";
+
+        // PDF：新版欄位 latestManuscriptUrl；舊版可能是 pdfUrl/pdfURL；若都沒有就抓 versions 最新一版
+    let url = d ? (d.latestManuscriptUrl || d.pdfUrl || d.pdfURL || d.pdf || "") : "";
+    // 若主文件連結不存在，嘗試從 versions 子集合抓最新一版
+    const sidForPdf = state.selectedId || d?.id;
+    if (!url && sidForPdf) {
+      try {
+        const vq = query(
+          collection(db, "kb_submissions", sidForPdf, "versions"),
+          orderBy("versionNo", "desc"),
+          limit(1)
+        );
+        const vs = await getDocs(vq);
+        if (!vs.empty) {
+          const v = vs.docs[0].data() || {};
+          url = v.manuscriptUrl || v.latestManuscriptUrl || v.pdfUrl || v.pdfURL || "";
+        }
+      } catch (e) {
+        console.warn("Load latest version for PDF failed:", e);
+      }
+    }
+    if (url) {
+      $("pdfLink").href = url;
+      $("pdfLink").style.display = "";
+      $("pdfNone").style.display = "none";
+    } else {
+      $("pdfLink").href = "#";
+      $("pdfLink").style.display = "none";
+      $("pdfNone").style.display = "";
+    }
+
+    $("reviewerUids").value = d ? (Array.isArray(d.assignedReviewerUids || d.reviewerUids) ? (d.assignedReviewerUids || d.reviewerUids).join(",") : ((d.assignedReviewerUids || d.reviewerUids) || "")) : "";
+    $("scheduledMonth").value = d ? (d.plannedMonth || d.scheduledMonth || d.scheduledIssue || "") : "";
+    $("publishUrl").value = d ? (d.publishUrl || "") : "";
+    $("editorNote").value = d ? (d.editorNote || d.adminNotes || "") : "";
+    $("authorMessage").value = d ? (d.authorMessage || "") : "";
+    if ($("reviewerNotifyTo")) $("reviewerNotifyTo").value = d ? (d.reviewerNotifyTo || "") : "";
+    if ($("reviewerNotifySubject")) $("reviewerNotifySubject").value = d ? (d.reviewerNotifySubject || "") : "";
+    if ($("reviewerMessage")) $("reviewerMessage").value = d ? (d.reviewerMessage || "") : "";
+    if ($("decisionNote")) $("decisionNote").value = d ? (d.decisionNote || "") : "";
+    if ($("manualStatus")) $("manualStatus").value = "";
+
+
+    // Buttons enabled/disabled
+    const enabled = !!d;
+    for (const bid of ["btnSaveMeta","btnToUnderReview","btnReqRevision","btnAccept","btnSchedule","btnPublish","btnSendEmail"]) {
+      $(bid).disabled = !enabled;
+    }
+    $("btnDelete").disabled = !(enabled && canDelete());
+  }
+
+  async function patchSubmission(patch) {
+    const d = state.selected;
+    if (!d) return;
+    await updateDoc(doc(db, "kb_submissions", d.id), {
+      ...patch,
+      updatedAt: serverTimestamp(),
+      updatedByUid: state.user?.uid || "",
+      updatedByEmail: state.user?.email || ""
+    });
+    await loadDetail(d.id);
+    await loadList();
+  }
+
+  // ---------- Save / Transitions ----------
+  
+  // Reviewer search UI
+  $("btnReviewerSearch")?.addEventListener("click", searchReviewers);
+  $("reviewerSearch")?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") searchReviewers();
+  });
+
+  // Keep assigned reviewer display in sync
+  let _rvTimer = null;
+  $("reviewerUids")?.addEventListener("input", () => {
+    clearTimeout(_rvTimer);
+    _rvTimer = setTimeout(() => renderAssignedReviewers(), 250);
+  });
+
+$("btnSaveMeta").addEventListener("click", async () => {
+    const d = state.selected;
+    if (!d) return;
+    try {
+      const assignedReviewerUids = toArrayCsv($("reviewerUids").value);
+      const plannedMonth = $("scheduledMonth").value.trim();
+      await patchSubmission({
+        // ✅ 正式欄位
+        assignedReviewerUids,
+        plannedMonth,
+
+        // ✅ 相容舊欄位（避免其他頁面仍讀 reviewerUids / scheduledMonth）
+        reviewerUids: assignedReviewerUids,
+        scheduledMonth: plannedMonth,
+
+        publishUrl: $("publishUrl").value.trim(),
+        editorNote: $("editorNote").value,
+        authorMessage: $("authorMessage").value,
+        reviewerNotifyTo: $("reviewerNotifyTo")?.value?.trim?.() || "",
+        reviewerNotifySubject: $("reviewerNotifySubject")?.value?.trim?.() || "",
+        reviewerMessage: $("reviewerMessage")?.value || ""
+      });
+      setMsg("ok", "已儲存設定");
+    } catch (e) {
+      console.error(e);
+      setMsg("err", "儲存失敗：" + (e?.message || e));
+    }
+  });
+
+  $("btnToUnderReview").addEventListener("click", async () => {
+    if (!state.selected) return;
+    try {
+      await patchSubmission({ status: "under_review", underReviewAt: serverTimestamp() });
+      setMsg("ok", "狀態已更新：submitted → under_review");
+    } catch (e) {
+      console.error(e);
+      setMsg("err", "更新狀態失敗：" + (e?.message || e));
+    }
+  });
+
+  $("btnReqRevision").addEventListener("click", async () => {
+    if (!state.selected) return;
+    try {
+      await patchSubmission({ status: "revision_requested", revisionRequestedAt: serverTimestamp() });
+      setMsg("ok", "狀態已更新：under_review → revision_requested");
+    } catch (e) {
+      console.error(e);
+      setMsg("err", "更新狀態失敗：" + (e?.message || e));
+    }
+  });
+
+  $("btnAccept").addEventListener("click", async () => {
+    if (!state.selected) return;
+    try {
+      await patchSubmission({ status: "accepted", acceptedAt: serverTimestamp() });
+      setMsg("ok", "狀態已更新：under_review → accepted");
+    } catch (e) {
+      console.error(e);
+      setMsg("err", "更新狀態失敗：" + (e?.message || e));
+    }
+  });
+
+  $("btnSchedule").addEventListener("click", async () => {
+    if (!state.selected) return;
+    const m = $("scheduledMonth").value.trim();
+    if (!m) {
+      setMsg("err", "請先填入排程發表月份（YYYY-MM）");
+      return;
+    }
+    try {
+      await patchSubmission({ status: "scheduled", scheduledAt: serverTimestamp(), scheduledMonth: m });
+      setMsg("ok", "狀態已更新：accepted → scheduled");
+    } catch (e) {
+      console.error(e);
+      setMsg("err", "更新狀態失敗：" + (e?.message || e));
+    }
+  });
+
+  $("btnPublish").addEventListener("click", async () => {
+    if (!state.selected) return;
+    const url = $("publishUrl").value.trim();
+    if (!url) {
+      setMsg("err", "請先填入發布連結（publishUrl）");
+      return;
+    }
+    try {
+      await patchSubmission({ status: "published", publishedAt: serverTimestamp(), publishUrl: url });
+      setMsg("ok", "狀態已更新：scheduled → published");
+    } catch (e) {
+      console.error(e);
+      setMsg("err", "更新狀態失敗：" + (e?.message || e));
+    }
+  });
+
+  // ---------- Email (Trigger Email Extension) ----------
+  $("btnSendEmail").addEventListener("click", async () => {
+    const d = state.selected;
+    if (!d) return;
+
+    const to = ($("ownerEmail").value || "").trim();
+    if (!to) {
+      setMsg("err", "作者 Email 空白，無法寄送通知");
+      return;
+    }
+
+    const st = d.status || "";
+    const subject = `CosPIF 月刊投稿通知（${statusLabel(st)}）`;
+    const note = ($("authorMessage").value || "").trim();
+    const html = `
+      <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,'Noto Sans TC',sans-serif;line-height:1.7">
+        <h2 style="margin:0 0 8px">CosPIF 月刊投稿通知</h2>
+        <div>投稿題目：<b>${escapeHtml(d.title || d.topic || "(未命名)")}</b></div>
+        <div>投稿ID：<span style="font-family:ui-monospace,Menlo,Consolas,monospace">${escapeHtml(d.submissionNo || d.id)}</span></div>
+        <div>目前狀態：<b>${escapeHtml(statusLabel(st))}</b></div>
+        ${note ? `<hr style="border:none;border-top:1px solid #e5e7eb;margin:12px 0"/>
+                 <div>編輯訊息：</div>
+                 <div style="white-space:pre-wrap">${escapeHtml(note)}</div>` : ""}
+        ${(d.pdfUrl || d.pdfURL) ? `<hr style="border:none;border-top:1px solid #e5e7eb;margin:12px 0"/>
+                 <div>稿件PDF：<a href="${escapeHtml(d.pdfUrl || d.pdfURL)}" target="_blank">點此開啟</a></div>` : ""}
+      </div>
+    `;
+
+    try {
+      await addDoc(collection(db, "mail"), {
+        to: [to],
+        message: { subject, html },
+        createdAt: serverTimestamp(),
+        source: "kb-submit-admin"
+      });
+      setMsg("ok", "已送出郵件佇列（mail）");
+    } catch (e) {
+      console.error(e);
+      setMsg("err", "寄信失敗：" + (e?.message || e));
+    }
+  });
+
+  // ---------- Delete ----------
+  
+  // ===== 審稿通知郵件（寄給審稿人） =====
+  const parseEmailList = (s) =>
+    (s || "")
+      .split(/[,;\n]+/)
+      .map((x) => x.trim())
+      .filter(Boolean)
+      .filter((x) => x.includes("@"));
+
+  const getBaseUrl = () => {
+    try { return new URL("kb-review.html", window.location.href).href; }
+    catch { return "kb-review.html"; }
+  };
+
+  const buildReviewerEmailHtml = (d, extraMsg) => {
+    const title = escapeHtml(d?.title || "(未填標題)");
+    const sid = escapeHtml(d?.id || "");
+    const pdf = d?.pdfUrl ? `<a href="${escapeHtml(d.pdfUrl)}">查看 PDF</a>` : "（尚未上傳）";
+    const reviewUrl = escapeHtml(getBaseUrl());
+
+    const extra = (extraMsg || "").trim()
+      ? `<p><b>補充說明：</b></p><pre style="white-space:pre-wrap;font-family:inherit">${escapeHtml(extraMsg.trim())}</pre>`
+      : "";
+
+    return `
+      <div style="font-family:Arial,Helvetica,sans-serif; line-height:1.6">
+        <p>您好，您已被指派為本稿件的審稿人，煩請登入系統完成審查。</p>
+        <ul>
+          <li><b>投稿ID：</b>${sid}</li>
+          <li><b>標題：</b>${title}</li>
+          <li><b>PDF：</b>${pdf}</li>
+          <li><b>審稿入口：</b><a href="${reviewUrl}">${reviewUrl}</a>（登入後，在「我被指派的投稿」可看到此稿件）</li>
+        </ul>
+        ${extra}
+        <p style="color:#666">此信由系統自動寄送，若您不是預期收件人請忽略。</p>
+      </div>
+    `;
+  };
+
+  $("btnSendReviewerEmail")?.addEventListener("click", async () => {
+    try {
+      const d = state.selected;
+      if (!d) return toast("請先選取一筆投稿", true);
+
+      // 優先使用手動輸入的收件人；空白則以已指派審稿人 Email 為準
+      const manualTo = parseEmailList($("reviewerNotifyTo")?.value);
+      let tos = manualTo;
+
+      if (!tos.length) {
+        const uids = toArrayCsv($("reviewerUids").value);
+        const emails = [];
+        for (const uid of uids) {
+          const u = await getUserByUid(uid);
+          const email = pickEmail(u);
+          if (email && email.includes("@")) emails.push(email);
+        }
+        tos = Array.from(new Set(emails));
+      }
+
+      if (!tos.length) return toast("找不到審稿人 Email：請先指派審稿人或手動填入收件人 Email", true);
+
+      const subject =
+        ($("reviewerNotifySubject")?.value || "").trim() ||
+        `【CosPIF KB】審稿邀請：${(d.title || "").trim() || d.id}`;
+
+      const extraMsg = ($("reviewerMessage")?.value || "").trim();
+      const htmlBody = buildReviewerEmailHtml(d, extraMsg);
+
+      await addDoc(collection(db, "mail"), {
+        to: tos,
+        message: { subject, html: htmlBody },
+        type: "kb_reviewer_invite",
+        submissionId: d.id,
+        createdAt: serverTimestamp(),
+      });
+
+      toast(`已送出審稿通知（${tos.length} 位）`);
+    } catch (e) {
+      console.error(e);
+      toast(`寄送失敗：${e.message || e}`, true);
+    }
+  });
+
+  // ===== 手動設定狀態：accepted / rejected =====
+  $("btnSetManualStatus")?.addEventListener("click", async () => {
+    try {
+      const d = state.selected;
+      if (!d) return toast("請先選取一筆投稿", true);
+
+      const s = ($("manualStatus")?.value || "").trim();
+      if (!["accepted", "rejected"].includes(s)) return toast("請選擇要套用的狀態（accepted / rejected）", true);
+
+      const note = ($("decisionNote")?.value || "").trim();
+
+      const patch = {
+        status: s,
+        decisionNote: note,
+        decisionAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      if (s === "accepted") patch.acceptedAt = serverTimestamp();
+      if (s === "rejected") patch.rejectedAt = serverTimestamp();
+
+      await patchSubmission(patch);
+      toast(`已更新狀態 → ${s}`);
+    } catch (e) {
+      console.error(e);
+      toast(`更新失敗：${e.message || e}`, true);
+    }
+  });
+
+
+$("btnDelete").addEventListener("click", async () => {
+    const d = state.selected;
+    if (!d) return;
+    if (!canDelete()) {
+      setMsg("err", "只有 admin/systemAdmin 可以刪除");
+      return;
+    }
+    if (!confirm("確定刪除這篇投稿？（此動作無法復原）")) return;
+
+    try {
+      await deleteDoc(doc(db, "kb_submissions", d.id));
+      state.selectedId = null;
+      state.selected = null;
+      renderDetail();
+      await loadList();
+      setMsg("ok", "已刪除投稿");
+    } catch (e) {
+      console.error(e);
+      setMsg("err", "刪除失敗：" + (e?.message || e));
+    }
+  });
+
+  // ---------- Reviews ----------
+  async function loadReviews() {
+    const d = state.selected;
+    const box = $("reviews");
+    box.innerHTML = "";
+    if (!d) return;
+
+    try {
+      const snap = await getDocs(collection(db, "kb_submissions", d.id, "reviews"));
+      const rows = snap.docs.map(s => ({ id: s.id, ...s.data() }));
+      rows.sort((a, b) => tsVal(b.updatedAt || b.createdAt) - tsVal(a.updatedAt || a.createdAt));
+
+      if (!rows.length) {
+        box.innerHTML = '<div class="hint">尚無審稿回覆。</div>';
+        return;
+      }
+
+      const parts = rows.map(r => {
+        const who = escapeHtml(r.reviewerName || r.reviewerEmail || r.reviewerUid || r.id);
+        const when = escapeHtml(fmtDate(r.updatedAt || r.createdAt));
+        const rec = escapeHtml(r.recommendation || r.decision || "-");
+        const comment = escapeHtml(r.comment || r.notes || "").replace(/\n/g, "<br>");
+        return `
+          <div class="card" style="margin:10px 0;border-radius:14px;box-shadow:none">
+            <div class="bd">
+              <div class="row" style="justify-content:space-between">
+                <div><b>${who}</b></div>
+                <div class="hint">${when}</div>
+              </div>
+              <div class="hr"></div>
+              <div style="font-size:14px;line-height:1.7">${comment || '<span class="hint">（無內容）</span>'}</div>
+              <div class="hint" style="margin-top:10px">建議：<b>${rec}</b></div>
+            </div>
+          </div>
+        `;
+      });
+
+      box.innerHTML = parts.join("");
+    } catch (e) {
+      console.error(e);
+      box.innerHTML = `<div class="hint">讀取審稿回覆失敗：${escapeHtml(e?.message || e)}</div>`;
+    }
+  }
+</script>
+</body>
+</html>

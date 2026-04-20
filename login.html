@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登入 - my-PIF 整合平台</title>
+    <link rel="stylesheet" href="/style.css?v=build_v1">
+     <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-alt);
+        }
+        .auth-container {
+            width: 100%;
+            max-width: 420px;
+        }
+        .auth-card {
+            padding: 2.5rem;
+            background-color: var(--card);
+            border-radius: 16px;
+            border: var(--bd);
+        }
+        .auth-card h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--accent);
+        }
+        .auth-link {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <h1>登入您的 my-PIF 帳戶</h1>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="email">電子郵件</label>
+                    <input id="email" type="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">密碼</label>
+                    <input id="password" type="password" required>
+                </div>
+                <button type="submit" id="btnLogin" class="primary" style="width:100%; margin-top: 1rem;">登入</button>
+            </form>
+            <div id="message" class="form-message" style="margin-top: 1.5rem;"></div>
+            <div class="auth-link">
+                還沒有帳戶？ <a href="/register.html">點此申請</a>
+            </div>
+        </div>
+    </div>
+
+<script type="module">
+    // *** GEMINI CORRECTED VERSION - HANDLES REDIRECTS ***
+    // This script should be used in the 'my-pif' project's login.html
+    
+    // Use the firebase-config.js from your 'my-pif' project
+    import { auth, db } from './firebase-config.js'; 
+    import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const form = document.getElementById('login-form');
+    const messageEl = document.getElementById('message');
+    const btnLogin = document.getElementById('btnLogin');
+
+    /**
+     * Gets the 'redirectUrl' parameter from the current page's URL.
+     * @returns {string|null} The decoded redirect URL if it exists and is valid, otherwise null.
+     */
+    function getRedirectUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectUrl = urlParams.get('redirectUrl');
+        // Basic validation to ensure it's a secure and valid URL
+        if (redirectUrl && (redirectUrl.startsWith('http:') || redirectUrl.startsWith('https:'))) {
+            return decodeURIComponent(redirectUrl);
+        }
+        return null;
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        messageEl.textContent = '';
+        messageEl.className = 'form-message';
+        btnLogin.disabled = true;
+        btnLogin.textContent = '登入中...';
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            const userDocRef = doc(db, "users", user.uid);
+            const userDoc = await getDoc(userDocRef);
+
+            if (!userDoc.exists()) {
+                throw new Error('auth/user-data-not-found');
+            }
+            
+            const userData = userDoc.data();
+            const userRole = userData.role || 'member';
+            const userStatus = userData.status || 'pending';
+
+            if (userStatus !== 'approved') {
+                if (userStatus === 'pending') throw new Error('auth/account-pending');
+                if (userStatus === 'denied') throw new Error('auth/account-denied');
+                throw new Error('auth/account-inactive');
+            }
+            
+            messageEl.textContent = '登入成功！正在跳轉...';
+            messageEl.classList.add('success');
+
+            // --- REDIRECTION LOGIC ---
+            // 1. Prioritize redirecting back to the original application if a 'redirectUrl' is present.
+            const externalRedirect = getRedirectUrl();
+            if (externalRedirect) {
+                window.location.href = externalRedirect;
+                return; // Stop execution
+            }
+            
+            // 2. If no 'redirectUrl' is found, perform the default internal redirection based on user role.
+            const internalRedirect = userRole === 'admin' ? '/admin.html' : '/index.html';
+            window.location.href = internalRedirect;
+            // --- END OF REDIRECTION LOGIC ---
+
+        } catch (error) {
+            console.error("Login Error:", error.code, error.message);
+            let msg = '登入失敗，請檢查您的帳號或密碼。';
+
+            switch (error.code || error.message) {
+                case 'auth/user-not-found':
+                case 'auth/wrong-password':
+                case 'auth/invalid-credential':
+                    msg = '電子郵件或密碼錯誤，請重試。';
+                    break;
+                case 'auth/account-pending':
+                    msg = '您的帳戶正在等待管理員審核。';
+                    break;
+                case 'auth/account-denied':
+                    msg = '您的帳戶申請已被拒絕，請聯繫管理員。';
+                    break;
+                case 'auth/account-inactive':
+                case 'auth/user-data-not-found':
+                     msg = '您的帳戶狀態異常，請聯繫管理員。';
+                    break;
+            }
+
+            messageEl.textContent = msg;
+            messageEl.classList.add('error');
+            btnLogin.disabled = false;
+            btnLogin.textContent = '登入';
+        }
+    });
+</script>
+
+</body>
+</html>

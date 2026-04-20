@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KB 後台｜刊物編輯（週刊／月刊）</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    .container{ max-width: 1750px; }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.85rem 1rem; background:#fff;
+      border:1px solid var(--line); border-radius:16px;
+      margin:.9rem 0 1rem;
+    }
+    .topbar .left{ display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
+    .topbar a{ text-decoration:none; color:var(--ink); font-weight:800; }
+    .badge{
+      display:inline-flex; align-items:center; gap:.35rem;
+      border:1px solid var(--line); border-radius:999px;
+      padding:.25rem .6rem; font-size:.82rem; background:#fff; color:var(--muted);
+    }
+
+    .layout{
+      display:grid;
+      grid-template-columns: 430px 1fr;
+      gap: 1rem;
+      align-items:start;
+    }
+    @media (max-width: 1100px){ .layout{ grid-template-columns: 1fr; } }
+
+    .card{
+      background:#fff; border:1px solid var(--line);
+      border-radius:16px; box-shadow:0 1px 3px rgba(0,0,0,.05);
+      padding: 1rem 1rem;
+    }
+
+    .row{ display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+    .grow{ flex: 1 1 auto; min-width: 180px; }
+
+    .input, select, textarea{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:.5rem .6rem;
+      font-size:.95rem;
+      outline:none;
+      background:#fff;
+    }
+    textarea{ min-height: 110px; resize: vertical; }
+    .input:focus, select:focus, textarea:focus{
+      border-color:#bfdbfe; box-shadow:0 0 0 3px rgba(59,130,246,.15);
+    }
+
+    .btnx{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius: 12px;
+      padding:.48rem .7rem;
+      cursor:pointer;
+      font-weight:800;
+      display:inline-flex; align-items:center; gap:.4rem;
+    }
+    .btnx:hover{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+    .btn-danger{ border-color:#fecaca; }
+    .btn-danger:hover{ background:#fff1f2; border-color:#fca5a5; color:#b91c1c; }
+
+    .muted{ color:var(--muted); }
+    .small{ font-size:.86rem; }
+    .kbd{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:.85rem; }
+
+    .hr{ border:none; border-top:1px solid #eef2f7; margin: .9rem 0; }
+    .warn{
+      padding:.6rem .7rem;
+      border:1px solid #fde68a;
+      background:#fffbeb;
+      border-radius:12px;
+      color:#92400e;
+    }
+    .ok{
+      padding:.6rem .7rem;
+      border:1px solid #bbf7d0;
+      background:#f0fdf4;
+      border-radius:12px;
+      color:#166534;
+    }
+    .disabled{ opacity:.55; pointer-events:none; }
+
+    /* left list */
+    .list{ display:flex; flex-direction:column; gap:.45rem; margin-top:.6rem; }
+    .item{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:.55rem .65rem;
+      cursor:pointer;
+      background:#fff;
+    }
+    .item:hover{ background:#eff6ff; border-color:#bfdbfe; }
+    .item .t{ font-weight:900; }
+    .item .m{ color:var(--muted); font-size:.85rem; margin-top:.15rem; line-height:1.35; }
+
+    /* article picker */
+    .picker{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:.75rem .8rem;
+      background:#fff;
+      margin-top:.6rem;
+    }
+    .pickerResults{ margin-top:.55rem; display:flex; flex-direction:column; gap:.45rem; }
+    .pickRow{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:.55rem .65rem;
+      background:#fff;
+      display:flex;
+      gap:.65rem;
+      justify-content:space-between;
+      align-items:flex-start;
+    }
+    .pickRow:hover{ background:#eff6ff; border-color:#bfdbfe; }
+    .pickRow .left{ min-width:0; }
+    .pickRow .id{ font-weight:900; }
+    .pickRow .meta{ color:var(--muted); font-size:.85rem; margin-top:.15rem; line-height:1.35; }
+    .pickRow .actions{ display:flex; gap:.4rem; flex-wrap:wrap; justify-content:flex-end; }
+
+    /* selected articles */
+    .selectedWrap{ margin-top:.7rem; }
+    .selCard{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:.75rem .8rem;
+      background:#fff;
+      margin:.6rem 0;
+    }
+    .selHead{
+      display:flex; justify-content:space-between; gap:.5rem; align-items:flex-start; flex-wrap:wrap;
+    }
+    .selHead .title{ font-weight:900; }
+    .chip{
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:.2rem .55rem;
+      font-size:.82rem;
+      color:var(--muted);
+      background:#fff;
+      display:inline-flex;
+      gap:.35rem;
+      align-items:center;
+      margin-left:.25rem;
+    }
+    .twoCol{
+      display:grid; grid-template-columns: 1fr 1fr; gap:.8rem;
+    }
+    @media (max-width: 980px){ .twoCol{ grid-template-columns: 1fr; } }
+
+    /* preview */
+    .preview{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:1rem 1rem;
+      background:#fff;
+      overflow:auto;
+      max-height: 75vh;
+    }
+    .pv h1{ font-size: 1.7rem; margin:.25rem 0 .45rem; }
+    .pv h2{ font-size: 1.25rem; margin: 1.1rem 0 .55rem; }
+    .pv p, .pv li{ line-height:1.75; }
+    .pv .card{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:.9rem .95rem;
+      box-shadow:none;
+      margin:.75rem 0;
+    }
+    .pv .card .t{ font-weight:900; font-size:1.05rem; margin:.1rem 0 .25rem; }
+    .pv .card .m{ color:var(--muted); font-size:.9rem; margin-top:.15rem; line-height:1.5; }
+    .pv a{ color: inherit; }
+  
+    /* Modal */
+    .modal{ position:fixed; inset:0; display:none; z-index:9999; }
+    .modal.show{ display:block; }
+    .modal-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.35); }
+    .modal-card{
+      position:relative;
+      width:min(860px, calc(100% - 24px));
+      margin: 60px auto;
+      background:#fff;
+      border-radius:16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+      padding:16px 16px 14px;
+    }
+    .chip{
+      display:inline-flex; align-items:center; gap:.4rem;
+      border:1px solid #e7e7ef; border-radius:999px;
+      padding:.35rem .6rem;
+      background:#fafafe;
+      font-size:.92rem;
+      user-select:none;
+    }
+    .chip input{ margin:0; }
+
+</style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="left">
+        <a href="index.html"><i class="fa-solid fa-house"></i> 首頁</a>
+        <span class="badge" id="authBadge">未登入</span>
+        <span class="badge" id="roleBadge">role: —</span>
+      </div>
+      <div class="row">
+        <span class="muted small" id="userInfo"></span>
+        <button class="btnx" id="btnSignOut"><i class="fa-solid fa-right-from-bracket"></i> 登出</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- LEFT: issue list -->
+      <aside class="card">
+        <h2 style="margin:.1rem 0 .35rem;">刊物後台</h2>
+        <div class="muted small">
+          從 <code>kb_articles</code> 挑選文章，編成「週刊／月刊」，存到 <code>kb_issues</code>。
+          <br>前台閱讀頁可用 <span class="kbd">kb-issue.html?issue=xxx</span>（本檔案會提供）。
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row">
+          <input class="input grow" id="qIssues" placeholder="搜尋刊物：title / issueId / frequency…" />
+          <button class="btnx" id="btnReload" title="重新載入"><i class="fa-solid fa-rotate"></i></button>
+        </div>
+
+        <div class="row" style="margin-top:.55rem;">
+          <input class="input grow" id="newIssueId" placeholder="新刊物 issueId（docId）例：2025-w52 或 2025-12" />
+          <button class="btnx" id="btnNewIssue"><i class="fa-solid fa-plus"></i> 新增</button>
+        </div>
+
+        <div class="list" id="issueList"></div>
+        <div id="msg" style="margin-top:.7rem;"></div>
+      </aside>
+
+      <!-- RIGHT: issue editor -->
+      <main class="card" id="editorWrap">
+        <div class="row" style="justify-content:space-between;">
+          <h2 style="margin:.1rem 0;">刊物編輯</h2>
+          <div class="row">
+            <button class="btnx" id="btnOpenFront"><i class="fa-solid fa-up-right-from-square"></i> 開前台</button>
+            <button class="btnx" id="btnSave"><i class="fa-solid fa-floppy-disk"></i> 儲存</button>
+            <button class="btnx" id="btnNotify" title="發信通知訂閱者（需已發布）"><i class="fa-solid fa-paper-plane"></i> 通知訂閱者</button>
+          </div>
+        </div>
+        <div class="muted small" id="currentIdLine" style="margin-top:.3rem;">issueId: —</div>
+
+        <div class="hr"></div>
+
+        <div class="twoCol">
+          <div>
+            <label class="muted small">issueId（docId）</label>
+            <input class="input" id="issueId" placeholder="例如：2025-w52 或 2025-12" />
+          </div>
+          <div>
+            <label class="muted small">status</label>
+            <select id="status">
+              <option value="draft">draft</option>
+              <option value="published">published</option>
+              <option value="archived">archived</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="twoCol" style="margin-top:.65rem;">
+          <div>
+            <label class="muted small">frequency（週刊／月刊／特刊）</label>
+            <select id="frequency">
+              <option value="weekly">weekly</option>
+              <option value="monthly">monthly</option>
+              <option value="special">special</option>
+            </select>
+          </div>
+          <div>
+            <label class="muted small">publishDate</label>
+            <input class="input" id="publishDate" type="date" />
+          </div>
+        </div>
+
+        <div style="margin-top:.65rem;">
+          <label class="muted small">title（刊物標題）</label>
+          <input class="input" id="title" placeholder="例如：化妝品知識週刊 Vol.52（2025/12）" />
+        </div>
+
+        <div style="margin-top:.65rem;">
+          <label class="muted small">coverImageUrl（封面背景圖 URL，可空白）</label>
+          <input class="input" id="coverImageUrl" placeholder="https://... 或 Firebase Storage 下載 URL" />
+        </div>
+
+        <div style="margin-top:.65rem;">
+          <label class="muted small">coverSummary（封面導讀）</label>（封面導讀）</label>
+          <textarea id="coverSummary" placeholder="簡短摘要：本期主題、亮點、適合誰閱讀…"></textarea>
+        </div>
+
+        <div style="margin-top:.65rem;">
+          <label class="muted small">editorNoteMd（編者的話｜Markdown）</label>
+          <textarea id="editorNoteMd" placeholder="可用 Markdown 撰寫：&#10;- 本期焦點&#10;- 更新內容&#10;- 下期預告…"></textarea>
+        </div>
+
+        <div class="hr"></div>
+
+        <h3 style="margin:.2rem 0;">挑選文章（來自 kb_articles）</h3>
+        <div class="picker">
+          <div class="row">
+            <input class="input grow" id="articleSearchInput" placeholder="搜尋文章：slug / title / topic / summary…" />
+            <select id="articleStatusFilter" style="width: 160px;">
+              <option value="published" selected>published</option>
+              <option value="all">all</option>
+              <option value="draft">draft</option>
+              <option value="archived">archived</option>
+            </select>
+            <button class="btnx" id="btnArticleSearch"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
+            <button class="btnx" id="btnArticleClear"><i class="fa-solid fa-broom"></i> 清除</button>
+          </div>
+          <div class="muted small" style="margin-top:.35rem;">
+            點「加入」會把文章 slug 加入本期清單；已存在就不重複。你也可以為每篇文章填「導讀」。
+          </div>
+          <div class="pickerResults" id="articleResults"></div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row" style="justify-content:space-between;">
+          <h3 style="margin:.2rem 0;">本期文章清單</h3>
+          <div class="row">
+            <button class="btnx" id="btnAutoTitle"><i class="fa-solid fa-wand-magic-sparkles"></i> 自動生成標題</button>
+            <button class="btnx btn-danger" id="btnDelete"><i class="fa-solid fa-trash"></i> 刪除本期</button>
+          </div>
+        </div>
+
+        <div class="selectedWrap" id="selectedWrap"></div>
+
+        <div class="hr"></div>
+
+        <div class="row" style="justify-content:space-between;">
+          <h3 style="margin:.2rem 0;">即時預覽（刊物樣式）</h3>
+          <span class="chip"><i class="fa-solid fa-eye"></i> 預覽不等於前台頁面，但版型相近</span>
+        </div>
+        <div class="preview pv" id="preview"></div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module">
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import {
+      collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
+      serverTimestamp,
+      query, orderBy, limit, startAt, endAt, documentId
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js";
+    import { db, auth } from "./firebase-config.js";
+
+    const $ = (s) => document.querySelector(s);
+
+    // Collections: articles exist already in your KB reader page
+    const COL_ISSUES = "kb_issues";
+    const COL_ARTICLES = "kb_articles";
+
+    let canEdit = false;
+
+    let issuesAll = [];
+    let currentId = "";
+    let currentData = null;
+
+    // ---- utils
+    function esc(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+    }
+    function msg(html, kind="ok"){
+      $("#msg").innerHTML = `<div class="${kind === "ok" ? "ok" : "warn"}">${html}</div>`;
+      setTimeout(() => { if ($("#msg").innerHTML) $("#msg").innerHTML = ""; }, 3800);
+    }
+    function clone(obj){ return JSON.parse(JSON.stringify(obj || {})); }
+    function normalizeId(s){ return String(s || "").trim(); }
+
+    function toIsoDate(d){
+      if (!d) return "";
+      if (typeof d === "string"){
+        if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+        return "";
+      }
+      try{
+        const dt = new Date(d);
+        const yyyy = dt.getFullYear();
+        const mm = String(dt.getMonth()+1).padStart(2,"0");
+        const dd = String(dt.getDate()).padStart(2,"0");
+        return `${yyyy}-${mm}-${dd}`;
+      }catch{ return ""; }
+    }
+
+    // ---- auth + role (supports claims.admin OR claims.roles.admin)
+    async function evaluateRoles(user){
+      canEdit = false;
+
+      if (!user){
+        $("#authBadge").textContent = "未登入";
+        $("#roleBadge").textContent = "role: —";
+        $("#userInfo").textContent = "";
+        $("#editorWrap").classList.add("disabled");
+        return;
+      }
+
+      $("#authBadge").textContent = "已登入";
+      $("#userInfo").textContent = user.email || "";
+
+      if (typeof window.__issueForcedRefresh === "undefined") window.__issueForcedRefresh = false;
+
+      try{
+        const token = await user.getIdTokenResult(!window.__issueForcedRefresh);
+        window.__issueForcedRefresh = true;
+
+        const claims = token?.claims || {};
+        const rolesObj = (claims.roles && typeof claims.roles === "object") ? claims.roles : {};
+        const roles = {
+          admin: !!claims.admin,
+          systemAdmin: !!claims.systemAdmin,
+          secretary: !!claims.secretary,
+          editor: !!claims.editor,
+          reviewer: !!claims.reviewer,
+          client: !!claims.client,
+          ...rolesObj
+        };
+
+        const ok = !!(roles.admin || roles.systemAdmin || roles.editor || roles.secretary);
+        canEdit = ok;
+
+        const roleKeys = ["admin","systemAdmin","secretary","editor","reviewer","client"];
+        const roleList = roleKeys.filter(k => !!roles[k]).join(", ");
+        $("#roleBadge").textContent = `role: ${roleList || "（none）"}`;
+
+        if (!ok){
+          $("#editorWrap").classList.add("disabled");
+          msg("你已登入，但缺少 admin/systemAdmin/editor/secretary 權限（已鎖定編輯）。", "warn");
+        } else {
+          $("#editorWrap").classList.remove("disabled");
+        }
+      }catch(e){
+        console.error(e);
+        $("#roleBadge").textContent = "role: （讀取失敗）";
+        $("#editorWrap").classList.add("disabled");
+        msg("無法讀取使用者權限（請確認自訂 claims 與 Firestore Rules）。", "warn");
+      }
+    }
+
+
+    // ---- functions (callable)
+    const functions = getFunctions(auth.app, "asia-east1");
+    const enqueueIssueNotify = httpsCallable(functions, "enqueueKbIssueNotification");
+
+    function openNotifyModal(){
+      if (!canEdit){
+        msg("目前沒有編輯權限，無法發送通知。", "warn");
+        return;
+      }
+      const id = ($("#issueId").value || "").trim();
+      if (!id){
+        msg("請先選取或建立刊物（issueId）。", "warn");
+        return;
+      }
+
+      const title = ($("#title").value || "").trim() || id;
+      const freq = ($("#frequency").value || "monthly").trim();
+      const subjectDefault = `【CosPIF 化妝品知識${freq === "weekly" ? "週刊" : "月刊"}】${title}`;
+      $("#notifySubject").value = subjectDefault;
+
+      $("#notifyStatus").textContent = "";
+      $("#notifyModal").classList.add("show");
+      $("#notifyModal").setAttribute("aria-hidden","false");
+    }
+    function closeNotifyModal(){
+      $("#notifyModal").classList.remove("show");
+      $("#notifyModal").setAttribute("aria-hidden","true");
+    }
+
+    async function sendNotify(){
+      if (!canEdit){
+        msg("目前沒有編輯權限，無法發送通知。", "warn");
+        return;
+      }
+      const issueId = ($("#issueId").value || "").trim();
+      if (!issueId){
+        msg("請先選取刊物。", "warn");
+        return;
+      }
+
+      const mode = document.querySelector('input[name="notifyMode"]:checked')?.value || "test";
+      const force = !!$("#notifyForce").checked;
+      const subject = ($("#notifySubject").value || "").trim();
+      const testEmail = ($("#notifyTestEmail").value || "").trim();
+      const publicBaseUrl = ($("#notifyPublicBase").value || "").trim();
+
+      if (mode === "all"){
+        const ok = confirm("將寄送『最新刊物出版通知』給所有訂閱者。確定要送出嗎？");
+        if (!ok) return;
+      }
+
+      $("#btnNotifySend").disabled = true;
+      $("#btnNotifySend").textContent = "送出中…";
+      $("#notifyStatus").textContent = "排程寄信中（寫入 mail queue）…";
+
+      try{
+        const payload = { issueId, mode, force, subject, testEmail, publicBaseUrl };
+        const res = await enqueueIssueNotify(payload);
+        const r = res?.data || {};
+        $("#notifyStatus").textContent = `完成：已排程 ${r.queued || 0} 封（mode=${r.mode || mode}）。`;
+        msg(`已排程寄送：${r.queued || 0} 封`, "ok");
+      }catch(e){
+        console.error(e);
+        const m = e?.message || String(e);
+        $("#notifyStatus").textContent = "失敗：" + m;
+        msg("發送失敗：" + m, "warn");
+      }finally{
+        $("#btnNotifySend").disabled = false;
+        $("#btnNotifySend").innerHTML = '<i class="fa-solid fa-paper-plane"></i> 送出通知';
+      }
+    }
+
+    // bind notify UI
+    $("#btnNotify")?.addEventListener("click", openNotifyModal);
+    $("#btnNotifyClose")?.addEventListener("click", closeNotifyModal);
+    $("#btnNotifySend")?.addEventListener("click", sendNotify);
+    $("#notifyModal")?.addEventListener("click", (e)=>{
+      const t = e.target;
+      if (t && t.dataset && t.dataset.close) closeNotifyModal();
+    });
+
+    // ---- load list
+    async function loadIssues(){
+      $("#issueList").innerHTML = `<div class="muted small">讀取刊物清單中…</div>`;
+      const snaps = await getDocs(collection(db, COL_ISSUES));
+      issuesAll = snaps.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      issuesAll.sort((a,b) => {
+        const da = (a.publishDate || "").toString();
+        const dbb = (b.publishDate || "").toString();
+        if (da && dbb) return dbb.localeCompare(da);
+        return (Number(b.updatedAt?.seconds||0) - Number(a.updatedAt?.seconds||0));
+      });
+
+      renderIssueList();
+    }
+
+    function renderIssueList(){
+      const q = ($("#qIssues").value || "").trim().toLowerCase();
+      const filtered = !q ? issuesAll : issuesAll.filter(x => {
+        const text = `${x.id} ${x.title||""} ${x.frequency||""} ${x.status||""} ${x.publishDate||""}`.toLowerCase();
+        return text.includes(q);
+      });
+
+      const box = $("#issueList");
+      box.innerHTML = "";
+      if (!filtered.length){
+        box.innerHTML = `<div class="muted small">沒有符合的刊物</div>`;
+        return;
+      }
+
+      filtered.forEach(x => {
+        const div = document.createElement("div");
+        div.className = "item";
+        const t = x.title || x.id;
+        const m = [
+          x.publishDate ? `date:${x.publishDate}` : "",
+          x.frequency ? `freq:${x.frequency}` : "",
+          x.status ? `status:${x.status}` : "",
+          `issueId:${x.id}`
+        ].filter(Boolean).join(" · ");
+        div.innerHTML = `<div class="t">${esc(t)}</div><div class="m">${esc(m)}</div>`;
+        div.addEventListener("click", () => openIssue(x.id));
+        box.appendChild(div);
+      });
+    }
+
+    // ---- editor data
+    function getEditorData(){
+      const d = clone(currentData || {});
+      d.issueId = normalizeId($("#issueId").value);
+      d.status = ($("#status").value || "draft").trim();
+      d.frequency = ($("#frequency").value || "weekly").trim();
+      d.publishDate = ($("#publishDate").value || "").trim();
+      d.title = ($("#title").value || "").trim();
+      d.coverImageUrl = ($("#coverImageUrl").value || "").trim();
+      d.coverSummary = ($("#coverSummary").value || "").trim();
+      d.editorNoteMd = ($("#editorNoteMd").value || "");
+      d.items = Array.isArray(currentData?.items) ? clone(currentData.items) : [];
+      return d;
+    }
+
+    function setEditorData(issue){
+      currentData = clone(issue || {});
+      $("#issueId").value = currentData.issueId || currentId || "";
+      $("#status").value = currentData.status || "draft";
+      $("#frequency").value = currentData.frequency || "weekly";
+      $("#publishDate").value = currentData.publishDate || "";
+      $("#title").value = currentData.title || "";
+      $("#coverImageUrl").value = currentData.coverImageUrl || "";
+      $("#coverSummary").value = currentData.coverSummary || "";
+      $("#editorNoteMd").value = currentData.editorNoteMd || "";
+      currentData.items = Array.isArray(currentData.items) ? currentData.items : [];
+      renderSelected();
+      refreshPreview();
+    }
+
+    // ---- articles search (server-side prefix query; avoid full collection download)
+    function pickText(v){
+      if (v == null) return "";
+      if (typeof v === "string") return v;
+      if (Array.isArray(v)) return v.map(pickText).filter(Boolean).join(" / ");
+      if (typeof v === "object"){
+        for (const k of ["zh","zhHant","zh_tw","zh-TW","en","ko","title","name"]){
+          if (typeof v[k] === "string") return v[k];
+        }
+        const vals = Object.values(v).filter(x => typeof x === "string");
+        return vals[0] || "";
+      }
+      return String(v);
+    }
+
+    function buildArticleLite(docSnap){
+      const data = docSnap.data() || {};
+      return {
+        id: docSnap.id,
+        slug: pickText(data.slug) || docSnap.id,
+        title: pickText(data.title) || pickText(data.title_zh) || docSnap.id,
+        topic: pickText(data.topic),
+        status: pickText(data.status),
+        summary: pickText(data.summary)
+      };
+    }
+
+    function articleMeta(a){
+      const slug = pickText(a.slug || a.id || "").toString();
+      const title = pickText(a.title) || slug;
+      const topic = pickText(a.topic) || "";
+      const status = pickText(a.status) || "";
+      const summary = pickText(a.summary) || "";
+      return { slug, title, topic, status, summary };
+    }
+
+    function scoreArticle(a, q){
+      if (!q) return 0;
+      const { slug, title, topic, status, summary } = articleMeta(a);
+      const id = slug.toLowerCase();
+      const text = `${slug} ${title} ${topic} ${status} ${summary}`.toLowerCase();
+      let s = 0;
+      if (id.startsWith(q)) s += 100;
+      if (id.includes(q)) s += 40;
+      if (String(title).toLowerCase().includes(q)) s += 30;
+      if (String(topic).toLowerCase().includes(q)) s += 20;
+      if (text.includes(q)) s += 10;
+      return s;
+    }
+
+    async function queryByDocIdPrefix(prefix, max=25){
+      const p = String(prefix || "").trim();
+      if (!p) return [];
+      const colRef = collection(db, COL_ARTICLES);
+      const qref = query(colRef, orderBy(documentId()), startAt(p), endAt(p + ""), limit(max));
+      const snaps = await getDocs(qref);
+      return snaps.docs.map(buildArticleLite);
+    }
+
+    async function queryByTitlePrefix(prefix, max=25){
+      const p = String(prefix || "").trim();
+      if (!p) return [];
+      const colRef = collection(db, COL_ARTICLES);
+      const qref = query(colRef, orderBy("title"), startAt(p), endAt(p + ""), limit(max));
+      const snaps = await getDocs(qref);
+      return snaps.docs.map(buildArticleLite);
+    }
+
+    async function loadRecentArticles(max=25){
+      const colRef = collection(db, COL_ARTICLES);
+      try{
+        const snaps = await getDocs(query(colRef, orderBy("updatedAt","desc"), limit(max)));
+        return snaps.docs.map(buildArticleLite);
+      }catch(e1){
+        try{
+          const snaps = await getDocs(query(colRef, orderBy("createdAt","desc"), limit(max)));
+          return snaps.docs.map(buildArticleLite);
+        }catch(e2){
+          const snaps = await getDocs(query(colRef, orderBy(documentId()), limit(max)));
+          return snaps.docs.map(buildArticleLite);
+        }
+      }
+    }
+
+    async function runArticleSearch(){
+      const qraw = ($("#articleSearchInput").value || "").trim();
+      const qLower = qraw.toLowerCase();
+      const filter = ($("#articleStatusFilter").value || "published").trim().toLowerCase();
+      const box = $("#articleResults");
+
+      box.innerHTML = `<div class="muted small">查詢中…</div>`;
+
+      try{
+        let hits = [];
+
+        if (!qraw){
+          hits = await loadRecentArticles(25);
+        }else{
+          const isSlugLike = /^[a-z0-9\-_]+$/i.test(qraw);
+          const map = new Map();
+
+          // A) docId 前綴（最快、最穩）
+          if (isSlugLike){
+            for (const v of [qraw, qLower]){
+              (await queryByDocIdPrefix(v, 25)).forEach(a => map.set(a.slug || a.id, a));
+            }
+          }
+
+          // B) title 前綴（支援中文標題開頭）
+          try{
+            (await queryByTitlePrefix(qraw, 25)).forEach(a => map.set(a.slug || a.id, a));
+          }catch(errTitle){
+            console.warn("title prefix query failed:", errTitle);
+          }
+
+          hits = Array.from(map.values());
+
+          // 回退：若完全找不到，給最近文章，避免「看起來壞掉」
+          if (!hits.length){
+            hits = await loadRecentArticles(25);
+          }
+
+          // 小集合內再做 contains 排序
+          hits = hits
+            .map(a => ({ a, s: scoreArticle(a, qLower) }))
+            .sort((x,y) => y.s - x.s)
+            .map(x => x.a);
+        }
+
+        if (filter !== "all"){
+          hits = hits.filter(a => String(a.status || "").toLowerCase() === filter);
+        }
+
+        if (!hits.length){
+          box.innerHTML = `<div class="muted small">找不到符合：<span class="kbd">${esc(qraw || "（最近文章）")}</span></div>`;
+          return;
+        }
+
+        box.innerHTML = "";
+        const header = document.createElement("div");
+        header.className = "muted small";
+        header.style.marginBottom = ".35rem";
+        header.innerHTML = qraw
+          ? `共找到 <b>${hits.length}</b> 篇（前綴查詢 + 本地排序）`
+          : `最近 <b>${hits.length}</b> 篇文章`;
+        box.appendChild(header);
+
+        hits.slice(0, 25).forEach(a => {
+          const { slug, title, topic, status, summary } = articleMeta(a);
+          const div = document.createElement("div");
+          div.className = "pickRow";
+          div.innerHTML = `
+            <div class="left">
+              <div class="id">${esc(slug)}</div>
+              <div class="meta">${esc([title, topic ? "topic:"+topic : "", status ? "status:"+status : ""].filter(Boolean).join(" · "))}</div>
+              ${summary ? `<div class="meta">${esc(String(summary).slice(0, 120))}${String(summary).length>120?"…":""}</div>` : ""}
+            </div>
+            <div class="actions">
+              <button class="btnx btn-add"><i class="fa-solid fa-plus"></i> 加入</button>
+              <button class="btnx btn-open"><i class="fa-solid fa-up-right-from-square"></i> 開文章</button>
+            </div>
+          `;
+          div.querySelector(".btn-add").addEventListener("click", () => addArticleToIssue(a));
+          div.querySelector(".btn-open").addEventListener("click", () => openArticleFront(slug));
+          box.appendChild(div);
+        });
+
+      }catch(e){
+        console.error(e);
+        box.innerHTML = `
+          <div class="warn">
+            文章搜尋失敗：${esc(e.message || e)}
+            <div class="muted small" style="margin-top:.35rem;">
+              常見原因：Firestore rules 沒開放 list / 或文章文件太大導致全量載入卡住（本版已改為前綴查詢）。
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function openArticleFront(slug){
+      const url = new URL(location.href);
+      const base = url.toString().replace(/kb-issue-edit\.html(\?.*)?$/i, "kb-article.html");
+      const front = new URL(base);
+      front.searchParams.set("slug", slug);
+      window.open(front.toString(), "_blank");
+    }
+
+    function addArticleToIssue(article){
+      const { slug, title, topic, summary } = articleMeta(article);
+      currentData = currentData || {};
+      currentData.items = Array.isArray(currentData.items) ? currentData.items : [];
+      if (currentData.items.some(x => x.slug === slug)){
+        msg(`已存在：<span class="kbd">${esc(slug)}</span>`, "warn");
+        return;
+      }
+      currentData.items.push({
+        slug, title, topic, summary,
+        noteMd: "",
+        featured: false,
+        addedAt: new Date().toISOString()
+      });
+      renderSelected();
+      refreshPreview();
+      msg(`已加入文章：<span class="kbd">${esc(slug)}</span>`);
+    }
+
+    // ---- selected list UI
+    function renderSelected(){
+      const box = $("#selectedWrap");
+      const items = Array.isArray(currentData?.items) ? currentData.items : [];
+      box.innerHTML = "";
+
+      if (!items.length){
+        box.innerHTML = `<div class="muted small">（尚未挑選文章）</div>`;
+        return;
+      }
+
+      items.forEach((it, idx) => {
+        const div = document.createElement("div");
+        div.className = "selCard";
+        div.innerHTML = `
+          <div class="selHead">
+            <div>
+              <div class="title">${esc(it.title || it.slug || "")}</div>
+              <div class="muted small" style="margin-top:.15rem;">
+                <span class="chip"><i class="fa-solid fa-link"></i> ${esc(it.slug || "")}</span>
+                ${it.topic ? `<span class="chip"><i class="fa-solid fa-folder-open"></i> ${esc(it.topic)}</span>` : ""}
+                ${it.featured ? `<span class="chip"><i class="fa-solid fa-star"></i> featured</span>` : ""}
+              </div>
+            </div>
+            <div class="row">
+              <button class="btnx up" title="上移"><i class="fa-solid fa-arrow-up"></i></button>
+              <button class="btnx down" title="下移"><i class="fa-solid fa-arrow-down"></i></button>
+              <button class="btnx open" title="開文章"><i class="fa-solid fa-up-right-from-square"></i></button>
+              <button class="btnx toggle" title="切換 featured"><i class="fa-solid fa-star"></i></button>
+              <button class="btnx btn-danger del" title="移除"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </div>
+
+          <div class="muted small" style="margin-top:.55rem;">文章摘要</div>
+          <div style="margin-top:.25rem; line-height:1.6;">${esc((it.summary || "").slice(0, 260))}${(it.summary||"").length>260?"…":""}</div>
+
+          <div style="margin-top:.65rem;">
+            <label class="muted small">本期導讀（noteMd｜Markdown，可空）</label>
+            <textarea class="note" placeholder="例如：為什麼這篇值得讀？你希望讀者帶走什麼？">${esc(it.noteMd || "")}</textarea>
+          </div>
+        `;
+
+        div.querySelector(".up").addEventListener("click", () => moveItem(idx, -1));
+        div.querySelector(".down").addEventListener("click", () => moveItem(idx, +1));
+        div.querySelector(".open").addEventListener("click", () => openArticleFront(it.slug));
+        div.querySelector(".toggle").addEventListener("click", () => toggleFeatured(idx));
+        div.querySelector(".del").addEventListener("click", () => removeItem(idx));
+
+        div.querySelector(".note").addEventListener("input", (e) => {
+          currentData.items[idx].noteMd = e.target.value;
+          refreshPreview();
+        });
+
+        box.appendChild(div);
+      });
+    }
+
+    function moveItem(i, delta){
+      const items = Array.isArray(currentData?.items) ? currentData.items : [];
+      const j = i + delta;
+      if (j < 0 || j >= items.length) return;
+      const tmp = items[i];
+      items[i] = items[j];
+      items[j] = tmp;
+      currentData.items = items;
+      renderSelected();
+      refreshPreview();
+    }
+
+    function toggleFeatured(i){
+      const items = Array.isArray(currentData?.items) ? currentData.items : [];
+      items[i].featured = !items[i].featured;
+      currentData.items = items;
+      renderSelected();
+      refreshPreview();
+    }
+
+    function removeItem(i){
+      if (!confirm("確定移除這篇文章？")) return;
+      const items = Array.isArray(currentData?.items) ? currentData.items : [];
+      items.splice(i, 1);
+      currentData.items = items;
+      renderSelected();
+      refreshPreview();
+    }
+
+    // ---- preview render
+    function mdToHtml(md){
+      marked.setOptions({ gfm: true, breaks: true });
+      return marked.parse(md || "");
+    }
+
+    function refreshPreview(){
+      const d = getEditorData();
+      const items = Array.isArray(d.items) ? d.items : [];
+
+      const dateText = d.publishDate ? d.publishDate : "";
+      const freqText = d.frequency ? d.frequency : "";
+      const statusText = d.status ? d.status : "";
+
+      // featured first (stable within groups)
+      const sorted = items.slice().sort((a,b) => (b.featured === true) - (a.featured === true));
+
+      const html = `
+        <div class="card" style="margin-top:0;">
+          <h1 style="margin:.15rem 0 .35rem;">${esc(d.title || "（未命名刊物）")}</h1>
+          ${d.coverImageUrl ? `<div style="margin-top:.7rem; border:1px solid var(--line); border-radius:14px; overflow:hidden;"><img src="${esc(d.coverImageUrl)}" style="width:100%; display:block; max-height:260px; object-fit:cover;"></div>` : ""}
+          <div class="m">
+            ${[dateText ? ("date:"+dateText) : "", freqText ? ("freq:"+freqText) : "", statusText ? ("status:"+statusText) : ""].filter(Boolean).join(" · ")}
+            ${d.issueId ? ` · issueId: ${esc(d.issueId)}` : ""}
+          </div>
+          ${d.coverSummary ? `<div style="margin-top:.6rem; line-height:1.7;">${esc(d.coverSummary)}</div>` : ""}
+        </div>
+
+        ${d.editorNoteMd ? `<div class="card"><div class="t">編者的話</div><div style="margin-top:.55rem;">${mdToHtml(d.editorNoteMd)}</div></div>` : ""}
+
+        <div class="card">
+          <div class="t">本期內容</div>
+          <div class="m">點擊標題可開啟文章（kb-article.html）。</div>
+
+          ${sorted.map((it) => `
+            <div class="card">
+              <div class="t">
+                <a href="#" data-open="${esc(it.slug)}">${esc(it.title || it.slug)}</a>
+                ${it.featured ? ` <span class="chip"><i class="fa-solid fa-star"></i> featured</span>` : ""}
+              </div>
+              <div class="m">${esc([it.topic ? ("topic:"+it.topic) : "", it.slug ? ("slug:"+it.slug) : ""].filter(Boolean).join(" · "))}</div>
+              ${it.summary ? `<div style="margin-top:.45rem; line-height:1.7;">${esc(it.summary)}</div>` : ""}
+              ${it.noteMd ? `<div style="margin-top:.55rem;"><div class="muted small">本期導讀</div><div style="margin-top:.25rem;">${mdToHtml(it.noteMd)}</div></div>` : ""}
+            </div>
+          `).join("")}
+        </div>
+      `;
+
+      const pv = $("#preview");
+      pv.innerHTML = html;
+
+      pv.querySelectorAll("[data-open]").forEach(a => {
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          const slug = a.getAttribute("data-open");
+          if (slug) openArticleFront(slug);
+        });
+      });
+    }
+
+    // ---- CRUD
+    async function openIssue(id){
+      const issueId = normalizeId(id);
+      if (!issueId) return;
+      currentId = issueId;
+      $("#currentIdLine").textContent = `issueId: ${currentId}`;
+
+      try{
+        const snap = await getDoc(doc(db, COL_ISSUES, issueId));
+        if (!snap.exists()){
+          msg(`找不到刊物：${esc(issueId)}`, "warn");
+          return;
+        }
+        const data = { id: snap.id, ...snap.data(), issueId: snap.data()?.issueId || snap.id };
+        setEditorData(data);
+      }catch(e){
+        console.error(e);
+        msg(`載入失敗：${esc(e.message || e)}`, "warn");
+      }
+    }
+
+    async function createNewIssue(){
+      const id = normalizeId($("#newIssueId").value);
+      if (!id) return msg("請輸入新刊物 issueId", "warn");
+      if (!canEdit) return msg("你沒有編輯權限", "warn");
+
+      const snap = await getDoc(doc(db, COL_ISSUES, id));
+      if (snap.exists()){
+        msg("此 issueId 已存在，已直接開啟。", "warn");
+        $("#newIssueId").value = "";
+        return openIssue(id);
+      }
+
+      const today = new Date();
+      const base = {
+        issueId: id,
+        status: "draft",
+        frequency: "weekly",
+        publishDate: toIsoDate(today),
+        title: `化妝品知識週刊 ${id}`,
+        coverSummary: "",
+        editorNoteMd: "",
+        items: [],
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+
+      try{
+        await setDoc(doc(db, COL_ISSUES, id), base);
+        $("#newIssueId").value = "";
+        msg("已建立新刊物（draft）");
+        await loadIssues();
+        await openIssue(id);
+      }catch(e){
+        console.error(e);
+        msg(`建立失敗：${esc(e.message || e)}`, "warn");
+      }
+    }
+
+    async function saveIssue(){
+      if (!canEdit) return msg("你沒有編輯權限", "warn");
+
+      const d = getEditorData();
+      const newId = normalizeId(d.issueId || currentId);
+      if (!newId) return msg("issueId 不可為空", "warn");
+
+      const renaming = (currentId && newId !== currentId);
+
+      try{
+        d.updatedAt = serverTimestamp();
+        d.issueId = newId;
+
+        if (!currentId){
+          d.createdAt = serverTimestamp();
+          await setDoc(doc(db, COL_ISSUES, newId), d, { merge: true });
+          currentId = newId;
+        } else if (renaming){
+          const oldId = currentId;
+          d.createdAt = currentData?.createdAt || serverTimestamp();
+          await setDoc(doc(db, COL_ISSUES, newId), d, { merge: true });
+          await deleteDoc(doc(db, COL_ISSUES, oldId));
+          currentId = newId;
+        } else {
+          await updateDoc(doc(db, COL_ISSUES, currentId), d);
+        }
+
+        $("#currentIdLine").textContent = `issueId: ${currentId}`;
+        msg("已儲存");
+        await loadIssues();
+        await openIssue(currentId);
+      }catch(e){
+        console.error(e);
+        msg(`儲存失敗：${esc(e.message || e)}`, "warn");
+      }
+    }
+
+    async function deleteIssue(){
+      if (!canEdit) return msg("你沒有編輯權限", "warn");
+      if (!currentId) return msg("尚未選取刊物", "warn");
+      if (!confirm(`確定刪除本期刊物：${currentId}？此動作不可復原。`)) return;
+
+      try{
+        await deleteDoc(doc(db, COL_ISSUES, currentId));
+        msg("已刪除");
+        currentId = "";
+        currentData = null;
+        $("#currentIdLine").textContent = "issueId: —";
+        setEditorData({ issueId:"", status:"draft", frequency:"weekly", publishDate:"", title:"", coverSummary:"", editorNoteMd:"", items:[] });
+        await loadIssues();
+      }catch(e){
+        console.error(e);
+        msg(`刪除失敗：${esc(e.message || e)}`, "warn");
+      }
+    }
+
+    // ---- helpers
+    function autoTitle(){
+      const d = getEditorData();
+      const date = d.publishDate ? d.publishDate.replaceAll("-","/") : "";
+      const freq = d.frequency === "monthly" ? "月刊" : (d.frequency === "weekly" ? "週刊" : "特刊");
+      const id = d.issueId || currentId || "";
+      if (!$("#title").value.trim()){
+        $("#title").value = `化妝品知識${freq} ${id}${date ? `（${date}）` : ""}`;
+      }
+      currentData = getEditorData();
+      refreshPreview();
+      msg("已生成標題");
+    }
+
+    function openFrontIssue(){
+      const id = normalizeId($("#issueId").value || currentId);
+      if (!id) return msg("請先選取或輸入 issueId", "warn");
+      const url = new URL(location.href);
+      const base = url.toString().replace(/kb-issue-edit\.html(\?.*)?$/i, "kb-issue.html");
+      const front = new URL(base);
+      front.searchParams.set("issue", id);
+      window.open(front.toString(), "_blank");
+    }
+
+    // ---- wiring
+    $("#btnSignOut").addEventListener("click", () => signOut(auth));
+    $("#btnReload").addEventListener("click", loadIssues);
+    $("#qIssues").addEventListener("input", renderIssueList);
+
+    $("#btnNewIssue").addEventListener("click", createNewIssue);
+    $("#btnSave").addEventListener("click", saveIssue);
+    $("#btnDelete").addEventListener("click", deleteIssue);
+    $("#btnAutoTitle").addEventListener("click", autoTitle);
+    $("#btnOpenFront").addEventListener("click", openFrontIssue);
+
+    ["issueId","status","frequency","publishDate","title","coverSummary","editorNoteMd"].forEach(id => {
+      $("#"+id).addEventListener("input", () => { currentData = getEditorData(); refreshPreview(); });
+      $("#"+id).addEventListener("change", () => { currentData = getEditorData(); refreshPreview(); });
+    });
+
+    let __artTimer = null;
+    $("#btnArticleSearch").addEventListener("click", runArticleSearch);
+    $("#btnArticleClear").addEventListener("click", async () => {
+      $("#articleSearchInput").value = "";
+      await runArticleSearch();
+    });
+$("#articleSearchInput").addEventListener("keydown", (e) => { if (e.key === "Enter") runArticleSearch(); });
+    $("#articleSearchInput").addEventListener("input", () => {
+      clearTimeout(__artTimer);
+      __artTimer = setTimeout(runArticleSearch, 180);
+    });
+
+    // ---- init
+    onAuthStateChanged(auth, async (user) => {
+      await evaluateRoles(user);
+
+      try{
+        await loadIssues();
+      }catch(e){
+        console.error(e);
+        msg("刊物清單載入失敗（可能 Firestore rules 不允許讀取 kb_issues）。", "warn");
+      }
+
+      await runArticleSearch();
+      refreshPreview();
+    });
+  </script>
+
+    <!-- Notify modal -->
+    <div class="modal" id="notifyModal" aria-hidden="true">
+      <div class="modal-backdrop" data-close="1"></div>
+      <div class="modal-card">
+        <div class="row" style="justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-weight:800; font-size:1.05rem;">發布通知（Email）</div>
+            <div class="muted small" id="notifyHint">將最新刊物通知訂閱者。</div>
+          </div>
+          <button class="btnx" id="btnNotifyClose" title="關閉"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="hr"></div>
+
+        <div class="twoCol" style="grid-template-columns:1.2fr .8fr;">
+          <div>
+            <label class="muted small">主旨（可改）</label>
+            <input class="input" id="notifySubject" placeholder="Email subject...">
+            <div class="muted small" style="margin-top:.4rem;">內容會自動帶入：封面圖、刊物標題、目錄連結。</div>
+          </div>
+          <div>
+            <label class="muted small">發送模式</label>
+            <div class="row" style="gap:.5rem; flex-wrap:wrap;">
+              <label class="chip"><input type="radio" name="notifyMode" value="test" checked> 測試寄給我</label>
+              <label class="chip"><input type="radio" name="notifyMode" value="all"> 寄給訂閱者</label>
+            </div>
+            <div class="row" style="gap:.5rem; margin-top:.5rem; align-items:center;">
+              <label class="chip"><input type="checkbox" id="notifyForce"> 強制重寄（已通知過也可再寄）</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="twoCol" style="grid-template-columns:1fr 1fr; margin-top:.8rem;">
+          <div>
+            <label class="muted small">測試信箱（選用）</label>
+            <input class="input" id="notifyTestEmail" placeholder="留空則使用目前登入信箱">
+          </div>
+          <div>
+            <label class="muted small">公開網站 base URL（用於分享連結）</label>
+            <input class="input" id="notifyPublicBase" placeholder="例如：https://cos-pif.web.app">
+            <div class="muted small" style="margin-top:.3rem;">若留空，後端會自動用 https://&lt;projectId&gt;.web.app</div>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+        <div class="row" style="justify-content:flex-end;">
+          <button class="btnx" id="btnNotifySend"><i class="fa-solid fa-paper-plane"></i> 送出通知</button>
+        </div>
+
+        <div class="muted small" id="notifyStatus" style="margin-top:.6rem;"></div>
+      </div>
+    </div>
+
+</body>
+</html>

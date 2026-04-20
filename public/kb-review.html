@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>KB 審稿入口 | CosPIF 化妝品智慧月刊</title>
+  <style>
+    :root{
+      --bg:#f6f7fb; --card:#fff; --text:#111827; --muted:#6b7280; --line:#e5e7eb;
+      --brand:#1d4ed8; --brand2:#0ea5e9; --ok:#16a34a; --warn:#f59e0b; --bad:#ef4444;
+      --shadow:0 10px 30px rgba(0,0,0,.06);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans TC",sans-serif}
+    a{color:var(--brand);text-decoration:none}
+    .wrap{max-width:1200px;margin:24px auto;padding:0 16px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+    .pillbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--line);background:var(--card);border-radius:999px;box-shadow:var(--shadow)}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--card);cursor:pointer}
+    .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));border:none;color:#fff}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .grid{display:grid;grid-template-columns: 440px 1fr;gap:16px}
+    @media (max-width: 980px){.grid{grid-template-columns:1fr}}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .card .hd{padding:16px 16px 10px;border-bottom:1px solid var(--line)}
+    .card .bd{padding:16px}
+    h1{margin:0;font-size:22px}
+    .sub{color:var(--muted);font-size:13px;margin-top:6px;line-height:1.4}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .input, textarea, select{
+      width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;
+      font-size:14px;outline:none;
+    }
+    textarea{min-height:130px;resize:vertical}
+    .list{display:flex;flex-direction:column;gap:10px}
+    .item{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff;cursor:pointer}
+    .item:hover{border-color:#cbd5e1}
+    .item .t{font-weight:700}
+    .item .m{color:var(--muted);font-size:12px;margin-top:6px;line-height:1.4}
+    .item.active{border-color:rgba(29,78,216,.45);box-shadow:0 0 0 4px rgba(29,78,216,.08)}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;font-size:12px;border:1px solid var(--line);background:#fff}
+    .badge.warn{border-color:#fde68a;color:#92400e;background:#fffbeb}
+    .badge.ok{border-color:#bbf7d0;color:var(--ok);background:#f0fdf4}
+    .badge.bad{border-color:#fecaca;color:var(--bad);background:#fef2f2}
+    .hr{height:1px;background:var(--line);margin:12px 0}
+    .hint{font-size:12px;color:var(--muted);line-height:1.5}
+    .err{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:10px 12px;border-radius:12px}
+    .okmsg{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;padding:10px 12px;border-radius:12px}
+    
+    .muted{color:var(--muted);font-size:13px;line-height:1.5}
+    .title{font-weight:700}
+    .meta{color:var(--muted);font-size:12px;margin-top:6px;line-height:1.4}
+.mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="pillbar">
+        <a class="pill" href="index.html">🏠 <strong>首頁</strong></a>
+        <a class="pill" href="kb-issue.html">📰 <strong>月刊/週刊</strong></a>
+        <span class="pill">🧪 <strong>KB 審稿入口</strong></span>
+        <span class="pill" id="userPill">未登入</span>
+      </div>
+      <div class="row">
+        <button class="btn" id="btnLogin">登入</button>
+        <button class="btn" id="btnLogout" style="display:none">登出</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="hd">
+          <h1>我被指派的投稿</h1>
+          <div class="sub">只會顯示 assignedReviewerUids 含有你 UID 的投稿。</div>
+        </div>
+        <div class="bd">
+          <div class="row" style="justify-content:space-between">
+            <button class="btn" id="btnReload">↻ 重新整理</button>
+            <span class="hint" id="queueStatusHint">狀態：—</span>
+          </div>
+          <div class="hr"></div>
+          <div id="list" class="list"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="hd">
+          <h1 id="title">審稿表單</h1>
+          <div class="sub" id="sub">請先選取一筆投稿。</div>
+        </div>
+        <div class="bd">
+          <div id="msg"></div>
+
+          <div class="row" style="justify-content:space-between">
+            <span class="badge" id="statusBadge">—</span>
+            <a class="btn" id="pdfLink" href="#" target="_blank">查看 PDF</a>
+          </div>
+
+          <div class="hr"></div>
+
+          <div class="hint">分數（0~100，可留空）</div>
+          <input class="input" id="score" type="number" min="0" max="100" placeholder="例如：85" />
+
+          <div style="height:10px"></div>
+          <div class="hint">建議</div>
+          <select class="input" id="rec">
+            <option value="">（請選擇）</option>
+            <option value="accept">accept（可接受）</option>
+            <option value="revise">revise（建議修訂）</option>
+            <option value="reject">reject（不建議接受）</option>
+          </select>
+
+          <div style="height:10px"></div>
+          <div class="hint">評語（可含修訂要求）</div>
+          <textarea id="comments" placeholder="例如：請補充引用來源、修正圖表標註、補充微生物依據…"></textarea>
+
+          <div class="hr"></div>
+
+          <div class="row">
+            <button class="btn primary" id="btnSave">送出/更新審稿</button>
+          </div>
+
+          <div class="hint" style="margin-top:10px">
+            審稿內容會寫入：<span class="mono">kb_submissions/{submissionId}/reviews/{yourUid}</span><br/>
+            （需要 Firestore rules 允許：你必須在該投稿的 assignedReviewerUids 內）
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase (modular v10) -->
+<script type="module">
+  import { auth, db } from "./firebase-config.js";
+  import {
+    collection, doc, getDoc, getDocs, query, where, setDoc, serverTimestamp, orderBy, limit, addDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js";
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+  const $ = (id) => document.getElementById(id);
+
+  const state = {
+    user: null,
+    list: [],
+    activeId: null,
+    active: null,
+  };
+
+  // ----- Roles / reviewer guard -----
+  function extractRolesFromClaims(claims){
+    if (!claims) return {};
+    const nested = (claims.roles && typeof claims.roles === "object") ? claims.roles : null;
+    if (nested) return nested;
+    const keys = ["admin","systemAdmin","secretary","kbEditor","editor","reviewer"];
+    const r = {};
+    keys.forEach(k => { if (claims[k]) r[k] = true; });
+    return r;
+  }
+
+  function canEnterReview(roles){
+    roles = roles || {};
+    // Only reviewer (or KB staff) can enter review queue
+    return !!(roles.reviewer || roles.kbEditor || roles.editor || roles.secretary || roles.admin || roles.systemAdmin);
+  }
+
+
+
+  function escapeHtml(s) {
+    return String(s ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;");
+  }
+
+  function tsVal(t) {
+    if (!t) return 0;
+    if (typeof t === "number") return t;
+    if (t.seconds) return t.seconds * 1000;
+    if (t.toDate) return t.toDate().getTime();
+    return 0;
+  }
+
+  function fmtTs(t) {
+    const v = tsVal(t);
+    if (!v) return "";
+    try { return new Date(v).toLocaleString(); } catch { return ""; }
+  }
+
+
+  // 管理員通知信箱：建議在 Firestore 的 settings/admin.notificationEmails 設定（後端 notifyKbReviewSubmitted 會讀取）。
+// 若你暫時不想改後端，也可以在此填入信箱並啟用 mail 集合寄信的 fallback（需 Firestore rules 允許 add 到 mail）。
+const ADMIN_EMAILS = [];
+
+  const functions = getFunctions((auth && auth.app) ? auth.app : undefined, "asia-east1"); // 若你的 functions 在其他區域，請改這裡
+  const notifyKbReviewSubmitted = httpsCallable(functions, "notifyKbReviewSubmitted");
+
+  function badgeTone(status){
+    if (!status) return "";
+    if (["accepted","published"].includes(status)) return "ok";
+    if (["revision_requested","scheduled","under_review","submitted"].includes(status)) return "warn";
+    if (["rejected"].includes(status)) return "bad";
+    return "";
+  }
+
+  function statusText(s) {
+    const map = {
+      draft: "Draft",
+      submitted: "Submitted",
+      under_review: "Under review",
+      revision_requested: "Revision requested",
+      accepted: "Accepted",
+      scheduled: "Scheduled",
+      published: "Published",
+      rejected: "Rejected",
+    };
+    return map[s] || s || "";
+  }
+
+  function setSignedOutUI() {
+    $("userPill").textContent = "未登入";
+    $("btnLogin").style.display = "";
+    $("btnLogout").style.display = "none";
+    $("list").innerHTML = '<div class="muted">請先登入</div>';
+    $("queueStatusHint").textContent = "狀態：—";
+    $("title").textContent = "—";
+    $("statusBadge").textContent = "—";
+    $("statusBadge").className = "badge";
+    $("pdfLink").textContent = "查看 PDF";
+    $("pdfLink").setAttribute("href","#");
+    $("score").value = "";
+    $("rec").value = "";
+    $("comments").value = "";
+    $("btnSave").disabled = true;
+  }
+
+  function setSignedInUI(user) {
+    $("userPill").textContent = user.email || user.uid;
+    $("btnLogin").style.display = "none";
+    $("btnLogout").style.display = "";
+    $("btnSave").disabled = false;
+    $("queueStatusHint").textContent = "狀態：—";
+  }
+
+  function setNoReviewerUI(){
+    $("queueStatusHint").textContent = "狀態：未具審稿身分";
+    $("list").innerHTML = '<div class="muted">您尚未被設定為「審查身分」，請聯絡管理者於後台指派。</div>';
+    $("btnSave").disabled = true;
+    $("msg").innerHTML = '<div class="err">您已登入，但目前沒有審稿權限（需要 roles.reviewer 或 KB 管理角色）。</div>';
+  }
+
+
+
+  async function loadQueue() {
+    if (!state.user) return;
+
+    const q1 = query(
+      collection(db, "kb_submissions"),
+      where("assignedReviewerUids", "array-contains", state.user.uid)
+    );
+    const q2 = query(
+      collection(db, "kb_submissions"),
+      where("reviewerUids", "array-contains", state.user.uid)
+    );
+
+    const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+    const m = new Map();
+    for (const d of snap1.docs) m.set(d.id, { id: d.id, ...d.data() });
+    for (const d of snap2.docs) m.set(d.id, { id: d.id, ...d.data() });
+    const rows = Array.from(m.values());
+    // client-side sort to avoid composite indexes
+    rows.sort((a, b) => tsVal(b.updatedAt || b.createdAt) - tsVal(a.updatedAt || a.createdAt));
+
+    state.list = rows;
+    renderList();
+
+    // auto-open first item
+    if (!state.activeId && rows.length) {
+      await openSubmission(rows[0].id);
+    }
+  }
+
+  function renderList() {
+    const el = $("list");
+    if (!state.list.length) {
+      el.innerHTML = '<div class="muted">目前沒有指派給您的審稿</div>';
+      return;
+    }
+
+    el.innerHTML = state.list
+      .map((x) => {
+        const active = x.id === state.activeId ? "active" : "";
+        const title = escapeHtml(x.title || x.topic || "(未命名)");
+        const st = escapeHtml(statusText(x.status));
+        const t = fmtTs(x.updatedAt || x.createdAt);
+        return `
+          <button class="item ${active}" data-id="${escapeHtml(x.id)}">
+            <div class="row">
+              <div class="title">${title}</div>
+              <div class="badge ${badgeTone(x.status)}">${st}</div>
+            </div>
+            <div class="meta">${escapeHtml(t)}</div>
+          </button>
+        `;
+      })
+      .join("");
+
+    el.querySelectorAll(".item").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        if (id) await openSubmission(id);
+      });
+    });
+  }
+
+  async function openSubmission(id) {
+    state.activeId = id;
+    renderList();
+
+    const ref = doc(db, "kb_submissions", id);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      $("title").textContent = "(找不到稿件)";
+      $("statusBadge").textContent = "—";
+      $("statusBadge").className = "badge";
+      $("queueStatusHint").textContent = "狀態：—";
+    $("statusBadge").className = "badge";
+      $("pdfLink").textContent = "查看 PDF";
+    $("pdfLink").setAttribute("href","#");
+      return;
+    }
+
+    const data = snap.data();
+    state.active = { id, ...data };
+
+    // 同步更新左側清單中的狀態/時間（避免左側狀態未更新）
+    const idx = state.list.findIndex((x) => x.id === id);
+    if (idx >= 0) {
+      state.list[idx] = { ...state.list[idx], ...data, id };
+      renderList();
+    }
+
+
+    $("title").textContent = data.title || data.topic || "(未命名)";
+    const stEl = $("statusBadge");
+    stEl.textContent = statusText(data.status);
+    stEl.className = "badge " + badgeTone(data.status);
+    $("queueStatusHint").textContent = "狀態：" + statusText(data.status);
+
+        // PDF 連結：新版欄位是 latestManuscriptUrl；舊版可能是 pdfUrl/pdfURL；若都沒有就從 versions 取最新
+    let pdfUrl = data.latestManuscriptUrl || data.pdfUrl || data.pdfURL || "";
+    if (!pdfUrl) {
+      try {
+        const vq = query(
+          collection(db, "kb_submissions", id, "versions"),
+          orderBy("versionNo", "desc"),
+          limit(1)
+        );
+        const vs = await getDocs(vq);
+        if (!vs.empty) {
+          const v = vs.docs[0].data() || {};
+          pdfUrl = v.manuscriptUrl || v.latestManuscriptUrl || v.pdfUrl || v.pdfURL || "";
+        }
+      } catch (e) {
+        console.warn("Load latest version for PDF failed:", e);
+      }
+    }
+
+    const pdfA = $("pdfLink");
+    if (pdfA) {
+      if (pdfUrl) {
+        pdfA.href = pdfUrl;
+        pdfA.target = "_blank";
+        pdfA.rel = "noopener";
+        pdfA.textContent = "查看 PDF";
+        pdfA.style.pointerEvents = "auto";
+        pdfA.style.opacity = "1";
+      } else {
+        pdfA.removeAttribute("href");
+        pdfA.textContent = "未提供 PDF";
+        pdfA.style.pointerEvents = "none";
+        pdfA.style.opacity = "0.6";
+      }
+    }
+
+    await loadMyReview();
+  }
+
+  async function loadMyReview() {
+    if (!state.user || !state.activeId) return;
+
+    const rref = doc(db, "kb_submissions", state.activeId, "reviews", state.user.uid);
+    const rsnap = await getDoc(rref);
+
+    if (rsnap.exists()) {
+      const r = rsnap.data();
+      $("score").value = r.score ?? "";
+      $("rec").value = r.rec ?? "";
+      $("comments").value = r.comments ?? "";
+    } else {
+      $("score").value = "";
+      $("rec").value = "";
+      $("comments").value = "";
+    }
+  }
+
+
+  async function saveMyReview() {
+    if (!state.user || !state.activeId) return;
+
+    const scoreRaw = String($("score").value || "").trim();
+    const score = scoreRaw === "" ? null : Number(scoreRaw);
+    const rec = String($("rec").value || "");
+    const comments = String($("comments").value || "").trim();
+
+    const rref = doc(db, "kb_submissions", state.activeId, "reviews", state.user.uid);
+
+    await setDoc(
+      rref,
+      {
+        reviewerUid: state.user.uid,
+        reviewerEmail: state.user.email || "",
+        score: Number.isFinite(score) ? score : null,
+        rec,
+        comments,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    // 送出審稿後通知管理員（不影響儲存流程）
+    const title = (state.active && (state.active.title || state.active.topic)) || state.activeId;
+    const cleanScore = Number.isFinite(score) ? score : null;
+
+    let notified = false;
+    let notifyReason = "";
+    try {
+      const r = await notifyKbReviewSubmitted({
+        submissionId: state.activeId,
+        title,
+        score: cleanScore,
+        rec,
+        comments,
+      });
+      notified = !!(r && r.data && r.data.ok);
+      notifyReason = (r && r.data && r.data.reason) ? String(r.data.reason) : "";
+    } catch (e) {
+      console.warn("notifyKbReviewSubmitted failed (fallback to mail):", e);
+    }
+
+    // 後備方案：若你已安裝 Firebase Extensions「Trigger Email」，可透過寫入 mail 集合寄信
+    if (!notified) {
+      try {
+        if (ADMIN_EMAILS.length) {
+          const subject = `【CosPIF KB】審稿已送出：${title}`;
+          const textBody =
+            `稿件：${title}\n` +
+            `投稿ID：${state.activeId}\n` +
+            `審稿人：${state.user.email || state.user.uid}\n` +
+            `建議：${rec || "(未填)"}\n` +
+            `分數：${cleanScore ?? "(未填)"}\n\n` +
+            `評語：\n${comments || "(未填)"}\n`;
+
+          await addDoc(collection(db, "mail"), {
+            to: ADMIN_EMAILS,
+            message: {
+              subject,
+              text: textBody,
+              html:
+                `<p>稿件：<strong>${escapeHtml(title)}</strong></p>` +
+                `<p>投稿ID：<span class="mono">${escapeHtml(state.activeId)}</span></p>` +
+                `<p>審稿人：${escapeHtml(state.user.email || state.user.uid)}</p>` +
+                `<p>建議：${escapeHtml(rec || "(未填)")}</p>` +
+                `<p>分數：${escapeHtml(cleanScore ?? "(未填)")}</p>` +
+                `<p>評語：</p><pre style="white-space:pre-wrap">${escapeHtml(comments || "(未填)")}</pre>`,
+            },
+            createdAt: serverTimestamp(),
+            meta: {
+              type: "kb_review_submitted",
+              submissionId: state.activeId,
+              reviewerUid: state.user.uid,
+            },
+          });
+          notified = true;
+        }
+      } catch (e) {
+        console.warn("mail fallback failed:", e);
+      }
+    }
+
+    // 重新載入清單與右側內容，確保左側狀態/時間同步更新
+    await loadQueue();
+    await openSubmission(state.activeId);
+
+    alert(notified ? "已儲存審稿意見，並已通知管理員" : (notifyReason === "no_admin_emails" ? "已儲存審稿意見（尚未設定管理員通知信箱）" : "已儲存審稿意見"));
+  }
+
+  // UI bindings
+  $("btnLogin").addEventListener("click", () => {
+    // 依你系統慣例導到既有 login.html
+    location.href = "login.html";
+  });
+
+  $("btnLogout").addEventListener("click", async () => {
+    await signOut(auth);
+  });
+
+  $("btnReload").addEventListener("click", async () => {
+    try {
+      $("btnReload").disabled = true;
+      await loadQueue();
+      if (state.activeId) await openSubmission(state.activeId);
+    } catch (e) {
+      console.error(e);
+      alert(e?.message || String(e));
+    } finally {
+      $("btnReload").disabled = false;
+    }
+  });
+
+  $("btnSave").addEventListener("click", async () => {
+    try {
+      $("btnSave").disabled = true;
+      await saveMyReview();
+    } catch (e) {
+      console.error(e);
+      alert(e?.message || String(e));
+    } finally {
+      $("btnSave").disabled = false;
+    $("queueStatusHint").textContent = "狀態：—";
+    }
+  });
+
+  onAuthStateChanged(auth, async (user) => {
+    state.user = user || null;
+    state.list = [];
+    state.activeId = null;
+    state.active = null;
+
+    if (!user) {
+      setSignedOutUI();
+      return;
+    }
+
+    // Signed in
+    setSignedInUI(user);
+
+    // Reviewer role guard (admin assigns reviewer identity via custom claims)
+    let roles = {};
+    try {
+      const token = await user.getIdTokenResult(true);
+      const claims = (token && token.claims) || {};
+      roles = extractRolesFromClaims(claims);
+    } catch (e) {
+      roles = {};
+    }
+
+    if (!canEnterReview(roles)) {
+      setNoReviewerUI();
+      return;
+    }
+
+    try{
+      await loadQueue();
+    }catch(e){
+      console.error(e);
+      $("msg").innerHTML = '<div class="err">載入指派稿件失敗：' + escapeHtml(e?.message || String(e)) + '</div>';
+    }
+  });
+</script>
+</body>
+</html>

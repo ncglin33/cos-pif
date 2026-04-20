@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>會員註冊 - my-PIF 整合平台</title>
+    <link rel="stylesheet" href="/style.css?v=universal_fix_v2">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-alt);
+        }
+        .auth-container {
+            width: 100%;
+            max-width: 420px;
+            padding: 2.5rem;
+            background-color: var(--card);
+            border-radius: 16px;
+            border: var(--bd);
+        }
+        .auth-container h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--accent);
+        }
+        /* Style for disabled button */
+        button:disabled {
+            background-color: var(--muted);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <h1>建立您的 my-PIF 帳戶</h1>
+        <form id="register-form">
+            <div class="form-group">
+                <label for="name">姓名 *</label>
+                <input type="text" id="name" required>
+            </div>
+            <div class="form-group">
+                <label for="company">公司名稱 *</label>
+                <input type="text" id="company" required>
+            </div>
+            <div class="form-group">
+                <label for="email">電子郵件 *</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">密碼 * (至少 6 位數)</label>
+                <input type="password" id="password" required minlength="6">
+            </div>
+            <button type="submit" id="submit-btn" class="primary" style="width:100%; margin-top: 1.5rem;">註冊</button>
+        </form>
+        <div id="status" class="form-message" style="margin-top: 1.5rem; text-align: center;"></div>
+        <div style="text-align: center; margin-top: 1.5rem;">
+            <p>已經有帳戶了？ <a href="/login.html">立即登入</a></p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth, db } from './firebase-config.js';
+        import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const form = document.getElementById('register-form');
+        const statusEl = document.getElementById('status');
+        const submitBtn = document.getElementById('submit-btn');
+        
+        function showStatus(message, type = 'info') {
+            statusEl.textContent = message;
+            statusEl.className = `form-message ${type}`;
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            submitBtn.disabled = true; // Disable button on submit
+            showStatus('正在處理註冊...', 'info');
+
+            const name = document.getElementById('name').value.trim();
+            const company = document.getElementById('company').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!name || !company || !email || !password) {
+                showStatus('所有欄位都是必要的。', 'error');
+                submitBtn.disabled = false; // Re-enable button
+                return;
+            }
+
+            try {
+                // Step 1: Create user in Firebase Auth
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                showStatus('認證成功，正在建立使用者資料...', 'info');
+
+                // Step 2: Create user document in Firestore to trigger review process
+                await setDoc(doc(db, 'users', user.uid), {
+                    name: name,
+                    company: company,
+                    email: email,
+                    role: 'member',
+                    status: 'pending', // This status should be watched by your backend function
+                    createdAt: serverTimestamp()
+                });
+
+                form.reset();
+                submitBtn.style.display = 'none'; // Hide button on success
+                showStatus('註冊申請成功！請等待管理員審核您的帳戶。審核通過後，您將可以登入。', 'success');
+
+            } catch (error) {
+                console.error('Registration Error:', error);
+                let errorMessage = '發生未知的錯誤，註冊失敗。';
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage = '此電子郵件已被註冊，請使用其他郵件或直接登入。';
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = '密碼強度不足，請使用至少 6 位數的密碼。';
+                } else if (error.message) {
+                    errorMessage = `註冊失敗: ${error.message}`;
+                }
+                showStatus(errorMessage, 'error');
+                submitBtn.disabled = false; // Re-enable button on failure
+            }
+        });
+    </script>
+</body>
+</html>

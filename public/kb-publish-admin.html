@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KB 發表管理｜已接受文章 → 前台</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <style>
+    .container{ max-width: 1750px; }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.85rem 1rem; background:#fff;
+      border:1px solid var(--line); border-radius:16px;
+      margin:.9rem 0 1rem;
+    }
+    .topbar .left{ display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
+    .topbar a{ text-decoration:none; color:var(--ink); font-weight:800; }
+    .badge{
+      display:inline-flex; align-items:center; gap:.35rem;
+      border:1px solid var(--line); border-radius:999px;
+      padding:.25rem .6rem; font-size:.82rem; background:#fff; color:var(--muted);
+    }
+    .layout{ display:grid; grid-template-columns: 430px 1fr; gap: 1rem; align-items:start; }
+    @media (max-width: 1100px){ .layout{ grid-template-columns: 1fr; } }
+
+    .card{
+      background:#fff; border:1px solid var(--line);
+      border-radius:16px; box-shadow:0 1px 3px rgba(0,0,0,.05);
+      padding: 1rem 1rem;
+    }
+
+    .row{ display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+    .grow{ flex: 1 1 auto; min-width: 180px; }
+    .muted{ color:var(--muted); }
+    .small{ font-size:.86rem; }
+    .kbd{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:.85rem; }
+    .hr{ border:none; border-top:1px solid #eef2f7; margin: .9rem 0; }
+
+    .input, select, textarea{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:.5rem .6rem;
+      font-size:.95rem;
+      outline:none;
+      background:#fff;
+    }
+    textarea{ min-height: 110px; resize: vertical; }
+    .input:focus, select:focus, textarea:focus{
+      border-color:#bfdbfe; box-shadow:0 0 0 3px rgba(59,130,246,.15);
+    }
+
+    .btnx{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius: 12px;
+      padding:.48rem .7rem;
+      cursor:pointer;
+      font-weight:800;
+      display:inline-flex; align-items:center; gap:.4rem;
+    }
+    .btnx:hover{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+    .btn-primary{
+      border-color:#bfdbfe; background:#eff6ff; color:#1d4ed8;
+    }
+    .btn-primary:hover{ background:#dbeafe; border-color:#93c5fd; }
+    .btn-danger{ border-color:#fecaca; }
+    .btn-danger:hover{ background:#fff1f2; border-color:#fca5a5; color:#b91c1c; }
+
+    .ok{
+      padding:.6rem .7rem;
+      border:1px solid #bbf7d0;
+      background:#f0fdf4;
+      border-radius:12px;
+      color:#166534;
+    }
+    .warn{
+      padding:.6rem .7rem;
+      border:1px solid #fde68a;
+      background:#fffbeb;
+      border-radius:12px;
+      color:#92400e;
+    }
+
+    .list{ display:flex; flex-direction:column; gap:.45rem; margin-top:.6rem; }
+    .item{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:.55rem .65rem;
+      cursor:pointer;
+      background:#fff;
+    }
+    .item:hover{ background:#eff6ff; border-color:#bfdbfe; }
+    .item .t{ font-weight:900; display:flex; gap:.45rem; align-items:center; flex-wrap:wrap; }
+    .item .m{ color:var(--muted); font-size:.85rem; margin-top:.15rem; line-height:1.35; }
+
+    .pill{
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:.18rem .55rem;
+      background:#fff;
+      color:var(--muted);
+      font-size:.82rem;
+      display:inline-flex;
+      gap:.35rem;
+      align-items:center;
+    }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .disabled{ opacity:.55; pointer-events:none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="left">
+        <a href="index.html"><i class="fa-solid fa-house"></i> 首頁</a>
+        <a href="kb-issue.html"><i class="fa-solid fa-newspaper"></i> 月刊/週刊</a>
+        <a href="kb-submit-admin.html"><i class="fa-solid fa-screwdriver-wrench"></i> KB 投稿管理</a>
+        <span class="badge"><i class="fa-solid fa-bullhorn"></i> 發表管理</span>
+        <span class="badge" id="authBadge">未登入</span>
+        <span class="badge" id="roleBadge">role: —</span>
+      </div>
+      <div class="row">
+        <span class="muted small" id="userInfo"></span>
+        <button class="btnx" id="btnSignOut"><i class="fa-solid fa-right-from-bracket"></i> 登出</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside class="card">
+        <h2 style="margin:.1rem 0 .35rem;">可發表（已接受）</h2>
+        <div class="muted small">從 <span class="kbd">kb_submissions</span> 讀取 <span class="kbd">status=accepted</span> 的投稿，點選後可發表到前台（寫入 <span class="kbd">kb_articles</span>）。</div>
+
+        <div class="hr"></div>
+
+        <div class="row">
+          <input class="input grow" id="q" placeholder="搜尋：標題 / 作者Email / 投稿ID…" />
+          <button class="btnx" id="btnReload" title="重新載入"><i class="fa-solid fa-rotate"></i></button>
+        </div>
+
+        <div class="row" style="margin-top:.55rem;">
+          <a class="btnx" href="kb-article.html" target="_blank" rel="noopener"><i class="fa-solid fa-eye"></i> 前台預覽</a>
+          <span class="muted small" id="count"></span>
+        </div>
+
+        <div class="list" id="list"></div>
+        <div id="msg" style="margin-top:.7rem;"></div>
+
+        <div class="hr"></div>
+        <div class="muted small">
+          <div><span class="pill"><i class="fa-solid fa-lock"></i> 權限</span> 需要 admin/systemAdmin/editor 才能操作。</div>
+          <div style="margin-top:.35rem;"><span class="pill"><i class="fa-solid fa-database"></i> 寫入</span> 發表內容僅同步必要欄位到 <span class="kbd">kb_articles</span>（避免前台直接讀取 kb_submissions）。</div>
+        </div>
+      </aside>
+
+      <main class="card" id="detailWrap">
+        <div class="row" style="justify-content:space-between;">
+          <div>
+            <h2 style="margin:.1rem 0;">發表設定</h2>
+            <div class="muted small" id="line">submissionId: —</div>
+          </div>
+          <div class="row">
+            <button class="btnx btn-primary" id="btnPublish"><i class="fa-solid fa-bullhorn"></i> 發表到前台</button>
+            <button class="btnx" id="btnSync"><i class="fa-solid fa-rotate"></i> 同步（更新前台資料）</button>
+            <button class="btnx btn-danger" id="btnUnpublish"><i class="fa-solid fa-trash"></i> 取消發表</button>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row">
+          <div class="grow">
+            <label class="muted small">題目</label>
+            <input class="input" id="title" placeholder="（自動帶入）" />
+          </div>
+          <div style="min-width:240px; flex:0 0 240px;">
+            <label class="muted small">發表月份 issue（YYYY-MM）</label>
+            <input class="input" id="issue" type="month" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:.65rem;">
+          <div class="grow">
+            <label class="muted small">作者（顯示用）</label>
+            <input class="input" id="authorsText" placeholder="（自動產生，可微調）" />
+          </div>
+          <div style="min-width:260px; flex:0 0 260px;">
+            <label class="muted small">接受日期</label>
+            <input class="input" id="acceptedDate" type="date" />
+          </div>
+        </div>
+
+        <div style="margin-top:.65rem;">
+          <label class="muted small">摘要</label>
+          <textarea id="abstract" placeholder="（自動帶入，可微調）"></textarea>
+        </div>
+
+        <div class="row" style="margin-top:.65rem;">
+          <div class="grow">
+            <label class="muted small">PDF（公開連結，可選）</label>
+            <input class="input" id="pdfUrl" placeholder="https://...（若你要讓前台提供PDF下載）" />
+            <div class="muted small" style="margin-top:.35rem;" id="pdfHint">（可留空）</div>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row">
+          <span class="pill" id="pillPub"><i class="fa-regular fa-circle"></i> 未發表</span>
+          <span class="pill mono" id="pillArticleId">kb_articles/—</span>
+          <span class="muted small" id="pillTime"></span>
+          <span style="flex:1 1 auto;"></span>
+          <a class="btnx" id="btnOpenArticle" href="#" target="_blank" rel="noopener"><i class="fa-solid fa-eye"></i> 開啟前台</a>
+        </div>
+
+        <div id="detailMsg" style="margin-top:.75rem;"></div>
+
+        <div class="hr"></div>
+        <div class="muted small">
+          <div><b>提示：</b>若前台無法讀取 <span class="kbd">kb_articles</span>，請確認 Firestore Rules 允許讀取（例如：<span class="kbd">allow read: if true;</span>）。</div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module">
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import {
+      collection, doc, getDoc, getDocs, query, where,
+      setDoc, deleteDoc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { db, auth } from "./firebase-config.js";
+
+    const $ = (s) => document.querySelector(s);
+
+    const SUB_COL = "kb_submissions";
+    const ART_COL = "kb_articles";
+
+    let currentUser = null;
+    let roles = {};
+    let list = [];
+    let currentSubmissionId = "";
+    let currentSubmission = null;
+    let currentArticle = null;
+
+    function esc(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+    }
+    function normalize(s){ return String(s||"").trim(); }
+    function msg(html, kind="ok", whereId="msg"){
+      const el = document.getElementById(whereId);
+      if (!el) return;
+      el.innerHTML = `<div class="${kind==="ok" ? "ok" : "warn"}">${html}</div>`;
+      setTimeout(() => { if (el.innerHTML) el.innerHTML = ""; }, 4500);
+    }
+    function authorsLine(sub){
+      const a = Array.isArray(sub?.authors) ? sub.authors : [];
+      const names = a.map(x => x?.name).filter(Boolean);
+      if (names.length) return names.slice(0,10).join("、") + (names.length>10 ? "…" : "");
+      const cn = sub?.corresponding?.name || "";
+      return cn || (sub?.createdByEmail ? sub.createdByEmail : "");
+    }
+    function toDateInput(v){
+      try{
+        const d = v?.toDate ? v.toDate() : (v ? new Date(v) : null);
+        if (!d || isNaN(d.getTime())) return "";
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth()+1).padStart(2,"0");
+        const dd = String(d.getDate()).padStart(2,"0");
+        return `${yyyy}-${mm}-${dd}`;
+      }catch{ return ""; }
+    }
+    function fromDateInput(s){
+      const t = normalize(s);
+      if (!t) return null;
+      const d = new Date(t + "T00:00:00");
+      if (isNaN(d.getTime())) return null;
+      return d;
+    }
+
+    function setPublishPills(article){
+      const isPub = !!article && (article.isPublic === true || String(article.visibility||"").toLowerCase() === "public");
+      $("#pillPub").innerHTML = isPub
+        ? `<i class="fa-solid fa-circle-check"></i> 已發表`
+        : `<i class="fa-regular fa-circle"></i> 未發表`;
+
+      $("#pillArticleId").textContent = currentSubmissionId ? `kb_articles/${currentSubmissionId}` : "kb_articles/—";
+
+      const t = article?.publishedAt?.toDate ? article.publishedAt.toDate().toLocaleString()
+              : (article?.publishedAtIso || "");
+      $("#pillTime").textContent = t ? `發表時間：${t}` : "";
+
+      const issue = normalize($("#issue").value);
+      const url = new URL("kb-articles.html", location.href);
+      if (issue) url.searchParams.set("issue", issue);
+      $("#btnOpenArticle").href = url.toString();
+    }
+
+    function setDetailFromSubmission(sub){
+      currentSubmission = sub || null;
+      const sid = currentSubmissionId || "";
+      $("#line").textContent = sid ? `submissionId: ${sid}` : "submissionId: —";
+
+      if (!sub){
+        ["#title","#issue","#authorsText","#acceptedDate","#abstract","#pdfUrl"].forEach(sel => {
+          const el = $(sel);
+          if (el) el.value = "";
+        });
+        $("#pdfHint").textContent = "（可留空）";
+        setPublishPills(null);
+        return;
+      }
+
+      $("#title").value = sub.title || "";
+      $("#authorsText").value = authorsLine(sub);
+      $("#abstract").value = sub.abstract || "";
+      $("#pdfUrl").value = sub.pdfUrl || sub.pdfURL || sub.latestManuscriptUrl || "";
+
+      const issue = sub.plannedMonth || sub.scheduledMonth || "";
+      if (issue && /^\d{4}-\d{2}$/.test(issue)) $("#issue").value = issue;
+
+      const acc = sub.acceptedAt || sub.acceptedAtIso || null;
+      $("#acceptedDate").value = toDateInput(acc) || toDateInput(new Date());
+
+      $("#pdfHint").textContent = $("#pdfUrl").value ? "（已從投稿/版本帶入，可修改）" : "（留空則前台不顯示PDF按鈕）";
+      setPublishPills(currentArticle);
+    }
+
+    function renderList(){
+      const q = normalize($("#q").value).toLowerCase();
+      const filtered = !q ? list : list.filter(x => {
+        const text = `${x.id} ${x.title||""} ${(x.createdByEmail||"")} ${(x.corresponding?.email||"")}`.toLowerCase();
+        return text.includes(q);
+      });
+
+      $("#count").textContent = filtered.length ? `共 ${filtered.length} 筆` : "";
+      const box = $("#list");
+      box.innerHTML = "";
+      if (!filtered.length){
+        box.innerHTML = `<div class="muted small">（沒有已接受投稿）</div>`;
+        return;
+      }
+
+      filtered.forEach(x => {
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `
+          <div class="t">
+            <span class="pill"><i class="fa-solid fa-circle-check"></i> accepted</span>
+            <span>${esc(x.title || "（未命名）")}</span>
+          </div>
+          <div class="m">${esc(`submissionId:${x.id}`)} · ${esc(x.corresponding?.email || x.createdByEmail || "")}</div>
+        `;
+        div.addEventListener("click", () => openSubmission(x.id));
+        box.appendChild(div);
+      });
+    }
+
+    async function loadList(){
+      if (!currentUser){
+        list = [];
+        renderList();
+        setDetailFromSubmission(null);
+        return;
+      }
+      $("#list").innerHTML = `<div class="muted small">讀取中…</div>`;
+
+      try{
+        const snaps = await getDocs(query(collection(db, SUB_COL), where("status", "==", "accepted")));
+        list = snaps.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderList();
+
+        const url = new URL(location.href);
+        const sid = url.searchParams.get("sid");
+        if (sid && list.some(x => x.id === sid)){
+          await openSubmission(sid);
+        } else if (!currentSubmissionId && list[0]){
+          await openSubmission(list[0].id);
+        } else if (!list.length){
+          setDetailFromSubmission(null);
+        }
+      }catch(e){
+        console.error(e);
+        msg("讀取失敗：" + esc(e.message || e), "warn");
+        $("#list").innerHTML = `<div class="warn">讀取失敗：${esc(e.message || e)}</div>`;
+      }
+    }
+
+    async function openSubmission(id){
+      const sid = normalize(id);
+      if (!sid) return;
+
+      try{
+        const sSnap = await getDoc(doc(db, SUB_COL, sid));
+        if (!sSnap.exists()) throw new Error("找不到投稿：" + sid);
+
+        currentSubmissionId = sid;
+        currentArticle = null;
+
+        const sub = { id: sSnap.id, ...sSnap.data() };
+        if (String(sub.status||"") !== "accepted"){
+          msg("此投稿狀態不是 accepted（無法發表）", "warn");
+        }
+
+        const aSnap = await getDoc(doc(db, ART_COL, sid));
+        currentArticle = aSnap.exists() ? { id: aSnap.id, ...aSnap.data() } : null;
+
+        setDetailFromSubmission(sub);
+
+        if (currentArticle){
+          $("#issue").value = currentArticle.issue || $("#issue").value || "";
+          $("#title").value = currentArticle.title || $("#title").value || "";
+          $("#abstract").value = currentArticle.abstract || $("#abstract").value || "";
+          $("#authorsText").value = currentArticle.authorsText || $("#authorsText").value || "";
+          $("#pdfUrl").value = currentArticle.pdfUrl || $("#pdfUrl").value || "";
+          $("#acceptedDate").value = toDateInput(currentArticle.acceptedAt || currentArticle.acceptedAtIso) || $("#acceptedDate").value || "";
+          setPublishPills(currentArticle);
+        } else {
+          setPublishPills(null);
+        }
+
+        const url = new URL(location.href);
+        url.searchParams.set("sid", sid);
+        history.replaceState({}, "", url.toString());
+
+      }catch(e){
+        console.error(e);
+        msg("開啟投稿失敗：" + esc(e.message || e), "warn", "detailMsg");
+      }
+    }
+
+    function collectArticleDraft(){
+      if (!currentSubmissionId || !currentSubmission) throw new Error("尚未選取投稿");
+      const issue = normalize($("#issue").value);
+      if (issue && !/^\d{4}-\d{2}$/.test(issue)) throw new Error("issue 格式需為 YYYY-MM");
+
+      const acceptedDate = fromDateInput($("#acceptedDate").value);
+      const pdfUrl = normalize($("#pdfUrl").value);
+
+      return {
+        submissionId: currentSubmissionId,
+        issue: issue || "",
+        title: normalize($("#title").value) || (currentSubmission.title || ""),
+        abstract: $("#abstract").value || currentSubmission.abstract || "",
+        authors: Array.isArray(currentSubmission.authors) ? currentSubmission.authors : [],
+        corresponding: currentSubmission.corresponding || { name: "", email: "" },
+        authorsText: normalize($("#authorsText").value) || authorsLine(currentSubmission),
+        pdfUrl: pdfUrl || "",
+        status: "accepted",
+        visibility: "public",
+        isPublic: true,
+        acceptedAtIso: acceptedDate ? acceptedDate.toISOString() : "",
+        updatedAt: serverTimestamp()
+      };
+    }
+
+    async function publish(isSyncOnly=false){
+      if (!currentUser) return msg("請先登入", "warn", "detailMsg");
+      if (!roles.admin && !roles.systemAdmin && !roles.editor) return msg("權限不足", "warn", "detailMsg");
+      if (!currentSubmissionId) return msg("請先選取投稿", "warn", "detailMsg");
+
+      try{
+        const draft = collectArticleDraft();
+        const nowIso = new Date().toISOString();
+
+        const aRef = doc(db, ART_COL, currentSubmissionId);
+        const aSnap = await getDoc(aRef);
+
+        if (!aSnap.exists()){
+          draft.createdAt = serverTimestamp();
+                    // 若是「發表到前台」：第一次建立 kb_articles 時就要直接標記為 published/public
+          if (!isSyncOnly) {
+            draft.status = "published";
+            draft.visibility = "public";
+            draft.isPublic = true;
+          }
+draft.createdByUid = currentUser.uid;
+          draft.publishedAt = serverTimestamp();
+          draft.publishedAtIso = nowIso;
+          draft.note = "Published from kb_submissions (accepted)";
+          await setDoc(aRef, draft, { merge: true });
+          currentArticle = draft;
+          msg("已發表到前台", "ok", "detailMsg");
+        }else{
+          // 同步（isSyncOnly=true）時，不要把 collectArticleDraft() 的預設值覆蓋掉已發表狀態
+          if (isSyncOnly) {
+            delete draft.status;
+            delete draft.visibility;
+            delete draft.isPublic;
+            delete draft.publishedAt;
+            delete draft.publishedAtIso;
+          } else {
+            // 發表到前台：確保狀態/可見度正確
+            draft.status = "published";
+            draft.visibility = "public";
+            draft.isPublic = true;
+          }
+          if (!isSyncOnly){
+            draft.publishedAt = serverTimestamp();
+            draft.publishedAtIso = nowIso;
+          }
+          await setDoc(aRef, draft, { merge: true });
+          currentArticle = { ...(aSnap.data()||{}), ...draft };
+          msg(isSyncOnly ? "已同步更新前台資料" : "已更新前台資料", "ok", "detailMsg");
+        }
+
+        setPublishPills(currentArticle);
+
+      }catch(e){
+        console.error(e);
+        msg("操作失敗：" + esc(e.message || e), "warn", "detailMsg");
+      }
+    }
+
+    async function unpublish(){
+      if (!currentUser) return msg("請先登入", "warn", "detailMsg");
+      if (!roles.admin && !roles.systemAdmin && !roles.editor) return msg("權限不足", "warn", "detailMsg");
+      if (!currentSubmissionId) return msg("請先選取投稿", "warn", "detailMsg");
+
+      if (!confirm("確定取消發表？（將刪除 kb_articles/此ID）")) return;
+
+      try{
+        await deleteDoc(doc(db, ART_COL, currentSubmissionId));
+        currentArticle = null;
+        setPublishPills(null);
+        msg("已取消發表", "ok", "detailMsg");
+      }catch(e){
+        console.error(e);
+        msg("取消失敗：" + esc(e.message || e), "warn", "detailMsg");
+      }
+    }
+
+    async function evaluateRoles(user){
+      if (!user){
+        $("#authBadge").textContent = "未登入";
+        $("#roleBadge").textContent = "role: —";
+        $("#userInfo").textContent = "";
+        roles = {};
+        return;
+      }
+      $("#authBadge").textContent = "已登入";
+      $("#userInfo").textContent = user.email || "";
+
+      if (typeof window.__kbPubForcedRefresh === "undefined") window.__kbPubForcedRefresh = false;
+      try{
+        const token = await user.getIdTokenResult(!window.__kbPubForcedRefresh);
+        window.__kbPubForcedRefresh = true;
+
+        const claims = token?.claims || {};
+        const rolesObj = (claims.roles && typeof claims.roles === "object") ? claims.roles : {};
+        roles = {
+          admin: !!claims.admin,
+          systemAdmin: !!claims.systemAdmin,
+          secretary: !!claims.secretary,
+          editor: !!claims.editor,
+          reviewer: !!claims.reviewer,
+          client: !!claims.client,
+          ...rolesObj
+        };
+        const roleKeys = ["admin","systemAdmin","secretary","editor","reviewer","client"];
+        const roleList = roleKeys.filter(k => !!roles[k]).join(", ");
+        $("#roleBadge").textContent = `role: ${roleList || "（none）"}`;
+
+      }catch(e){
+        console.error(e);
+        $("#roleBadge").textContent = "role: （讀取失敗）";
+        roles = {};
+      }
+    }
+
+    $("#btnReload").addEventListener("click", loadList);
+    $("#q").addEventListener("input", renderList);
+    $("#btnPublish").addEventListener("click", () => publish(false));
+    $("#btnSync").addEventListener("click", () => publish(true));
+    $("#btnUnpublish").addEventListener("click", unpublish);
+
+    $("#btnSignOut").addEventListener("click", async () => {
+      try{ await signOut(auth); }catch(e){ console.error(e); }
+      location.href = "login.html";
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user || null;
+      await evaluateRoles(currentUser);
+
+      if (!currentUser){
+        msg("未登入：請先到 login.html 登入。", "warn");
+        $("#detailWrap").classList.add("disabled");
+        $("#list").innerHTML = `<div class="warn">未登入：請先到 login.html 登入。</div>`;
+        return;
+      }
+
+      const ok = !!roles.admin || !!roles.systemAdmin || !!roles.editor;
+      if (!ok){
+        msg("權限不足：需要 admin / systemAdmin / editor。", "warn");
+        $("#detailWrap").classList.add("disabled");
+        $("#list").innerHTML = `<div class="warn">權限不足：需要 admin / systemAdmin / editor。</div>`;
+        return;
+      }
+
+      $("#detailWrap").classList.remove("disabled");
+      await loadList();
+    });
+  </script>
+</body>
+</html>

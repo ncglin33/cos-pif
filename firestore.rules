@@ -1,0 +1,503 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // 支援兩種寫法：
+    // A) token.admin / token.editor ...（平面 claims）
+    // B) token.roles.admin / token.roles.editor ...（巢狀 roles）
+    function hasRole(role) {
+      return isSignedIn() && (
+        request.auth.token[role] == true
+        || (request.auth.token.roles != null && request.auth.token.roles[role] == true)
+      );
+    }
+
+    // 僅限最高權限（影響 PIF 等核心資料）
+    function isAdmin() {
+      return hasRole('admin') || hasRole('systemAdmin');
+    }
+
+    // KB 後台允許的角色（可依需求再縮小/擴大）
+    function isKBEditor() {
+      return isAdmin() || hasRole('secretary') || hasRole('editor');
+    }
+
+    function isClient() {
+      return hasRole('client');
+    }
+
+    match /pifs/{pifId} {
+      // Admins can do anything.
+      allow read, write: if isAdmin();
+      // Authenticated users who are NOT clients can create.
+      allow create: if request.auth != null && !isClient();
+      // Authenticated users can read/update if they are the owner.
+      allow read, update: if request.auth != null && resource.data.ownerId == request.auth.uid;
+
+      match /{allPaths=**} {
+        allow read, write: if isAdmin() || (request.auth != null && resource.data.ownerId == request.auth.uid);
+      }
+    }
+
+    match /users/{userId} {
+      allow read, write: if isAdmin() || (request.auth != null && request.auth.uid == userId);
+    }
+
+    match /settings/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    // PIF 06 Templates
+    match /pif06_summary_templates/{templateId} {
+        allow read, write: if request.auth != null;
+    }
+    
+    match /pif06_process_templates/{templateId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /physchem_properties/{propertyId} {
+      allow read: if true;
+      allow write: if isAdmin() || request.auth != null;
+    }
+
+    match /rms/{rmId} {
+      allow read: if true;
+      allow write: if isAdmin() || request.auth != null;
+    }
+
+    match /pif_modules/{moduleId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if isAdmin();
+    }
+
+    match /vendors/{vendorId} {
+      allow read: if request.auth != null;
+      allow create, write, delete: if isAdmin();
+    }
+
+    match /vendor_submissions/{submissionId} {
+      allow create: if request.auth != null
+                      && request.resource.data.submittedBy == request.auth.uid
+                      && request.resource.data.status == 'pending';
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /qa_database/{qaId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /cosmetic_knowledge/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /cosmetic_database/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // === Knowledge Base (KB) ===
+    // 讓前台 kb-article.html 可讀取文章/名詞/文獻；後台 admin-kb.html 只允許 Admin 寫入
+    match /kb_terms/{id} {
+      allow read: if true;
+      allow write: if isKBEditor();
+    }
+
+    match /kb_articles/{id} {
+      allow read: if true;
+      allow write: if isKBEditor();
+    }
+
+    match /kb_refs/{id} {
+      allow read: if true;
+      allow write: if isKBEditor();
+    }
+        match /kb_issues/{id} {
+      // Public read: only published issues; editors can read all
+      allow get: if isKBEditor() || (resource.data.status == "published");
+
+      // Public list: only published issues; allow (optional) limit guard
+      // Note: if you want to REQUIRE limit(), change the line to:
+      //   && request.query.limit != null && request.query.limit <= 100
+      allow list: if isKBEditor() || (
+        resource.data.status == "published"
+        && (request.query.limit == null || request.query.limit <= 100)
+      );
+
+      allow create, update, delete: if isKBEditor();
+    }
+
+    // ===== 最新消息 / 系統公告 (news) =====
+    // 前台（免登入）可讀取「已發布」的最新消息；未發布僅管理端可見
+    // 建議欄位其一：
+    //   - published: true/false   或
+    //   - status: "draft"|"published"   或
+    //   - isPublic: true/false
+    match /news/{newsId} {
+      // Public read: only published; editors/admin can read all
+      allow get: if isAdmin() || isKBEditor() || (
+        (resource.data.published == true) ||
+        (resource.data.status == "published") ||
+        (resource.data.isPublic == true)
+      );
+
+      // Public list: only published; optional limit guard
+      allow list: if isAdmin() || isKBEditor() || (
+        (
+          (resource.data.published == true) ||
+          (resource.data.status == "published") ||
+          (resource.data.isPublic == true)
+        )
+        && (request.query.limit == null || request.query.limit <= 100)
+      );
+
+      allow create, update, delete: if isAdmin() || isKBEditor();
+    }
+
+// ===== KB 下期月刊主題票選 (kb_topic_polls) =====
+// 前台：topic-poll.html（需登入才能投票）
+// 後台：topic-poll-admin.html（主辦單位可建立/編輯 poll、看統計）
+//
+// 集合結構：
+// kb_topic_polls/{pollId}  (pollId 建議 YYYY-MM，例如 2026-02)
+//   - title (string), desc (string, optional)
+//   - openFrom (timestamp), openUntil (timestamp)
+//   - maxSelections (int)  // 例如 3
+//   - allowSuggestion (bool)
+//   - candidates (list of {id,title,desc})
+//
+// kb_topic_polls/{pollId}/votes/{uid}
+//   - uid, email, displayName
+//   - picks (list<string>)  // 勾選候選主題 id
+//   - suggestion (string)   // 使用者建議主題（可空字串）
+//   - createdAt, updatedAt
+
+function isKbPollAdmin() {
+  return hasRole('admin') || hasRole('systemAdmin') || hasRole('editor') || hasRole('secretary');
+}
+
+// 公開設定（供前台讀取「已發布的 pollId」等）
+    match /kb_public_config/{docId} {
+      allow get, list: if true;
+      allow create, update, delete: if isKbPollAdmin();
+    }
+
+    match /kb_topic_polls/{pollId} {
+  // 讓前台可讀取/列出投票（候選題與投票時間）
+  allow get, list: if true;
+
+  // 只有主辦單位可建立/修改 poll 設定
+  allow create, update, delete: if isKbPollAdmin();
+
+  function pollDoc() {
+    return get(/databases/$(database)/documents/kb_topic_polls/$(pollId));
+  }
+  function pollExists() { 
+    return exists(/databases/$(database)/documents/kb_topic_polls/$(pollId)); 
+  }
+
+  function pollOpen() {
+    return pollExists()
+      && pollDoc().data.openFrom is timestamp
+      && pollDoc().data.openUntil is timestamp
+      && request.time >= pollDoc().data.openFrom
+      && request.time <= pollDoc().data.openUntil;
+  }
+
+  match /votes/{uid} {
+    // 自己可讀自己的投票；主辦單位可讀全部（統計/匯出）
+    allow get: if (request.auth != null && request.auth.uid == uid) || isKbPollAdmin();
+    allow list: if isKbPollAdmin();
+
+    // 允許在投票期間內建立/更新自己的投票
+    allow create, update: if request.auth != null
+      && request.auth.uid == uid
+      && pollOpen()
+      && (pollDoc().data.maxSelections is int || pollDoc().data.maxSelections is float)
+      && request.resource.data.keys().hasOnly(['uid','email','displayName','picks','suggestion','createdAt','updatedAt'])
+      && request.resource.data.uid == uid
+      && request.resource.data.picks is list
+      && request.resource.data.picks.size() <= pollDoc().data.maxSelections
+      && request.resource.data.suggestion is string
+      && request.resource.data.suggestion.size() <= 200;
+
+    // 僅主辦單位可刪除（必要時清除異常資料）
+    allow delete: if isKbPollAdmin();
+  }
+}
+// ===== END KB 下期月刊主題票選 =====
+
+    // 訂閱名單（公開頁可新增，但不可讀取）
+
+// =========================
+// KB 投稿 / 審稿（kb_submissions）
+// 狀態流程：
+// draft → submitted → under_review → revision_requested → accepted → scheduled → published
+// 規則：登入者可建立/讀取自己的投稿；審稿人可讀取被指派的投稿並提交評語；KB 編輯/管理可管理全流程；只有 admin 可刪除
+// =========================
+match /kb_submissions/{submissionId} {
+
+  function validStatus(s) {
+    return s in ['draft','submitted','under_review','revision_requested','revised_submitted','accepted','rejected','scheduled','published'];
+  }
+
+  function isOwner() {
+    return isSignedIn() && (
+      resource.data.ownerUid == request.auth.uid ||
+      resource.data.createdByUid == request.auth.uid
+    );
+  }
+
+  function isOwnerNew() {
+    return isSignedIn() && (
+      request.resource.data.ownerUid == request.auth.uid ||
+      request.resource.data.createdByUid == request.auth.uid
+    );
+  }
+
+  function isAssignedReviewer() {
+    return isSignedIn()
+      && resource.data.assignedReviewerUids != null
+      && resource.data.assignedReviewerUids.hasAny([request.auth.uid]);
+  }
+
+  function hasWhere(field, op, value) {
+    return request.query.where.size() > 0 && (
+      (request.query.where[0].field == field && request.query.where[0].op == op && request.query.where[0].value == value) ||
+      (request.query.where.size() > 1 && request.query.where[1].field == field && request.query.where[1].op == op && request.query.where[1].value == value)
+    );
+  }
+
+  // 作者列表：where ownerUid == me（可再加一個 status==）
+  function isMySubmissionsQuery() {
+    return isSignedIn()
+      && request.query.where.size() <= 2
+      && (hasWhere('ownerUid', '==', request.auth.uid) || hasWhere('createdByUid', '==', request.auth.uid));
+  }
+
+  // 審稿列表：where assignedReviewerUids array-contains me（可再加一個 status==）
+  function isMyAssignedReviewsQuery() {
+    return isSignedIn()
+      && request.query.where.size() <= 2
+      && hasWhere('assignedReviewerUids', 'array-contains', request.auth.uid);
+  }
+
+  function canTransition(from, to) {
+    return
+      (from == 'draft' && to == 'submitted') ||
+      (from == 'submitted' && to == 'under_review') ||
+      (from == 'under_review' && (to == 'revision_requested' || to == 'accepted' || to == 'rejected')) ||
+      (from == 'revision_requested' && (to == 'revised_submitted' || to == 'submitted')) ||
+      (from == 'revised_submitted' && (to == 'under_review' || to == 'accepted' || to == 'rejected')) ||
+      (from == 'accepted' && to == 'scheduled') ||
+      (from == 'scheduled' && to == 'published');
+  }
+
+  function ownerAllowedUpdate() {
+    // 作者：僅能在 draft / revision_requested 編輯；或進行 draft→submitted、revision_requested→submitted
+    let from = resource.data.status;
+    let to   = request.resource.data.status;
+
+    let allowedFrom = (from == 'draft' || from == 'revision_requested');
+    let allowedTransition = (from == to) || canTransition(from, to);
+
+    // 作者不可改動的欄位（由系統/編輯維護）
+    let immutableOk =
+      request.resource.data.ownerUid == resource.data.ownerUid &&
+      request.resource.data.ownerEmail == resource.data.ownerEmail &&
+      request.resource.data.createdByUid == resource.data.createdByUid &&
+      request.resource.data.createdByEmail == resource.data.createdByEmail &&
+      request.resource.data.createdAt == resource.data.createdAt &&
+      request.resource.data.assignedReviewerUids == resource.data.assignedReviewerUids &&
+      request.resource.data.editorUid == resource.data.editorUid &&
+      request.resource.data.decision == resource.data.decision &&
+      request.resource.data.scheduledMonth == resource.data.scheduledMonth &&
+      request.resource.data.publishedAt == resource.data.publishedAt;
+
+    // 作者可改動欄位（依你的前端可再增減）
+    let allowedKeys = [
+      'title','topic','abstract','keywords',
+      'articleType','corresponding','authors',
+      'pdfPath','pdfUrl','pdfURL',
+      'latestManuscriptUrl','latestSupplementUrls',
+      'currentVersion',
+      'status',
+      'submittedAt','revisedAt',
+      'updatedAt',
+      'revisionNote',
+      'authorNote'
+    ];
+
+    return allowedFrom
+      && allowedTransition
+      && validStatus(to)
+      && immutableOk
+      && request.resource.data.diff(resource.data).changedKeys().hasOnly(allowedKeys);
+  }
+
+  function editorAllowedUpdate() {
+    // 編輯/秘書/管理：可進行流程轉換、指派審稿、排程、發布等
+    let from = resource.data.status;
+    let to   = request.resource.data.status;
+
+    // 允許：不改狀態（純更新資料）或合法轉換
+    let okTransition = (from == to) || canTransition(from, to);
+
+    // 編輯可改動欄位（依需求增減）
+    let allowedKeys = [
+      'title','topic','abstract','keywords',
+      'articleType','corresponding','authors',
+      'pdfPath','pdfUrl','pdfURL',
+      'latestManuscriptUrl','latestSupplementUrls',
+      'currentVersion',
+      'status','submittedAt','revisedAt','updatedAt',
+      'assignedReviewerUids',
+      'editorUid','editorNote','revisionNote','decision',
+      'acceptedAt','scheduledMonth','scheduledAt',
+      'publishedAt','publishUrl'
+    ];
+
+    return (isKBEditor() || isAdmin())
+      && validStatus(to)
+      && okTransition
+      && request.resource.data.diff(resource.data).changedKeys().hasOnly(allowedKeys);
+  }
+
+  // Create：任何登入者可建立自己的 draft
+  allow create: if isSignedIn()
+    && isOwnerNew()
+    && request.resource.data.status == 'draft'
+    && validStatus(request.resource.data.status);
+
+  // Read：作者 / 被指派審稿人 / KB 編輯
+  allow get: if isOwner() || isAssignedReviewer() || isKBEditor();
+
+  // List：作者查自己的、審稿人查被指派的、或 KB 編輯查全部
+  allow list: if isKBEditor() || isMySubmissionsQuery() || isMyAssignedReviewsQuery();
+
+  // Update：作者在可編輯狀態；或 KB 編輯可管理流程
+  allow update: if (isOwner() && ownerAllowedUpdate())
+    || ((isKBEditor() || isAdmin()) && editorAllowedUpdate());
+
+  // Delete：只有 admin
+  allow delete: if isAdmin();
+
+  // 子集合：版本紀錄（投稿/修訂每送出一次就建立一筆）
+  match /versions/{versionId} {
+
+    function submission() {
+      return get(/databases/$(database)/documents/kb_submissions/$(submissionId));
+    }
+
+    function isSubmissionOwner() {
+      return isSignedIn() && (
+        submission().data.ownerUid == request.auth.uid ||
+        submission().data.createdByUid == request.auth.uid
+      );
+    }
+
+    // 作者與 KB 編輯可讀版本（供下載/查歷史）
+    allow read: if isKBEditor() || isSubmissionOwner();
+
+    // 建立版本：作者在送出投稿/修訂時建立；KB 編輯也可補建
+    allow create: if isKBEditor() || isSubmissionOwner();
+
+    // 版本通常不應被作者改寫；如需修正由 KB 編輯處理
+    allow update, delete: if isKBEditor();
+  }
+
+  // 子集合：審稿意見
+  match /reviews/{reviewId} {
+
+    function isReviewerDocOwner() {
+      return isSignedIn() && request.auth.uid == request.resource.data.reviewerUid;
+    }
+
+    function isReviewerDocOwnerExisting() {
+      return isSignedIn() && resource.data.reviewerUid == request.auth.uid;
+    }
+
+    function reviewerCanWriteReview() {
+      // 只有被指派的審稿人可寫入/更新自己的 review；reviewId 建議用 reviewerUid（或任意，但 reviewerUid 必須一致）
+      return isSignedIn()
+        && (isKBEditor() || (get(/databases/$(database)/documents/kb_submissions/$(submissionId)).data.assignedReviewerUids != null
+          && get(/databases/$(database)/documents/kb_submissions/$(submissionId)).data.assignedReviewerUids.hasAny([request.auth.uid])))
+        && get(/databases/$(database)/documents/kb_submissions/$(submissionId)).data.status == 'under_review';
+    }
+
+    allow get: if isKBEditor()
+      || isOwner()
+      || isAssignedReviewer();
+
+    allow list: if isKBEditor()
+      || isOwner()
+      || isAssignedReviewer();
+
+    // 審稿人：建立自己的 review（必須帶 reviewerUid）
+    allow create: if reviewerCanWriteReview()
+      && request.resource.data.reviewerUid == request.auth.uid;
+
+    // 審稿人：更新自己的 review；KB 編輯也可調整
+    allow update: if (reviewerCanWriteReview() && isReviewerDocOwnerExisting())
+      || isKBEditor();
+
+    // Delete：只有 admin
+    allow delete: if isAdmin();
+  }
+}
+
+
+    match /kb_subscribers/{id} {
+      allow create: if request.resource.data.keys().hasOnly(["email","frequency","source","status","createdAt"])
+        && request.resource.data.email is string
+        && request.resource.data.email.size() > 3
+        && request.resource.data.email.size() <= 120
+        && request.resource.data.status == "active"
+        && (request.resource.data.frequency == "weekly" || request.resource.data.frequency == "monthly");
+      allow get, list, update, delete: if isKBEditor();
+    }
+    // (removed) isPublishedIssuesQuery(): replaced by resource.data.status check in kb_issues rules
+
+
+    // ===== 功效試算申請（eva_submissions）=====
+    // 管理員審核頁 eva-review.html 需要讀取/更新此集合
+    match /eva_submissions/{id} {
+      // Admin / systemAdmin can read & review
+      allow read, update, delete: if isAdmin();
+      // 申請建立：登入者可建立（避免匿名濫用）；如需完全公開可改為 true
+      allow create: if isSignedIn();
+    }
+
+    // ===== Email Queue（mail）=====
+    // 前端審核頁會寫入 mail 觸發寄信（Firebase Extensions / Trigger Email）
+    match /mail/{id} {
+      allow create: if isAdmin();
+      // 一般不需要讓前端讀取 mail 內容；若你有後台要看寄信狀態，可改成 isAdmin()
+      allow read, update, delete: if false;
+    }
+
+
+match /pif_intent_submissions/{submissionId} {
+        allow create: if true;
+        allow get: if true; 
+        allow list: if true;
+        allow update: if true;
+        allow delete: if isAdmin();
+    }
+
+    match /contact_messages/{messageId} {
+        allow read, write: if isAdmin();
+    }
+
+    match /pif_payment_proofs/{proofId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

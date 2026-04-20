@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>後台管理 - 批次匯入 QA 問答</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .container { max-width: 1600px; }
+        .card { margin-bottom: 1.5rem; }
+
+        #drop-zone {
+            border: 2px dashed var(--line);
+            border-radius: .75rem;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        #drop-zone.dragover {
+            background-color: var(--brand-bg-subtle);
+            border-color: var(--brand);
+        }
+        #file-info { margin-top: 1rem; color: var(--muted); }
+        #preview-zone { display: none; }
+        
+        #preview-cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 1.5rem;
+        }
+        .data-card {
+            background: #fff;
+            border-radius: .75rem;
+            border: 1px solid var(--line);
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+            display: flex;
+            flex-direction: column;
+            transition: box-shadow .2s;
+        }
+        .data-card:hover {
+            box-shadow:
+                0 4px 6px -1px rgb(0 0 0 / 0.1),
+                0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .data-card-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--line);
+            background: #f9fafb;
+            cursor: pointer;
+        }
+        .data-card-header h4 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--ink);
+            word-break: break-all;
+        }
+        .data-card-body {
+            padding: 1.25rem;
+            flex-grow: 1;
+        }
+        .data-field {
+            margin-bottom: 1.1rem;
+        }
+        .data-field:last-child { margin-bottom: 0; }
+        .data-field-label {
+            font-weight: 500;
+            font-size: .8rem;
+            color: var(--muted);
+            margin-bottom: .25rem;
+            display: block;
+            text-transform: capitalize;
+        }
+        .data-field-value {
+            font-size: .9rem;
+            padding: .5rem;
+            border-radius: .375rem;
+            transition: background-color .2s;
+            cursor: pointer;
+            white-space: pre-wrap;
+            word-break: break-word;
+            min-height: 38px;
+            width: 100%;
+        }
+        .data-field-value:hover {
+            background-color: #f0f8ff;
+        }
+
+        #status-message {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: .5rem;
+            text-align: center;
+            display: none;
+        }
+        .status-success { background-color: var(--ok-bg); color: var(--ok-text); }
+        .status-error { background-color: var(--error-bg); color: var(--error-text); }
+
+        .status-warning {
+            background-color: #fff7ed;
+            color: #9a3412;
+            border: 1px solid #fdba74;
+            padding: 0.9rem 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            font-weight: 600;
+        }
+
+        #manual-input {
+            width: 100%;
+            min-height: 140px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: .85rem;
+        }
+    </style>
+</head>
+<body>
+
+<header class="no-print">
+    <div class="wrap">
+        <h1><a href="dashboard.html" style="color: inherit; text-decoration: none;">管理後台</a></h1>
+        <div class="controls header-right">
+            <div id="user-info" style="display: inline-block; margin-left: 1rem;"></div>
+            <button id="btnSignOut" class="btn btn-danger">登出</button>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <header>
+        <h2>批次匯入 QA 問答資料</h2>
+        <p class="subtitle">上傳匯入檔案 / 貼上文字 → 預覽與修正 → 檢查無誤後寫入 Firestore 的 `qa_database` 集合。</p>
+    </header>
+
+    <div class="card">
+        <h3>步驟一：下載範本、上傳檔案或貼上文字</h3>
+        <p>請確保您的 CSV 檔案或貼上文字包含 `question` 欄位。建議使用完整欄位：`category,question,answer,keywords,audience,lang`；其中 `question` 是唯一的必要欄位。</p>
+        <div style="margin-bottom: 1rem;">
+            <button id="btn-download-template" class="btn">
+                <i class="fa-solid fa-download"></i> 下載 QA 的 CSV 範本
+            </button>
+        </div>
+        <div id="drop-zone">
+            <p><i class="fa-solid fa-upload"></i> 將 CSV 檔案拖曳至此，或點擊選擇</p>
+            <input type="file" id="file-input" accept=".csv,text/csv" hidden>
+            <div id="file-info">尚未選擇檔案</div>
+        </div>
+        <hr style="margin:1.5rem 0;">
+        <h4>或直接貼上 CSV 內容</h4>
+        <textarea id="manual-input" class="form-control" placeholder="在此貼上 CSV 內容，第一行必須是標頭 (category,question,answer,keywords,audience,lang)…"></textarea>
+        <div style="margin-top: .75rem;">
+            <button id="btn-import-text" class="btn">
+                <i class="fa-solid fa-file-import"></i> 匯入文字到預覽
+            </button>
+        </div>
+    </div>
+
+    <div id="preview-zone" class="card">
+        <h3>步驟二：預覽並修正</h3>
+        <p>請仔細檢查資料。您可以直接點擊卡片內的欄位進行修改。系統將使用 `question` 的內容自動產生資料庫唯一識別碼；若 CSV 中同一 `question` 出現多筆，匯入時會以最後一筆覆蓋/更新。`lang` 建議使用 zh-Hant / en / ko / ja。</p>
+        
+        <div id="preview-cards-container"></div>
+
+        <div id="status-message"></div>
+
+        <div style="margin-top: 1.5rem; text-align: right;">
+            <button id="btn-confirm-write" class="btn primary">
+                <i class="fa-solid fa-check-double"></i> 確認並寫入資料庫
+            </button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { doc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { db, auth } from './firebase-config.js';
+
+    const $ = sel => document.querySelector(sel);
+    let parsedRecords = [];
+    const QA_FIELDS = ['category','question','answer','keywords','audience','lang'];
+
+    // ✅ 建議語言代碼（可依需求擴充）
+    const ALLOWED_LANGS = new Set(['zh-Hant','en','ko','ja','zh','zh-TW']);
+
+    function analyzeImport(records){
+        const counts = new Map();
+        records.forEach(r => {
+            const q = (r.question || '').trim();
+            if (!q) return;
+            counts.set(q, (counts.get(q) || 0) + 1);
+        });
+
+        const dupQs = [...counts.entries()]
+            .filter(([, c]) => c > 1)
+            .map(([q, c]) => ({ question: q, count: c }));
+
+        const invalidLangSet = new Set();
+        records.forEach(r => {
+            const lang = (r.lang || '').toString().trim();
+            if (lang && !ALLOWED_LANGS.has(lang)) invalidLangSet.add(lang);
+        });
+
+        return { dupQs, invalidLangs: [...invalidLangSet] };
+    }
+
+    function showImportWarnings(analysis){
+        const msgEl = $('#status-message');
+        if (!msgEl) return;
+
+        const parts = [];
+        if (analysis.dupQs && analysis.dupQs.length){
+            parts.push(`偵測到 <strong>${analysis.dupQs.length}</strong> 個重複問題（同一 question 多筆）。匯入時會以 <strong>最後一筆</strong> 覆蓋/更新同一問題。`);
+        }
+        if (analysis.invalidLangs && analysis.invalidLangs.length){
+            parts.push(`偵測到未在建議清單的語言代碼：<strong>${analysis.invalidLangs.join(', ')}</strong>。仍可匯入，但建議使用 zh-Hant / en / ko / ja。`);
+        }
+
+        if (!parts.length){
+            msgEl.className = '';
+            msgEl.innerHTML = '';
+            return;
+        }
+
+        msgEl.className = 'status-warning';
+        msgEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ${parts.join('<br>')}`;
+    }
+
+
+    function startApp() {
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                setupUI(user);
+                document.body.style.opacity = '1';
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+    }
+
+    function setupUI(user) {
+        $('#user-info').textContent = user.email;
+        $('#btnSignOut').addEventListener('click', () => signOut(auth));
+        $('#btn-download-template').addEventListener('click', downloadTemplate);
+
+        const dropZone = $('#drop-zone');
+        const fileInput = $('#file-input');
+        
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', e => {
+            if (e.target.files.length) handleFile(e.target.files[0]);
+        });
+
+        $('#btn-import-text').addEventListener('click', () => loadFromCsvText($('#manual-input').value));
+        $('#btn-confirm-write').addEventListener('click', handleConfirmAndWrite);
+        $('#preview-cards-container').addEventListener('click', handleCardClick);
+    }
+
+    function downloadTemplate() {
+        const csvContent = QA_FIELDS.join(',') + '\n';
+        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'qa_template_multifield.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+    
+    function handleFile(file) {
+        if (!file.type.includes('csv')) {
+            alert('錯誤：請選擇 .csv 檔案。');
+            return;
+        }
+        $('#file-info').textContent = `已選擇檔案: ${file.name}`;
+        const reader = new FileReader();
+        reader.onload = e => loadFromCsvText(e.target.result);
+        reader.readAsText(file, 'UTF-8');
+    }
+
+    function loadFromCsvText(rawText) {
+        try {
+            let text = rawText.trim();
+            if (text.charCodeAt(0) === 0xFEFF) {
+                text = text.slice(1);
+            }
+            if (!text) throw new Error('CSV 內容是空的。');
+
+            const rows = parseCsv(text);
+            if (rows.length < 2) throw new Error("CSV 內容需要包含標頭和至少一筆資料。");
+
+            const headers = rows[0].map(h => h.trim());
+            if (!headers.includes('question')) {
+                throw new Error(`CSV 標頭中必須包含 'question' 欄位。`);
+            }
+
+            const headerMap = {};
+            headers.forEach((h, i) => { headerMap[h] = i; });
+
+                        parsedRecords = rows.slice(1).map(values => {
+                if (values.length === 1 && values[0].trim() === '') return null;
+                const record = {};
+                QA_FIELDS.forEach(field => {
+                    const index = headerMap[field];
+                    record[field] = (index !== undefined && values[index] !== undefined) ? String(values[index]).trim() : '';
+                });
+                return record;
+            }).filter(Boolean);
+
+            if (!parsedRecords.length) throw new Error("找不到有效的資料筆。");
+
+            // ✅ 簡單校驗/提示：重複 question 與 lang 建議清單
+            const analysis = analyzeImport(parsedRecords);
+            showImportWarnings(analysis);
+
+            renderPreviewCards(parsedRecords);} catch (err) {
+            alert(`解析失敗: ${err.message}`);
+            parsedRecords = [];
+            $('#preview-zone').style.display = 'none';
+        }
+    }
+    
+    function parseCsv(text) {
+        // Simple CSV parser, for this specific use case.
+        const rows = [];
+        let inQuotes = false;
+        let row = [];
+        let field = '';
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                row.push(field);
+                field = '';
+            } else if (char === '\n' && !inQuotes) {
+                row.push(field);
+                rows.push(row);
+                row = [];
+                field = '';
+            } else {
+                field += char;
+            }
+        }
+        row.push(field);
+        rows.push(row);
+        return rows;
+    }
+
+    function getSanitizedDocId(name) {
+        if (!name) return `qa_${Date.now()}`;
+        // A simple hash function to generate a consistent ID
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+            const char = name.charCodeAt(i);
+            hash = (hash << 5) - hash + char;
+            hash |= 0; // Convert to 32bit integer
+        }
+        return `qa_${Math.abs(hash).toString(16)}`;
+    }
+    
+        function renderPreviewCards(records) {
+        const fieldLabelMap = {
+            category: '分類',
+            question: '問題',
+            answer: '回答',
+            keywords: '關鍵字',
+            audience: '對象',
+            lang: '語言'
+        };
+
+        $('#preview-cards-container').innerHTML = records.map((record, rowIndex) => {
+            const body = QA_FIELDS
+                .filter(f => f !== 'question')
+                .map(f => `
+                    <div class="data-field">
+                        <label class="data-field-label">${fieldLabelMap[f] || f}</label>
+                        <div class="data-field-value" data-row-index="${rowIndex}" data-field="${f}">
+                            ${record[f] || ''}
+                        </div>
+                    </div>
+                `).join('');
+
+            return `
+                <div class="data-card" data-row-index="${rowIndex}">
+                    <div class="data-card-header">
+                        <h4 data-row-index="${rowIndex}" data-field="question">
+                            ${record.question || '[無問題]'}
+                        </h4>
+                    </div>
+                    <div class="data-card-body">
+                        ${body}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        $('#preview-zone').style.display = 'block';
+    }
+
+    function handleCardClick(e) {
+        const target = e.target;
+        if (target.matches(".data-card-header h4, .data-field-value")) {
+            makeEditable(target);
+        }
+    }
+
+    function makeEditable(element) {
+        if (element.querySelector('textarea')) return;
+        const rowIndex = element.dataset.rowIndex;
+        const field = element.dataset.field;
+        const currentValue = element.textContent;
+        element.innerHTML = '';
+        const textarea = document.createElement('textarea');
+        textarea.className = 'form-control';
+        textarea.style.minHeight = field === 'question' ? '60px' : '120px';
+        textarea.value = currentValue;
+        element.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+
+        const saveChanges = () => {
+            parsedRecords[rowIndex][field] = textarea.value;
+            element.innerHTML = textarea.value;
+        };
+
+        textarea.addEventListener('blur', saveChanges, { once: true });
+        textarea.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                textarea.blur();
+            } else if (e.key === 'Escape') {
+                textarea.value = currentValue;
+                textarea.blur();
+            }
+        });
+    }
+
+    async function handleConfirmAndWrite() {
+        if (!parsedRecords.length) return alert("沒有資料可寫入。");
+        const btn = $('#btn-confirm-write');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中...';
+        
+        try {
+            const batch = writeBatch(db);
+            parsedRecords.forEach(record => {
+                if (!record.question) return;
+                const docId = getSanitizedDocId(record.question);
+                const docRef = doc(db, "qa_database", docId);
+                const dataToSet = {};
+                QA_FIELDS.forEach(field => {
+                    dataToSet[field] = record[field] || '';
+                });;
+                batch.set(docRef, dataToSet, { merge: true });
+            });
+            await batch.commit();
+            $('#status-message').className = 'status-success';
+            $('#status-message').innerHTML = `<i class="fa-solid fa-check-circle"></i> 成功！共 ${parsedRecords.length} 筆 QA 資料已寫入或更新。`;
+        } catch (error) {
+            console.error("Write error:", error);
+            $('#status-message').className = 'status-error';
+            $('#status-message').innerHTML = `<i class="fa-solid fa-exclamation-triangle"></i> 寫入失敗: ${error.message}`;
+        }
+        $('#status-message').style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check-double"></i> 確認並寫入資料庫';
+    }
+
+    startApp();
+    document.body.style.opacity = '0';
+</script>
+</body>
+</html>

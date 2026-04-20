@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>繳費通知／上傳繳費證明 - CosPIF</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    .pricing-container{
+      min-height: calc(100vh - 140px);
+      display:flex; align-items:center; justify-content:center;
+      padding:2rem 1rem;
+    }
+    .pricing-card{
+      max-width: 980px;
+      width:100%;
+      background:#fff;
+      border-radius:16px;
+      box-shadow:0 16px 40px rgba(15,23,42,.15);
+      padding:2rem 2.5rem;
+    }
+    .pricing-title{ font-size:1.6rem; margin-bottom:.5rem; display:flex; align-items:center; gap:.6rem; }
+    .pricing-subtitle{ color:#6b7280; font-size:.95rem; margin-bottom:1.5rem; line-height:1.45; }
+    .price-grid{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:1.75rem; }
+    @media (max-width:768px){
+      .pricing-card{ padding:1.5rem 1.25rem; }
+      .price-grid{ grid-template-columns:1fr; }
+    }
+
+    .price-panel{
+      border:1px solid #e5e7eb;
+      border-radius:12px;
+      padding:1.25rem 1.5rem;
+      background:#f9fafb;
+      text-align:left;
+    }
+    .price-panel h3{ font-size:1.05rem; margin-bottom:.75rem; display:flex; align-items:center; gap:.5rem; }
+
+    .form-row{ margin-bottom:1rem; }
+    .form-row label{ display:block; font-size:.9rem; margin-bottom:.35rem; color:#374151; }
+    .form-row input[type="text"],
+    .form-row input[type="tel"],
+    .form-row input[type="email"],
+    .form-row input[type="date"],
+    .form-row select{
+      width:100%;
+      padding:.5rem .6rem;
+      border-radius:8px;
+      border:1px solid #d1d5db;
+      font-size:.95rem;
+      background:#fff;
+    }
+
+    .form-row input[type="number"]{
+      width:100%;
+      padding:.5rem .6rem;
+      border-radius:8px;
+      border:1px solid #d1d5db;
+      font-size:.95rem;
+      background:#fff;
+    }
+    .form-row textarea{
+      width:100%;
+      padding:.55rem .6rem;
+      border-radius:8px;
+      border:1px solid #d1d5db;
+      font-size:.95rem;
+      background:#fff;
+      min-height:90px;
+      resize:vertical;
+    }
+
+    .hint{ font-size:.82rem; color:#6b7280; margin-top:.35rem; }
+
+    .file-box{
+      background:#fff;
+      border:1px dashed #d1d5db;
+      border-radius:10px;
+      padding:.75rem .85rem;
+    }
+    .file-box input[type="file"]{ width:100%; }
+
+    .thumbs{ display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap:.5rem; margin-top:.6rem; }
+    @media (max-width:520px){ .thumbs{ grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .thumb{ border:1px solid #e5e7eb; border-radius:8px; background:#fff; padding:.25rem; }
+    .thumb img{ width:100%; height:110px; object-fit:cover; border-radius:6px; display:block; }
+    .thumb .name{ font-size:.75rem; color:#6b7280; margin-top:.25rem; word-break:break-word; }
+
+    .progress-wrap{
+      margin-top:.6rem;
+      background:#eef2ff;
+      border:1px solid #e5e7eb;
+      border-radius:999px;
+      overflow:hidden;
+      height:10px;
+      display:none;
+    }
+    .progress-bar{
+      height:100%;
+      width:0%;
+      background:#2563eb;
+      transition: width .2s ease;
+    }
+    .progress-text{
+      display:none;
+      margin-top:.35rem;
+      font-size:.82rem;
+      color:#6b7280;
+    }
+
+    .btn-submit{
+      margin-top: 1rem;
+      margin-right:.5rem;
+      padding:.6rem 1.3rem;
+      border-radius:999px;
+      border:none;
+      background:#2563eb;
+      color:#fff;
+      font-size:.9rem;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:.4rem;
+    }
+    .btn-submit:hover{ background:#1d4ed8; }
+    .btn-submit:disabled{ background:#93c5fd; cursor:not-allowed; }
+
+    .btn-ghost{
+      margin-top:1rem;
+      padding:.5rem 1rem;
+      border-radius:999px;
+      border:1px solid #e5e7eb;
+      background:#fff;
+      font-size:.85rem;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:.4rem;
+    }
+    .btn-ghost:hover{ background:#f3f4f6; }
+
+    .note{ margin-top:.75rem; font-size:.82rem; color:#6b7280; line-height:1.45; }
+
+    .badge{
+      display:inline-flex; align-items:center; gap:.35rem;
+      padding:.25rem .55rem;
+      border-radius:999px;
+      border:1px solid #e5e7eb;
+      font-size:.82rem;
+      background:#fff;
+    }
+    .badge.pending{ border-color:#fde68a; background:#fffbeb; color:#92400e; }
+    .badge.confirmed{ border-color:#bbf7d0; background:#f0fdf4; color:#166534; }
+    .badge.rejected{ border-color:#fecaca; background:#fef2f2; color:#991b1b; }
+
+    .kv{
+      display:grid;
+      grid-template-columns: 140px minmax(0, 1fr);
+      gap:.5rem .75rem;
+      align-items:start;
+      margin-top:.5rem;
+      font-size:.92rem;
+    }
+    .kv .k{ color:#6b7280; }
+    .kv .v{ color:#111827; word-break:break-word; }
+
+    .status-card{
+      border:1px solid #e5e7eb;
+      border-radius:14px;
+      padding:1.25rem 1.5rem;
+      background:#fff;
+      box-shadow:0 10px 24px rgba(15,23,42,.08);
+    }
+
+    #submission-status{ display:none; }
+
+    @media print{
+      header, footer,
+      .btn-submit, .btn-ghost,
+      #submission-status,
+      .file-box, .hint,
+      #proof-preview, .progress-wrap, .progress-text,
+      .no-print{
+        display:none !important;
+      }
+      .pricing-container{ padding:0; }
+      .pricing-card{
+        box-shadow:none;
+        border-radius:0;
+        max-width:100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <nav>
+      <a href="index.html" class="logo"><i class="fa-solid fa-shield-halved"></i> CosPIF</a>
+      <ul class="nav-links">
+        <li><a href="index.html#features">核心功能</a></li>
+        <li><a href="index.html#about">關於我們</a></li>
+        <li><a href="pif-wish.html">PIF 意願調查</a></li>
+        <li><a href="pif-track.html">PIF 進度追蹤</a></li>
+        <li><a href="pay.html" class="active">繳費／上傳證明</a></li>
+      </ul>
+      <a href="login.html" class="btn-login">登入系統</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="pricing-container">
+    <div class="pricing-card">
+
+      <!-- FORM VIEW -->
+      <div id="form-view">
+        <h2 class="pricing-title"><i class="fa-solid fa-receipt"></i> 繳費通知／上傳繳費證明</h2>
+        <p class="pricing-subtitle">
+          若您已完成<strong>自行匯款</strong>，可在此上傳繳費證明（截圖或 PDF）。
+          <br>送出後系統會產生一組<strong>繳費證明序號</strong>，後台確認收款後，您即可在此頁看到<strong>「收款已確認」</strong>狀態。
+        </p>
+
+        <div class="price-grid">
+          <!-- Left: Company -->
+          <div class="price-panel">
+            <h3><i class="fa-solid fa-building"></i> 廠商與聯絡資訊</h3>
+
+            <div class="form-row">
+              <label for="vendor-name">廠商名稱 *</label>
+              <input type="text" id="vendor-name" placeholder="例：XXX 生技股份有限公司">
+            </div>
+
+            <div class="form-row">
+              <label for="company-tax-id">公司統編</label>
+              <input type="text" id="company-tax-id" placeholder="例：12345678">
+              <div class="hint">此欄位用於「公司歸戶」彙整申請案狀態。</div>
+              <div style="margin-top:.35rem;display:flex;align-items:center;gap:.45rem;">
+                <input type="checkbox" id="no-tax-id-toggle">
+                <span style="font-size:.85rem;color:#6b7280;">尚無統編，改用「電話」欄位的手機號碼歸戶</span>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label for="contact-name">聯絡人姓名 *</label>
+              <input type="text" id="contact-name" placeholder="例：王小明">
+            </div>
+
+            <div class="form-row">
+              <label for="contact-phone">電話（手機） *</label>
+              <input type="tel" id="contact-phone" placeholder="例：09xxxxxxxx">
+            </div>
+
+            <div class="form-row">
+              <label for="contact-email">聯絡 Email *</label>
+              <input type="email" id="contact-email" placeholder="例：contact@example.com">
+            </div>
+
+            <div class="form-row">
+              <label for="contact-note">補充備註</label>
+              <textarea id="contact-note" placeholder="例如：本次為 PIF 製作首期款／請協助開立收據..."></textarea>
+            </div>
+          </div>
+
+          <!-- Right: Payment -->
+          <div class="price-panel">
+            <h3><i class="fa-solid fa-money-bill-transfer"></i> 匯款資訊與繳費證明</h3>
+
+            <div class="form-row">
+              <label>匯款資訊（請依實際收款帳戶修改）</label>
+              <div class="status-card">
+                <div class="kv">
+                  <div class="k">銀行</div><div class="v" id="bank-name">（請填）中國信託銀行 東高雄分行</div>
+                  <div class="k">銀行代碼</div><div class="v" id="bank-code">（請填）822</div>
+                  <div class="k">戶名</div><div class="v" id="bank-holder">（請填）勝美生技有限公司</div>
+                  <div class="k">帳號</div><div class="v" id="bank-account">（請填）439-5402-3433-4</div>
+                </div>
+                <div class="note" style="margin-top:.65rem;">
+                  ※ 若您有「繳費通知單號／申請案 ID／PIFID／追蹤序號」，請一併填入下方欄位，後台可更快核對。
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label for="product-name">品名／產品名稱 *</label>
+              <input type="text" id="product-name" placeholder="例：酪梨保濕修護霜">
+            </div>
+
+            <div class="form-row">
+              <label for="case-select">選擇案件（PIFID） *</label>
+              <select id="case-select">
+                <option value="">請先載入案件</option>
+              </select>
+              <div class="hint">請先填寫「公司統編」或勾選「尚無統編」並輸入手機號碼，系統將自動載入案件；若未出現，可按「重新載入」。</div>
+              <div style="margin-top:.5rem;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+                <button type="button" class="btn-ghost" id="btn-load-cases">
+                  <i class="fa-solid fa-rotate"></i> 重新載入
+                </button>
+                <span id="case-load-msg" class="hint" style="margin:0;"></span>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label for="pif-id">PIFID（自動帶入） *</label>
+              <input type="text" id="pif-id" placeholder="請先選擇案件" readonly>
+              <div class="hint">為避免後台對帳困難，本頁送出繳費證明時必須綁定 PIFID。</div>
+            </div>
+
+            <div class="form-row">
+              <label for="tracking-code">PIF 追蹤序號（選填）</label>
+              <input type="text" id="tracking-code" placeholder="例：PIF251212AB">
+            </div>
+
+            <div class="form-row">
+              <label for="paid-amount">匯款金額（NTD） *</label>
+              <input type="number" id="paid-amount" placeholder="例：5000" min="0" step="1">
+            </div>
+
+            <div class="form-row">
+              <label for="paid-date">匯款日期 *</label>
+              <input type="date" id="paid-date">
+            </div>
+
+            <div class="form-row">
+              <label for="bank-last5">匯款帳號末五碼（選填）</label>
+              <input type="text" id="bank-last5" placeholder="例：12345">
+              <div class="hint">若為 ATM／網銀轉帳，建議填寫帳號末五碼，協助對帳。</div>
+            </div>
+
+            <div class="form-row">
+              <label>繳費證明（圖片或 PDF，可不傳，改填末五碼）</label>
+              <div class="file-box">
+                <input type="file" id="proof-file" accept="image/*,application/pdf">
+                <div class="hint">建議：清晰可辨識金額、日期、轉出帳號或交易序號。檔案建議小於 10MB。</div>
+
+                <div class="progress-wrap" id="upload-progress-wrap" aria-hidden="true">
+                  <div class="progress-bar" id="upload-progress-bar"></div>
+                </div>
+                <div class="progress-text" id="upload-progress-text">上傳中 0%</div>
+              </div>
+
+              <div id="proof-preview" class="thumbs" aria-live="polite"></div>
+            </div>
+
+            <button class="btn-submit" id="btn-submit">
+              <i class="fa-solid fa-cloud-arrow-up"></i> 送出繳費證明（取得證明序號）
+            </button>
+
+            <button class="btn-ghost" onclick="window.print()">
+              <i class="fa-solid fa-print"></i> 列印／匯出 PDF
+            </button>
+
+            <p id="submission-status" class="note"></p>
+          </div>
+        </div>
+
+        <div class="note no-print" style="margin-top:1.25rem;">
+          提醒：後台確認收款後，本頁狀態會更新為「收款已確認」。若證明不清晰或資訊不足，可能會被退回補件。
+        </div>
+      </div>
+
+      <!-- STATUS VIEW -->
+      <div id="status-view" style="display:none;">
+        <h2 class="pricing-title"><i class="fa-solid fa-clipboard-list"></i> 繳費證明狀態</h2>
+        <p class="pricing-subtitle">
+          此頁會顯示您上傳的繳費證明目前審核狀態。
+        </p>
+
+        <div class="status-card">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:.75rem; flex-wrap:wrap;">
+            <div>
+              <div style="font-size:.9rem; color:#6b7280;">繳費證明序號</div>
+              <div id="status-code" style="font-size:1.25rem; font-weight:700; letter-spacing:.5px;"></div>
+            </div>
+            <div id="status-badge" class="badge pending"><i class="fa-solid fa-hourglass-half"></i> 待確認</div>
+          </div>
+
+          <div class="kv" style="margin-top:1rem;">
+            <div class="k">廠商</div><div class="v" id="s-vendor">-</div>
+            <div class="k">歸戶代碼</div><div class="v" id="s-companyKey">-</div>
+            <div class="k">產品</div><div class="v" id="s-product">-</div>
+            <div class="k">PIFID</div><div class="v" id="s-pifId">-</div>
+            <div class="k">追蹤序號</div><div class="v" id="s-tracking">-</div>
+            <div class="k">匯款金額</div><div class="v" id="s-amount">-</div>
+            <div class="k">匯款日期</div><div class="v" id="s-paidAt">-</div>
+            <div class="k">帳號末五碼</div><div class="v" id="s-last5">-</div>
+            <div class="k">繳費證明</div><div class="v" id="s-proofLink">-</div>
+            <div class="k">後台備註</div><div class="v" id="s-adminNote">-</div>
+          </div>
+
+          <div id="resubmit-area" style="display:none; margin-top:1rem;">
+            <hr style="border:none;border-top:1px solid #e5e7eb; margin:1rem 0;">
+            <div style="font-weight:700; margin-bottom:.35rem;">此證明已被退回，請重新上傳</div>
+            <div class="file-box">
+              <input type="file" id="proof-file-resubmit" accept="image/*,application/pdf">
+              <div class="hint">重新上傳後狀態會回到「待確認」。</div>
+
+              <div class="progress-wrap" id="upload-progress-wrap-2" aria-hidden="true">
+                <div class="progress-bar" id="upload-progress-bar-2"></div>
+              </div>
+              <div class="progress-text" id="upload-progress-text-2">上傳中 0%</div>
+            </div>
+            <button class="btn-submit" id="btn-resubmit" style="margin-top:.85rem;">
+              <i class="fa-solid fa-rotate"></i> 重新送出
+            </button>
+          </div>
+
+          <div style="margin-top:1rem;">
+            <button class="btn-ghost" id="btn-back">
+              <i class="fa-solid fa-arrow-left"></i> 返回上傳頁
+            </button>
+            <button class="btn-ghost" onclick="window.print()">
+              <i class="fa-solid fa-print"></i> 列印／匯出 PDF
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="container">
+    <p>&copy; 2025 CosPIF 化妝品智慧科技系統. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<script type="module">
+  import { db } from './firebase-config.js';
+  import {
+    collection,
+    addDoc,
+    setDoc,
+    doc,
+    updateDoc,
+    serverTimestamp,
+    query,
+    where,
+    getDocs,
+    getDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  import {
+    getStorage,
+    ref as storageRef,
+    uploadBytesResumable,
+    getDownloadURL
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+
+  const storage = getStorage();
+
+  // ====== CONFIG ======
+  // 你可自行改成更符合你系統命名的 collection
+  const COLLECTION = 'pif_payment_proofs';
+  const PIF_COLLECTION = 'pifs';
+
+  // ====== DOM ======
+  const formView = document.getElementById('form-view');
+  const statusView = document.getElementById('status-view');
+
+  const vendorNameInput = document.getElementById('vendor-name');
+  const companyTaxIdInput = document.getElementById('company-tax-id');
+  const noTaxIdToggle = document.getElementById('no-tax-id-toggle');
+
+  const contactNameInput = document.getElementById('contact-name');
+  const contactPhoneInput = document.getElementById('contact-phone');
+  const contactEmailInput = document.getElementById('contact-email');
+  const contactNoteInput = document.getElementById('contact-note');
+
+  const productNameInput = document.getElementById('product-name');
+  const pifIdInput = document.getElementById('pif-id');
+  const trackingCodeInput = document.getElementById('tracking-code');
+
+  const caseSelect = document.getElementById('case-select');
+  const loadCasesBtn = document.getElementById('btn-load-cases');
+  const caseLoadMsg = document.getElementById('case-load-msg');
+
+  const paidAmountInput = document.getElementById('paid-amount');
+  const paidDateInput = document.getElementById('paid-date');
+  const bankLast5Input = document.getElementById('bank-last5');
+
+  const proofFileInput = document.getElementById('proof-file');
+  const proofPreview = document.getElementById('proof-preview');
+
+  const submitBtn = document.getElementById('btn-submit');
+  const submissionStatusEl = document.getElementById('submission-status');
+
+  const progressWrap = document.getElementById('upload-progress-wrap');
+  const progressBar = document.getElementById('upload-progress-bar');
+  const progressText = document.getElementById('upload-progress-text');
+
+  // Status view
+  const statusCodeEl = document.getElementById('status-code');
+  const statusBadgeEl = document.getElementById('status-badge');
+  const sVendor = document.getElementById('s-vendor');
+  const sCompanyKey = document.getElementById('s-companyKey');
+  const sProduct = document.getElementById('s-product');
+  const sPifId = document.getElementById('s-pifId');
+  const sTracking = document.getElementById('s-tracking');
+  const sAmount = document.getElementById('s-amount');
+  const sPaidAt = document.getElementById('s-paidAt');
+  const sLast5 = document.getElementById('s-last5');
+  const sProofLink = document.getElementById('s-proofLink');
+  const sAdminNote = document.getElementById('s-adminNote');
+  const resubmitArea = document.getElementById('resubmit-area');
+  const resubmitFileInput = document.getElementById('proof-file-resubmit');
+  const resubmitBtn = document.getElementById('btn-resubmit');
+  const backBtn = document.getElementById('btn-back');
+
+  const progressWrap2 = document.getElementById('upload-progress-wrap-2');
+  const progressBar2 = document.getElementById('upload-progress-bar-2');
+  const progressText2 = document.getElementById('upload-progress-text-2');
+
+  // ====== Utils ======
+  function qs(name){
+    const u = new URL(window.location.href);
+    return (u.searchParams.get(name) || '').trim();
+  }
+  function baseUrl(){
+    return window.location.href.split('?')[0];
+  }
+  function showStatusMsg(msg, isError=false){
+    submissionStatusEl.style.display = 'block';
+    submissionStatusEl.style.color = isError ? 'red' : '';
+    submissionStatusEl.textContent = msg;
+  }
+
+  function isValidEmail(email){
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+  function isValidCompanyTaxId(taxId){
+    return /^\d{8}$/.test((taxId||'').trim());
+  }
+  function isValidTWMobile(mobile){
+    return /^09\d{8}$/.test((mobile||'').trim());
+  }
+  function isValidLast5(v){
+    const s = (v||'').trim();
+    if (!s) return true;
+    return /^\d{5}$/.test(s);
+  }
+  function safeFileName(name){
+    return String(name||'file').replace(/[^a-zA-Z0-9._-]/g, '_');
+  }
+
+  function generatePaymentCode(){
+    const now = new Date();
+    const yy = String(now.getFullYear()).slice(2);
+    const mm = String(now.getMonth()+1).padStart(2,'0');
+    const dd = String(now.getDate()).padStart(2,'0');
+    const rand = Math.random().toString(36).slice(2, 4).toUpperCase();
+    const rand2 = Math.random().toString(36).slice(2, 4).toUpperCase();
+    return `PAY${yy}${mm}${dd}${rand}${rand2}`;
+  }
+
+  function badgeFor(status){
+    // pending | confirmed | rejected
+    const s = (status || 'pending').toLowerCase();
+    if (s === 'confirmed') {
+      return { cls: 'badge confirmed', html: '<i class="fa-solid fa-circle-check"></i> 收款已確認' };
+    }
+    if (s === 'rejected') {
+      return { cls: 'badge rejected', html: '<i class="fa-solid fa-circle-xmark"></i> 退回補件' };
+    }
+    return { cls: 'badge pending', html: '<i class="fa-solid fa-hourglass-half"></i> 待確認' };
+  }
+
+  function previewProofFile(file, container){
+    container.innerHTML = '';
+    if (!file) return;
+    const div = document.createElement('div');
+    div.className = 'thumb';
+    const name = document.createElement('div');
+    name.className = 'name';
+    name.textContent = file.name;
+
+    if (file.type && file.type.startsWith('image/')) {
+      const img = document.createElement('img');
+      const reader = new FileReader();
+      reader.onload = () => { img.src = reader.result; };
+      reader.readAsDataURL(file);
+      div.appendChild(img);
+      div.appendChild(name);
+      container.appendChild(div);
+      return;
+    }
+
+    // PDF / other
+    div.innerHTML = `
+      <div style="height:110px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:#f3f4f6;">
+        <i class="fa-solid fa-file-pdf" style="font-size:2rem;color:#ef4444;"></i>
+      </div>
+    `;
+    div.appendChild(name);
+    container.appendChild(div);
+  }
+
+  function setProgress(ui, pct){
+    const { wrap, bar, text } = ui;
+    const p = Math.max(0, Math.min(100, pct || 0));
+    wrap.style.display = 'block';
+    text.style.display = 'block';
+    bar.style.width = p + '%';
+    text.textContent = `上傳中 ${p.toFixed(0)}%`;
+  }
+  function hideProgress(ui){
+    const { wrap, text, bar } = ui;
+    wrap.style.display = 'none';
+    text.style.display = 'none';
+    bar.style.width = '0%';
+  }
+
+  async function uploadProofFile(companyKey, paymentCodeOrDocId, file, progressUI){
+    const safeName = safeFileName(file.name);
+    const path = `${COLLECTION}/${companyKey}/${paymentCodeOrDocId}/proof_${Date.now()}_${safeName}`;
+    const refObj = storageRef(storage, path);
+
+    return await new Promise((resolve, reject) => {
+      const task = uploadBytesResumable(refObj, file);
+      task.on('state_changed',
+        (snap) => {
+          const pct = (snap.bytesTransferred / snap.totalBytes) * 100;
+          setProgress(progressUI, pct);
+        },
+        (err) => reject(err),
+        async () => {
+          const url = await getDownloadURL(task.snapshot.ref);
+          resolve({ url, path });
+        }
+      );
+    });
+  }
+
+
+  // ====== Case selector (方案 A：送出繳費證明前先選擇案件，強制綁定 PIFID) ======
+  const _caseMap = new Map(); // key: pifId, value: {pifId, productName, companyName, updatedAt...}
+
+  function toMillis(v){
+    if (!v) return 0;
+    // Firestore Timestamp
+    if (typeof v === 'object' && v.seconds != null) return v.seconds * 1000;
+    if (typeof v === 'object' && typeof v.toDate === 'function') return v.toDate().getTime();
+    if (typeof v === 'string') {
+      const t = Date.parse(v);
+      return Number.isFinite(t) ? t : 0;
+    }
+    if (typeof v === 'number') return v;
+    return 0;
+  }
+
+  function currentCompanyKeyStrict(){
+    const noTaxId = !!noTaxIdToggle?.checked;
+    if (noTaxId) {
+      const phone = (contactPhoneInput.value || '').trim();
+      if (!phone) throw new Error('您已勾選「尚無統編」，請先填寫電話（手機號碼）以便歸戶。');
+      if (!isValidTWMobile(phone)) throw new Error('請輸入有效手機號碼（09 開頭 10 碼），以便載入案件。');
+      return phone;
+    } else {
+      const taxId = (companyTaxIdInput.value || '').trim();
+      if (!taxId) throw new Error('請先填寫公司統編，以便載入案件。');
+      if (!isValidCompanyTaxId(taxId)) throw new Error('公司統編格式不正確（需 8 碼數字），無法載入案件。');
+      return taxId;
+    }
+  }
+
+  function setCaseLoadMsg(msg, isError=false){
+    if (!caseLoadMsg) return;
+    caseLoadMsg.textContent = msg || '';
+    caseLoadMsg.style.color = isError ? '#b91c1c' : '';
+  }
+
+  function resetCaseSelect(){
+    _caseMap.clear();
+    if (!caseSelect) return;
+    caseSelect.innerHTML = '<option value="">請先載入案件</option>';
+    caseSelect.value = '';
+    if (pifIdInput) pifIdInput.value = '';
+  }
+
+  async function loadMyCases(){
+    try{
+      setCaseLoadMsg('');
+      const companyKey = currentCompanyKeyStrict();
+
+      // cache companyKey for other pages
+      try { if (companyKey) localStorage.setItem('cospif_companyKey', companyKey); } catch(e) {}
+
+      if (loadCasesBtn){
+        loadCasesBtn.disabled = true;
+        loadCasesBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 載入中...';
+      }
+
+      resetCaseSelect();
+      setCaseLoadMsg('正在載入案件...');
+
+      const q = query(collection(db, PIF_COLLECTION), where('companyKey', '==', companyKey));
+      const snap = await getDocs(q);
+
+      if (snap.empty){
+        setCaseLoadMsg('查無案件：請確認公司統編/手機歸戶代碼是否正確，或尚未建立 PIF 專案。', true);
+        return;
+      }
+
+      const cases = snap.docs.map(d => {
+        const data = d.data() || {};
+        const pid = (data.pifId || d.id || '').toString().trim();
+        return {
+          pifId: pid,
+          productName: (data.productName || data.pif01?.productName || '').toString(),
+          companyName: (data.companyName || '').toString(),
+          stage: (data.stage || '').toString(),
+          paymentStatus: (data.paymentStatus || '').toString(),
+          finalPdfReady: !!data.finalPdfReady,
+          updatedAt: data.updatedAt || data.paymentUpdatedAt || data.finalPdfUpdatedAt || data.createdAt || null
+        };
+      }).filter(x => x.pifId);
+
+      cases.sort((a,b) => toMillis(b.updatedAt) - toMillis(a.updatedAt));
+
+      // Fill select
+      caseSelect.innerHTML = '<option value="">請選擇案件（必選）</option>';
+      for (const c of cases){
+        _caseMap.set(c.pifId, c);
+        const paidText = (c.paymentStatus || '').toLowerCase() === 'confirmed' ? '收款已確認' : ((c.paymentStatus || '').toLowerCase() === 'submitted' ? '已送出證明' : '未確認');
+        const pdfText = c.finalPdfReady ? 'PDF完成' : 'PDF未完成';
+        const label = `${c.pifId}｜${c.productName || '未命名產品'}｜${paidText}｜${pdfText}`;
+        const opt = document.createElement('option');
+        opt.value = c.pifId;
+        opt.textContent = label;
+        caseSelect.appendChild(opt);
+      }
+
+      setCaseLoadMsg(`已載入 ${cases.length} 筆案件。`);
+
+      // auto-select if URL has pifId
+      const urlPid = qs('pifId');
+      if (urlPid && _caseMap.has(urlPid)){
+        caseSelect.value = urlPid;
+        caseSelect.dispatchEvent(new Event('change'));
+      }
+    } catch(err){
+      console.error(err);
+      setCaseLoadMsg(err.message || String(err), true);
+    } finally {
+      if (loadCasesBtn){
+        loadCasesBtn.disabled = false;
+        loadCasesBtn.innerHTML = '<i class="fa-solid fa-rotate"></i> 重新載入';
+      }
+    }
+  }
+
+  // Auto-load cases when user finishes typing companyKey (no need to press a button)
+  let _lastAutoKey = '';
+  let _autoTimer = null;
+
+  function autoLoadCasesDebounced(){
+    if (_autoTimer) clearTimeout(_autoTimer);
+    _autoTimer = setTimeout(async () => {
+      try{
+        const noTaxId = !!noTaxIdToggle?.checked;
+        let key = '';
+
+        if (noTaxId){
+          const phone = (contactPhoneInput.value || '').trim();
+          // Wait until full length to avoid noisy errors while typing
+          if (phone.length < 10) { setCaseLoadMsg(''); return; }
+          if (!isValidTWMobile(phone)) { setCaseLoadMsg('手機號碼格式不正確（需 09 開頭 10 碼）。', true); return; }
+          key = phone;
+        } else {
+          const taxId = (companyTaxIdInput.value || '').trim();
+          if (taxId.length < 8) { setCaseLoadMsg(''); return; }
+          if (!isValidCompanyTaxId(taxId)) { setCaseLoadMsg('公司統編格式不正確（需 8 碼數字）。', true); return; }
+          key = taxId;
+        }
+
+        if (!key) return;
+        if (key === _lastAutoKey && caseSelect && caseSelect.options.length > 1) return;
+
+        _lastAutoKey = key;
+        await loadMyCases();
+      } catch(err){
+        console.error(err);
+        // Do not hard-fail; just show a gentle message
+        setCaseLoadMsg(err.message || String(err), true);
+      }
+    }, 600);
+  }
+
+  // ====== Main: Submit ======
+  async function submitPaymentProof({ resubmitDocId = '' } = {}) {
+    const vendorName = (vendorNameInput.value || '').trim();
+    const companyTaxId = (companyTaxIdInput?.value || '').trim();
+
+    const contactName = (contactNameInput.value || '').trim();
+    const contactPhone = (contactPhoneInput.value || '').trim();
+    const contactEmail = (contactEmailInput.value || '').trim();
+    const contactNote = (contactNoteInput.value || '').trim();
+
+    const productName = (productNameInput.value || '').trim();
+    const pifId = (pifIdInput.value || '').trim();
+    const trackingCode = (trackingCodeInput.value || '').trim();
+
+    const paidAmount = Number((paidAmountInput.value || '').trim());
+    const paidAt = (paidDateInput.value || '').trim();
+    const bankLast5 = (bankLast5Input.value || '').trim();
+
+    const file = proofFileInput.files && proofFileInput.files[0];
+
+    // Validate basic
+    if (!vendorName) return alert('請填寫「廠商名稱」。');
+
+    const noTaxId = !!noTaxIdToggle?.checked;
+    let companyKey = '';
+
+    if (noTaxId) {
+      if (!contactPhone) return alert('您已勾選「尚無統編」，請填寫「電話」欄位的手機號碼以便歸戶。');
+      if (!isValidTWMobile(contactPhone)) return alert('請在「電話」欄位輸入有效的手機號碼（09 開頭 10 碼）。');
+      companyKey = contactPhone;
+    } else {
+      if (!companyTaxId) return alert('請填寫「公司統編」，或勾選「尚無統編，改用手機號碼歸戶」。');
+      if (!isValidCompanyTaxId(companyTaxId)) return alert('公司統編格式似乎不正確，請輸入 8 碼數字。');
+      companyKey = companyTaxId;
+    }
+
+    // Cache companyKey for other pages
+    try { if (companyKey) localStorage.setItem('cospif_companyKey', companyKey); } catch(e) {}
+
+    if (!contactName) return alert('請填寫「聯絡人姓名」。');
+    if (!contactPhone) return alert('請填寫「電話」。');
+    if (!contactEmail) return alert('請填寫「聯絡 Email」。');
+    if (!isValidEmail(contactEmail)) return alert('聯絡 Email 格式似乎不正確。');
+
+    if (!productName) return alert('請填寫「品名／產品名稱」。');
+
+    if (!pifId) return alert('請先「載入我的案件」並選擇案件（PIFID）。');
+
+    if (!paidAt) return alert('請填寫「匯款日期」。');
+    if (!Number.isFinite(paidAmount) || paidAmount <= 0) return alert('請填寫正確的「匯款金額」。');
+
+    if (!isValidLast5(bankLast5)) return alert('匯款帳號末五碼格式不正確，請輸入 5 碼數字（或留空）。');
+
+    if (!resubmitDocId) {
+      if (!file && !bankLast5) return alert('請上傳繳費證明（圖片或 PDF），或填寫「匯款帳號末五碼」。');
+    } else {
+      // resubmit uses a different file input
+      // (handled in resubmit handler)
+    }
+
+    showStatusMsg(resubmitDocId ? '正在重新送出...' : '正在送出繳費證明...');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 送出中...';
+
+    try {
+      if (!resubmitDocId) {
+        // 1) Create doc
+        const paymentCode = generatePaymentCode();
+        const paymentCodeUpper = paymentCode.toUpperCase();
+
+        const data = {
+          paymentCode,
+          paymentCodeUpper,
+
+          vendorName,
+          companyTaxId: noTaxId ? null : (companyTaxId || null),
+          companyMobileKey: noTaxId ? (contactPhone || null) : null,
+          companyKeyType: noTaxId ? 'mobile' : 'taxId',
+          companyKey,
+
+          contactName,
+          contactPhone,
+          contactEmail,
+          note: contactNote,
+
+          productName,
+          pifId: pifId || '',
+          trackingCode: trackingCode || '',
+
+          paidAmount,
+          paidAt,
+          bankLast5: bankLast5 || '',
+
+          proofUrl: '',
+          proofPath: '',
+
+          status: 'pending', // pending | confirmed | rejected
+          adminNote: '',
+
+          url: baseUrl(),
+          submittedAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        };
+
+        const docRef = await addDoc(collection(db, COLLECTION), data);
+
+        // 2) Upload file (optional)
+        if (file) {
+          showStatusMsg('正在上傳繳費證明...');
+          const up = await uploadProofFile(companyKey, docRef.id, file, { wrap: progressWrap, bar: progressBar, text: progressText });
+
+          // 3) Update doc with proof url
+          await updateDoc(doc(db, COLLECTION, docRef.id), {
+            proofUrl: up.url,
+            proofPath: up.path,
+            updatedAt: serverTimestamp()
+          });
+        } else {
+          // 未上傳檔案：改以末五碼對帳（仍會進入後台審核流程）
+          await updateDoc(doc(db, COLLECTION, docRef.id), {
+            proofUrl: '',
+            proofPath: '',
+            updatedAt: serverTimestamp()
+          });
+        }
+// ✅ 同步更新專案主檔（供 pay-review / client 儀表板顯示）
+        try {
+          await setDoc(doc(db, PIF_COLLECTION, pifId), {
+            companyKey,
+            companyName: vendorName,
+            productName,
+            paymentStatus: 'submitted',
+            paymentProofDocId: docRef.id,
+            paymentProofCode: paymentCode,
+            paymentSubmittedAt: serverTimestamp(),
+            paymentUpdatedAt: serverTimestamp(),
+            // finalPdfPath 固定規則，若原本已存在不會覆蓋（merge）
+            finalPdfPath: `pifs/${pifId}/final.pdf`
+          }, { merge: true });
+        } catch(e) {
+          console.warn('update pifs paymentStatus failed:', e);
+        }
+
+
+        hideProgress({ wrap: progressWrap, bar: progressBar, text: progressText });
+
+        alert(
+          `送出成功！\n\n您的繳費證明序號：${paymentCode}\n\n後台確認收款後，狀態會更新為「收款已確認」。`
+        );
+
+        window.location.href = `pay.html?code=${encodeURIComponent(paymentCode)}`;
+        return;
+      }
+
+      // If resubmit, handled elsewhere
+    } catch (err) {
+      console.error(err);
+      hideProgress({ wrap: progressWrap, bar: progressBar, text: progressText });
+      showStatusMsg('送出失敗：' + (err.message || '未知錯誤'), true);
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> 送出繳費證明（取得證明序號）';
+    }
+  }
+
+  // ====== Load status by code / id ======
+  async function loadStatusView() {
+    const code = qs('code');
+    const id = qs('id');
+    if (!code && !id) return false;
+
+    formView.style.display = 'none';
+    statusView.style.display = 'block';
+
+    // load doc
+    let docSnap = null;
+    let docId = '';
+    if (id) {
+      docId = id;
+      docSnap = await getDoc(doc(db, COLLECTION, docId));
+      if (!docSnap.exists()) {
+        alert('找不到此繳費證明（id）。');
+        return true;
+      }
+    } else {
+      const q = query(collection(db, COLLECTION), where('paymentCodeUpper', '==', code.toUpperCase()));
+      const qsnap = await getDocs(q);
+      if (qsnap.empty) {
+        alert('找不到此繳費證明序號，請確認網址參數 code 是否正確。');
+        return true;
+      }
+      const first = qsnap.docs[0];
+      docSnap = first;
+      docId = first.id;
+    }
+
+    const d = docSnap.data() || {};
+
+    statusCodeEl.textContent = d.paymentCode || code || '-';
+    const b = badgeFor(d.status);
+    statusBadgeEl.className = b.cls;
+    statusBadgeEl.innerHTML = b.html;
+
+    sVendor.textContent = d.vendorName || '-';
+    sCompanyKey.textContent = d.companyKey || '-';
+    sProduct.textContent = d.productName || '-';
+    sPifId.textContent = d.pifId || '-';
+    sTracking.textContent = d.trackingCode || '-';
+    sAmount.textContent = (d.paidAmount != null && d.paidAmount !== '') ? `NT$ ${d.paidAmount}` : '-';
+    sPaidAt.textContent = d.paidAt || '-';
+    sLast5.textContent = d.bankLast5 || '-';
+
+    if (d.proofUrl) {
+      sProofLink.innerHTML = `<a href="${d.proofUrl}" target="_blank" rel="noopener">開啟繳費證明</a>`;
+    } else if (d.bankLast5) {
+      sProofLink.textContent = '（未上傳檔案，請以末五碼對帳）';
+    } else {
+      sProofLink.textContent = '-';
+    }
+
+    sAdminNote.textContent = d.adminNote || '-';
+
+    // Re-submit area if rejected
+    const st = (d.status || 'pending').toLowerCase();
+    if (st === 'rejected') {
+      resubmitArea.style.display = 'block';
+      resubmitBtn.disabled = false;
+
+      resubmitBtn.onclick = async () => {
+        const f = resubmitFileInput.files && resubmitFileInput.files[0];
+        if (!f) return alert('請選擇要重新上傳的檔案。');
+
+        try {
+          resubmitBtn.disabled = true;
+          resubmitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 重新送出中...';
+
+          const companyKey = d.companyKey || 'unknown';
+          const up = await uploadProofFile(companyKey, docId, f, { wrap: progressWrap2, bar: progressBar2, text: progressText2 });
+
+          await updateDoc(doc(db, COLLECTION, docId), {
+            proofUrl: up.url,
+            proofPath: up.path,
+            status: 'pending',
+            adminNote: '',
+            updatedAt: serverTimestamp()
+          });
+
+          hideProgress({ wrap: progressWrap2, bar: progressBar2, text: progressText2 });
+
+          alert('已重新送出，狀態已更新為「待確認」。');
+          window.location.reload();
+        } catch (err) {
+          console.error(err);
+          hideProgress({ wrap: progressWrap2, bar: progressBar2, text: progressText2 });
+          alert('重新送出失敗：' + (err.message || '未知錯誤'));
+          resubmitBtn.disabled = false;
+          resubmitBtn.innerHTML = '<i class="fa-solid fa-rotate"></i> 重新送出';
+        }
+      };
+    } else {
+      resubmitArea.style.display = 'none';
+    }
+
+    backBtn.onclick = () => {
+      window.location.href = 'pay.html';
+    };
+
+    return true;
+  }
+
+  // ====== Init ======
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Auto-fill cached companyKey (from pif-wish.html logic)
+    try {
+      const cachedKey = (localStorage.getItem('cospif_companyKey') || '').trim();
+      if (cachedKey) {
+        if (/^\d{8}$/.test(cachedKey)) {
+          if (companyTaxIdInput && !companyTaxIdInput.value) companyTaxIdInput.value = cachedKey;
+          if (noTaxIdToggle) noTaxIdToggle.checked = false;
+        } else if (/^09\d{8}$/.test(cachedKey)) {
+          if (contactPhoneInput && !contactPhoneInput.value) contactPhoneInput.value = cachedKey;
+          if (noTaxIdToggle) noTaxIdToggle.checked = true;
+        }
+      }
+    } catch(e) {}
+
+    // Toggle no tax id behavior
+    if (noTaxIdToggle && companyTaxIdInput) {
+      const syncNoTaxUI = () => {
+        const on = !!noTaxIdToggle.checked;
+        companyTaxIdInput.disabled = on;
+        if (on) companyTaxIdInput.value = '';
+      };
+      noTaxIdToggle.addEventListener('change', syncNoTaxUI);
+      syncNoTaxUI();
+    }
+
+    // Prefill from URL params (optional)
+    const pifId = qs('pifId');
+    const productName = qs('productName');
+    const tracking = qs('tracking');
+    const amount = qs('amount');
+    if (pifId && !pifIdInput.value) pifIdInput.value = pifId;
+    if (productName && !productNameInput.value) productNameInput.value = productName;
+    if (tracking && !trackingCodeInput.value) trackingCodeInput.value = tracking;
+    if (amount && !paidAmountInput.value) paidAmountInput.value = amount;
+
+    // ✅ 若已自動帶入統編/手機，直接觸發載入案件（不用按按鈕）
+    setTimeout(() => {
+      const keyNow = ((companyTaxIdInput?.value || '').trim()) || ((contactPhoneInput?.value || '').trim());
+      if (keyNow) {
+        try { autoLoadCasesDebounced(); } catch(e) {}
+      }
+    }, 80);
+
+
+    // Preview
+    proofFileInput.addEventListener('change', () => {
+      const f = proofFileInput.files && proofFileInput.files[0];
+      previewProofFile(f, proofPreview);
+    });
+
+    // Status view if code/id
+    const showingStatus = await loadStatusView();
+    if (showingStatus) return;
+
+    // ===== 案件選擇（必選） =====
+    if (loadCasesBtn) {
+      loadCasesBtn.addEventListener('click', () => { _lastAutoKey = ''; loadMyCases(); });
+    }
+    if (caseSelect) {
+      caseSelect.addEventListener('change', () => {
+        const pid = (caseSelect.value || '').trim();
+        const c = _caseMap.get(pid);
+        if (!pid || !c) {
+          pifIdInput.value = '';
+          return;
+        }
+        // 帶入 PIFID / 產品名稱（可再自行修改）
+        pifIdInput.value = pid;
+        if (c.productName && !productNameInput.value) productNameInput.value = c.productName;
+      });
+    }
+
+    // 自動載入案件：輸入統編/手機後自動查詢並填入下拉選單
+    if (companyTaxIdInput) {
+      companyTaxIdInput.addEventListener('input', autoLoadCasesDebounced);
+      companyTaxIdInput.addEventListener('blur', autoLoadCasesDebounced);
+    }
+    if (contactPhoneInput) {
+      contactPhoneInput.addEventListener('input', autoLoadCasesDebounced);
+      contactPhoneInput.addEventListener('blur', autoLoadCasesDebounced);
+    }
+    if (noTaxIdToggle) {
+      noTaxIdToggle.addEventListener('change', () => {
+        resetCaseSelect();
+        autoLoadCasesDebounced();
+      });
+    }
+
+
+    // Submit
+    submitBtn.addEventListener('click', () => submitPaymentProof());
+  });
+</script>
+
+</body>
+</html>

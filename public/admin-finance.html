@@ -1,0 +1,1975 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CosPIF 財務管理後台（完整會計作帳版） (style+admincss visibility-fix)</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <!-- 沿用既有後台樣式（若你專案已有） -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="admin.css">
+<style id="af-visibility-fix">
+  /* Fix white screen caused by admin.css default opacity:0 */
+  body{
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+  }
+</style>
+<style>
+    .header .wrap{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      width:100%;
+      gap:1rem;
+    }
+    .header-left{
+      display:flex;
+      align-items:center;
+      gap:1rem;
+      flex-wrap:wrap;
+    }
+    .header-right{
+      display:flex;
+      align-items:center;
+      gap:.5rem;
+    }
+
+    .app-wrap{ padding-bottom: 2.8rem; }
+
+    .section{ margin-bottom: 26px; }
+    .section-title{
+      display:flex; align-items:center; gap:.5rem;
+    }
+
+    .toolbar-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap: .75rem 1rem;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+    .filter-grid{
+      display:grid;
+      grid-template-columns: repeat(6, minmax(140px, 1fr));
+      gap: .75rem 1rem;
+      width: 100%;
+    }
+    .filter-grid label{ font-size: .85rem; color:#4b5563; }
+    .filter-grid input, .filter-grid select{
+      width:100%;
+      padding:.45rem .55rem;
+      border-radius: 8px;
+      border:1px solid #d1d5db;
+      background:#fff;
+      font-size:.92rem;
+    }
+    .filter-inline{
+      display:flex;
+      align-items:center;
+      gap:.5rem;
+      padding:.35rem .5rem;
+      border:1px dashed #d1d5db;
+      border-radius: 10px;
+      background:#fafafa;
+      height: 40px;
+    }
+
+    .toolbar-actions{
+      display:flex;
+      gap:.5rem;
+      flex-wrap:wrap;
+    }
+
+    .summary-grid{
+      display:grid;
+      grid-template-columns: repeat(5, minmax(180px, 1fr));
+      gap: .75rem 1rem;
+    }
+    .summary-card{
+      background:#fff;
+      border:1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: .9rem 1rem;
+      box-shadow: 0 6px 18px rgba(15,23,42,.04);
+    }
+    .summary-card .label{
+      font-size:.85rem;
+      color:#6b7280;
+      margin-bottom:.25rem;
+    }
+    .summary-card .value{
+      font-size:1.22rem;
+      font-weight:700;
+      color:#111827;
+    }
+    .summary-sub{
+      margin-top:.35rem;
+      font-size:.82rem;
+      color:#6b7280;
+    }
+
+    .tab-row{
+      display:flex;
+      gap:.5rem;
+      flex-wrap:wrap;
+      margin-bottom:.75rem;
+    }
+    .tab-btn{
+      border:1px solid #d1d5db;
+      background:#fff;
+      padding:.35rem .7rem;
+      border-radius: 10px;
+      font-size:.9rem;
+      cursor:pointer;
+    }
+    .tab-btn.active{
+      border-color:#111827;
+      font-weight:700;
+    }
+
+    .report-wrap{
+      border:1px solid #e5e7eb;
+      border-radius: 14px;
+      background:#fff;
+      padding: .8rem 1rem 1rem;
+      box-shadow: 0 6px 18px rgba(15,23,42,.04);
+    }
+
+    .report-table{
+      width:100%;
+      border-collapse: collapse;
+    }
+    .report-table th, .report-table td{
+      padding:.5rem .6rem;
+      border-bottom:1px solid #f1f5f9;
+      text-align:left;
+      white-space:nowrap;
+      font-size:.9rem;
+    }
+    .report-table th{ font-weight:700; color:#111827; }
+
+    .table-wrap{ overflow-x:auto; }
+    .table{ width:100%; }
+
+    .table th, .table td{
+      white-space:nowrap;
+      vertical-align: middle;
+    }
+
+    .table td input, .table td select{
+      font-size: .86rem;
+      padding: .26rem .38rem;
+      border-radius: 6px;
+      border:1px solid #d1d5db;
+      min-width: 96px;
+      background:#fff;
+    }
+    .table td input[type="date"]{ min-width: 130px; }
+    .table td input[type="number"]{ min-width: 88px; }
+
+    .mini{ min-width: 78px !important; width: 78px; }
+    .xwide{ min-width: 260px !important; }
+
+    .badge{
+      display:inline-block;
+      padding:.14rem .5rem;
+      border-radius: 999px;
+      font-size: .76rem;
+      background:#f3f4f6;
+      color:#374151;
+      margin-left:.35rem;
+    }
+    .badge.ok{ background:#dcfce7; color:#166534; }
+    .badge.warn{ background:#fef3c7; color:#92400e; }
+    .badge.err{ background:#fee2e2; color:#991b1b; }
+
+    .install-hint{
+      font-size:.74rem;
+      color:#6b7280;
+      margin-top:.2rem;
+    }
+
+    .row-overdue{ background: #fff7ed; }
+    .row-completed{ background: #f8fafc; }
+
+    .status-bar{
+      text-align:center;
+      padding: .9rem 1rem;
+      color:#6b7280;
+    }
+
+    .hint{
+      font-size:.85rem;
+      color:#6b7280;
+    }
+
+    .inline-actions{
+      display:flex;
+      gap:.35rem;
+      flex-wrap:wrap;
+    }
+
+    @media (max-width: 1350px){
+      .filter-grid{ grid-template-columns: repeat(3, minmax(160px, 1fr)); }
+      .summary-grid{ grid-template-columns: repeat(2, minmax(180px, 1fr)); }
+    }
+    @media (max-width: 680px){
+      .filter-grid{ grid-template-columns: 1fr; }
+      .summary-grid{ grid-template-columns: 1fr; }
+    }
+  
+/* === admin.css integration overrides (finance wide table) === */
+/* admin.css 預設 .app-wrap max-width:1200px 會讓多欄表格被擠壓，本頁需放寬 */
+.app-wrap{
+  max-width: 100% !important;
+  padding: 24px 32px !important;
+}
+
+/* 讓多欄表格以內容寬度展開，搭配水平捲動 */
+.table.finance-table{
+  width: max-content !important;
+  min-width: 2400px;
+  table-layout: auto !important;
+}
+
+/* 給每欄一個基本寬度，避免標題/輸入框擠成一團 */
+.table.finance-table th,
+.table.finance-table td{
+  min-width: 110px;
+}
+
+/* 前三欄（PIF/公司/產品）通常需要更寬 */
+.table.finance-table th:nth-child(1),
+.table.finance-table td:nth-child(1){ min-width: 150px; }
+
+.table.finance-table th:nth-child(2),
+.table.finance-table td:nth-child(2){ min-width: 200px; }
+
+.table.finance-table th:nth-child(3),
+.table.finance-table td:nth-child(3){ min-width: 240px; }
+
+/* 發票/備註等末端欄位也稍加寬 */
+.table.finance-table th:nth-last-child(3),
+.table.finance-table td:nth-last-child(3){ min-width: 160px; }
+
+.table.finance-table th:nth-last-child(2),
+.table.finance-table td:nth-last-child(2){ min-width: 150px; }
+
+.table.finance-table th:last-child,
+.table.finance-table td:last-child{ min-width: 140px; }
+
+.table.finance-table td input,
+.table.finance-table td select{
+  min-width: 110px;
+}
+.table.finance-table td input[type="date"]{ min-width: 140px; }
+
+/* 小欄位仍保留可視寬度 */
+.table.finance-table .mini{ min-width: 86px !important; width: 86px; }
+
+@media (max-width: 980px){
+  .table.finance-table{ min-width: 2200px; }
+}
+  </style>
+</head>
+
+<body>
+  <header class="header">
+    <div class="wrap">
+      <div class="header-left">
+        <a href="admin.html" class="btn"><i class="fa-solid fa-arrow-left"></i> 返回資訊管理後台</a>
+        <a href="pif-i.html" class="btn"><i class="fa-solid fa-box-archive"></i> 返回PIF文件櫃</a>
+        <a href="index-c-company.html" class="btn"><i class="fa-solid fa-box-archive"></i> 顧客前台</a>
+        <a href="pif-wish-review.html" class="btn"><i class="fa-solid fa-clipboard-check"></i> 意願審核</a>
+        <a href="pay-review.html" class="btn"><i class="fa-solid fa-clipboard-check"></i> 付款審核</a>
+        <a href="eva-review.html" class="btn"><i class="fa-solid fa-clipboard-check"></i> 功效審核</a>
+        <h1 style="font-size:1.5rem;margin:0;">
+          <i class="fa-solid fa-sack-dollar"></i> 財務管理後台（完整會計作帳版）
+        </h1>
+      </div>
+      <div class="header-right">
+        <div id="user-info" style="display:inline-block;margin-right:.75rem;"></div>
+        <button id="btnSignOut" class="btn btn-danger">登出</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="app-wrap">
+    <div class="section">
+      <h2 class="section-title"><i class="fa-solid fa-chart-pie"></i> 帳務概覽</h2>
+      <div id="summaryGrid" class="summary-grid"></div>
+      <div class="hint" style="margin-top:.5rem;">
+        概覽統計以目前載入之 PIF 為基礎；「應收/已收/未收」以金額、分期與已收款欄位綜合估算。
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title"><i class="fa-solid fa-table-list"></i> 彙總報表</h2>
+      <div class="tab-row">
+        <button class="tab-btn active" data-tab="company"><i class="fa-solid fa-building"></i> 依公司彙總</button>
+        <button class="tab-btn" data-tab="month"><i class="fa-solid fa-calendar-days"></i> 依月份彙總</button>
+        <button class="tab-btn" data-tab="aging"><i class="fa-solid fa-hourglass-half"></i> 應收帳齡</button>
+      </div>
+
+      <div class="report-wrap">
+        <div id="reportCompany" class="report-panel"></div>
+        <div id="reportMonth" class="report-panel" style="display:none;"></div>
+        <div id="reportAging" class="report-panel" style="display:none;"></div>
+      </div>
+
+      <div class="hint" style="margin-top:.5rem;">
+        點選「依公司彙總」表格中的公司列，可直接套用公司篩選。
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title"><i class="fa-solid fa-filter"></i> 篩選 / 匯出 / 批次作業</h2>
+
+      <div class="toolbar-row">
+        <div class="filter-grid">
+          <div>
+            <label>公司名稱</label>
+            <input id="f-company" type="text" placeholder="關鍵字">
+          </div>
+          <div>
+            <label>產品/專案名稱</label>
+            <input id="f-product" type="text" placeholder="關鍵字">
+          </div>
+          <div>
+            <label>PIF ID</label>
+            <input id="f-pifid" type="text" placeholder="完整或部分">
+          </div>
+          <div>
+            <label>意願狀態</label>
+            <select id="f-intent">
+              <option value="">全部</option>
+              <option value="pending">審核中</option>
+              <option value="approved">已核准</option>
+              <option value="rejected">已駁回</option>
+            </select>
+          </div>
+          <div>
+            <label>執行狀態</label>
+            <select id="f-exec">
+              <option value="">全部</option>
+              <option value="not_started">未開始</option>
+              <option value="in_progress">執行中</option>
+              <option value="completed">已完成</option>
+              <option value="on_hold">暫停</option>
+            </select>
+          </div>
+          <div>
+            <label>付款狀態</label>
+            <select id="f-pay-status">
+              <option value="">全部</option>
+              <option value="unpaid">未付款</option>
+              <option value="partial">部分付款</option>
+              <option value="paid">已付款</option>
+              <option value="void">作廢/不需付款</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
+          <label class="filter-inline">
+            <input id="f-overdue" type="checkbox">
+            <span>只看逾期</span>
+          </label>
+          <label class="filter-inline">
+            <input id="f-no-invoice" type="checkbox">
+            <span>只看未開發票</span>
+          </label>
+          <label class="filter-inline">
+            <input id="f-has-dirty" type="checkbox">
+            <span>只看已修改未儲存</span>
+          </label>
+        </div>
+
+        <div class="toolbar-actions">
+          <button id="btnReload" class="btn"><i class="fa-solid fa-rotate"></i> 重新載入</button>
+
+          <button id="btnAutoFill50" class="btn">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> 快速套用 50/50
+          </button>
+
+          <button id="btnApplyAutoPaid" class="btn">
+            <i class="fa-solid fa-coins"></i> 依分期收款日自動回填已收款（畫面列）
+          </button>
+
+          <button id="btnAutoPayStatus" class="btn">
+            <i class="fa-solid fa-robot"></i> 依已收款自動更新付款狀態（畫面列）
+          </button>
+
+          <button id="btnExportDetail" class="btn primary">
+            <i class="fa-solid fa-file-csv"></i> 匯出 明細CSV
+          </button>
+          <button id="btnExportCompany" class="btn primary">
+            <i class="fa-solid fa-building"></i> 匯出 公司彙總CSV
+          </button>
+          <button id="btnExportMonth" class="btn primary">
+            <i class="fa-solid fa-calendar-days"></i> 匯出 月份彙總CSV
+          </button>
+
+          <button id="btnSaveAll" class="btn primary">
+            <i class="fa-solid fa-floppy-disk"></i> 批次儲存已修改
+          </button>
+        </div>
+      </div>
+
+      <div class="hint" style="margin-top:.5rem;">
+        本頁會將帳務欄位寫入 <code>pifs/{pifId}.finance</code>。同時整合意願審核集合
+        <code>pif_intent_submissions</code> 以確保意願狀態、審核日與追蹤序號一致。
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title"><i class="fa-solid fa-list-check"></i> 各專案帳務總覽（分期 + 發票 + 作帳輔助）</h2>
+
+      <div class="table-wrap">
+        <table class="table finance-table">
+          <thead>
+            <tr>
+              <th>PIF ID</th>
+              <th>公司</th>
+              <th>產品/專案</th>
+
+              <th>意願狀態</th>
+              <th>意願審核日</th>
+              <th>追蹤序號</th>
+
+              <th>執行狀態</th>
+              <th>完成日期</th>
+
+              <th>幣別</th>
+              <th>金額</th>
+              <th>已收款</th>
+              <th>未收款(估)</th>
+
+              <th>付款方式</th>
+              <th>付款狀態</th>
+
+              <th>第1期%</th>
+              <th>第1期到期</th>
+              <th>第1期收款日</th>
+
+              <th>第2期%</th>
+              <th>第2期到期</th>
+              <th>第2期收款日</th>
+
+              <th>第3期%</th>
+              <th>第3期到期</th>
+              <th>第3期收款日</th>
+
+              <th>分期檢核</th>
+
+              <th>發票號碼</th>
+              <th>發票日期</th>
+
+              <th>備註</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="financeTbody"></tbody>
+        </table>
+      </div>
+
+      <div id="tableStatus" class="status-bar">正在載入資料...</div>
+    </div>
+  </div>
+
+<script type="module">
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { collection, getDocs, doc, setDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { auth, db } from './firebase-config.js';
+
+  const $ = sel => document.querySelector(sel);
+  const TODAY = new Date();
+
+  let allRows = [];
+  let dirtyMap = new Map();
+
+  function esc(str){
+    return (str ?? '').toString().replace(/[&<>"']/g, s => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[s]));
+  }
+
+  function toDateInputValue(v){
+    if (!v) return '';
+    if (typeof v === 'object' && v.toDate) {
+      const d = v.toDate();
+      return d.toISOString().slice(0,10);
+    }
+    if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+    try{
+      const d = new Date(v);
+      if (!isNaN(d.getTime())) return d.toISOString().slice(0,10);
+    }catch(e){}
+    return '';
+  }
+
+
+  // ====== Auto-sync from payment proofs (pif_payment_proofs) ======
+  // 說明：財務後台先製作、繳費審核後製時，finance 物件不會自動帶入「已收款/收款日」。
+  // 這裡改用「付款審核資料」作為真實收款來源：讀取 pif_payment_proofs（status=confirmed）並彙總回填到畫面資料列。
+  const PAYMENT_PROOFS_COLLECTION = 'pif_payment_proofs';
+
+  function chunkArray(arr, size){
+    const out = [];
+    for (let i=0;i<arr.length;i+=size) out.push(arr.slice(i,i+size));
+    return out;
+  }
+
+  async function loadProofAggMap(pifIds){
+    const ids = (pifIds || []).map(x => (x || '').toString().trim()).filter(Boolean);
+    const map = new Map(); // pifId -> { sum:number, payments:[{amt:number, paidAt:string}] }
+    if (!ids.length) return map;
+
+    const colRef = collection(db, PAYMENT_PROOFS_COLLECTION);
+
+    // Firestore "in" 一次最多 10 筆，分批查詢避免一次拉全站資料。
+    const chunks = chunkArray(ids, 10);
+
+    for (const ch of chunks){
+      // 為避免建立 composite index（status + in），這裡先只用 pifId in，之後在前端過濾 status。
+      const q = query(colRef, where('pifId', 'in', ch));
+      const snap = await getDocs(q);
+
+      snap.forEach(ds => {
+        const d = ds.data() || {};
+        const pifId = (d.pifId || '').toString().trim();
+        if (!pifId) return;
+
+        if (!map.has(pifId)) map.set(pifId, { sum: 0, payments: [] });
+        const rec = map.get(pifId);
+
+        if ((d.status || '') !== 'confirmed') return;
+
+        const amt = Number(d.paidAmount || 0);
+        if (Number.isFinite(amt) && amt > 0) rec.sum += amt;
+
+        const paidAt = (d.paidAt || '').toString().trim(); // YYYY-MM-DD
+        if (paidAt) rec.payments.push({ amt: Number.isFinite(amt) ? amt : 0, paidAt });
+      });
+    }
+
+    // sort payments by paidAt asc
+    for (const rec of map.values()){
+      rec.payments.sort((a,b) => String(a.paidAt).localeCompare(String(b.paidAt)));
+    }
+    return map;
+  }
+
+  function applyProofAggToRow(row, rec){
+    if (!row || !rec) return;
+
+    const proofPaid = Math.round(Number(rec.sum || 0));
+    const currentPaid = Number(row.paidAmount);
+
+    // paidAmount：若財務欄位尚未填寫（空白/非數字/0），則用 proof 彙總回填
+    if ((!Number.isFinite(currentPaid) || currentPaid <= 0) && proofPaid > 0){
+      row.paidAmount = proofPaid;
+    }
+
+    // payStatus：用「已收款 vs 應收金額」推估（不覆蓋手動填寫的 paid/partial/unpaid）
+    const hasManualStatus = row.payStatus && row.payStatus !== 'unpaid';
+    const total = Number(row.amount);
+    const effectivePaid = Number.isFinite(Number(row.paidAmount)) ? Number(row.paidAmount) : proofPaid;
+
+    if (!hasManualStatus && Number.isFinite(total)){
+      if (effectivePaid <= 0) row.payStatus = 'unpaid';
+      else if (effectivePaid >= total) row.payStatus = 'paid';
+      else row.payStatus = 'partial';
+    }
+
+    // 依分期%自動推導「各期收款日」：用付款證明的匯款日期，按時間累加分配到第1/2/3期
+    if (!Number.isFinite(total) || !rec.payments || !rec.payments.length) return;
+
+    const insts = [
+      { field:'inst1PaidAt', pct:Number(row.inst1Percent || 0) },
+      { field:'inst2PaidAt', pct:Number(row.inst2Percent || 0) },
+      { field:'inst3PaidAt', pct:Number(row.inst3Percent || 0) },
+    ].filter(x => x.pct > 0);
+
+    if (!insts.length) return;
+
+    // cumulative targets
+    const targets = [];
+    let cumTarget = 0;
+    for (const it of insts){
+      cumTarget += (computeInstallAmount(total, it.pct) || 0);
+      targets.push({ field: it.field, target: cumTarget });
+    }
+
+    let cumPaid = 0;
+    let idx = 0;
+
+    for (const p of rec.payments){
+      cumPaid += Number(p.amt || 0);
+
+      while (idx < targets.length && cumPaid >= targets[idx].target){
+        const f = targets[idx].field;
+        // 只在該期尚未填收款日的情況下自動回填，避免覆蓋人工修正
+        if (!toDateInputValue(row[f])) row[f] = p.paidAt;
+        idx++;
+      }
+      if (idx >= targets.length) break;
+    }
+  }
+
+  function parseNumber(v){
+    if (v === '' || v === null || v === undefined) return '';
+    const n = Number(v);
+    return Number.isFinite(n) ? n : '';
+  }
+
+  function isOverdue(dueStr, paidStr, percent){
+    if (!dueStr) return false;
+    const pct = Number(percent || 0);
+    if (!pct) return false;
+    if (paidStr) return false;
+    const d = new Date(dueStr + 'T00:00:00');
+    if (isNaN(d.getTime())) return false;
+    const todayYMD = TODAY.toISOString().slice(0,10);
+    const t = new Date(todayYMD + 'T00:00:00');
+    return d.getTime() < t.getTime();
+  }
+
+  function computeInstallAmount(total, percent){
+    const t = Number(total);
+    const p = Number(percent);
+    if (!Number.isFinite(t) || !Number.isFinite(p)) return '';
+    return Math.round(t * p / 100);
+  }
+
+  function localYMD(d = new Date()){
+    // 以使用者本地時區產生 YYYY-MM-DD，避免 UTC 造成日期偏移
+    const offset = d.getTimezoneOffset();
+    const local = new Date(d.getTime() - offset * 60 * 1000);
+    return local.toISOString().slice(0,10);
+  }
+
+
+  function calcAutoPaid(row){
+    const total = Number(row.amount);
+    if (!Number.isFinite(total)) return 0;
+
+    const p1 = Number(row.inst1Percent || 0);
+    const p2 = Number(row.inst2Percent || 0);
+    const p3 = Number(row.inst3Percent || 0);
+
+    let sum = 0;
+    if (p1 && toDateInputValue(row.inst1PaidAt)) sum += computeInstallAmount(total, p1) || 0;
+    if (p2 && toDateInputValue(row.inst2PaidAt)) sum += computeInstallAmount(total, p2) || 0;
+    if (p3 && toDateInputValue(row.inst3PaidAt)) sum += computeInstallAmount(total, p3) || 0;
+
+    return sum;
+  }
+
+  function calcOutstanding(row){
+    const total = Number(row.amount);
+    if (!Number.isFinite(total)) return '';
+    const paid = Number(row.paidAmount);
+    const autoPaid = calcAutoPaid(row);
+
+    const effectivePaid = Number.isFinite(paid) ? paid : autoPaid;
+    const out = total - (effectivePaid || 0);
+    return out < 0 ? 0 : Math.round(out);
+  }
+
+  function calcRowOverdue(row){
+    const p1 = Number(row.inst1Percent || 0);
+    const p2 = Number(row.inst2Percent || 0);
+    const p3 = Number(row.inst3Percent || 0);
+
+    const d1 = toDateInputValue(row.inst1Due);
+    const d2 = toDateInputValue(row.inst2Due);
+    const d3 = toDateInputValue(row.inst3Due);
+
+    const pd1 = toDateInputValue(row.inst1PaidAt);
+    const pd2 = toDateInputValue(row.inst2PaidAt);
+    const pd3 = toDateInputValue(row.inst3PaidAt);
+
+    return isOverdue(d1, pd1, p1) || isOverdue(d2, pd2, p2) || isOverdue(d3, pd3, p3);
+  }
+
+  function hasInvoice(row){
+    return !!(row.invoiceNo || row.invoiceDate);
+  }
+
+  function badgeForPayStatus(s){
+    if (s === 'paid') return `<span class="badge ok">已付款</span>`;
+    if (s === 'partial') return `<span class="badge warn">部分付款</span>`;
+    if (s === 'void') return `<span class="badge">作廢/不需</span>`;
+    if (s === 'unpaid') return `<span class="badge warn">未付款</span>`;
+    return `<span class="badge">—</span>`;
+  }
+
+  function badgeForInstallCheck(sumPct){
+    if (sumPct === 0) return `<span class="badge">未設定</span>`;
+    if (sumPct === 100) return `<span class="badge ok">OK 100%</span>`;
+    if (sumPct > 100) return `<span class="badge err">超過 ${sumPct}%</span>`;
+    return `<span class="badge warn">不足 ${sumPct}%</span>`;
+  }
+
+  function monthKeyFromRow(row){
+    const inv = toDateInputValue(row.invoiceDate);
+    if (inv) return inv.slice(0,7);
+
+    const pds = [row.inst1PaidAt, row.inst2PaidAt, row.inst3PaidAt]
+      .map(toDateInputValue).filter(Boolean).sort();
+    if (pds.length) return pds[0].slice(0,7);
+
+    const ir = toDateInputValue(row.intentReviewedAt);
+    if (ir) return ir.slice(0,7);
+
+    return '未歸檔';
+  }
+
+  function normalizeFromContracts(data){
+    const c = data.contract || {};
+    return {
+      currency: c.currency ?? 'TWD',
+      amount: c.amount ?? '',
+      paymentMethod: c.paymentMethod ?? '',
+      inst1Percent: c.inst1Percent ?? '',
+      inst1Due: c.inst1Due ?? '',
+      inst2Percent: c.inst2Percent ?? '',
+      inst2Due: c.inst2Due ?? '',
+      inst3Percent: c.inst3Percent ?? '',
+      inst3Due: c.inst3Due ?? ''
+    };
+  }
+
+  function normalizeFinance(data){
+    const f = data.finance || {};
+    return {
+      intentStatus: f.intentStatus ?? '',
+      intentReviewedAt: f.intentReviewedAt ?? '',
+      trackingCode: f.trackingCode ?? '',
+
+      execStatus: f.execStatus ?? '',
+      completedAt: f.completedAt ?? '',
+
+      currency: f.currency ?? '',
+      amount: f.amount ?? '',
+      paidAmount: f.paidAmount ?? '',
+
+      paymentMethod: f.paymentMethod ?? '',
+      payStatus: f.payStatus ?? 'unpaid',
+
+      inst1Percent: f.inst1Percent ?? '',
+      inst1Due: f.inst1Due ?? '',
+      inst1PaidAt: f.inst1PaidAt ?? '',
+
+      inst2Percent: f.inst2Percent ?? '',
+      inst2Due: f.inst2Due ?? '',
+      inst2PaidAt: f.inst2PaidAt ?? '',
+
+      inst3Percent: f.inst3Percent ?? '',
+      inst3Due: f.inst3Due ?? '',
+      inst3PaidAt: f.inst3PaidAt ?? '',
+
+      invoiceNo: f.invoiceNo ?? '',
+      invoiceDate: f.invoiceDate ?? '',
+
+      notes: f.notes ?? ''
+    };
+  }
+
+  function mergeRow(base, finance, contractFallback, intentFromSub){
+    const intentStatus = intentFromSub?.status ?? finance.intentStatus ?? '';
+    const intentReviewedAt = intentFromSub?.reviewedAt ?? finance.intentReviewedAt ?? '';
+    const trackingCode = intentFromSub?.trackingCode ?? finance.trackingCode ?? intentFromSub?.trackingCodeUpper ?? '';
+
+    const currency = finance.currency || contractFallback.currency || 'TWD';
+    const amount = (finance.amount !== '' && finance.amount !== undefined) ? finance.amount : (contractFallback.amount ?? '');
+    const paymentMethod = finance.paymentMethod || contractFallback.paymentMethod || '';
+
+    const inst1Percent = (finance.inst1Percent !== '' && finance.inst1Percent !== undefined) ? finance.inst1Percent : (contractFallback.inst1Percent ?? '');
+    const inst1Due = finance.inst1Due || contractFallback.inst1Due || '';
+    const inst2Percent = (finance.inst2Percent !== '' && finance.inst2Percent !== undefined) ? finance.inst2Percent : (contractFallback.inst2Percent ?? '');
+    const inst2Due = finance.inst2Due || contractFallback.inst2Due || '';
+    const inst3Percent = (finance.inst3Percent !== '' && finance.inst3Percent !== undefined) ? finance.inst3Percent : (contractFallback.inst3Percent ?? '');
+    const inst3Due = finance.inst3Due || contractFallback.inst3Due || '';
+
+    return {
+      ...base,
+
+      intentStatus,
+      intentReviewedAt,
+      trackingCode,
+
+      execStatus: finance.execStatus || base.execStatus || '',
+      completedAt: finance.completedAt || base.completedAt || '',
+
+      currency,
+      amount,
+      paidAmount: finance.paidAmount ?? '',
+
+      paymentMethod,
+      payStatus: finance.payStatus || 'unpaid',
+
+      inst1Percent, inst1Due, inst1PaidAt: finance.inst1PaidAt || '',
+      inst2Percent, inst2Due, inst2PaidAt: finance.inst2PaidAt || '',
+      inst3Percent, inst3Due, inst3PaidAt: finance.inst3PaidAt || '',
+
+      invoiceNo: finance.invoiceNo || '',
+      invoiceDate: finance.invoiceDate || '',
+
+      notes: finance.notes || ''
+    };
+  }
+
+  function renderSummary(rows){
+    const grid = $('#summaryGrid');
+    if (!grid) return;
+
+    let totalProjects = rows.length;
+    let totalAmount = 0;
+    let totalPaid = 0;
+    let totalOutstanding = 0;
+    let overdueCount = 0;
+
+    for (const r of rows){
+      const amt = Number(r.amount);
+      const pad = Number(r.paidAmount);
+      const autoPaid = calcAutoPaid(r);
+
+      if (Number.isFinite(amt)) totalAmount += amt;
+
+      const effectivePaid = Number.isFinite(pad) ? pad : autoPaid;
+      if (Number.isFinite(effectivePaid)) totalPaid += effectivePaid;
+
+      const out = calcOutstanding(r);
+      if (out !== '' && Number.isFinite(Number(out))) totalOutstanding += Number(out);
+
+      if (calcRowOverdue(r)) overdueCount++;
+    }
+
+    grid.innerHTML = `
+      <div class="summary-card">
+        <div class="label">專案總數</div>
+        <div class="value">${totalProjects}</div>
+        <div class="summary-sub">已歸戶之所有 PIF 專案</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">應收總額（已填金額）</div>
+        <div class="value">${Math.round(totalAmount).toLocaleString()}</div>
+        <div class="summary-sub">以各案「金額」加總</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">已收款總額（含自動估算）</div>
+        <div class="value">${Math.round(totalPaid).toLocaleString()}</div>
+        <div class="summary-sub">優先用「已收款」，否則用分期收款日估算</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">未收款總額（估）</div>
+        <div class="value">${Math.round(totalOutstanding).toLocaleString()}</div>
+        <div class="summary-sub">金額 - 已收款（估算）</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">逾期件數</div>
+        <div class="value">${overdueCount}</div>
+        <div class="summary-sub">任一期到期且未收款</div>
+      </div>
+    `;
+  }
+
+  function renderCompanyReport(rows){
+    const wrap = $('#reportCompany');
+    if (!wrap) return;
+
+    const map = new Map();
+
+    for (const r of rows){
+      const key = (r.companyName || '未填公司').trim() || '未填公司';
+
+      const amt = Number(r.amount);
+      const pad = Number(r.paidAmount);
+      const autoPaid = calcAutoPaid(r);
+      const effectivePaid = Number.isFinite(pad) ? pad : autoPaid;
+      const out = calcOutstanding(r);
+      const overdue = calcRowOverdue(r) ? 1 : 0;
+
+      if (!map.has(key)){
+        map.set(key, { company:key, count:0, amount:0, paid:0, outstanding:0, overdue:0 });
+      }
+      const o = map.get(key);
+      o.count += 1;
+      if (Number.isFinite(amt)) o.amount += amt;
+      if (Number.isFinite(effectivePaid)) o.paid += effectivePaid;
+      if (out !== '' && Number.isFinite(Number(out))) o.outstanding += Number(out);
+      o.overdue += overdue;
+    }
+
+    const arr = Array.from(map.values())
+      .sort((a,b) => b.amount - a.amount || b.count - a.count || a.company.localeCompare(b.company));
+
+    const rowsHtml = arr.map(o => `
+      <tr data-company="${esc(o.company)}" style="cursor:pointer;">
+        <td>${esc(o.company)}</td>
+        <td>${o.count}</td>
+        <td>${Math.round(o.amount).toLocaleString()}</td>
+        <td>${Math.round(o.paid).toLocaleString()}</td>
+        <td>${Math.round(o.outstanding).toLocaleString()}</td>
+        <td>${o.overdue ? `<span class="badge err">${o.overdue}</span>` : `<span class="badge ok">0</span>`}</td>
+      </tr>
+    `).join('');
+
+    wrap.innerHTML = `
+      <table class="report-table" id="companyReportTable">
+        <thead>
+          <tr>
+            <th>公司</th>
+            <th>專案數</th>
+            <th>應收總額</th>
+            <th>已收總額</th>
+            <th>未收總額</th>
+            <th>逾期件數</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml || `<tr><td colspan="6">無資料</td></tr>`}
+        </tbody>
+      </table>
+    `;
+
+    const table = $('#companyReportTable');
+    if (table){
+      table.querySelectorAll('tbody tr[data-company]').forEach(tr => {
+        tr.addEventListener('click', () => {
+          $('#f-company').value = tr.dataset.company === '未填公司' ? '' : tr.dataset.company;
+          applyFilters();
+        });
+      });
+    }
+  }
+
+  function renderMonthReport(rows){
+    const wrap = $('#reportMonth');
+    if (!wrap) return;
+
+    const map = new Map();
+
+    for (const r of rows){
+      const key = monthKeyFromRow(r);
+
+      const amt = Number(r.amount);
+      const pad = Number(r.paidAmount);
+      const autoPaid = calcAutoPaid(r);
+      const effectivePaid = Number.isFinite(pad) ? pad : autoPaid;
+      const out = calcOutstanding(r);
+
+      if (!map.has(key)){
+        map.set(key, { month:key, count:0, amount:0, paid:0, outstanding:0 });
+      }
+      const o = map.get(key);
+      o.count += 1;
+      if (Number.isFinite(amt)) o.amount += amt;
+      if (Number.isFinite(effectivePaid)) o.paid += effectivePaid;
+      if (out !== '' && Number.isFinite(Number(out))) o.outstanding += Number(out);
+    }
+
+    const arr = Array.from(map.values()).sort((a,b) => a.month.localeCompare(b.month));
+
+    const rowsHtml = arr.map(o => `
+      <tr>
+        <td>${esc(o.month)}</td>
+        <td>${o.count}</td>
+        <td>${Math.round(o.amount).toLocaleString()}</td>
+        <td>${Math.round(o.paid).toLocaleString()}</td>
+        <td>${Math.round(o.outstanding).toLocaleString()}</td>
+      </tr>
+    `).join('');
+
+    wrap.innerHTML = `
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>月份（依發票/收款/審核推定）</th>
+            <th>專案數</th>
+            <th>應收總額</th>
+            <th>已收總額</th>
+            <th>未收總額</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml || `<tr><td colspan="5">無資料</td></tr>`}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function renderAgingReport(rows){
+    const wrap = $('#reportAging');
+    if (!wrap) return;
+
+    const buckets = [
+      { key:'未逾期', min:null, max:0 },
+      { key:'1-30天', min:1, max:30 },
+      { key:'31-60天', min:31, max:60 },
+      { key:'61-90天', min:61, max:90 },
+      { key:'90天以上', min:91, max:99999 }
+    ];
+    const stats = new Map(buckets.map(b => [b.key, { bucket:b.key, count:0, amount:0 }]));
+
+    function daysOverdue(row){
+      const pcts = [
+        { pct:Number(row.inst1Percent||0), due:toDateInputValue(row.inst1Due), paid:toDateInputValue(row.inst1PaidAt) },
+        { pct:Number(row.inst2Percent||0), due:toDateInputValue(row.inst2Due), paid:toDateInputValue(row.inst2PaidAt) },
+        { pct:Number(row.inst3Percent||0), due:toDateInputValue(row.inst3Due), paid:toDateInputValue(row.inst3PaidAt) }
+      ].filter(x => x.pct && x.due);
+
+      if (!pcts.length) return 0;
+
+      const today = new Date(TODAY.toISOString().slice(0,10) + 'T00:00:00');
+      let minDays = 0;
+
+      for (const x of pcts){
+        if (x.paid) continue;
+        const dueDate = new Date(x.due + 'T00:00:00');
+        if (isNaN(dueDate.getTime())) continue;
+
+        const diffMs = today.getTime() - dueDate.getTime();
+        const diffDays = Math.floor(diffMs / (1000*60*60*24));
+
+        if (diffDays > 0){
+          if (!minDays || diffDays < minDays) minDays = diffDays;
+        }
+      }
+      return minDays;
+    }
+
+    for (const r of rows){
+      const d = daysOverdue(r);
+      const amt = Number(r.amount);
+
+      let bucketKey = '未逾期';
+      if (d > 0){
+        for (const b of buckets){
+          if (b.min !== null && d >= b.min && d <= b.max){
+            bucketKey = b.key;
+            break;
+          }
+        }
+      }
+      const s = stats.get(bucketKey);
+      s.count += 1;
+      if (Number.isFinite(amt)) s.amount += amt;
+    }
+
+    const rowsHtml = buckets.map(b => {
+      const s = stats.get(b.key);
+      return `
+        <tr>
+          <td>${b.key}</td>
+          <td>${s.count}</td>
+          <td>${Math.round(s.amount).toLocaleString()}</td>
+        </tr>
+      `;
+    }).join('');
+
+    wrap.innerHTML = `
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>帳齡區間</th>
+            <th>專案數</th>
+            <th>金額合計（以專案總額估）</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function renderAllReports(){
+    renderCompanyReport(allRows);
+    renderMonthReport(allRows);
+    renderAgingReport(allRows);
+  }
+
+  function renderTable(rows){
+    const tbody = $('#financeTbody');
+    tbody.innerHTML = '';
+
+    if (!rows.length){
+      $('#tableStatus').textContent = '查無符合條件的資料。';
+      return;
+    }
+    $('#tableStatus').textContent = `共 ${rows.length} 筆專案。`;
+
+    for (const r of rows){
+      const tr = document.createElement('tr');
+
+      const p1 = parseNumber(r.inst1Percent) || 0;
+      const p2 = parseNumber(r.inst2Percent) || 0;
+      const p3 = parseNumber(r.inst3Percent) || 0;
+      const sumPct = (p1 || 0) + (p2 || 0) + (p3 || 0);
+
+      const a1 = computeInstallAmount(r.amount, p1);
+      const a2 = computeInstallAmount(r.amount, p2);
+      const a3 = computeInstallAmount(r.amount, p3);
+
+      const over = calcRowOverdue(r);
+      if (over) tr.classList.add('row-overdue');
+      if ((r.execStatus || '') === 'completed') tr.classList.add('row-completed');
+
+      const payBadge = badgeForPayStatus(r.payStatus || 'unpaid');
+      const outstanding = calcOutstanding(r);
+
+      tr.innerHTML = `
+        <td><code>${esc(r.pifId)}</code></td>
+        <td>${esc(r.companyName)}</td>
+        <td>${esc(r.productName)}</td>
+
+        <td>
+          <select data-field="intentStatus">
+            <option value="" ${r.intentStatus===''?'selected':''}>—</option>
+            <option value="pending" ${r.intentStatus==='pending'?'selected':''}>審核中</option>
+            <option value="approved" ${r.intentStatus==='approved'?'selected':''}>已核准</option>
+            <option value="rejected" ${r.intentStatus==='rejected'?'selected':''}>已駁回</option>
+          </select>
+        </td>
+        <td><input data-field="intentReviewedAt" type="date" value="${esc(toDateInputValue(r.intentReviewedAt))}"></td>
+        <td><input data-field="trackingCode" class="mini" type="text" value="${esc(r.trackingCode || '')}"></td>
+
+        <td>
+          <select data-field="execStatus">
+            <option value="" ${r.execStatus===''?'selected':''}>—</option>
+            <option value="not_started" ${r.execStatus==='not_started'?'selected':''}>未開始</option>
+            <option value="in_progress" ${r.execStatus==='in_progress'?'selected':''}>執行中</option>
+            <option value="completed" ${r.execStatus==='completed'?'selected':''}>已完成</option>
+            <option value="on_hold" ${r.execStatus==='on_hold'?'selected':''}>暫停</option>
+          </select>
+        </td>
+        <td><input data-field="completedAt" type="date" value="${esc(toDateInputValue(r.completedAt))}"></td>
+
+        <td>
+          <select data-field="currency" class="mini">
+            <option value="TWD" ${r.currency==='TWD'?'selected':''}>TWD</option>
+            <option value="USD" ${r.currency==='USD'?'selected':''}>USD</option>
+            <option value="CNY" ${r.currency==='CNY'?'selected':''}>CNY</option>
+            <option value="JPY" ${r.currency==='JPY'?'selected':''}>JPY</option>
+          </select>
+        </td>
+        <td><input data-field="amount" type="number" min="0" step="1" value="${esc(r.amount)}" placeholder="總額"></td>
+        <td><input data-field="paidAmount" type="number" min="0" step="1" value="${esc(r.paidAmount)}" placeholder="已收"></td>
+        <td><input class="mini" type="text" value="${outstanding !== '' ? esc(outstanding) : ''}" readonly></td>
+
+        <td>
+          <select data-field="paymentMethod">
+            <option value="" ${r.paymentMethod===''?'selected':''}>—</option>
+            <option value="bank_transfer" ${r.paymentMethod==='bank_transfer'?'selected':''}>匯款/轉帳</option>
+            <option value="credit_card" ${r.paymentMethod==='credit_card'?'selected':''}>信用卡</option>
+            <option value="invoice" ${r.paymentMethod==='invoice'?'selected':''}>請款/發票後付</option>
+            <option value="cash" ${r.paymentMethod==='cash'?'selected':''}>現金</option>
+            <option value="other" ${r.paymentMethod==='other'?'selected':''}>其他</option>
+          </select>
+        </td>
+        <td>
+          <div style="display:flex;align-items:center;gap:.2rem;">
+            <select data-field="payStatus">
+              <option value="unpaid" ${r.payStatus==='unpaid'?'selected':''}>未付款</option>
+              <option value="partial" ${r.payStatus==='partial'?'selected':''}>部分付款</option>
+              <option value="paid" ${r.payStatus==='paid'?'selected':''}>已付款</option>
+              <option value="void" ${r.payStatus==='void'?'selected':''}>作廢/不需</option>
+            </select>
+            ${payBadge}
+            ${over ? `<span class="badge err">逾期</span>` : ``}
+          </div>
+        </td>
+
+        <td>
+          <input data-field="inst1Percent" class="mini" type="number" min="0" max="100" step="1" value="${esc(r.inst1Percent)}" placeholder="%">
+          <div class="install-hint">${a1 ? `≈ ${a1.toLocaleString()}` : ''}</div>
+        </td>
+        <td><input data-field="inst1Due" type="date" value="${esc(toDateInputValue(r.inst1Due))}"></td>
+        <td><input data-field="inst1PaidAt" type="date" value="${esc(toDateInputValue(r.inst1PaidAt))}"></td>
+
+        <td>
+          <input data-field="inst2Percent" class="mini" type="number" min="0" max="100" step="1" value="${esc(r.inst2Percent)}" placeholder="%">
+          <div class="install-hint">${a2 ? `≈ ${a2.toLocaleString()}` : ''}</div>
+        </td>
+        <td><input data-field="inst2Due" type="date" value="${esc(toDateInputValue(r.inst2Due))}"></td>
+        <td><input data-field="inst2PaidAt" type="date" value="${esc(toDateInputValue(r.inst2PaidAt))}"></td>
+
+        <td>
+          <input data-field="inst3Percent" class="mini" type="number" min="0" max="100" step="1" value="${esc(r.inst3Percent)}" placeholder="%">
+          <div class="install-hint">${a3 ? `≈ ${a3.toLocaleString()}` : ''}</div>
+        </td>
+        <td><input data-field="inst3Due" type="date" value="${esc(toDateInputValue(r.inst3Due))}"></td>
+        <td><input data-field="inst3PaidAt" type="date" value="${esc(toDateInputValue(r.inst3PaidAt))}"></td>
+
+        <td>${badgeForInstallCheck(sumPct)}</td>
+
+        <td><input data-field="invoiceNo" class="mini" type="text" value="${esc(r.invoiceNo)}" placeholder="號碼"></td>
+        <td><input data-field="invoiceDate" type="date" value="${esc(toDateInputValue(r.invoiceDate))}"></td>
+
+        <td><input data-field="notes" class="xwide" type="text" value="${esc(r.notes)}" placeholder="備註"></td>
+
+        <td>
+          <div class="inline-actions">
+            <button class="btn primary btn-save-row" data-pifid="${esc(r.pifId)}">
+              <i class="fa-solid fa-save"></i> 儲存
+            </button>
+            <button class="btn btn-settle" data-pifid="${esc(r.pifId)}">
+              <i class="fa-solid fa-circle-check"></i> 一鍵沖帳
+            </button>
+            <button class="btn btn-invoice" data-pifid="${esc(r.pifId)}">
+              <i class="fa-solid fa-file-invoice"></i> 請款單
+            </button>
+            <button class="btn btn-receipt" data-pifid="${esc(r.pifId)}">
+              <i class="fa-solid fa-receipt"></i> 收據
+            </button>
+          </div>
+        </td>
+      `;
+
+      tr.querySelectorAll('input[data-field], select[data-field]').forEach(el => {
+        const evt = (el.tagName === 'SELECT' || el.type === 'date') ? 'change' : 'input';
+        el.addEventListener(evt, () => markDirtyFromRow(tr, r.pifId));
+      });
+
+      tr.querySelector('.btn-save-row')?.addEventListener('click', () => saveSingleRow(r.pifId, tr));
+      tr.querySelector('.btn-settle')?.addEventListener('click', () => settleRow(r.pifId, tr));
+      tr.querySelector('.btn-invoice')?.addEventListener('click', () => openInvoiceDoc(r.pifId, tr));
+      tr.querySelector('.btn-receipt')?.addEventListener('click', () => openReceiptDoc(r.pifId, tr));
+
+      tbody.appendChild(tr);
+    }
+  }
+
+  function collectFinanceFromRow(tr){
+    const get = (field) => tr.querySelector(`[data-field="${field}"]`)?.value ?? '';
+
+    return {
+      intentStatus: get('intentStatus'),
+      intentReviewedAt: get('intentReviewedAt'),
+      trackingCode: get('trackingCode'),
+
+      execStatus: get('execStatus'),
+      completedAt: get('completedAt'),
+
+      currency: get('currency'),
+      amount: get('amount') === '' ? '' : Number(get('amount')),
+      paidAmount: get('paidAmount') === '' ? '' : Number(get('paidAmount')),
+
+      paymentMethod: get('paymentMethod'),
+      payStatus: get('payStatus') || 'unpaid',
+
+      inst1Percent: get('inst1Percent') === '' ? '' : Number(get('inst1Percent')),
+      inst1Due: get('inst1Due'),
+      inst1PaidAt: get('inst1PaidAt'),
+
+      inst2Percent: get('inst2Percent') === '' ? '' : Number(get('inst2Percent')),
+      inst2Due: get('inst2Due'),
+      inst2PaidAt: get('inst2PaidAt'),
+
+      inst3Percent: get('inst3Percent') === '' ? '' : Number(get('inst3Percent')),
+      inst3Due: get('inst3Due'),
+      inst3PaidAt: get('inst3PaidAt'),
+
+      invoiceNo: get('invoiceNo'),
+      invoiceDate: get('invoiceDate'),
+
+      notes: get('notes'),
+
+      updatedAt: new Date().toISOString()
+    };
+  }
+
+  function markDirtyFromRow(tr, pifId){
+    const finance = collectFinanceFromRow(tr);
+    dirtyMap.set(pifId, finance);
+
+    const idx = allRows.findIndex(r => r.pifId === pifId);
+    if (idx >= 0){
+      allRows[idx] = { ...allRows[idx], ...finance };
+    }
+
+    // ✅ 只更新本列的「未收款(估)」顯示，避免整表重繪造成輸入跳開
+    try{
+      const rowNow = allRows.find(r => r.pifId === pifId) || {};
+      const outVal = typeof calcOutstanding === 'function' ? calcOutstanding(rowNow) : '';
+      // 依欄位標記尋找 readonly 的 outstanding 欄
+      const outInput =
+        tr.querySelector('input[data-field="outstanding"][readonly]') ||
+        tr.querySelector('input[readonly][data-field="outstanding"]') ||
+        tr.querySelector('input[readonly].outstanding') ||
+        null;
+      if (outInput) outInput.value = (outVal !== undefined && outVal !== null ? outVal : '');
+    }catch(e){}
+
+    // ✅ 更新概覽（若函式存在）
+    try{
+      if (typeof renderSummary === 'function') renderSummary(allRows);
+    }catch(e){}
+
+    $('#tableStatus').textContent = `共有 ${dirtyMap.size} 筆資料已修改尚未儲存。`;
+
+    // ❌ 不要在每次輸入時重繪表格
+    // applyFilters(true, false);
+  }
+
+
+  async function saveSingleRow(pifId, tr){
+    const finance = collectFinanceFromRow(tr);
+    try{
+      const ref = doc(db, 'pifs', pifId);
+      await setDoc(ref, { finance }, { merge: true });
+      dirtyMap.delete(pifId);
+
+      $('#tableStatus').textContent = `PIF ${pifId} 財務資料已儲存。剩餘未儲存：${dirtyMap.size} 筆。`;
+      applyFilters();
+    }catch(err){
+      console.error('saveSingleRow failed', err);
+      alert(`儲存失敗（${pifId}）：${err.message}`);
+    }
+  }
+
+  async function saveAllDirty(){
+    if (dirtyMap.size === 0){
+      alert('目前沒有需要儲存的變更。');
+      return;
+    }
+    if (!confirm(`即將儲存 ${dirtyMap.size} 筆變更，確定繼續？`)) return;
+
+    const entries = Array.from(dirtyMap.entries());
+    let ok = 0, fail = 0;
+
+    for (const [pifId, finance] of entries){
+      try{
+        const ref = doc(db, 'pifs', pifId);
+        await setDoc(ref, { finance }, { merge: true });
+        ok++;
+        dirtyMap.delete(pifId);
+      }catch(e){
+        fail++;
+        console.error('batch save failed', pifId, e);
+      }
+    }
+
+    $('#tableStatus').textContent = `批次儲存完成：成功 ${ok} / 失敗 ${fail}。`;
+    applyFilters();
+  }
+
+  function applyFilters(recalcSummary = true, recalcReports = true){
+    const c = $('#f-company').value.trim().toLowerCase();
+    const p = $('#f-product').value.trim().toLowerCase();
+    const id = $('#f-pifid').value.trim().toLowerCase();
+    const intent = $('#f-intent').value;
+    const exec = $('#f-exec').value;
+    const pay = $('#f-pay-status').value;
+
+    const overdueOnly = $('#f-overdue').checked;
+    const noInvoiceOnly = $('#f-no-invoice').checked;
+    const dirtyOnly = $('#f-has-dirty').checked;
+
+    let rows = allRows.slice();
+
+    if (c) rows = rows.filter(r => (r.companyName || '').toLowerCase().includes(c));
+    if (p) rows = rows.filter(r => (r.productName || '').toLowerCase().includes(p));
+    if (id) rows = rows.filter(r => (r.pifId || '').toLowerCase().includes(id));
+    if (intent) rows = rows.filter(r => (r.intentStatus || '') === intent);
+    if (exec) rows = rows.filter(r => (r.execStatus || '') === exec);
+    if (pay) rows = rows.filter(r => (r.payStatus || 'unpaid') === pay);
+
+    if (overdueOnly) rows = rows.filter(r => calcRowOverdue(r));
+    if (noInvoiceOnly) rows = rows.filter(r => !hasInvoice(r));
+    if (dirtyOnly) rows = rows.filter(r => dirtyMap.has(r.pifId));
+
+    renderTable(rows);
+
+    if (recalcSummary) renderSummary(allRows);
+    if (recalcReports) renderAllReports();
+  }
+
+  function csvEscape(v){
+    const s = (v ?? '').toString();
+    if (s.includes('"') || s.includes(',') || s.includes('\n')){
+      return `"${s.replace(/"/g, '""')}"`;
+    }
+    return s;
+  }
+
+  function downloadCSV(csv, filename){
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportDetailCSV(){
+    const headers = [
+      'pifId','companyName','productName',
+      'intentStatus','intentReviewedAt','trackingCode',
+      'execStatus','completedAt',
+      'currency','amount','paidAmount',
+      'paymentMethod','payStatus',
+      'inst1Percent','inst1Due','inst1PaidAt',
+      'inst2Percent','inst2Due','inst2PaidAt',
+      'inst3Percent','inst3Due','inst3PaidAt',
+      'invoiceNo','invoiceDate',
+      'notes'
+    ];
+
+    const rows = allRows.map(r => headers.map(h => csvEscape(r[h]))).map(arr => arr.join(','));
+    const csv = [headers.join(','), ...rows].join('\n');
+    downloadCSV(csv, `CosPIF_finance_detail_${new Date().toISOString().slice(0,10)}.csv`);
+  }
+
+  function exportCompanyCSV(){
+    const map = new Map();
+    for (const r of allRows){
+      const key = (r.companyName || '未填公司').trim() || '未填公司';
+      const amt = Number(r.amount);
+      const pad = Number(r.paidAmount);
+      const autoPaid = calcAutoPaid(r);
+      const effectivePaid = Number.isFinite(pad) ? pad : autoPaid;
+      const out = calcOutstanding(r);
+
+      if (!map.has(key)){
+        map.set(key, { company:key, count:0, amount:0, paid:0, outstanding:0, overdue:0 });
+      }
+      const o = map.get(key);
+      o.count += 1;
+      if (Number.isFinite(amt)) o.amount += amt;
+      if (Number.isFinite(effectivePaid)) o.paid += effectivePaid;
+      if (out !== '' && Number.isFinite(Number(out))) o.outstanding += Number(out);
+      if (calcRowOverdue(r)) o.overdue += 1;
+    }
+
+    const arr = Array.from(map.values()).sort((a,b) => b.amount - a.amount || a.company.localeCompare(b.company));
+    const headers = ['company','count','amount','paid','outstanding','overdue'];
+    const lines = arr.map(o => headers.map(h => csvEscape(o[h]))).map(a => a.join(','));
+    const csv = [headers.join(','), ...lines].join('\n');
+    downloadCSV(csv, `CosPIF_finance_company_${new Date().toISOString().slice(0,10)}.csv`);
+  }
+
+  function exportMonthCSV(){
+    const map = new Map();
+    for (const r of allRows){
+      const key = monthKeyFromRow(r);
+      const amt = Number(r.amount);
+      const pad = Number(r.paidAmount);
+      const autoPaid = calcAutoPaid(r);
+      const effectivePaid = Number.isFinite(pad) ? pad : autoPaid;
+      const out = calcOutstanding(r);
+
+      if (!map.has(key)){
+        map.set(key, { month:key, count:0, amount:0, paid:0, outstanding:0 });
+      }
+      const o = map.get(key);
+      o.count += 1;
+      if (Number.isFinite(amt)) o.amount += amt;
+      if (Number.isFinite(effectivePaid)) o.paid += effectivePaid;
+      if (out !== '' && Number.isFinite(Number(out))) o.outstanding += Number(out);
+    }
+
+    const arr = Array.from(map.values()).sort((a,b) => a.month.localeCompare(b.month));
+    const headers = ['month','count','amount','paid','outstanding'];
+    const lines = arr.map(o => headers.map(h => csvEscape(o[h]))).map(a => a.join(','));
+    const csv = [headers.join(','), ...lines].join('\n');
+    downloadCSV(csv, `CosPIF_finance_month_${new Date().toISOString().slice(0,10)}.csv`);
+  }
+
+  function apply5050ToVisible(){
+    const tbody = $('#financeTbody');
+    const trs = Array.from(tbody.querySelectorAll('tr'));
+    if (!trs.length) return alert('目前沒有可套用的列。');
+    if (!confirm('將目前畫面中的專案分期比例快速套用「50% / 50% / 0%」？\n（僅標記為已修改，需再儲存）')) return;
+
+    trs.forEach(tr => {
+      const p1 = tr.querySelector('[data-field="inst1Percent"]');
+      const p2 = tr.querySelector('[data-field="inst2Percent"]');
+      const p3 = tr.querySelector('[data-field="inst3Percent"]');
+      if (p1) p1.value = 50;
+      if (p2) p2.value = 50;
+      if (p3) p3.value = 0;
+
+      const pifId = tr.querySelector('button.btn-save-row')?.dataset?.pifid;
+      if (pifId) markDirtyFromRow(tr, pifId);
+    });
+
+    applyFilters();
+  }
+
+  function applyAutoPaidToVisible(){
+    const tbody = $('#financeTbody');
+    const trs = Array.from(tbody.querySelectorAll('tr'));
+    if (!trs.length) return alert('目前沒有可套用的列。');
+    if (!confirm('將目前畫面列的「已收款」依分期收款日自動回填？\n（僅標記為已修改，需再儲存）')) return;
+
+    trs.forEach(tr => {
+      const pifId = tr.querySelector('button.btn-save-row')?.dataset?.pifid;
+      if (!pifId) return;
+
+      const temp = collectFinanceFromRow(tr);
+      const base = allRows.find(r => r.pifId === pifId) || {};
+      const merged = { ...base, ...temp };
+
+      const autoPaid = calcAutoPaid(merged);
+      const paidInput = tr.querySelector('[data-field="paidAmount"]');
+      if (paidInput) paidInput.value = autoPaid;
+
+      markDirtyFromRow(tr, pifId);
+    });
+
+    applyFilters();
+  }
+
+  function autoPayStatusToVisible(){
+    const tbody = $('#financeTbody');
+    const trs = Array.from(tbody.querySelectorAll('tr'));
+    if (!trs.length) return alert('目前沒有可套用的列。');
+    if (!confirm('依目前畫面列的「金額/已收款」自動更新付款狀態？\n（僅標記為已修改，需再儲存）')) return;
+
+    trs.forEach(tr => {
+      const pifId = tr.querySelector('button.btn-save-row')?.dataset?.pifid;
+      if (!pifId) return;
+
+      const temp = collectFinanceFromRow(tr);
+      const total = Number(temp.amount);
+      const paid = Number(temp.paidAmount);
+
+      const sel = tr.querySelector('[data-field="payStatus"]');
+      if (!sel) return;
+
+      if (!Number.isFinite(total) || total <= 0){
+        sel.value = temp.payStatus || 'unpaid';
+      } else if (Number.isFinite(paid) && paid >= total){
+        sel.value = 'paid';
+      } else if (Number.isFinite(paid) && paid > 0){
+        sel.value = 'partial';
+      } else {
+        sel.value = 'unpaid';
+      }
+
+      markDirtyFromRow(tr, pifId);
+    });
+
+    applyFilters();
+  }
+
+  function settleRow(pifId, tr){
+    const choice = prompt(
+      '收款一鍵沖帳\n\n' +
+      '請輸入：\n' +
+      '1 = 只沖第1期\n' +
+      '2 = 只沖第2期\n' +
+      '3 = 只沖第3期\n' +
+      'next = 沖下一筆尚未收款的分期（預設）\n' +
+      'all = 沖全部尚未收款的分期\n',
+      'next'
+    );
+    if (choice === null) return;
+
+    const mode = (choice || 'next').trim().toLowerCase();
+    const todayStr = localYMD();
+
+    const f1 = {
+      no: 1,
+      pctEl: tr.querySelector('[data-field="inst1Percent"]'),
+      paidEl: tr.querySelector('[data-field="inst1PaidAt"]')
+    };
+    const f2 = {
+      no: 2,
+      pctEl: tr.querySelector('[data-field="inst2Percent"]'),
+      paidEl: tr.querySelector('[data-field="inst2PaidAt"]')
+    };
+    const f3 = {
+      no: 3,
+      pctEl: tr.querySelector('[data-field="inst3Percent"]'),
+      paidEl: tr.querySelector('[data-field="inst3PaidAt"]')
+    };
+    const fields = [f1, f2, f3].map(f => ({
+      ...f,
+      pct: Number(f.pctEl?.value || 0)
+    }));
+
+    const markPaid = (f) => {
+      if (!f || !f.pct) return false;
+      if (!f.paidEl) return false;
+      if (!f.paidEl.value) f.paidEl.value = todayStr;
+      return true;
+    };
+
+    let changed = false;
+
+    if (mode === '1' || mode === '2' || mode === '3'){
+      const target = fields.find(x => String(x.no) === mode);
+      changed = markPaid(target);
+    } else if (mode === 'all'){
+      fields.forEach(f => { if (markPaid(f)) changed = true; });
+    } else if (mode === 'next' || mode === ''){
+      const target = fields.find(f => f.pct > 0 && f.paidEl && !f.paidEl.value);
+      if (target){
+        changed = markPaid(target);
+      }
+    } else {
+      alert('輸入格式不正確，請使用 1 / 2 / 3 / next / all');
+      return;
+    }
+
+    if (!changed){
+      alert('沒有可沖帳的分期（可能尚未設定分期% 或已全部收款）。');
+      return;
+    }
+
+    // 依目前欄位更新已收款與付款狀態（僅畫面，需再儲存）
+    const temp = collectFinanceFromRow(tr);
+    const base = allRows.find(r => r.pifId === pifId) || {};
+    const merged = { ...base, ...temp };
+
+    const autoPaid = calcAutoPaid(merged);
+    const paidInput = tr.querySelector('[data-field="paidAmount"]');
+    if (paidInput) paidInput.value = autoPaid;
+
+    const total = Number(merged.amount);
+    const sel = tr.querySelector('[data-field="payStatus"]');
+    if (sel && Number.isFinite(total) && total > 0){
+      if (autoPaid >= total) sel.value = 'paid';
+      else if (autoPaid > 0) sel.value = 'partial';
+      else sel.value = 'unpaid';
+    }
+
+    markDirtyFromRow(tr, pifId);
+    applyFilters();
+  }
+
+
+  function buildInstallLines(row){
+    const total = Number(row.amount);
+    const currency = row.currency || 'TWD';
+
+    const items = [
+      { no:1, pct:Number(row.inst1Percent||0), due:toDateInputValue(row.inst1Due), paid:toDateInputValue(row.inst1PaidAt) },
+      { no:2, pct:Number(row.inst2Percent||0), due:toDateInputValue(row.inst2Due), paid:toDateInputValue(row.inst2PaidAt) },
+      { no:3, pct:Number(row.inst3Percent||0), due:toDateInputValue(row.inst3Due), paid:toDateInputValue(row.inst3PaidAt) }
+    ].filter(x => x.pct);
+
+    return items.map(it => {
+      const amt = computeInstallAmount(total, it.pct) || '';
+      return { ...it, amt, currency };
+    });
+  }
+
+  function openInvoiceDoc(pifId, tr){
+    const temp = collectFinanceFromRow(tr);
+    const base = allRows.find(r => r.pifId === pifId) || {};
+    const row = { ...base, ...temp };
+    const installs = buildInstallLines(row);
+
+    const win = window.open('', '_blank');
+    if (!win) return alert('瀏覽器阻擋彈出視窗，請允許後再試一次。');
+
+    const html = `
+      <!doctype html>
+      <html lang="zh-Hant">
+      <head>
+        <meta charset="utf-8">
+        <title>CosPIF 請款單 - ${esc(row.pifId)}</title>
+        <style>
+          body{ font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", sans-serif; padding: 24px; }
+          .wrap{ max-width: 820px; margin: 0 auto; }
+          h1{ font-size: 22px; margin: 0 0 6px; text-align:center; }
+          .sub{ text-align:center; color:#555; margin-bottom: 18px; }
+          .meta{ display:grid; grid-template-columns: 140px 1fr; gap: 6px 10px; margin-bottom: 18px; }
+          .meta div{ font-size: 14.5px; }
+          table{ width:100%; border-collapse: collapse; margin-top: 8px; }
+          th, td{ border:1px solid #ddd; padding: 8px 10px; font-size: 14px; }
+          th{ background:#f7f7f7; text-align:left; }
+          .right{ text-align:right; }
+          .note{ margin-top: 16px; font-size: 13.5px; color:#666; }
+          @media print{ .no-print{ display:none; } }
+          .btn{ padding: 6px 10px; border:1px solid #333; background:white; cursor:pointer; border-radius: 6px; }
+        </style>
+      </head>
+      <body>
+        <div class="wrap">
+          <div class="no-print" style="text-align:right;margin-bottom:10px;">
+            <button class="btn" onclick="window.print()">列印</button>
+          </div>
+
+          <h1>CosPIF 公司歸戶升級版 請款單</h1>
+          <div class="sub">Payment Request / Internal Use</div>
+
+          <div class="meta">
+            <div>公司（甲方）</div><div>${esc(row.companyName || '')}</div>
+            <div>產品/專案</div><div>${esc(row.productName || '')}</div>
+            <div>PIF ID</div><div>${esc(row.pifId || '')}</div>
+            <div>付款方式</div><div>${esc(row.paymentMethod || '')}</div>
+            <div>發票號碼</div><div>${esc(row.invoiceNo || '（可由財務後補）')}</div>
+            <div>發票日期</div><div>${esc(toDateInputValue(row.invoiceDate) || '（可由財務後補）')}</div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>項目</th>
+                <th>比例</th>
+                <th>到期日</th>
+                <th class="right">金額</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${
+                installs.length
+                  ? installs.map(it => `
+                      <tr>
+                        <td>第 ${it.no} 期服務費</td>
+                        <td>${it.pct}%</td>
+                        <td>${esc(it.due || '')}</td>
+                        <td class="right">${it.amt !== '' ? `${it.currency} ${Number(it.amt).toLocaleString()}` : ''}</td>
+                      </tr>
+                    `).join('')
+                  : `
+                    <tr>
+                      <td>服務費（未設定分期）</td>
+                      <td>—</td>
+                      <td>—</td>
+                      <td class="right">${row.amount !== '' ? `${row.currency || 'TWD'} ${Number(row.amount).toLocaleString()}` : ''}</td>
+                    </tr>
+                  `
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <th colspan="3" class="right">合計</th>
+                <th class="right">${row.amount !== '' ? `${row.currency || 'TWD'} ${Number(row.amount).toLocaleString()}` : ''}</th>
+              </tr>
+            </tfoot>
+          </table>
+
+          <div class="note">
+            本請款單由 CosPIF 財務管理後台產生，供雙方對帳與付款時程確認使用。
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+  }
+
+  function openReceiptDoc(pifId, tr){
+    const temp = collectFinanceFromRow(tr);
+    const base = allRows.find(r => r.pifId === pifId) || {};
+    const row = { ...base, ...temp };
+
+    const currency = row.currency || 'TWD';
+    const paid = Number(row.paidAmount);
+    const autoPaid = calcAutoPaid(row);
+    const effectivePaid = Number.isFinite(paid) ? paid : autoPaid;
+
+    const win = window.open('', '_blank');
+    if (!win) return alert('瀏覽器阻擋彈出視窗，請允許後再試一次。');
+
+    const html = `
+      <!doctype html>
+      <html lang="zh-Hant">
+      <head>
+        <meta charset="utf-8">
+        <title>CosPIF 收據 - ${esc(row.pifId)}</title>
+        <style>
+          body{ font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", sans-serif; padding: 24px; }
+          .wrap{ max-width: 820px; margin: 0 auto; }
+          h1{ font-size: 22px; margin: 0 0 6px; text-align:center; }
+          .sub{ text-align:center; color:#555; margin-bottom: 18px; }
+          .meta{ display:grid; grid-template-columns: 140px 1fr; gap: 6px 10px; margin-bottom: 18px; }
+          .meta div{ font-size: 14.5px; }
+          .box{ border:1px solid #ddd; padding: 14px 16px; border-radius: 8px; }
+          .big{ font-size: 20px; font-weight:700; }
+          .note{ margin-top: 14px; font-size: 13.5px; color:#666; }
+          @media print{ .no-print{ display:none; } }
+          .btn{ padding: 6px 10px; border:1px solid #333; background:white; cursor:pointer; border-radius: 6px; }
+        </style>
+      </head>
+      <body>
+        <div class="wrap">
+          <div class="no-print" style="text-align:right;margin-bottom:10px;">
+            <button class="btn" onclick="window.print()">列印</button>
+          </div>
+
+          <h1>CosPIF 服務費收據（內部版）</h1>
+          <div class="sub">Receipt / Internal Use</div>
+
+          <div class="meta">
+            <div>公司（甲方）</div><div>${esc(row.companyName || '')}</div>
+            <div>產品/專案</div><div>${esc(row.productName || '')}</div>
+            <div>PIF ID</div><div>${esc(row.pifId || '')}</div>
+            <div>付款方式</div><div>${esc(row.paymentMethod || '')}</div>
+            <div>發票號碼</div><div>${esc(row.invoiceNo || '—')}</div>
+            <div>發票日期</div><div>${esc(toDateInputValue(row.invoiceDate) || '—')}</div>
+          </div>
+
+          <div class="box">
+            <div>收款金額</div>
+            <div class="big">${Number.isFinite(effectivePaid) ? `${currency} ${Math.round(effectivePaid).toLocaleString()}` : '—'}</div>
+            <div class="note">（若未填「已收款」，本頁會依分期「收款日」估算）</div>
+          </div>
+
+          <div class="note">
+            本收據為 CosPIF 財務管理後台之內部收款確認文件。對外正式收據/發票請依實際開立之法定文件為準。
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+  }
+function wireTabs(){
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const tab = btn.dataset.tab;
+
+        $('#reportCompany').style.display = tab === 'company' ? 'block' : 'none';
+        $('#reportMonth').style.display = tab === 'month' ? 'block' : 'none';
+        $('#reportAging').style.display = tab === 'aging' ? 'block' : 'none';
+      });
+    });
+  }
+
+  function wireFilters(){
+    const inputs = [
+      '#f-company','#f-product','#f-pifid',
+      '#f-intent','#f-exec','#f-pay-status',
+      '#f-overdue','#f-no-invoice','#f-has-dirty'
+    ];
+    inputs.forEach(sel => {
+      const el = $(sel);
+      if (!el) return;
+      el.addEventListener('input', () => applyFilters());
+      el.addEventListener('change', () => applyFilters());
+    });
+
+    $('#btnReload').addEventListener('click', loadAllData);
+    $('#btnSaveAll').addEventListener('click', saveAllDirty);
+
+    $('#btnAutoFill50').addEventListener('click', apply5050ToVisible);
+    $('#btnApplyAutoPaid').addEventListener('click', applyAutoPaidToVisible);
+    $('#btnAutoPayStatus').addEventListener('click', autoPayStatusToVisible);
+
+    $('#btnExportDetail').addEventListener('click', exportDetailCSV);
+    $('#btnExportCompany').addEventListener('click', exportCompanyCSV);
+    $('#btnExportMonth').addEventListener('click', exportMonthCSV);
+  }
+
+  async function loadAllData(){
+    $('#tableStatus').textContent = '正在載入資料（PIF + 意願審核）...';
+    dirtyMap.clear();
+    allRows = [];
+
+    try{
+      const intentSnap = await getDocs(collection(db, 'pif_intent_submissions'));
+      const intentMapByPifId = new Map();
+
+      intentSnap.forEach(s => {
+        const d = s.data() || {};
+        const pifId = (d.pifId || '').toString().trim();
+        if (!pifId) return;
+
+        const prev = intentMapByPifId.get(pifId);
+        const curReviewedMs = d.reviewedAt && d.reviewedAt.toMillis ? d.reviewedAt.toMillis() : 0;
+        const prevReviewedMs = prev && prev.reviewedAt && prev.reviewedAt.toMillis ? prev.reviewedAt.toMillis() : 0;
+
+        if (!prev || curReviewedMs >= prevReviewedMs){
+          intentMapByPifId.set(pifId, {
+            submissionId: s.id,
+            status: d.status || '',
+            reviewedAt: d.reviewedAt || '',
+            trackingCode: d.trackingCode || d.trackingCodeUpper || '',
+            trackingCodeUpper: d.trackingCodeUpper || ''
+          });
+        }
+      });
+
+      const pifsSnap = await getDocs(collection(db, 'pifs'));
+      pifsSnap.forEach(docSnap => {
+        const data = docSnap.data() || {};
+        const pifId = docSnap.id;
+
+        const base = {
+          pifId,
+          companyName: data.companyName || '',
+          productName: data.productName || '',
+          execStatus: data.execStatus || data.executionStatus || '',
+          completedAt: data.completedAt || data.completionDate || ''
+        };
+
+        const finance = normalizeFinance(data);
+        const contractFallback = normalizeFromContracts(data);
+        const intentFromSub = intentMapByPifId.get(pifId);
+
+        const row = mergeRow(base, finance, contractFallback, intentFromSub);
+        allRows.push(row);
+      });
+
+      // ====== Auto-sync from payment proofs ======
+      try{
+        $('#tableStatus').textContent = '正在同步付款審核資料（繳費證明）...';
+        const proofMap = await loadProofAggMap(allRows.map(r => r.pifId));
+        for (const r of allRows){
+          applyProofAggToRow(r, proofMap.get(r.pifId));
+        }
+      }catch(syncErr){
+        console.warn('付款審核資料同步失敗（將不影響手動帳務功能）：', syncErr);
+      }
+
+
+
+      allRows.sort((a,b) =>
+        (a.companyName || '').localeCompare(b.companyName || '') ||
+        (a.productName || '').localeCompare(b.productName || '') ||
+        (a.pifId || '').localeCompare(b.pifId || '')
+      );
+
+      renderSummary(allRows);
+      renderAllReports();
+      applyFilters(false, false);
+
+      $('#tableStatus').textContent = `載入完成：共 ${allRows.length} 筆專案。`;
+    }catch(err){
+      console.error('loadAllData failed', err);
+      $('#tableStatus').textContent = `載入失敗：${err.message}`;
+    }
+  }
+
+  function boot(){
+    wireTabs();
+    wireFilters();
+
+    onAuthStateChanged(auth, user => {
+      if (!user){
+        window.location.href = `login.html?redirect=${encodeURIComponent(window.location.href)}`;
+        return;
+      }
+      $('#user-info').textContent = user.email;
+      $('#btnSignOut').addEventListener('click', () => signOut(auth));
+      loadAllData();
+    });
+  }
+
+  boot();
+</script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+/* General styles */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+    margin: 0;
+    opacity: 0; /* Initially hidden */
+    transition: opacity 0.5s ease-in-out;
+}
+
+.app-wrap {
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+}
+
+.header {
+    background-color: white;
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header .wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.section {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.06);
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 0.75rem;
+    color: #111827;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: #4b5563;
+}
+
+input[type="email"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn.primary {
+    background-color: #4f46e5;
+    color: white;
+}
+.btn.primary:hover {
+    background-color: #4338ca;
+}
+
+.btn.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+.btn.btn-danger:hover {
+    background-color: #c82333;
+}
+
+.btn.btn-success {
+    background-color: #198754;
+    color: white;
+}
+.btn.btn-success:hover {
+    background-color: #157347;
+}
+
+.btn.btn-warning {
+    background-color: #ffc107;
+    color: #212529;
+    border-color: #ffc107;
+}
+.btn.btn-warning:hover {
+    background-color: #e0a800;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Table Styles */
+.table-wrap {
+    overflow-x: auto;
+}
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+}
+
+.table th, .table td {
+    padding: 0.9rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.table th {
+    background-color: #f9fafb;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #4b5563;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.table tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+/* Status & Role Badges */
+.status-badge, .role-badge {
+    display: inline-block;
+    padding: 0.25em 0.6em;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+
+.status-badge {
+    margin-right: 6px;
+}
+
+.status-badge.active {
+    background-color: #dcfce7; /* green-100 */
+    color: #166534; /* green-800 */
+}
+.status-badge.pending {
+    background-color: #fef9c3; /* yellow-100 */
+    color: #854d0e; /* yellow-800 */
+}
+.status-badge.expired {
+    background-color: #fee2e2; /* red-100 */
+    color: #991b1b; /* red-800 */
+}
+.status-badge.rejected {
+    background-color: #e5e7eb; /* gray-200 */
+    color: #4b5563; /* gray-600 */
+}
+
+.role-badge.admin {
+    background-color: #fecaca; /* red-200 */
+    color: #991b1b; /* red-800 */
+}
+
+.role-badge.client {
+    background-color: #dbeafe; /* blue-200 */
+    color: #1e40af; /* blue-800 */
+}

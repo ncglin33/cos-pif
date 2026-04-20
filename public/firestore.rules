@@ -1,0 +1,205 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+
+    // ================================
+    // Admin最高權限（全域放行）
+    // 目的：讓 admin / systemAdmin 不受任何集合限制，避免反覆 permission-denied
+    // ================================
+    function adm_signedIn() { return request.auth != null; }
+
+    // 支援兩種 custom claims 寫法：
+    // 1) { roles: { admin:true } }
+    // 2) { admin:true }
+    function adm_adminByClaims() {
+      return adm_signedIn() && (
+        request.auth.token.admin == true ||
+        request.auth.token.systemAdmin == true ||
+        request.auth.token.superAdmin == true ||
+        (request.auth.token.roles != null && (
+          request.auth.token.roles.admin == true ||
+          request.auth.token.roles.systemAdmin == true ||
+          request.auth.token.roles.superAdmin == true
+        ))
+      );
+    }
+
+    // 支援 users/{uid}.role == 'admin' 或 'systemAdmin'
+    function adm_adminByUserDoc() {
+      return adm_signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin','systemAdmin','superAdmin']);
+    }
+
+    function adm_isAdmin() { return adm_adminByClaims() || adm_adminByUserDoc(); }
+
+    // ✅ 全資料庫 admin bypass
+    match /{document=**} {
+      allow read, write: if adm_isAdmin();
+    }
+
+    // Rules for the 'users' collection
+    match /users/{userId} {
+      // Anyone can create their own user document upon registration.
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // A user can read or update their own data.
+      // An admin can read or update any user's data.
+      allow read, update: if request.auth != null &&
+                          (request.auth.uid == userId ||
+                           (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
+    }
+
+    // Rules for querying the 'users' collection
+    match /users/{document=**} {
+        // Allow list (query) under two conditions:
+        // 1. The user is an admin (for the admin panel).
+        // 2. The query is the specific one used during registration to check for the first user (`limit(1)`).
+        allow list: if request.auth != null &&
+                     (
+                       (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+                       ||
+                       request.query.limit == 1
+                     );
+    }
+
+    // Rules for the 'pifs' collection
+    match /pifs/{pifId} {
+      // Any authenticated user can create a new PIF document.
+      allow create: if request.auth != null;
+
+      // Any authenticated user can read all PIF documents (for the database list page).
+      allow read, list: if request.auth != null;
+
+      // Only the owner of the PIF or an admin can update or delete it.
+      allow update, delete: if request.auth != null &&
+                            (resource.data.ownerId == request.auth.uid ||
+                             (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
+    }
+
+    // Rules for the 'cosmetic_toxics' collection
+    match /cosmetic_toxics/{docId} {
+      // Allow any authenticated user to query the collection (list) and read single documents (get).
+      allow get, list: if request.auth != null;
+    }
+    // ================================
+    // KB / News / Knowledge base rules
+    // ================================
+
+    function isSignedIn() { return request.auth != null; }
+
+    function hasClaimRole(role) {
+      return isSignedIn() &&
+        (
+          (request.auth.token.roles != null && request.auth.token.roles[role] == true) ||
+          (request.auth.token[role] == true)
+        );
+    }
+
+    function isUserAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isKbStaff() {
+      return hasClaimRole('admin')
+          || hasClaimRole('systemAdmin')
+          || hasClaimRole('secretary')
+          || hasClaimRole('kbEditor')
+          || hasClaimRole('editor')
+          || isUserAdmin();
+    }
+
+    function isOwner(data) {
+      return isSignedIn() && data.createdByUid == request.auth.uid;
+    }
+
+    function isAssignedReviewer(data) {
+      return isSignedIn()
+        && (data.reviewerUids != null)
+        && data.reviewerUids.hasAny([request.auth.uid]);
+    }
+
+    function canReadSubmission(data) {
+      return isOwner(data) || isAssignedReviewer(data) || isKbStaff();
+    }
+
+    // 投稿主檔
+    match /kb_submissions/{sid} {
+      allow create: if isSignedIn()
+        && (
+          isKbStaff() ||
+          (request.resource.data.createdByUid == request.auth.uid)
+        )
+        && request.resource.data.status == 'draft';
+
+      allow read: if canReadSubmission(resource.data);
+
+      // 作者只能在 draft / revision_requested 編修，並限制狀態流轉
+      allow update: if isKbStaff() || (
+        isOwner(resource.data)
+        && request.resource.data.createdByUid == resource.data.createdByUid
+        && (
+          (resource.data.status == 'draft' && (request.resource.data.status == 'draft' || request.resource.data.status == 'submitted')) ||
+          (resource.data.status == 'revision_requested' && (request.resource.data.status == 'revision_requested' || request.resource.data.status == 'revised_submitted'))
+        )
+      );
+
+      allow delete: if isKbStaff();
+
+      // 版本子集合（每次上傳 PDF / 修訂可寫入）
+      match /versions/{verId} {
+        function parent() {
+          return get(/databases/$(database)/documents/kb_submissions/$(sid)).data;
+        }
+        allow read: if canReadSubmission(parent());
+        allow create: if isSignedIn() && (isKbStaff() || isOwner(parent()));
+        allow update, delete: if isKbStaff();
+      }
+    }
+
+    // 刊物（月刊/週刊）
+    match /kb_issues/{issueId} {
+      allow read: if (resource.data.status == 'published') || isKbStaff();
+      allow create, update, delete: if isKbStaff();
+    }
+
+    // 文章（發布後可公開閱讀）
+    match /kb_articles/{articleId} {
+      allow read: if (resource.data.status == 'published') || isKbStaff();
+      allow create, update, delete: if isKbStaff();
+    }
+
+    // 名詞 / 文獻：公開讀、僅 KB staff 可寫
+    match /kb_terms/{termId} {
+      allow read: if true;
+      allow create, update, delete: if isKbStaff();
+    }
+    match /kb_refs/{refId} {
+      allow read: if true;
+      allow create, update, delete: if isKbStaff();
+    }
+
+    // 最新消息：published 公開讀；staff 可寫
+    match /news/{newsId} {
+      allow read: if (resource.data.status == 'published') || isKbStaff();
+      allow create, update, delete: if isKbStaff();
+    }
+
+    // 化妝品知識庫 / QA：公開讀；staff 可寫（若你希望改成需登入再讀，可把 if true 改成 isSignedIn()）
+    match /cosmetic_knowledge/{id} {
+      allow read: if true;
+      allow create, update, delete: if isKbStaff();
+    }
+    match /qa_knowledge/{id} {
+      allow read: if true;
+      allow create, update, delete: if isKbStaff();
+    }
+  }
+}

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<script type="module" src="/auth_guard_cos.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PIF 00｜產品資訊檔案目錄</title>
+<style>
+  :root{
+    --fg:#111; --muted:#666; --line:#e5e7eb; --brand:#2563eb; --ok:#16a34a; --bad:#dc2626; --warn:#d97706;
+  }
+  html,body{background:#fff;color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei",Segoe UI,Roboto,Arial,sans-serif;line-height:1.5}
+  h1{font-size:1.4rem;margin:0 0 .25rem 0}
+  .toolbar{position:sticky;top:0;background:rgba(255,255,255,.95);backdrop-filter:blur(4px);border-bottom:1px solid var(--line);z-index:50}
+  .toolbar .wrap{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;padding:.6rem .8rem}
+  button{border:1px solid var(--line);background:#fff;padding:.45rem .7rem;border-radius:.5rem;cursor:pointer}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .container{max-width:800px;margin:0 auto;padding:1rem .8rem 3rem}
+  #status{padding:1rem; text-align:center; color: var(--muted);}
+  .toc-list{border:1px solid var(--line); border-radius:.75rem; overflow:hidden;}
+  .toc-item{display:flex; padding:.6rem .9rem; border-bottom:1px solid var(--line); align-items:center;}
+  .toc-item:last-child{border-bottom:none;}
+  .toc-item .no{flex-shrink:0; font-weight:500; width:5em;}
+  .toc-item .title{flex-grow:1;}
+  .toc-item .link{font-size:.8rem; color:var(--brand); text-decoration:none;}
+  .toc-item .link.disabled{color:var(--muted); pointer-events:none;}
+  .no-print{}
+  @media print{
+    .toolbar, .no-print{display:none!important}
+    .container{padding:0; max-width:none;}
+    h1 {text-align:center; margin-bottom:1.5rem;}
+    .toc-item .link {display:none;}
+  }
+</style>
+</head>
+<body>
+  <div class="toolbar no-print">
+    <div class="wrap">
+      <button onclick="fetchAndRenderTOC()">重新整理</button>
+      <button onclick="window.print()" class="primary">列印 / 匯出 PDF</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1>產品資訊檔案目錄</h1>
+    <div id="toc-list" class="toc-list">
+        <div id="status">讀取中...</div>
+    </div>
+  </div>
+
+<script>
+const $ = sel => document.querySelector(sel);
+
+async function fetchAndRenderTOC() {
+    const listEl = $('#toc-list');
+    const statusEl = $('#status');
+    statusEl.textContent = '正在從 pifs.html 讀取最新資料...';
+
+    try {
+        const response = await fetch('pifs.html');
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const html = await response.text();
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Updated to find the pifModules array directly from the script
+        const scriptTag = Array.from(doc.querySelectorAll('script[type="module"]')).find(s => s.textContent.includes('pifModules'));
+        if (!scriptTag) throw new Error('在 pifs.html 中找不到包含 pifModules 的 script 標籤');
+
+        // This is a simplified and potentially fragile way to extract the array.
+        // It assumes the variable is declared as `const pifModules = [...]`.
+        const match = scriptTag.textContent.match(/const pifModules =\s*(\[[\s\S]*?\]);/);
+        if (!match || !match[1]) throw new Error('無法從 script 中解析 pifModules 陣列');
+
+        // The matched string is JavaScript, not JSON. We need to evaluate it.
+        // Using Function constructor is safer than eval().
+        const pifData = new Function(`return ${match[1]}`)();
+
+        if (!pifData || !pifData.length) {
+             statusEl.textContent = '找不到有效的 PIF 項目。';
+             return;
+        }
+
+        // Clear previous content
+        listEl.innerHTML = '';
+
+        pifData.forEach(item => {
+            const itemEl = document.createElement('div');
+            itemEl.className = 'toc-item';
+
+            const linkClass = item.href ? 'link' : 'link disabled';
+            const target = item.href ? `href="${item.href}" target="_blank"` : 'href="#"';
+
+            itemEl.innerHTML = `
+                <div class="no">${item.no}</div>
+                <div class="title">${item.title}</div>
+                <a class="${linkClass}" ${target}>前往</a>
+            `;
+            listEl.appendChild(itemEl);
+        });
+
+    } catch (error) {
+        console.error('讀取目錄時發生錯誤:', error);
+        listEl.innerHTML = `<div id="status">讀取目錄失敗，請確認 pifs.html 是否存在且格式正確。(${error.message})</div>`;
+    }
+}
+
+// Initial load
+(function init(){
+    fetchAndRenderTOC();
+})();
+</script>
+</body>
+</html>

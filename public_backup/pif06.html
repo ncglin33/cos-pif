@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PIF 06｜製造方法與流程</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<style>
+  :root{--max:1200px;}
+  h2 { font-size: 1.1rem; margin-bottom: .6rem;}
+  h3 { font-size: 1rem; margin-top:.8rem; margin-bottom: .5rem; color: #374151;}
+
+  .card { margin-bottom: 1rem; }
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px; justify-content: flex-end;}
+  
+  /* 相別管理 */
+  #phase-manager { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 1rem; }
+  #phase-list { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  #phase-list li { display: flex; align-items: center; background-color: #e5e7eb; border-radius: 16px; padding: 4px 12px; font-size: 0.9rem; }
+  .remove-phase-btn { background: none; border: none; color: #9ca3af; cursor: pointer; margin-left: 8px; padding: 2px; line-height: 1; }
+  .remove-phase-btn:hover { color: #374151; }
+  #add-phase-form { display: flex; gap: 6px; }
+  #add-phase-form input { width: 120px; }
+
+  /* 配方表 */
+  #formulaTbl th:nth-child(2), #formulaTbl td:nth-child(2){width:160px} /* 相別 */
+  #formulaTbl th:nth-child(3), #formulaTbl td:nth-child(3){width:56%} /* INCI */
+  #formulaTbl th:nth-child(4), #formulaTbl td:nth-child(4){width:120px} /* 用量 */
+  #formulaTbl td:nth-child(3) input, #formulaTbl td:nth-child(4) input { background-color: #f9fafb; color: #6b7280; }
+
+  /* 流程圖 */
+  .flow-wrap{display:grid;grid-template-columns:1fr;gap:1rem}
+  .steps-list table td{vertical-align:middle}
+  .svg-box{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:8px;overflow:auto;margin-top: .8rem;}
+  .svg-box svg{max-width:100%}
+  #flowImg {max-width:100%; border:1px solid var(--line); border-radius:var(--radius); margin-top:.8rem;}
+</style>
+</head>
+<body>
+
+<nav-bar></nav-bar>
+<top-bar></top-bar>
+
+<div class="container">
+  <status-bar></status-bar>
+
+  <!-- 1. 相別與配方表 -->
+  <section class="card" id="formulaCard">
+    <h2>一、製造相別與配方表</h2>
+    
+    <!-- 相別管理 -->
+    <h3>管理製造相別</h3>
+    <div class="muted" style="margin-bottom: 0.8rem;">在此新增、刪除或編輯此產品的製造相別，下方配方表的「相別」下拉選單會同步更新。</div>
+    <div id="phase-manager">
+      <ul id="phase-list"></ul>
+      <form id="add-phase-form">
+        <input type="text" id="new-phase-name" placeholder="輸入新相別名稱">
+        <button type="submit" class="primary"><i class="fa-solid fa-plus"></i> 新增</button>
+      </form>
+    </div>
+
+    <!-- 配方表 -->
+    <h3 style="margin-top: 1.5rem;">配方表 (唯讀，順序/相別可調)</h3>
+    <div class="muted">配方內容（INCI / 用量）直接從 PIF 03 讀取。您可在此調整「投料順序」並指定各成分的「相別」。</div>
+
+    <table id="formulaTbl">
+      <thead>
+        <tr>
+          <th style="width:50px">序</th>
+          <th style="width:160px">相別</th>
+          <th>INCI／原料名稱</th>
+          <th style="width:100px">用量(%)</th>
+          <th class="noprint" style="width:110px">順序</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="5" class="muted" style="text-align:center;">正在從 PIF 03 載入配方資料...</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 2. 製造摘要說明 -->
+  <section class="card">
+    <h2>二、製造摘要說明</h2>
+    <div class="muted">依選定相別與配方，描述溫度、轉速、時間、pH 調整與關鍵控制點（CCP）。</div>
+    <textarea id="summary" placeholder="點擊右下角的 AI 按鈕，即可根據上方配方自動生成專業的製造流程建議。" rows="10"></textarea>
+    <div class="toolbar noprint" style="margin-top:6px; justify-content: space-between;">
+      <span class="muted" id="sumCount">0 字</span>
+      <button id="btnGenerateAiSummary" class="primary" title="根據上方配方，運用 AI 生成專業的製造流程草稿"><i class="fa-solid fa-wand-magic-sparkles"></i> AI 生成摘要</button>
+    </div>
+  </section>
+
+  <!-- 3. 製程流程圖 -->
+  <section class="card" id="flowCard">
+    <h2>三、製程流程圖</h2>
+    <div class="flow-wrap">
+      <div class="steps-list">
+        <h3>3-1 內建流程圖產生器</h3>
+        <div class="muted">編輯下方步驟文字，然後點擊按鈕即可產生 SVG 流程圖。</div>
+        <div class="toolbar" style="margin:.8rem 0">
+          <button id="add-step-btn"><i class="fa-solid fa-plus"></i> 新增步驟</button>
+          <button id="update-flow-btn" class="primary"><i class="fa-solid fa-arrows-rotate"></i> 更新流程圖</button>
+          <button id="clear-steps-btn" class="danger"><i class="fa-solid fa-trash-can"></i> 清除步驟</button>
+        </div>
+        <table id="stepsTbl">
+          <thead><tr><th>序</th><th>步驟名稱</th><th>條件 / 備註 (溫度、轉速、時間...)</th><th class="noprint">動作</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="svg-container">
+        <h3>3-2 流程圖預覽</h3>
+        <div class="muted">此為預覽圖，您可以點擊下載按鈕儲存為 SVG 檔案。</div>
+        <div class="toolbar" style="margin-top:.8rem">
+          <button id="download-svg-btn"><i class="fa-solid fa-download"></i> 下載 SVG</button>
+        </div>
+        <div class="svg-box" id="svg-box">
+          <div class="muted" style="text-align:center;padding:2rem 0">點擊「更新流程圖」按鈕以產生預覽</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="toolbar" style="margin: 2rem 0;">
+    <button id="save-btn" class="primary" style="font-size: 1.1rem; padding: .5rem 1.5rem;"><i class="fa-solid fa-cloud-arrow-up"></i> 儲存本頁所有變更</button>
+  </div>
+
+</div>
+
+<script type="module">
+import { auth, db, functions } from "./firebase-config.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
+import "./components.js";
+
+const byId = id => document.getElementById(id);
+const $ = sel => document.querySelector(sel);
+
+const safeCall = (tagName, selector, callback) => {
+    customElements.whenDefined(tagName).then(() => {
+        const element = document.querySelector(selector);
+        if (element) callback(element);
+        else console.error(`Element ${selector} not found.`);
+    });
+};
+
+const showStatus = (message, type, duration) => {
+    safeCall('status-bar', 'status-bar', el => el.show(message, type, duration));
+};
+
+let pifId, user, pif_docRef, productName;
+const state = { 
+    formula: [], 
+    summary: '', 
+    steps: [],
+    phases: ['水相', '油相', '後添加'] // Default phases
+};
+
+const initPage = () => {
+    const params = new URLSearchParams(window.location.search);
+    pifId = params.get("id");
+    if (!pifId) {
+        showStatus("錯誤：URL 中缺少 PIF ID。", "error", -1);
+        return;
+    }
+    const companyName = params.get("companyName");
+    productName = params.get("productName");
+
+    safeCall('top-bar', 'top-bar', el => el.setInfo(pifId, companyName, productName, "06 製造方法與流程"));
+    document.body.addEventListener('logout-request', () => signOut(auth).catch(error => showStatus(`登出失敗: ${error.message}`, 'error')));
+
+    onAuthStateChanged(auth, u => {
+        user = u;
+        if (user) {
+            safeCall('top-bar', 'top-bar', el => el.setUser(user));
+            pif_docRef = doc(db, 'pifs', pifId);
+            loadData();
+        } else {
+            window.location.href = '/';
+        }
+    });
+
+    addEventListeners();
+};
+
+const loadData = async () => {
+  showStatus("已登入，正在載入資料...", "loading", 0);
+  try {
+    const pif_snap = await getDoc(pif_docRef);
+    if (!pif_snap.exists()) {
+      showStatus(`錯誤：找不到 PIF ID 為 ${pifId} 的文件。`, "error", -1);
+      return;
+    }
+    
+    const cloudData = pif_snap.data();
+    const pif03_recipe = cloudData?.pif03?.recipe || [];
+    const pif06_data = cloudData?.pif06 || {};
+
+    state.formula = synchronizeFormula(pif03_recipe, pif06_data.formula || []);
+    state.summary = pif06_data.summary || '';
+    state.steps = pif06_data.steps || [];
+    state.phases = (pif06_data.phases && pif06_data.phases.length > 0) ? pif06_data.phases : ['水相', '油相', '後添加'];
+    
+    renderAll();
+    showStatus("資料載入完成！", "success");
+
+  } catch (error) {
+    console.error("Load Data Error:", error);
+    showStatus(`載入資料時發生錯誤: ${error.message}`, "error", -1);
+  }
+};
+
+const saveData = async () => {
+    showStatus("正在儲存變更...", "loading", 0);
+    const btn = byId('save-btn');
+    btn.disabled = true;
+    try {
+        const dataToSave = {
+            formula: state.formula.map(f => ({ inci: f.inci, order: f.order, phase: f.phase })),
+            summary: state.summary,
+            steps: state.steps,
+            phases: state.phases
+        };
+        await setDoc(pif_docRef, { pif06: dataToSave, lastModified: serverTimestamp() }, { merge: true });
+        showStatus("所有變更已成功儲存至雲端！", "success");
+    } catch (error) {
+        console.error("Save Data Error:", error);
+        showStatus(`儲存失敗: ${error.message}`, "error", -1);
+    } finally {
+        btn.disabled = false;
+    }
+};
+
+function synchronizeFormula(pif03_recipe, pif06_saved) {
+    if (!Array.isArray(pif03_recipe)) return [];
+    const pif06_map = new Map(pif06_saved.map(item => [item.inci, {order: item.order, phase: item.phase}]));
+    const synced = pif03_recipe.map((pif03_item, index) => {
+        const pif06_extras = pif06_map.get(pif03_item.inci);
+        return {
+            inci: pif03_item.inci,
+            pct: pif03_item.pct,
+            order: (pif06_extras && pif06_extras.order != null) ? pif06_extras.order : index + 1,
+            phase: (pif06_extras && pif06_extras.phase != null) ? pif06_extras.phase : ''
+        };
+    });
+    synced.sort((a, b) => a.order - b.order);
+    return synced;
+}
+
+function renderAll() {
+    renderPhases();
+    renderFormula();
+    byId('summary').value = state.summary;
+    updateSummaryCount();
+    renderSteps();
+}
+
+function renderPhases() {
+    const list = byId('phase-list');
+    list.innerHTML = '';
+    state.phases.forEach(phase => {
+        const li = document.createElement('li');
+        li.textContent = phase;
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'remove-phase-btn';
+        removeBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+        removeBtn.title = `刪除「${phase}」`;
+        removeBtn.onclick = () => {
+            if (confirm(`確定要刪除「${phase}」這個相別嗎？`)) {
+                state.phases = state.phases.filter(p => p !== phase);
+                renderAll(); // Re-render everything
+            }
+        };
+        li.appendChild(removeBtn);
+        list.appendChild(li);
+    });
+}
+
+function renderFormula() {
+  const tbody = byId('formulaTbl').querySelector('tbody');
+  tbody.innerHTML = '';
+  if (!state.formula || state.formula.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="muted" style="text-align:center; padding: 1rem;">未找到 PIF 03 配方資料，或配方為空。</td></tr>';
+    return;
+  }
+  
+  const phaseOptions = state.phases.map(p => `<option value="${p}">${p}</option>`).join('');
+
+  state.formula.forEach((row, idx) => {
+    const tr = document.createElement('tr');
+    tr.dataset.inci = row.inci;
+    tr.innerHTML = `
+      <td>${row.order}</td>
+      <td>
+        <select class="phase-select">
+          <option value="">-- 未指定 --</option>
+          ${phaseOptions}
+        </select>
+      </td>
+      <td><input value="${row.inci || ''}" readonly></td>
+      <td><input type="number" value="${row.pct != null ? row.pct : ''}" readonly></td>
+      <td class="noprint">
+        <div class="row-actions">
+          <button data-act="up" title="上移"><i class="fa-solid fa-arrow-up"></i></button>
+          <button data-act="down" title="下移"><i class="fa-solid fa-arrow-down"></i></button>
+        </div>
+      </td>
+    `;
+    const select = tr.querySelector('.phase-select');
+    select.value = row.phase || '';
+    tbody.appendChild(tr);
+  });
+}
+
+function renderSteps() {
+    const tbody = byId('stepsTbl').querySelector('tbody');
+    tbody.innerHTML = '';
+    if (!state.steps || state.steps.length === 0) {
+        state.steps = [{ name: '開始', note: '' }, { name: '結束', note: '' }];
+    }
+    state.steps.forEach((step, index) => {
+        const tr = document.createElement('tr');
+        tr.dataset.index = index;
+        tr.innerHTML = `
+            <td>${index + 1}</td>
+            <td><input class="step-name" value="${step.name || ''}" placeholder="例如：混合、加熱"></td>
+            <td><input class="step-note" value="${step.note || ''}" placeholder="例如：至 80°C，轉速 3000 rpm"></td>
+            <td class="noprint"><button class="remove-step-btn danger">刪除</button></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function updateSummaryCount() {
+    const len = byId('summary').value.length;
+    byId('sumCount').textContent = `${len} 字`;
+}
+
+async function generateAiSummary() {
+    const btn = byId('btnGenerateAiSummary');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 正在生成...';
+    showStatus("AI 正在根據您的配方生成摘要...", "loading", 0);
+
+    try {
+        if (state.formula.some(f => !f.phase)) {
+            throw new Error('請先為所有成分指定相別，AI 才能進行分析。');
+        }
+
+        const generate = httpsCallable(functions, 'generateManufacturingSummary');
+        const result = await generate({ formula: state.formula, productName: productName });
+        
+        if (result.data.success) {
+            byId('summary').value = result.data.summary;
+            state.summary = result.data.summary;
+            updateSummaryCount();
+            showStatus("AI 摘要已成功生成！", "success");
+        } else {
+            throw new Error(result.data.error || 'AI 摘要生成失敗。');
+        }
+
+    } catch (error) {
+        console.error("AI Summary Error:", error);
+        showStatus(`AI 摘要生成失敗: ${error.message}`, "error", -1);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> AI 生成摘要';
+    }
+}
+
+async function updateFlowchart() {
+    showStatus("正在產生流程圖...", "loading", 0);
+    const btn = byId('update-flow-btn');
+    btn.disabled = true;
+    try {
+        const generateFlowchart = httpsCallable(functions, 'generateFlowchart');
+        const result = await generateFlowchart({ steps: state.steps });
+        byId('svg-box').innerHTML = result.data.svg;
+        showStatus("流程圖已更新。", "success");
+    } catch (error) {
+        console.error("Flowchart Error:", error);
+        showStatus(`產生流程圖失敗: ${error.message}`, "error", -1);
+        byId('svg-box').innerHTML = `<div class="muted" style="text-align:center;padding:2rem 0;color:red;">產生失敗，請檢查 Cloud Function 是否已部署或日誌。</div>`;
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function addEventListeners() {
+    byId('save-btn').addEventListener('click', saveData);
+    
+    // Phase Manager
+    byId('add-phase-form').addEventListener('submit', e => {
+        e.preventDefault();
+        const input = byId('new-phase-name');
+        const newPhase = input.value.trim();
+        if (newPhase && !state.phases.includes(newPhase)) {
+            state.phases.push(newPhase);
+            renderAll(); // Re-render everything
+        }
+        input.value = '';
+    });
+
+    // Formula Table
+    byId('formulaTbl').addEventListener('change', e => {
+        if (e.target.classList.contains('phase-select')) {
+            const inci = e.target.closest('tr').dataset.inci;
+            const formula_item = state.formula.find(f => f.inci === inci);
+            if(formula_item) formula_item.phase = e.target.value;
+        }
+    });
+
+    byId('formulaTbl').addEventListener('click', e => {
+        const button = e.target.closest('button');
+        if (!button) return;
+        const act = button.dataset.act;
+        const tr = button.closest('tr');
+        const inci = tr.dataset.inci;
+        const currentIndex = state.formula.findIndex(f => f.inci === inci);
+
+        if (act === 'up' && currentIndex > 0) {
+            [state.formula[currentIndex].order, state.formula[currentIndex - 1].order] = [state.formula[currentIndex - 1].order, state.formula[currentIndex].order];
+        } else if (act === 'down' && currentIndex < state.formula.length - 1) {
+            [state.formula[currentIndex].order, state.formula[currentIndex + 1].order] = [state.formula[currentIndex + 1].order, state.formula[currentIndex].order];
+        }
+        state.formula.sort((a,b) => a.order - b.order);
+        renderFormula();
+    });
+    
+    // Summary Textarea
+    byId('summary').addEventListener('input', () => {
+        state.summary = byId('summary').value;
+        updateSummaryCount();
+    });
+
+    byId('btnGenerateAiSummary').addEventListener('click', generateAiSummary);
+
+    // Steps Table
+    byId('stepsTbl').addEventListener('change', e => {
+        const index = e.target.closest('tr').dataset.index;
+        const step = state.steps[index];
+        if (e.target.classList.contains('step-name')) step.name = e.target.value;
+        if (e.target.classList.contains('step-note')) step.note = e.target.value;
+    });
+    
+    byId('stepsTbl').addEventListener('click', e => {
+        if (e.target.classList.contains('remove-step-btn')) {
+            state.steps.splice(e.target.closest('tr').dataset.index, 1);
+            renderSteps();
+        }
+    });
+
+    byId('add-step-btn').addEventListener('click', () => {
+        state.steps.push({ name: '', note: '' });
+        renderSteps();
+    });
+
+    byId('clear-steps-btn').addEventListener('click', () => {
+        if (confirm('確定要清除所有步驟嗎？')) {
+            state.steps = [];
+            renderSteps();
+        }
+    });
+
+    // Flowchart
+    byId('update-flow-btn').addEventListener('click', updateFlowchart);
+
+    byId('download-svg-btn').addEventListener('click', () => {
+        const svg = byId('svg-box').querySelector('svg');
+        if (!svg) return alert('沒有可下載的流程圖。');
+        const svgData = new XMLSerializer().serializeToString(svg);
+        const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-t" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `flowchart-${pifId}.svg`;
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+}
+
+initPage();
+
+</script>
+</body>
+</html>

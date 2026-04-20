@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PIF 10｜成分毒理特性 (AI 智慧版)</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="style.css">
+<style>
+  html { scroll-behavior: smooth; }
+  body { background-color: #f0f2f5; }
+  .container { padding: 1rem; }
+
+  #ai-editor-panel {
+    background: #fff; border-radius: 8px; margin-bottom: 2rem; 
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out, padding 0.5s ease-out; padding: 0;
+  }
+  #ai-editor-panel.open { padding: 1.5rem; max-height: 1000px; }
+  #ai-editor-header { font-size: 1.5rem; font-weight: 600; color: #111827; margin-bottom: 1rem; }
+  #ai-editor-body { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.25rem; }
+  #ai-editor-footer { padding-top: 1.5rem; text-align: right; }
+
+  #cards-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }
+  .ingredient-card { background: #fff; border: 2px solid transparent; border-radius: 8px; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1); display: flex; flex-direction: column; transition: all 0.3s ease; }
+  .ingredient-card.editing { border-color: var(--brand); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+
+  .card-header h3 { font-size: 1.2rem; }
+  .card-header p { font-size: 0.9rem; }
+  .card-body { padding: 1rem; flex-grow: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 1rem; }
+  .data-point .label { font-weight: 500; }
+  .value.no-data { font-style: italic; }
+  .ai-error { color: #ef4444; font-weight: 500; grid-column: 1 / -1; }
+  
+  #upload-status-pdf { 
+      display: none; 
+      padding: 0.75rem 1.25rem; 
+      margin-top: 1rem; 
+      border-radius: 8px; 
+      font-weight: 500; 
+      text-align: center; 
+  }
+  .status-info { background-color: #e0e7ff; color: #3730a3; }
+  .status-success { background-color: #dcfce7; color: #166534; }
+  .status-error { background-color: #fee2e2; color: #991b1b; }
+  #upload-status-pdf i { margin-right: 0.5rem; }
+</style>
+</head>
+<body>
+
+<pif-nav></pif-nav>
+<top-bar></top-bar>
+
+<div class="container">
+    <status-bar></status-bar>
+    <header>
+        <h2>各成分之毒理特性 (AI 智慧版)</h2>
+        <p class="subtitle">此工作台將自動比對您的配方，並允許使用 AI 輔助填寫各成分的毒理特性。</p>
+        <div class="toolbar noprint" style="margin: 1rem 0;">
+          <button id="btnUploadPdf"><i class="fa-solid fa-file-arrow-up"></i> 上傳本頁 PDF</button>
+          <input type="file" id="pdfUploader" accept="application/pdf" style="display:none;">
+          <button onclick="window.print()" class="btn"><i class="fa-solid fa-print"></i> 列印</button>
+        </div>
+        <div id="upload-status-pdf" class="noprint"></div>
+    </header>
+    
+    <div id="ai-editor-panel">
+        <h3 id="ai-editor-header"></h3>
+        <div id="ai-editor-body"></div>
+        <div id="ai-editor-footer">
+            <button id="ai-editor-cancel" class="btn">取消</button>
+            <button id="ai-editor-save" class="btn primary">儲存變更</button>
+        </div>
+    </div>
+
+    <div id="report-container">
+        <div id="cards-container"></div>
+    </div>
+</div>
+
+<script type="module">
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
+  import { ref, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+  import { db, auth, storage } from './firebase-config.js';
+  import "./components.js";
+
+  const $ = sel => document.querySelector(sel);
+  const showStatus = (message, type, duration) => customElements.whenDefined('status-bar').then(() => document.querySelector('status-bar').show(message, type, duration));
+  
+  const DATA_COLLECTION = "rms";
+  let pageContext = {};
+  let recipeCache = [];
+  let propertiesCache = new Map();
+  let currentEditingInci = null;
+
+  const ALL_FIELDS = { 
+    acute_oral_toxicity: '急性經口毒性 (LD50)',
+    acute_dermal_toxicity: '急性經皮毒性 (LD50)',
+    acute_inhalation_toxicity: '急性吸入毒性 (LC50)',
+    skin_irritation: '皮膚刺激/腐蝕性',
+    eye_irritation: '眼睛刺激/損傷性',
+    skin_sensitization: '皮膚過敏性',
+    mutagenicity: '基因突變性',
+    carcinogenicity: '致癌性',
+    reproductive_toxicity: '生殖毒性',
+    noael: '未觀察到有害作用的劑量水平 (NOAEL)',
+  };
+  const AI_NO_DATA = "AI 輔助無資料";
+
+  async function main() {
+      onAuthStateChanged(auth, user => {
+          if (user) initPage(user); 
+          else window.location.href = 'login.html';
+      });
+  }
+
+  function initPage(user) {
+    pageContext = setupPageContext();
+    document.body.addEventListener('logout-request', () => auth.signOut());
+    setupUI(user, pageContext);
+    initializeWorkspace();
+  }
+
+  function setupPageContext() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return { pifId: urlParams.get('id'), companyName: decodeURIComponent(urlParams.get('companyName')||''), productName: decodeURIComponent(urlParams.get('productName')||'') };
+  }
+
+  function setupUI(user, context) {
+      const topBar = document.querySelector('top-bar');
+      customElements.whenDefined('top-bar').then(() => {
+          topBar.setInfo(context.pifId, context.companyName, context.productName, "PIF 10 成分毒理特性");
+          topBar.setUser(user);
+      });
+      $('#ai-editor-cancel').addEventListener('click', closeAiEditor);
+      $('#cards-container').addEventListener('click', e => {
+          const button = e.target.closest('.btn-ai-edit');
+          if (button) openAiEditor({ inci: button.dataset.inci, cas: button.dataset.cas });
+      });
+
+      $('#btnUploadPdf').addEventListener('click', () => $('#pdfUploader').click());
+      $('#pdfUploader').addEventListener('change', handlePdfUpload);
+  }
+
+  async function initializeWorkspace() {
+    showStatus('載入中...', 'loading');
+    await loadPropertiesData();
+    const pifDocSnap = await getDoc(doc(db, "pifs", pageContext.pifId));
+    if (!pifDocSnap.exists() || !pifDocSnap.data().pif03?.recipe?.length) {
+        showStatus('<h3><i class="fa-solid fa-box-open"></i> 缺少 PIF 03 配方</h3><p>請先前往 PIF 03 填寫產品配方，才能在此處編輯各成分的毒理特性。</p>', 'error', -1);
+        $('#report-container').innerHTML = '';
+        return;
+    }
+    recipeCache = pifDocSnap.data().pif03.recipe;
+    renderIngredientCards(recipeCache);
+    showStatus('配方載入完成！', 'success');
+  }
+
+  async function loadPropertiesData() {
+    const querySnapshot = await getDocs(collection(db, DATA_COLLECTION));
+    querySnapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.inciName) propertiesCache.set(data.inciName.trim().toLowerCase(), {id: doc.id, ...data});
+    });
+  }
+
+  function renderIngredientCards(recipe) {
+    $('#cards-container').innerHTML = recipe.map(ing => generateCard(ing)).join('');
+  }
+
+  function generateCard(ing) {
+    const inci = ing.inci || '[未命名]';
+    const cas = ing.cas || 'N/A';
+    const propData = propertiesCache.get(inci.trim().toLowerCase()) || null;
+
+    return `
+    <div class="ingredient-card" data-inci-name="${inci}">
+      <div class="card-header"><h3>${inci}</h3><p>CAS: ${cas}</p></div>
+      <div class="card-body">
+        ${Object.entries(ALL_FIELDS).map(([key, name]) => {
+            const value = propData?.[key] || '-';
+            return `<div class="data-point"><span class="label">${name}</span><span class="value ${!propData || !value || value === '-' ? 'no-data' : ''}">${value}</span></div>`;
+        }).join('')}
+      </div>
+      <div class="card-footer"><button class="btn btn-ai-edit" data-inci="${inci}" data-cas="${cas}"><i class="fa-solid fa-magic-sparkles"></i> AI 編輯</button></div>
+    </div>`;
+  }
+  
+  async function openAiEditor(ingredient) {
+    currentEditingInci = ingredient.inci;
+    document.querySelectorAll('.ingredient-card.editing').forEach(c => c.classList.remove('editing'));
+    const card = $(`div[data-inci-name="${ingredient.inci}"]`);
+    if (card) {
+        card.classList.add('editing');
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    const editorPanel = $('#ai-editor-panel');
+    editorPanel.classList.add('open');
+    if(window.scrollY > editorPanel.offsetTop) {
+        window.scrollTo(0, editorPanel.offsetTop - 20);
+    }
+
+    $('#ai-editor-header').textContent = `AI 智慧編輯: ${ingredient.inci}`;
+    const editorBody = $('#ai-editor-body');
+    editorBody.innerHTML = '<div id="ai-editor-loader"><i class="fa-solid fa-spinner fa-spin"></i> AI 正在查詢毒理資料...</div>';
+
+    const existingData = propertiesCache.get(ingredient.inci.trim().toLowerCase()) || {};
+    const suggestions = await getAiSuggestions(ingredient);
+    
+    if (suggestions.error) {
+        editorBody.innerHTML = `<p class="ai-error"><i class="fa-solid fa-circle-exclamation"></i> AI 查詢失敗: ${suggestions.error}</p>`;
+        return;
+    }
+
+    let formHtml = Object.entries(ALL_FIELDS).map(([key, name]) => {
+        const value = existingData[key] || suggestions[key] || AI_NO_DATA;
+        return `<div class="form-group"><label>${name}</label><input id="ai-field-${key}" value="${value}"></div>`;
+    }).join('');
+    editorBody.innerHTML = formHtml;
+
+    const saveButton = $('#ai-editor-save');
+    const newSaveButton = saveButton.cloneNode(true);
+    saveButton.parentNode.replaceChild(newSaveButton, saveButton);
+    newSaveButton.addEventListener('click', () => handleSaveAiData(ingredient));
+  }
+  
+  function closeAiEditor() {
+    $('#ai-editor-panel').classList.remove('open');
+    document.querySelectorAll('.ingredient-card.editing').forEach(c => c.classList.remove('editing'));
+    currentEditingInci = null;
+  }
+
+  async function handleSaveAiData(ingredient) {
+      const saveButton = $('#ai-editor-save');
+      saveButton.disabled = true; saveButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 儲存中...';
+      const newData = { inciName: ingredient.inci, cas: ingredient.cas };
+      Object.keys(ALL_FIELDS).forEach(key => newData[key] = $(`#ai-field-${key}`).value.trim());
+
+      try {
+          const docId = ingredient.inci.trim().toLowerCase().replace(/[\s/]/g, '_');
+          await setDoc(doc(db, DATA_COLLECTION, docId), newData, { merge: true });
+          propertiesCache.set(ingredient.inci.trim().toLowerCase(), { id: docId, ...newData });
+          
+          const card = $(`div[data-inci-name="${ingredient.inci}"]`);
+          const originalRecipeItem = recipeCache.find(r => r.inci === ingredient.inci);
+          if (card && originalRecipeItem) card.outerHTML = generateCard(originalRecipeItem);
+          
+          closeAiEditor();
+          showStatus(`成功更新了 ${ingredient.inci} 的資料！`, 'success');
+      } catch (error) {
+          showStatus(`儲存失敗: ${error.message}`, 'error');
+      } finally {
+          saveButton.disabled = false; saveButton.innerHTML = '儲存變更';
+      }
+  }
+
+  async function getAiSuggestions(ingredient) {
+      const functions = getFunctions(auth.app, 'us-central1');
+      const generateToxicologySummary = httpsCallable(functions, 'generateToxicologySummary');
+      try {
+          const result = await generateToxicologySummary({ inci: ingredient.inci });
+          if (result.data.success) {
+              return result.data.data;
+          } else {
+              return { error: result.data.error || 'AI returned an unspecified error.' };
+          }
+      } catch (error) {
+          console.error("Error calling generateToxicologySummary function:", error);
+          return { error: error.message || 'Failed to connect to the AI service.' };
+      }
+  }
+
+  function handlePdfUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+        showStatus("請僅上傳 PDF 檔案。", "warning");
+        return;
+    }
+    uploadMainPdf(file, `pifs/${pageContext.pifId}/10.pdf`);
+  }
+
+  function uploadMainPdf(file, storagePath) {
+      const uploadTask = uploadBytesResumable(ref(storage, storagePath), file);
+      const button = $('#btnUploadPdf');
+      button.disabled = true;
+
+      uploadTask.on('state_changed', 
+          (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              setUploadStatusPdf(`<i class="fa-solid fa-upload"></i> 正在上傳 PDF... ${Math.round(progress)}%`, 'status-info');
+          }, 
+          (error) => {
+              console.error("Main PDF Upload failed:", error);
+              setUploadStatusPdf(`<i class="fa-solid fa-triangle-exclamation"></i> PDF 上傳失敗: ${error.code}`, 'status-error');
+              button.disabled = false;
+          }, 
+          () => {
+              setUploadStatusPdf('<i class="fa-solid fa-check-circle"></i> PDF 已成功上傳！儀表板狀態將會更新。', 'status-success');
+              button.disabled = false;
+              $('#pdfUploader').value = ''; // Reset file input
+              setTimeout(() => setUploadStatusPdf('', 'none'), 5000);
+          }
+      );
+  }
+
+  function setUploadStatusPdf(msg, styleClass) {
+      const statusEl = $('#upload-status-pdf');
+      if (!msg || styleClass === 'none') {
+          statusEl.style.display = 'none';
+      } else {
+          statusEl.innerHTML = msg;
+          statusEl.className = `noprint ${styleClass}`;
+          statusEl.style.display = 'block';
+      }
+  }
+
+  main();
+
+</script>
+</body>
+</html>

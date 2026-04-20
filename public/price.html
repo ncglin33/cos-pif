@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>價格試算 - CosPIF 智慧科技整合系統</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .pricing-container {
+            min-height: calc(100vh - 140px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+        .pricing-card {
+            max-width: 960px;
+            width: 100%;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.15);
+            padding: 2rem 2.5rem;
+        }
+        .pricing-title {
+            font-size: 1.6rem;
+            margin-bottom: .5rem;
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+        }
+        .pricing-subtitle {
+            color: #6b7280;
+            font-size: .95rem;
+            margin-bottom: 1.5rem;
+        }
+        .price-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
+            gap: 1.75rem;
+        }
+        @media (max-width: 768px) {
+            .pricing-card {
+                padding: 1.5rem 1.25rem;
+            }
+            .price-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .price-panel {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            background: #f9fafb;
+            text-align: left;
+        }
+        .price-panel h3 {
+            font-size: 1.05rem;
+            margin-bottom: .75rem;
+        }
+        .form-row {
+            margin-bottom: 1rem;
+        }
+        .form-row label {
+            display: block;
+            font-size: .9rem;
+            margin-bottom: .35rem;
+            color: #374151;
+        }
+        .form-row input[type="number"] {
+            width: 100%;
+            padding: .5rem .6rem;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            font-size: .95rem;
+        }
+
+        /* 左側用表格排版，對齊右側 */
+        .service-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .9rem;
+        }
+        .service-table tr + tr {
+            border-top: 1px dashed #e5e7eb;
+        }
+        .service-table td {
+            padding: .45rem .25rem;
+            vertical-align: top;
+        }
+        .service-check {
+            width: 28px;
+        }
+        .service-desc {
+            text-align: left;
+        }
+        .service-title {
+            font-size: .9rem;
+            margin-bottom: .1rem;
+        }
+        .service-note {
+            font-size: .8rem;
+            color: #6b7280;
+        }
+
+        .price-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .9rem;
+        }
+        .price-table th,
+        .price-table td {
+            padding: .45rem 0;
+            border-bottom: 1px dashed #e5e7eb;
+        }
+        .price-table th {
+            text-align: left;
+            color: #6b7280;
+            font-weight: 500;
+        }
+        .price-table td:last-child {
+            text-align: right;
+        }
+        .text-muted {
+            color: #9ca3af;
+        }
+        .total-row td {
+            border-top: 1px solid #d1d5db;
+            border-bottom: none;
+            padding-top: .7rem;
+        }
+        .grand-total {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #111827;
+        }
+        .per-product {
+            font-size: .9rem;
+            color: #4b5563;
+        }
+        .note {
+            margin-top: .75rem;
+            font-size: .8rem;
+            color: #6b7280;
+        }
+        .btn-print {
+            margin-top: 1rem;
+            padding: .5rem 1rem;
+            border-radius: 999px;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            font-size: .85rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+        }
+        .btn-print:hover {
+            background: #f3f4f6;
+        }
+        @media print {
+            header, footer, .btn-print {
+                display: none !important;
+            }
+            .pricing-container {
+                padding: 0;
+            }
+            .pricing-card {
+                box-shadow: none;
+                border-radius: 0;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container">
+        <nav>
+            <a href="index.html" class="logo"><i class="fa-solid fa-shield-halved"></i> CosPIF</a>
+            <ul class="nav-links">
+                <li><a href="index.html#features">核心功能</a></li>
+                <li><a href="index.html#about">關於我們</a></li>
+                <li><a href="contact.html">聯絡我們</a></li>
+            </ul>
+            <a href="login.html" class="btn-login">登入系統</a>
+        </nav>
+    </div>
+</header>
+
+<main>
+    <div class="pricing-container">
+        <div class="pricing-card">
+            <h2 class="pricing-title">
+                <i class="fa-solid fa-calculator"></i>
+                價格試算
+            </h2>
+            <p class="pricing-subtitle">
+                以每一「產品」為單位試算：PIF 建置每產品 <strong>8,000 元</strong>，
+                防腐挑戰試驗每品 <strong>12,000 元</strong>，
+                理化與安定性試驗每品 <strong>5,000 元</strong>，
+                微生物總生菌數檢測每品 <strong>2,000 元</strong>，
+                SA 簽署(限本系統產生)每品 <strong>5,000 元</strong>。金額為新台幣，供預估與專案溝通參考，全套優惠28000，多件或多品項另有優惠。
+            </p>
+
+            <div class="price-grid">
+                <!-- 左側：輸入設定（表格排版） -->
+                <div class="price-panel">
+                    <h3><i class="fa-solid fa-sliders"></i> 試算條件</h3>
+                    <div class="form-row">
+                        <label for="product-count">產品數量（品項數）</label>
+                        <input type="number" id="product-count" min="0" value="1">
+                    </div>
+                    <div class="form-row">
+                        <label>每一產品需要的服務內容</label>
+                        <table class="service-table">
+                            <tbody>
+                                <tr>
+                                    <td class="service-check">
+                                        <input type="checkbox" id="include-pif" checked disabled>
+                                    </td>
+                                    <td class="service-desc">
+                                        <div class="service-title">PIF 建置／產品資訊檔案整理</div>
+                                        <div class="service-note">每產品 8,000 元（基本項目，必選）</div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="service-check">
+                                        <input type="checkbox" id="include-pet" checked>
+                                    </td>
+                                    <td class="service-desc">
+                                        <div class="service-title">防腐挑戰試驗（Preservative Efficacy Test）</div>
+                                        <div class="service-note">每產品 12,000 元，如為免檢測產品或已有相關報告，可視情況取消勾選。</div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="service-check">
+                                        <input type="checkbox" id="include-phys">
+                                    </td>
+                                    <td class="service-desc">
+                                        <div class="service-title">產品理化與安定性試驗</div>
+                                        <div class="service-note">每產品 5,000 元，用於確認配方穩定性與包材相容性。</div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="service-check">
+                                        <input type="checkbox" id="include-micro">
+                                    </td>
+                                    <td class="service-desc">
+                                        <div class="service-title">微生物總生菌數檢測</div>
+                                        <div class="service-note">每產品 2,000 元，評估產品在標示保存條件下之微生物品質。</div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="service-check">
+                                        <input type="checkbox" id="include-sa">
+                                    </td>
+                                    <td class="service-desc">
+                                        <div class="service-title">SA 簽署（Safety Assessment 報告簽署）</div>
+                                        <div class="service-note">每產品 5,000 元，根據本系統所建置之 PIF、毒理與試驗結果撰寫正式安全評估報告。</div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="service-check">
+                                        <input type="checkbox" id="include-func">
+                                    </td>
+                                    <td class="service-desc">
+                                        <div class="service-title">功能性檢測（如保濕、美白、抗皺等）</div>
+                                        <div class="service-note">費用另計，依實際評估指標與試驗設計另行報價。</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 右側：計算結果 -->
+                <div class="price-panel">
+                    <h3><i class="fa-solid fa-file-invoice-dollar"></i> 試算結果</h3>
+                    <table class="price-table">
+                        <tbody>
+                            <tr>
+                                <th>PIF 建置（8,000 元／產品）</th>
+                                <td id="pif-line">—</td>
+                            </tr>
+                            <tr>
+                                <th>防腐挑戰試驗（12,000 元／產品）</th>
+                                <td id="pet-line" class="text-muted">—</td>
+                            </tr>
+                            <tr>
+                                <th>理化與安定性試驗（5,000 元／產品）</th>
+                                <td id="phys-line" class="text-muted">—</td>
+                            </tr>
+                            <tr>
+                                <th>微生物總生菌數檢測（2,000 元／產品）</th>
+                                <td id="micro-line" class="text-muted">—</td>
+                            </tr>
+                            <tr>
+                                <th>SA 簽署（5,000 元／產品）</th>
+                                <td id="sa-line" class="text-muted">—</td>
+                            </tr>
+                            <tr>
+                                <th>功能性檢測</th>
+                                <td id="func-line" class="text-muted">—</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td>
+                                    <div class="per-product">
+                                        每產品合計：<span id="per-product-total">0</span> 元
+                                    </div>
+                                </td>
+                                <td class="grand-total">
+                                    總金額：<span id="grand-total">0</span> 元
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="note">
+                        ※ 本試算為概估，未含稅及特殊追加項目（如額外樣本、重複試驗、國際認證文件等）。  
+                        功能性檢測費用將依實際需求與試驗設計由 CosPIF 團隊另行提供正式報價。
+                    </p>
+                    <button class="btn-print" onclick="window.print()">
+                        <i class="fa-solid fa-print"></i> 列印／匯出 PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2025 CosPIF 化妝品智慧科技系統. All Rights Reserved.</p>
+    </div>
+</footer>
+
+<script>
+    const UNIT_PIF   = 8000;
+    const UNIT_PET   = 12000;
+    const UNIT_PHYS  = 5000;
+    const UNIT_MICRO = 2000;
+    const UNIT_SA    = 5000;
+
+    const productCountInput = document.getElementById('product-count');
+    const includePetInput   = document.getElementById('include-pet');
+    const includePhysInput  = document.getElementById('include-phys');
+    const includeMicroInput = document.getElementById('include-micro');
+    const includeSaInput    = document.getElementById('include-sa');
+    const includeFuncInput  = document.getElementById('include-func');
+
+    const pifLineEl   = document.getElementById('pif-line');
+    const petLineEl   = document.getElementById('pet-line');
+    const physLineEl  = document.getElementById('phys-line');
+    const microLineEl = document.getElementById('micro-line');
+    const saLineEl    = document.getElementById('sa-line');
+    const funcLineEl  = document.getElementById('func-line');
+    const perProdEl   = document.getElementById('per-product-total');
+    const grandTotalEl= document.getElementById('grand-total');
+
+    function formatCurrency(n) {
+        return n.toLocaleString('zh-TW', { maximumFractionDigits: 0 });
+    }
+
+    function updateQuote() {
+        const count = Math.max(0, parseInt(productCountInput.value, 10) || 0);
+        const includePet   = includePetInput.checked;
+        const includePhys  = includePhysInput.checked;
+        const includeMicro = includeMicroInput.checked;
+        const includeSa    = includeSaInput.checked;
+        const includeFunc  = includeFuncInput.checked;
+
+        const pifSubtotal   = count * UNIT_PIF;
+        const petSubtotal   = includePet   ? count * UNIT_PET   : 0;
+        const physSubtotal  = includePhys  ? count * UNIT_PHYS  : 0;
+        const microSubtotal = includeMicro ? count * UNIT_MICRO : 0;
+        const saSubtotal    = includeSa    ? count * UNIT_SA    : 0;
+
+        pifLineEl.textContent  = count > 0
+            ? `${count} × 8,000 = ${formatCurrency(pifSubtotal)} 元`
+            : '—';
+
+        petLineEl.textContent  = includePet && count > 0
+            ? `${count} × 12,000 = ${formatCurrency(petSubtotal)} 元`
+            : '—';
+        petLineEl.classList.toggle('text-muted', !(includePet && count > 0));
+
+        physLineEl.textContent = includePhys && count > 0
+            ? `${count} × 5,000 = ${formatCurrency(physSubtotal)} 元`
+            : '—';
+        physLineEl.classList.toggle('text-muted', !(includePhys && count > 0));
+
+        microLineEl.textContent = includeMicro && count > 0
+            ? `${count} × 2,000 = ${formatCurrency(microSubtotal)} 元`
+            : '—';
+        microLineEl.classList.toggle('text-muted', !(includeMicro && count > 0));
+
+        saLineEl.textContent   = includeSa && count > 0
+            ? `${count} × 5,000 = ${formatCurrency(saSubtotal)} 元`
+            : '—';
+        saLineEl.classList.toggle('text-muted', !(includeSa && count > 0));
+
+        // 功能性檢測：不計入金額，只顯示文字
+        if (includeFunc) {
+            funcLineEl.textContent = '依實際檢測項目與試驗設計另行報價';
+            funcLineEl.classList.remove('text-muted');
+        } else {
+            funcLineEl.textContent = '—';
+            funcLineEl.classList.add('text-muted');
+        }
+
+        const perProduct = UNIT_PIF
+            + (includePet   ? UNIT_PET   : 0)
+            + (includePhys  ? UNIT_PHYS  : 0)
+            + (includeMicro ? UNIT_MICRO : 0)
+            + (includeSa    ? UNIT_SA    : 0);
+
+        perProdEl.textContent    = formatCurrency(perProduct);
+        const grandTotal = perProduct * count;
+        grandTotalEl.textContent = formatCurrency(grandTotal);
+    }
+
+    productCountInput.addEventListener('input', updateQuote);
+    includePetInput.addEventListener('change', updateQuote);
+    includePhysInput.addEventListener('change', updateQuote);
+    includeMicroInput.addEventListener('change', updateQuote);
+    includeSaInput.addEventListener('change', updateQuote);
+    includeFuncInput.addEventListener('change', updateQuote);
+
+    // 初始計算
+    updateQuote();
+</script>
+</body>
+</html>

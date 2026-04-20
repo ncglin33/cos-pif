@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>後台管理 - 製作過程範本</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { background-color: #f9fafb; }
+        .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .news-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid var(--line);
+            border-radius: .5rem;
+            margin-bottom: 1rem;
+            background: #fff;
+            gap: 1rem;
+        }
+        .news-item-content h4 { margin: 0 0 .25rem 0; }
+        .news-item-meta { font-size: .85rem; color: var(--muted); }
+        .news-item-actions .btn { margin-left: .5rem; }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 760px;
+            border-radius: .75rem;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--line);
+        }
+        .modal-header h2 { margin: 0; }
+        .close-button {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* 批次匯入區塊樣式（沿用 news 模式） */
+        .import-card {
+            margin-top: 2rem;
+            background: #ffffff;
+            border-radius: .75rem;
+            border: 1px solid var(--line);
+            padding: 1.25rem 1.5rem;
+        }
+        .import-card h3 {
+            margin-top: 0;
+            margin-bottom: .5rem;
+            font-size: 1.2rem;
+        }
+        .import-card p {
+            margin: 0 0 .5rem;
+            font-size: .9rem;
+            color: var(--muted);
+        }
+        .import-card textarea {
+            width: 100%;
+            min-height: 130px;
+            resize: vertical;
+            border-radius: .5rem;
+            border: 1px solid var(--line);
+            padding: .5rem .75rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: .85rem;
+        }
+        .import-actions {
+            margin-top: .5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: .75rem;
+            flex-wrap: wrap;
+        }
+        .import-actions .btn {
+            margin-top: .25rem;
+        }
+        .import-status {
+            font-size: .85rem;
+            color: var(--muted);
+        }
+        .import-status strong {
+            color: #2563eb;
+        }
+
+        .import-preview {
+            margin-top: 1rem;
+            max-height: 260px;
+            overflow: auto;
+            border-radius: .5rem;
+            border: 1px solid var(--line);
+            background: #f9fafb;
+        }
+        .import-preview table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .85rem;
+        }
+        .import-preview th,
+        .import-preview td {
+            padding: .4rem .5rem;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+            vertical-align: top;
+        }
+        .import-preview th {
+            background: #eef2ff;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        .badge-status {
+            display: inline-block;
+            padding: 0 .45rem;
+            border-radius: 999px;
+            font-size: .75rem;
+            border: 1px solid #d1d5db;
+        }
+        .badge-status.published { background: #dcfce7; border-color: #86efac; }
+        .badge-status.draft { background: #fee2e2; border-color: #fecaca; }
+        .text-muted-small { font-size: .8rem; color: var(--muted); }
+
+        .steps-snippet {
+            font-size: .85rem;
+            color: #374151;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            padding: .35rem .5rem;
+            border-radius: .4rem;
+            margin-top: .35rem;
+            max-width: 520px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="wrap">
+            <h1><a href="dashboard.html" style="color: inherit; text-decoration: none;">管理後台</a></h1>
+            <div class="controls header-right">
+                <div id="user-info" style="display: inline-block; margin-left: 1rem;"></div>
+                <button id="btnSignOut" class="btn btn-danger">登出</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="controls">
+            <h2><i class="fa-solid fa-gears"></i> 製作過程範本管理</h2>
+            <button id="btn-new-post" class="btn primary"><i class="fa-solid fa-plus"></i> 新增範本</button>
+        </div>
+
+        <div id="template-list"></div>
+
+        <!-- 批次匯入區塊 -->
+        <div class="import-card">
+            <h3><i class="fa-solid fa-file-import"></i> 批次匯入製作過程範本（CSV）</h3>
+            <p>請在下方貼上 CSV 內容，第一列需包含欄位名稱：<code>title,category,steps,status,createdAt</code>（createdAt 可留空）。</p>
+            <textarea id="import-text" placeholder="範例：
+title,category,steps,status,createdAt
+清潔／洗髮（界活系）,清潔品,1. 水相預混與溶解
+2. 依序加入界活避免起泡
+3. 助溶/增稠分段調整
+4. <40°C 後添加與防腐
+5. pH/黏度確認,published,2025-12-01
+O/W 乳霜標準製程,乳霜乳液,1. 水相加熱至 70–80°C
+2. 油相加熱至同溫
+3. 均質乳化
+4. 冷卻轉低速
+5. <40°C 後添加,published,2025-11-20"></textarea>
+            <div class="import-actions">
+                <div>
+                    <button id="btn-load-sample" class="btn"><i class="fa-solid fa-wand-magic-sparkles"></i> 載入範例</button>
+                    <button id="btn-parse-import" class="btn primary"><i class="fa-solid fa-magnifying-glass"></i> 解析文字為預覽</button>
+                </div>
+                <div>
+                    <button id="btn-commit-import" class="btn success" disabled><i class="fa-solid fa-database"></i> 將預覽資料批次寫入資料庫</button>
+                </div>
+                <div class="import-status" id="import-status">
+                    尚未解析任何資料。
+                </div>
+            </div>
+
+            <div class="import-preview" id="import-preview" style="display:none;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>標題</th>
+                            <th>類別</th>
+                            <th>狀態</th>
+                            <th>建立日期</th>
+                            <th>步驟前 60 字</th>
+                        </tr>
+                    </thead>
+                    <tbody id="import-preview-body"></tbody>
+                </table>
+            </div>
+            <p class="text-muted-small">提醒：匯入後資料會直接新增到 <code>pif06_process_templates</code> 集合，不會覆蓋既有資料；如需修改請在上方列表中個別編輯。</p>
+        </div>
+    </div>
+
+    <!-- The Modal -->
+    <div id="post-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">新增範本</h2>
+                <span class="close-button">&times;</span>
+            </div>
+            <div class="card-body">
+                <input type="hidden" id="post-id">
+
+                <div class="form-group">
+                    <label for="post-title">範本標題</label>
+                    <input type="text" id="post-title" class="form-input" placeholder="例如：清潔／洗髮（界活系）">
+                </div>
+
+                <div class="form-group">
+                    <label for="post-category">類別／劑型</label>
+                    <input type="text" id="post-category" class="form-input" placeholder="例如：清潔品、乳霜乳液、凝膠、面膜">
+                </div>
+
+                <div class="form-group">
+                    <label for="post-content">製作過程步驟（文字版）</label>
+                    <textarea id="post-content" class="form-input" rows="10" placeholder="建議以條列或編號描述：
+1. ...
+2. ...
+3. ..."></textarea>
+                    <div class="text-muted-small" style="margin-top:.35rem;">
+                        此欄會儲存為 <code>steps</code> 字串。前端可直接顯示或再自行拆解。
+                    </div>
+                </div>
+
+                 <div class="form-group">
+                    <label for="post-status">狀態</label>
+                    <select id="post-status" class="form-input">
+                        <option value="draft">草稿</option>
+                        <option value="published">已發布</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-footer" style="text-align:right; border-top: 1px solid var(--line); padding-top: 1rem; margin-top: 1rem;">
+                <button id="btn-save-post" class="btn primary"><i class="fa-solid fa-save"></i> 儲存</button>
+            </div>
+        </div>
+    </div>
+
+<script type="module">
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { collection, onSnapshot, doc, setDoc, addDoc, deleteDoc, serverTimestamp, query, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { auth, db } from './firebase-config.js';
+
+    const $ = sel => document.querySelector(sel);
+    let currentUser = null;
+
+    // Modal elements
+    const modal = $("#post-modal");
+    const btnNewPost = $("#btn-new-post");
+    const btnSavePost = $("#btn-save-post");
+    const closeButton = $(".close-button");
+
+    // 匯入相關元素與狀態
+    const importText = $("#import-text");
+    const btnLoadSample = $("#btn-load-sample");
+    const btnParseImport = $("#btn-parse-import");
+    const btnCommitImport = $("#btn-commit-import");
+    const importStatus = $("#import-status");
+    const importPreview = $("#import-preview");
+    const importPreviewBody = $("#import-preview-body");
+    let parsedItems = [];  // 暫存解析後的資料
+
+    const COLLECTION_NAME = "pif06_process_templates";
+
+    onAuthStateChanged(auth, user => {
+        if (user) {
+            currentUser = user;
+            $('#user-info').textContent = user.email;
+            $('#btnSignOut').addEventListener('click', () => signOut(auth).then(() => window.location.href = 'login.html'));
+            loadTemplates();
+        } else {
+            window.location.href = 'login.html';
+        }
+    });
+
+    function loadTemplates() {
+        const col = collection(db, COLLECTION_NAME);
+        const q = query(col, orderBy('createdAt', 'desc'));
+
+        onSnapshot(q, (snapshot) => {
+            const list = $('#template-list');
+            list.innerHTML = '';
+            if (snapshot.empty) {
+                list.innerHTML = '<p>目前沒有任何製作過程範本。</p>';
+                return;
+            }
+
+            snapshot.forEach(docSnap => {
+                const tpl = docSnap.data() || {};
+                const id = docSnap.id;
+                const createdAt = tpl.createdAt?.toDate?.().toLocaleDateString?.() || 'N/A';
+                const stepsText = (tpl.steps || tpl.content || '').toString();
+                const snippet = stepsText.replace(/\s+/g, ' ').slice(0, 80);
+
+                const item = document.createElement('div');
+                item.className = 'news-item';
+                item.innerHTML = `
+                    <div class="news-item-content">
+                        <h4>${tpl.title || '(未命名範本)'}</h4>
+                        <div class="news-item-meta">
+                            <span>類別: ${tpl.category || '-'}</span> | 
+                            <span>狀態: ${tpl.status === 'published' ? '已發布' : '草稿'}</span> | 
+                            <span>建立於: ${createdAt}</span>
+                        </div>
+                        ${snippet ? `<div class="steps-snippet">${snippet}${stepsText.length > 80 ? '…' : ''}</div>` : ''}
+                    </div>
+                    <div class="news-item-actions">
+                        <button class="btn btn-edit" data-id="${id}"><i class="fa-solid fa-pen-to-square"></i> 編輯</button>
+                        <button class="btn btn-danger btn-delete" data-id="${id}"><i class="fa-solid fa-trash"></i> 刪除</button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+
+            document.querySelectorAll('.btn-edit').forEach(btn => btn.addEventListener('click', handleEdit));
+            document.querySelectorAll('.btn-delete').forEach(btn => btn.addEventListener('click', handleDelete));
+        });
+    }
+
+    function openModal(data = {}) {
+        $('#post-id').value = data.id || '';
+        $('#post-title').value = data.title || '';
+        $('#post-category').value = data.category || '';
+        $('#post-content').value = data.steps || data.content || '';
+        $('#post-status').value = data.status || 'draft';
+        $('#modal-title').textContent = data.id ? '編輯範本' : '新增範本';
+        modal.style.display = "block";
+    }
+
+    function closeModal() {
+        modal.style.display = "none";
+    }
+
+    async function handleSave() {
+        const id = $('#post-id').value;
+        const data = {
+            title: $('#post-title').value.trim(),
+            category: $('#post-category').value.trim(),
+            steps: $('#post-content').value.trim(),
+            status: $('#post-status').value,
+            updatedAt: serverTimestamp(),
+        };
+
+        if (!data.title) {
+            alert('範本標題為必填欄位。');
+            return;
+        }
+
+        btnSavePost.disabled = true;
+        btnSavePost.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 儲存中...';
+
+        try {
+            if (id) {
+                await setDoc(doc(db, COLLECTION_NAME, id), data, { merge: true });
+            } else {
+                data.createdAt = serverTimestamp();
+                await addDoc(collection(db, COLLECTION_NAME), data);
+            }
+            closeModal();
+        } catch (error) {
+            console.error("Error saving template: ", error);
+            alert('儲存失敗: ' + error.message);
+        }
+
+        btnSavePost.disabled = false;
+        btnSavePost.innerHTML = '<i class="fa-solid fa-save"></i> 儲存';
+    }
+
+    function handleEdit(e) {
+        const id = e.currentTarget.dataset.id;
+        const ref = doc(db, COLLECTION_NAME, id);
+
+        getDoc(ref).then(docSnap => {
+            if (docSnap.exists()) {
+                openModal({ id, ...docSnap.data() });
+            }
+        }).catch(err => {
+            console.error('讀取範本內容失敗', err);
+            alert('讀取範本內容失敗：' + err.message);
+        });
+    }
+
+    async function handleDelete(e) {
+        const id = e.currentTarget.dataset.id;
+        if (confirm('確定要刪除這個範本嗎？此操作無法復原。')) {
+            try {
+                await deleteDoc(doc(db, COLLECTION_NAME, id));
+            } catch (error) {
+                console.error("Error deleting template: ", error);
+                alert('刪除失敗: ' + error.message);
+            }
+        }
+    }
+
+    // Modal event listeners
+    btnNewPost.addEventListener('click', () => openModal());
+    btnSavePost.addEventListener('click', handleSave);
+    closeButton.addEventListener('click', closeModal);
+    window.addEventListener('click', (event) => {
+        if (event.target == modal) {
+            closeModal();
+        }
+    });
+
+    // --------- 批次匯入相關邏輯（news 模式改寫） ---------
+
+    btnLoadSample.addEventListener('click', () => {
+        importText.value = `title,category,steps,status,createdAt
+清潔／洗髮（界活系）,清潔品,1. 水相預混與溶解\n2. 依序加入界活避免起泡\n3. 助溶/增稠分段調整\n4. <40°C 後添加與防腐\n5. pH/黏度確認,published,2025-12-01
+O/W 乳霜標準製程,乳霜乳液,1. 水相加熱至 70–80°C\n2. 油相加熱至同溫\n3. 均質乳化\n4. 冷卻轉低速\n5. <40°C 後添加,published,2025-11-20
+凝膠（高分子增稠）,凝膠,1. 水相基底\n2. 高分子分散避免結塊\n3. 中和成膠\n4. 活性與防腐後添加\n5. pH/黏度確認,draft,`;
+        importStatus.textContent = '已載入範例內容，請按「解析文字為預覽」。';
+    });
+
+    // 解析 CSV 文字成為預覽資料
+    btnParseImport.addEventListener('click', () => {
+        const raw = (importText.value || '').trim();
+        parsedItems = [];
+        importPreviewBody.innerHTML = '';
+        importPreview.style.display = 'none';
+        btnCommitImport.disabled = true;
+
+        if (!raw) {
+            importStatus.textContent = '沒有可解析的內容，請先貼上 CSV 再試一次。';
+            return;
+        }
+
+        const lines = raw.split(/\r?\n/).filter(l => l.trim() !== '');
+        if (lines.length < 2) {
+            importStatus.textContent = '資料行數不足，至少需要標題列 + 1 筆資料。';
+            return;
+        }
+
+        const header = lines[0].split(',').map(h => h.trim());
+        const idxTitle = header.indexOf('title');
+        const idxCategory = header.indexOf('category');
+        const idxSteps = header.indexOf('steps');
+        const idxStatus = header.indexOf('status');
+        const idxCreatedAt = header.indexOf('createdAt');
+
+        if (idxTitle === -1 || idxCategory === -1 || idxSteps === -1) {
+            importStatus.innerHTML = '欄位錯誤：第一列必須至少包含 <code>title, category, steps</code> 欄位。';
+            return;
+        }
+
+        const rows = lines.slice(1);
+        let rowNumber = 0;
+
+        for (const line of rows) {
+            rowNumber++;
+            if (!line.trim()) continue;
+
+            // 簡易 CSV 切割（與 news.html 同級；若要支援引號逗號可再升級）
+            const cols = line.split(',').map(c => c.trim());
+
+            const title = cols[idxTitle] || '';
+            const category = idxCategory >= 0 ? (cols[idxCategory] || '') : '';
+            const steps = idxSteps >= 0 ? (cols[idxSteps] || '') : '';
+            const status = idxStatus >= 0 ? (cols[idxStatus] || 'draft') : 'draft';
+            const createdAtRaw = idxCreatedAt >= 0 ? (cols[idxCreatedAt] || '') : '';
+
+            if (!title && !steps) continue;
+
+            let createdAtDate = null;
+            if (createdAtRaw) {
+                const d = new Date(createdAtRaw);
+                if (!isNaN(d.getTime())) createdAtDate = d;
+            }
+
+            parsedItems.push({
+                _row: rowNumber,
+                title,
+                category,
+                steps: steps.replace(/\\n/g, "\n"),
+                status: status === 'published' ? 'published' : 'draft',
+                createdAt: createdAtDate,
+            });
+        }
+
+        if (!parsedItems.length) {
+            importStatus.textContent = '解析完成，但沒有有效資料列。請確認內容是否正確。';
+            return;
+        }
+
+        parsedItems.forEach((item, idx) => {
+            const tr = document.createElement('tr');
+            const previewSteps = (item.steps || '').replace(/\s+/g, ' ').slice(0, 60);
+            const dateText = item.createdAt
+                ? item.createdAt.toISOString().slice(0, 10)
+                : '(匯入時以現在時間)';
+
+            tr.innerHTML = `
+                <td>${idx + 1}</td>
+                <td>${item.title || '&nbsp;'}</td>
+                <td>${item.category || '&nbsp;'}</td>
+                <td><span class="badge-status ${item.status === 'published' ? 'published' : 'draft'}">${item.status === 'published' ? '已發布' : '草稿'}</span></td>
+                <td>${dateText}</td>
+                <td>${previewSteps}</td>
+            `;
+            importPreviewBody.appendChild(tr);
+        });
+
+        importPreview.style.display = 'block';
+        btnCommitImport.disabled = false;
+        importStatus.innerHTML = `解析完成，預計匯入 <strong>${parsedItems.length}</strong> 筆資料。請確認預覽後按下「將預覽資料批次寫入資料庫」。`;
+    });
+
+    // 將預覽資料實際寫入 Firestore
+    btnCommitImport.addEventListener('click', async () => {
+        if (!parsedItems.length) {
+            importStatus.textContent = '目前沒有可匯入的資料，請先解析 CSV。';
+            return;
+        }
+
+        if (!confirm(`確定要將 ${parsedItems.length} 筆製作過程範本寫入資料庫嗎？`)) {
+            return;
+        }
+
+        btnCommitImport.disabled = true;
+        btnCommitImport.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 匯入中...';
+
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const item of parsedItems) {
+            const data = {
+                title: item.title || '',
+                category: item.category || '',
+                steps: item.steps || '',
+                status: item.status || 'draft',
+                updatedAt: serverTimestamp(),
+            };
+
+            data.createdAt = item.createdAt ? item.createdAt : serverTimestamp();
+
+            try {
+                await addDoc(collection(db, COLLECTION_NAME), data);
+                successCount++;
+            } catch (err) {
+                console.error('匯入某筆範本失敗：', err);
+                failCount++;
+            }
+        }
+
+        btnCommitImport.disabled = false;
+        btnCommitImport.innerHTML = '<i class="fa-solid fa-database"></i> 將預覽資料批次寫入資料庫';
+
+        importStatus.innerHTML = `匯入完成：成功 <strong>${successCount}</strong> 筆，失敗 <strong>${failCount}</strong> 筆。`;
+    });
+</script>
+</body>
+</html>

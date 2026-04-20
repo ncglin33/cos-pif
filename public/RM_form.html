@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<script type="module" src="/auth_guard_cos.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>提交新原料審核</title>
+<style>
+  :root { --line: #e5e7eb; --brand: #2563eb; --fg: #111; --muted: #666; }
+  body { font-family: ui-sans-serif, system-ui, -apple-system, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Segoe UI, Roboto, Arial, sans-serif; background: #f9fafb; color: var(--fg); margin: 0; padding: 1.5rem; }
+  .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 2rem; border-radius: .75rem; border: 1px solid var(--line); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+  h1 { font-size: 1.5rem; margin: 0 0 .5rem 0; }
+  p.subtitle { margin: 0 0 1rem 0; color: var(--muted); }
+  .inci-name { font-size: 1.2rem; font-weight: 500; color: var(--brand); margin-bottom: 1.5rem; }
+  .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem 1.5rem; }
+  .form-grid .full-width { grid-column: 1 / -1; }
+  label { display: block; font-weight: 500; font-size: .9rem; margin-bottom: .4rem; }
+  input { width: 100%; padding: .6rem .75rem; border: 1px solid var(--line); border-radius: .5rem; font-size: 1rem; box-sizing: border-box; }
+  .actions { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; align-items: center; gap: 1rem; }
+  button { border: 1px solid var(--line); background: #fff; padding: .5rem 1rem; border-radius: .5rem; cursor: pointer; font-size: .9rem; }
+  button[type="submit"] { background: var(--brand); color: #fff; border-color: var(--brand); font-weight: 500; }
+  #status { font-size: .9rem; color: var(--muted); }
+  #main-container[data-loading="true"] { display: none; }
+</style>
+</head>
+<body>
+
+<div id="main-container" data-loading="true">
+  <h1>提交新原料審核</h1>
+  <p class="subtitle">您提交的資料將進入待審核區，由管理員確認後才會納入中央資料庫。</p>
+  <div id="inci-name-display" class="inci-name"></div>
+  
+  <form id="member-form">
+    <div class="form-grid">
+      <div>
+        <label for="cas_no">CAS No.</label>
+        <input type="text" id="cas_no" name="cas_no">
+      </div>
+      <hr class="full-width" style="border:none; border-top:1px solid #eee; margin:.5rem 0;">
+      <div><label for="state">外觀狀態</label><input type="text" id="state" name="state"></div>
+      <div><label for="color">顏色</label><input type="text" id="color" name="color"></div>
+      <div><label for="odor">氣味</label><input type="text" id="odor" name="odor"></div>
+      <div><label for="solubility_water">在水中溶解度</label><input type="text" id="solubility_water" name="solubility_water"></div>
+      <div><label for="ph">pH 值</label><input type="text" id="ph" name="ph"></div>
+      <div><label for="melting_point">熔點 (°C)</label><input type="text" id="melting_point" name="melting_point"></div>
+      <div><label for="boiling_point">沸點 (°C)</label><input type="text" id="boiling_point" name="boiling_point"></div>
+      <div><label for="flash_point">閃火點 (°C)</label><input type="text" id="flash_point" name="flash_point"></div>
+      <div><label for="density">密度 (g/cm³)</label><input type="text" id="density" name="density"></div>
+      <div><label for="viscosity">黏度 (cps)</label><input type="text" id="viscosity" name="viscosity"></div>
+    </div>
+    
+    <div class="actions">
+      <span id="status"></span>
+      <button type="button" onclick="window.close()">關閉</button>
+      <button type="submit">提交審核</button>
+    </div>
+  </form>
+</div>
+
+<script type="module">
+  import { app, db, doc, setDoc } from '/firebase_config_cos.js';
+  const $ = sel => document.querySelector(sel);
+  let inciName;
+
+  function renderForm() {
+    const params = new URLSearchParams(window.location.search);
+    inciName = params.get('new_inci');
+    if (!inciName) {
+      $('#main-container').innerHTML = '<h1>錯誤：找不到需要新增的成分名稱(INCI)。</h1><p>請從 PIF 09-2 頁面點擊連結進入。</p>';
+      return;
+    }
+    $('#inci-name-display').textContent = inciName;
+    $('#main-container').removeAttribute('data-loading');
+  }
+
+  async function saveToFirebase(e) {
+    e.preventDefault();
+    const form = e.target;
+    const statusEl = $('#status');
+    form.querySelector('button[type="submit"]').disabled = true;
+    statusEl.textContent = '提交中...';
+
+    const physicochemical = {};
+    const inputs = form.querySelectorAll('[name]');
+    inputs.forEach(input => {
+      if(input.value) physicochemical[input.name] = input.value;
+    });
+
+    try {
+      const docRef = doc(db, 'rm_inventory_cos', inciName);
+      await setDoc(docRef, {
+        timestamp: new Date(),
+        physicochemical: physicochemical
+      }, { merge: true });
+
+      statusEl.textContent = '提交成功！';
+      alert('原料資料已成功提交審核！您可以關閉此分頁了。');
+      form.reset();
+      setTimeout(() => window.close(), 1000);
+
+    } catch (err) {
+      console.error("Firebase setDoc failed:", err);
+      statusEl.textContent = '提交失敗';
+      alert(`發生錯誤，提交失敗：${err.message}`);
+      form.querySelector('button[type="submit"]').disabled = false;
+    }
+  }
+
+  window.addEventListener('auth-ready', () => {
+    renderForm();
+    $('#member-form').addEventListener('submit', saveToFirebase);
+  });
+</script>
+
+</body>
+</html>

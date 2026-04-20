@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PIF 11｜產品安定性試驗報告</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<style>
+  .container { max-width: 1200px; }
+  h2 { font-size: 1.1rem; margin: 1rem 0 .5rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 1rem; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
+  .grid-top { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 1rem; margin-bottom: 1rem; }
+  label { font-size: .9rem; color: var(--muted); margin-bottom: 4px; display: block; }
+  .meta { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+  .card h3 { margin: 0 0 .8rem; font-size: 1.05rem; display: flex; justify-content: space-between; align-items: center; }
+  .card .body { padding: 0; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border: 1px solid var(--line); padding: .5rem .6rem; font-size: .92rem; vertical-align: top; }
+  th { background: #f8fafc; text-align: left; }
+  td input, td select, td textarea { width: 100%; border: 1px solid var(--line); border-radius: .4rem; padding: .4rem .5rem; background: #fff; }
+  .pass { background: #f0fdf4; }
+  .fail { background: #fff1f2; }
+  .center { text-align: center; }
+  .foot { margin-top: 1rem; color: var(--muted); font-size: .86rem; }
+  .sign-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .print-only { display: none; }
+  
+  #upload-status-pdf { 
+      display: none; 
+      padding: 0.75rem 1.25rem; 
+      margin-top: 1rem; 
+      border-radius: 8px; 
+      font-weight: 500; 
+      text-align: center; 
+  }
+  .status-info { background-color: #e0e7ff; color: #3730a3; }
+  .status-success { background-color: #dcfce7; color: #166534; }
+  .status-error { background-color: #fee2e2; color: #991b1b; }
+  #upload-status-pdf i { margin-right: 0.5rem; }
+
+  @media print {
+    body { font-size: 9px; }
+    .noprint { display: none !important; }
+    .print-only { display: block; }
+    .container { max-width: 100%; padding: 0; }
+    h1 { font-size: 1.2rem; }
+    .card { border: 1px solid #ccc; padding: 12px; break-inside: avoid; }
+    th, td { padding: .3rem .4rem; }
+    input, textarea, select { border: none !important; background: transparent !important; }
+    .grid-top { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<pif-nav></pif-nav>
+<top-bar></top-bar>
+
+<div class="container">
+  <status-bar></status-bar>
+
+  <div class="toolbar noprint">
+    <button id="btnSave" class="primary"><i class="fa-solid fa-cloud-arrow-up"></i> 儲存變更</button>
+    <button id="addCondition"><i class="fa-solid fa-plus"></i> 新增試驗條件</button>
+    <button id="addItemToAll"><i class="fa-solid fa-vials"></i> 新增測試項目</button>
+    <button id="addTimepointAll"><i class="fa-solid fa-clock"></i> 新增時間點</button>
+    <div style="flex-grow:1"></div>
+    <button id="btnUploadPdf"><i class="fa-solid fa-file-arrow-up"></i> 上傳本頁 PDF</button>
+    <input type="file" id="pdfUploader" accept="application/pdf" style="display:none;">
+    <button id="btnImportCSV"><i class="fa-solid fa-file-csv"></i> 匯入 CSV</button>
+    <button id="btnExportCSV"><i class="fa-solid fa-file-export"></i> 匯出 CSV</button>
+    <button id="genAIConclusion"><i class="fa-solid fa-wand-magic-sparkles"></i> AI 總結</button>
+    <button id="btnPrint"><i class="fa-solid fa-print"></i> 列印 / PDF</button>
+  </div>
+  <div id="upload-status-pdf" class="noprint"></div>
+
+  <div class="grid-top">
+    <div class="card">
+        <div class="meta">
+          <div><label>產品名稱</label><input id="productName" type="text" placeholder="請輸入產品名稱"></div>
+          <div><label>批號</label><input id="batchNo" type="text" placeholder="例如：A240901"></div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="meta">
+          <div><label>樣品編號</label><input id="sampleNo" type="text" placeholder="例如：SUN-2025-01"></div>
+          <div><label>製造日期</label><input id="mfgDate" type="date"></div>
+        </div>
+    </div>
+  </div>
+
+  <div id="conditionsHost"></div>
+
+  <div class="card">
+    <h3>試驗摘要與判定</h3>
+    <div class="body">
+      <textarea id="summary" rows="5" placeholder="可輸入摘要；或點選「AI 總結」自動生成。"></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>檢測與複核</h3>
+    <div class="body sign-grid">
+      <div>
+        <label>檢測人員</label>
+        <input id="tester" type="text" placeholder="檢測人員姓名">
+      </div>
+      <div>
+        <label>檢測日期</label>
+        <input id="testDate" type="date">
+      </div>
+      <div>
+        <label>複核人員</label>
+        <input id="reviewer" type="text" placeholder="複核人員姓名">
+      </div>
+      <div>
+        <label>複核日期</label>
+        <input id="reviewDate" type="date">
+      </div>
+    </div>
+  </div>
+  
+  <div id="print-container" class="print-only"></div>
+
+</div>
+
+<script type="module">
+import { auth, db, storage } from "./firebase-config.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { ref, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+import "./components.js";
+
+const $ = sel => document.querySelector(sel);
+const byId = id => document.getElementById(id);
+const showStatus = (message, type, duration) =>
+  customElements.whenDefined("status-bar").then(() =>
+    document.querySelector("status-bar").show(message, type, duration)
+  );
+
+let pifId, user, pifDocRef, companyName, productName;
+
+const state = {
+  product: {
+    name: "",
+    batch: "",
+    sample: "",
+    mfg: "",
+    rpt: "",
+    tester: "",
+    testDate: "",
+    reviewer: "",
+    reviewDate: ""
+  },
+  conditions: [],
+  summary: ""
+};
+
+const metaFields = [
+  "productName",
+  "batchNo",
+  "sampleNo",
+  "mfgDate",
+  "rptDate",
+  "tester",
+  "testDate",
+  "reviewer",
+  "reviewDate"
+];
+
+const productMap = {
+  productName: "name",
+  batchNo: "batch",
+  sampleNo: "sample",
+  mfgDate: "mfg",
+  rptDate: "rpt",
+  tester: "tester",
+  testDate: "testDate",
+  reviewer: "reviewer",
+  reviewDate: "reviewDate"
+};
+
+async function initPage() {
+  const params = new URLSearchParams(window.location.search);
+  pifId = params.get("id");
+  companyName = params.get("companyName");
+  productName = params.get("productName");
+
+  if (!pifId) {
+    showStatus("錯誤：URL 中缺少 PIF ID。", "error", -1);
+    $(".container").innerHTML =
+      '<p style="text-align:center; padding: 2rem;">無效的連結，請返回主控台重新進入。</p>';
+    return;
+  }
+
+  customElements.whenDefined("top-bar").then(() => {
+    const topBar = document.querySelector("top-bar");
+    topBar.setInfo(pifId, companyName, productName, "11 產品安定性試驗報告");
+  });
+
+  document.body.addEventListener("logout-request", () => auth.signOut());
+
+  onAuthStateChanged(auth, u => {
+    user = u;
+    if (user) {
+      customElements.whenDefined("top-bar").then(() =>
+        document.querySelector("top-bar").setUser(user)
+      );
+      byId("btnSave").disabled = false;
+      pifDocRef = doc(db, "pifs", pifId);
+      loadData();
+    } else {
+      customElements.whenDefined("top-bar").then(() =>
+        document.querySelector("top-bar").setUser(null)
+      );
+      showStatus("您尚未登入，雲端功能已停用。", "warning", -1);
+      byId("btnSave").disabled = true;
+      if (state.conditions.length === 0) {
+        seedSampleData();
+      }
+      render();
+    }
+  });
+
+  bindEvents();
+}
+
+async function loadData() {
+  if (!user) return;
+  showStatus("正在載入資料...", "loading", 0);
+  try {
+    const docSnap = await getDoc(pifDocRef);
+    if (docSnap.exists() && docSnap.data().pif11) {
+      const data = docSnap.data().pif11;
+      Object.assign(state.product, data.product || {});
+      state.conditions = Array.isArray(data.conditions) ? data.conditions : [];
+      state.summary = data.summary || "";
+      if (state.conditions.length === 0) {
+        seedSampleData();
+      }
+    } else {
+      if (state.conditions.length === 0) {
+        seedSampleData();
+      }
+    }
+
+    if (productName) {
+      state.product.name = productName;
+    }
+
+    state.conditions.forEach(cond => computeJudgement(cond));
+
+    render();
+    showStatus("資料載入完成！", "success");
+  } catch (error) {
+    console.error("Load error:", error);
+    showStatus(`載入失敗: ${error.message}`, "error", -1);
+  }
+}
+
+async function saveData() {
+  if (!user) {
+    showStatus("請先登入才能儲存資料", "error");
+    return;
+  }
+  showStatus("正在儲存變更...", "loading", 0);
+  byId("btnSave").disabled = true;
+  try {
+    syncStateFromUI();
+    await setDoc(
+      pifDocRef,
+      {
+        pif11: {
+          product: state.product,
+          conditions: state.conditions,
+          summary: state.summary
+        },
+        lastModified: serverTimestamp()
+      },
+      { merge: true }
+    );
+    showStatus("所有變更已成功儲存！", "success");
+  } catch (error) {
+    console.error("Save error:", error);
+    showStatus(`儲存失敗: ${error.message}`, "error", -1);
+  } finally {
+    byId("btnSave").disabled = false;
+  }
+}
+
+function syncStateFromUI() {
+  metaFields.forEach(id => {
+    const key = productMap[id];
+    const el = byId(id);
+    if (key && el) {
+      state.product[key] = el.value;
+    }
+  });
+  const summaryEl = byId("summary");
+  if (summaryEl) {
+    state.summary = summaryEl.value;
+  }
+}
+
+function render() {
+  metaFields.forEach(id => {
+    const key = productMap[id];
+    const el = byId(id);
+    if (el && Object.prototype.hasOwnProperty.call(state.product, key)) {
+      el.value = state.product[key] || "";
+    }
+  });
+
+  if (productName) {
+    byId("productName").value = productName;
+  }
+
+  byId("summary").value = state.summary || "";
+
+  const host = byId("conditionsHost");
+  host.innerHTML = "";
+  state.conditions.forEach((cond, ci) => {
+    host.appendChild(renderCondition(cond, ci));
+  });
+}
+
+function renderCondition(cond, ci) {
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `
+    <h3>
+      <input
+        type="text"
+        value="${cond.name || ""}"
+        oninput="onCondMeta(${ci}, 'name', this.value)"
+        placeholder="試驗條件名稱"
+        style="font-size:1.05rem; font-weight:bold; border:none; background:transparent;"
+      >
+      <button class="noprint" onclick="window.removeCondition(${ci})">
+        <i class="fa-solid fa-trash-can"></i>
+      </button>
+    </h3>
+    <div class="body">
+      <div class="meta" style="margin-bottom:1rem;">
+        <div>
+          <label>容器/容量</label>
+          <input
+            type="text"
+            value="${cond.pack || ""}"
+            oninput="onCondMeta(${ci}, 'pack', this.value)"
+          >
+        </div>
+        <div>
+          <label>備註</label>
+          <input
+            type="text"
+            value="${cond.note || ""}"
+            oninput="onCondMeta(${ci}, 'note', this.value)"
+          >
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        ${renderTableHTML(cond, ci)}
+      </div>
+    </div>
+  `;
+  return card;
+}
+
+function renderTableHTML(cond, ci) {
+  const heads = cond.timepoints
+    .map(t => `<th class="center">${t}</th>`)
+    .join("");
+
+  const rows = cond.items
+    .map((it, ri) => {
+      const cells = cond.timepoints
+        .map((tp, ti) => {
+          const values = Array.isArray(it.values) ? it.values : [];
+          const val = values[ti] ?? "";
+          const passArr = Array.isArray(it._pass) ? it._pass : [];
+          const isPass = passArr[ti] !== false;
+          const cls =
+            val !== "" ? (isPass ? "pass" : "fail") : "";
+          return `
+            <td class="${cls}">
+              <input
+                id="v-${ci}-${ri}-${ti}"
+                value="${val}"
+                oninput="onItemValueChange(${ci}, ${ri}, ${ti}, this.value)"
+              >
+            </td>`;
+        })
+        .join("");
+
+      const rowPass = judgeRow(it);
+      const judgeText = rowPass ? "合格" : "不合格";
+      const judgeClass = rowPass ? "pass" : "fail";
+
+      return `
+        <tr>
+          <td>
+            <input
+              id="name-${ci}-${ri}"
+              value="${it.name || ""}"
+              oninput="onItemMetaChange(${ci}, ${ri}, 'name', this.value)"
+            >
+          </td>
+          <td>
+            <input
+              id="spec-${ci}-${ri}"
+              value="${it.spec || ""}"
+              placeholder="例: 5.0–6.0"
+              oninput="onItemMetaChange(${ci}, ${ri}, 'spec', this.value)"
+            >
+          </td>
+          <td>
+            <input
+              id="unit-${ci}-${ri}"
+              value="${it.unit || ""}"
+              oninput="onItemMetaChange(${ci}, ${ri}, 'unit', this.value)"
+            >
+          </td>
+          ${cells}
+          <td class="center ${judgeClass}">${judgeText}</td>
+          <td class="center noprint">
+            <button onclick="window.removeItem(${ci}, ${ri})">
+              <i class="fa-solid fa-minus"></i>
+            </button>
+          </td>
+        </tr>`;
+    })
+    .join("");
+
+  return `
+    <table>
+      <thead>
+        <tr>
+          <th>測試項目</th>
+          <th>規格</th>
+          <th>單位</th>
+          ${heads}
+          <th>判定</th>
+          <th class="noprint">操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows}
+      </tbody>
+    </table>`;
+}
+
+// 規格判斷：支援 5.0–6.0、≦100、≧90 這幾種
+function checkValueAgainstSpec(rawValue, spec) {
+  if (!spec) return true;
+  const v = parseFloat(String(rawValue).replace(/[^0-9.+-]/g, ""));
+  if (isNaN(v)) return true;
+
+  const s = String(spec);
+
+  const rangeMatch = s.match(/([\d.]+)\s*[–-]\s*([\d.]+)/);
+  if (rangeMatch) {
+    const min = parseFloat(rangeMatch[1]);
+    const max = parseFloat(rangeMatch[2]);
+    if (!isNaN(min) && !isNaN(max)) {
+      return v >= min && v <= max;
+    }
+  }
+
+  const leMatch = s.match(/(?:≦|<=)\s*([\d.]+)/);
+  if (leMatch) {
+    const lim = parseFloat(leMatch[1]);
+    if (!isNaN(lim)) {
+      return v <= lim;
+    }
+  }
+
+  const geMatch = s.match(/(?:≧|>=)\s*([\d.]+)/);
+  if (geMatch) {
+    const lim = parseFloat(geMatch[1]);
+    if (!isNaN(lim)) {
+      return v >= lim;
+    }
+  }
+
+  return true;
+}
+
+function judgeRow(it) {
+  const passArr = Array.isArray(it._pass) ? it._pass : [];
+  if (passArr.length === 0) return true;
+  return passArr.every(p => p !== false);
+}
+
+function computeJudgement(cond) {
+  cond.items.forEach(it => {
+    if (!Array.isArray(it.values)) it.values = [];
+    if (!Array.isArray(it._pass)) it._pass = [];
+
+    cond.timepoints.forEach((_, ti) => {
+      const raw = it.values[ti];
+      if (raw === undefined || raw === null || String(raw).trim() === "") {
+        it._pass[ti] = true;
+      } else {
+        it._pass[ti] = checkValueAgainstSpec(raw, it.spec || "");
+      }
+    });
+  });
+}
+
+// ===== window.* handlers =====
+window.onCondMeta = (ci, key, value) => {
+  if (!state.conditions[ci]) return;
+  state.conditions[ci][key] = value;
+};
+
+window.onItemMetaChange = (ci, ri, key, value) => {
+  const cond = state.conditions[ci];
+  if (!cond || !cond.items[ri]) return;
+  cond.items[ri][key] = value;
+  computeJudgement(cond);
+  render();
+};
+
+window.onItemValueChange = (ci, ri, ti, value) => {
+  const cond = state.conditions[ci];
+  if (!cond || !cond.items[ri]) return;
+  if (!Array.isArray(cond.items[ri].values)) cond.items[ri].values = [];
+  cond.items[ri].values[ti] = value;
+  computeJudgement(cond);
+  render();
+};
+
+window.addCondition = () => {
+  const baseTimepoints =
+    state.conditions.length > 0
+      ? [...state.conditions[0].timepoints]
+      : ["初始", "7d", "14d", "21d", "28d"];
+
+  const newCond = {
+    name: `條件 ${state.conditions.length + 1}`,
+    pack: "",
+    note: "",
+    timepoints: baseTimepoints,
+    items: []
+  };
+
+  if (state.conditions.length > 0) {
+    const tpl = state.conditions[0];
+    newCond.items = tpl.items.map(it => ({
+      name: it.name,
+      spec: it.spec,
+      unit: it.unit,
+      values: new Array(baseTimepoints.length).fill(""),
+      _pass: new Array(baseTimepoints.length).fill(true)
+    }));
+  }
+
+  state.conditions.push(newCond);
+  render();
+};
+
+window.removeCondition = ci => {
+  if (!confirm("確定刪除此試驗條件？")) return;
+  state.conditions.splice(ci, 1);
+  render();
+};
+
+window.addItemToAll = () => {
+  if (state.conditions.length === 0) {
+    showStatus("請先新增試驗條件。", "warning", 4000);
+    return;
+  }
+
+  state.conditions.forEach(cond => {
+    const len = cond.timepoints.length;
+    cond.items.push({
+      name: "",
+      spec: "",
+      unit: "",
+      values: new Array(len).fill(""),
+      _pass: new Array(len).fill(true)
+    });
+  });
+
+  state.conditions.forEach(cond => computeJudgement(cond));
+  render();
+};
+
+window.addTimepointAll = () => {
+  if (state.conditions.length === 0) {
+    showStatus("請先新增試驗條件。", "warning", 4000);
+    return;
+  }
+
+  const label = prompt("請輸入新時間點，例如：35℃/3M 或 56天", "");
+  const tp = (label || "").trim();
+  if (!tp) return;
+
+  state.conditions.forEach(cond => {
+    cond.timepoints.push(tp);
+    cond.items.forEach(it => {
+      if (!Array.isArray(it.values)) it.values = [];
+      if (!Array.isArray(it._pass)) it._pass = [];
+      it.values.push("");
+      it._pass.push(true);
+    });
+    computeJudgement(cond);
+  });
+
+  render();
+};
+
+window.removeItem = (ci, ri) => {
+  const cond = state.conditions[ci];
+  if (!cond) return;
+  cond.items.splice(ri, 1);
+  computeJudgement(cond);
+  render();
+};
+
+// ===== PDF upload =====
+function handlePdfUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.type !== "application/pdf") {
+    showStatus("請僅上傳 PDF 檔案。", "warning", 4000);
+    return;
+  }
+  if (!pifId) {
+    showStatus("找不到 PIF ID，無法上傳 PDF。", "error", 4000);
+    return;
+  }
+  uploadMainPdf(file, `pifs/${pifId}/11.pdf`);
+}
+
+function uploadMainPdf(file, storagePath) {
+  const uploadTask = uploadBytesResumable(ref(storage, storagePath), file);
+  const button = byId("btnUploadPdf");
+  button.disabled = true;
+
+  uploadTask.on(
+    "state_changed",
+    snapshot => {
+      const progress =
+        (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      setUploadStatusPdf(
+        `<i class="fa-solid fa-upload"></i> 正在上傳 PDF... ${Math.round(
+          progress
+        )}%`,
+        "status-info"
+      );
+    },
+    error => {
+      console.error("Main PDF Upload failed:", error);
+      setUploadStatusPdf(
+        `<i class="fa-solid fa-triangle-exclamation"></i> PDF 上傳失敗: ${error.code}`,
+        "status-error"
+      );
+      button.disabled = false;
+    },
+    () => {
+      setUploadStatusPdf(
+        '<i class="fa-solid fa-check-circle"></i> PDF 已成功上傳！儀表板狀態將會更新。',
+        "status-success"
+      );
+      button.disabled = false;
+      byId("pdfUploader").value = "";
+      setTimeout(() => setUploadStatusPdf("", "none"), 5000);
+    }
+  );
+}
+
+function setUploadStatusPdf(msg, styleClass) {
+  const statusEl = byId("upload-status-pdf");
+  if (!msg || styleClass === "none") {
+    statusEl.style.display = "none";
+  } else {
+    statusEl.innerHTML = msg;
+    statusEl.className = `noprint ${styleClass}`;
+    statusEl.style.display = "block";
+  }
+}
+
+// ===== toolbar buttons =====
+function bindEvents() {
+  byId("btnSave").addEventListener("click", saveData);
+  byId("addCondition").addEventListener("click", window.addCondition);
+  byId("addItemToAll").addEventListener("click", window.addItemToAll);
+  byId("addTimepointAll").addEventListener("click", window.addTimepointAll);
+  byId("btnExportCSV").addEventListener("click", exportCSV);
+  byId("genAIConclusion").addEventListener("click", genAIConclusion);
+  byId("btnPrint").addEventListener("click", printPage);
+
+  byId("btnUploadPdf").addEventListener("click", () =>
+    byId("pdfUploader").click()
+  );
+  byId("pdfUploader").addEventListener("change", handlePdfUpload);
+}
+
+function exportCSV() {
+  syncStateFromUI();
+  if (state.conditions.length === 0) {
+    showStatus("目前沒有試驗資料可匯出。", "warning", 4000);
+    return;
+  }
+
+  const rows = [];
+  rows.push([
+    "Condition",
+    "Pack",
+    "Note",
+    "Item",
+    "Spec",
+    "Unit",
+    "Timepoint",
+    "Value",
+    "Pass"
+  ]);
+
+  state.conditions.forEach(cond => {
+    cond.items.forEach(it => {
+      const values = Array.isArray(it.values) ? it.values : [];
+      const passArr = Array.isArray(it._pass) ? it._pass : [];
+      cond.timepoints.forEach((tp, ti) => {
+        const v = values[ti] ?? "";
+        const pass =
+          v === "" ? "" : passArr[ti] === false ? "FAIL" : "PASS";
+        rows.push([
+          cond.name || "",
+          cond.pack || "",
+          cond.note || "",
+          it.name || "",
+          it.spec || "",
+          it.unit || "",
+          tp || "",
+          v,
+          pass
+        ]);
+      });
+    });
+  });
+
+  const csv = rows
+    .map(cols =>
+      cols
+        .map(field => {
+          const f = String(field ?? "");
+          return /[",\n]/.test(f)
+            ? `"${f.replace(/"/g, '""')}"`
+            : f;
+        })
+        .join(",")
+    )
+    .join("\r\n");
+
+  const blob = new Blob([csv], {
+    type: "text/csv;charset=utf-8;"
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `pif11_${pifId || "data"}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  showStatus("CSV 匯出完成。", "success", 4000);
+}
+
+function printPage() {
+  window.print();
+}
+
+function genAIConclusion() {
+  syncStateFromUI();
+
+  if (state.conditions.length === 0) {
+    showStatus("目前尚未輸入安定性試驗資料，無法產生摘要。", "warning", 4000);
+    return;
+  }
+
+  state.conditions.forEach(cond => computeJudgement(cond));
+
+  const overallPass = state.conditions.every(cond =>
+    cond.items.every(it => judgeRow(it))
+  );
+
+  let summaryText =
+    "依目前輸入之安定性試驗結果，產品在各測試條件下整體判定為：" +
+    (overallPass ? "「安定（合格）」" : "「部分條件需再確認」") +
+    "。\n\n";
+
+  const lines = state.conditions.map(cond => {
+    const name = cond.name || "未命名條件";
+    const failItems = cond.items
+      .filter(it => !judgeRow(it))
+      .map(it => it.name || "(未命名項目)");
+    if (failItems.length === 0) {
+      return `・${name}：所有測試項目符合規格。`;
+    }
+    return `・${name}：以下項目未完全符合規格：${failItems.join("、")}。`;
+  });
+
+  summaryText += lines.join("\n");
+  byId("summary").value = summaryText;
+  state.summary = summaryText;
+
+  showStatus("已根據目前資料產生安定性試驗摘要，可再視需要調整。", "success", 4000);
+}
+
+// 預設示範資料
+function seedSampleData() {
+  state.conditions = [
+    {
+      name: "加速試驗 40℃",
+      pack: "",
+      note: "",
+      timepoints: ["初始", "7d", "14d", "21d", "28d"],
+      items: [
+        {
+          name: "外觀",
+          spec: "無顯著變化",
+          unit: "",
+          values: ["", "", "", "", ""],
+          _pass: [true, true, true, true, true]
+        },
+        {
+          name: "pH 值",
+          spec: "5.0–6.0",
+          unit: "",
+          values: ["", "", "", "", ""],
+          _pass: [true, true, true, true, true]
+        },
+        {
+          name: "黏度變化",
+          spec: "±20% 以內",
+          unit: "%",
+          values: ["", "", "", "", ""],
+          _pass: [true, true, true, true, true]
+        },
+        {
+          name: "總生菌數",
+          spec: "≦100 CFU/g",
+          unit: "CFU/g",
+          values: ["", "", "", "", ""],
+          _pass: [true, true, true, true, true]
+        }
+      ]
+    }
+  ];
+}
+
+initPage();
+</script>
+</body>
+</html>

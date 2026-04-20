@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PIF 目錄（可編輯／合併／列印）</title>
+<style>
+  :root{
+    --maxw: 900px;
+    --fg: #111;
+    --muted:#666;
+    --accent:#0a7;
+  }
+  html,body{height:100%;}
+  body{
+    font-family: "Noto Serif TC", "Songti TC", PMingLiU, serif;
+    color:var(--fg);
+    margin:0; background:#fafafa;
+  }
+  header{ max-width:var(--maxw); margin:24px auto 12px; padding:0 16px; }
+  .toolbar{
+    font-family: ui-sans-serif, system-ui, -apple-system, "Noto Sans TC", sans-serif;
+    display:flex; gap:8px; flex-wrap:wrap; align-items:center; color:#000; margin-top:8px;
+  }
+  .toolbar button{ border:1px solid #bbb; background:#fff; padding:6px 10px; border-radius:8px; cursor:pointer; }
+  .toolbar button:active{transform:translateY(1px)}
+  .toolbar .sep{flex:0 0 1px; height:28px; background:#ddd; margin:0 6px}
+
+  .paper{ background:#fff; max-width:var(--maxw); margin:12px auto 48px; padding:48px 56px; box-shadow:0 10px 30px rgba(0,0,0,.08); }
+  .title{ text-align:center; letter-spacing:.35em; font-weight:700; font-size:28px; margin:0 0 18px; }
+  .right-head{ text-align:right; color:var(--fg); font-size:16px; margin-top:-6px;}
+
+  .toc{ margin-top:18px;}
+  .row{ display:grid; grid-template-columns:auto 1fr minmax(40px,70px) auto; gap:8px; align-items:baseline; line-height:1.8; padding:2px 0; }
+  .num{ width:64px; text-align:left; color:var(--fg); font-variant-numeric: tabular-nums; }
+  .label[contenteditable]{ outline:1px dashed transparent; }
+  .page{ text-align:right; width:64px; font-variant-numeric: tabular-nums; }
+  .page[contenteditable]{ outline:1px dashed transparent; }
+  .row:hover .label[contenteditable], .row:hover .page[contenteditable]{ outline-color:#e5e5e5; }
+  .leader{ height:1px; align-self:center; background:repeating-linear-gradient(to right, #000 0, #000 2px, transparent 2px, transparent 6px); transform: translateY(-2px);}  
+  .appendix .num{ width:auto; }
+  .appendix .page{ width:64px; }
+  .drag-handle{ cursor:move; opacity:.5; user-select:none; }
+  .del{ color:#b00; cursor:pointer; font-family: ui-sans-serif, system-ui, "Noto Sans TC", sans-serif; font-size:12px; border:0; background:transparent; }
+  .del:hover{ text-decoration:underline; }
+  footer{ max-width:var(--maxw); margin:0 auto 36px; color:var(--muted); font-size:12px; padding:0 16px;}
+
+  /* 合併內容區域樣式 */
+  .content{ max-width:var(--maxw); margin:0 auto 48px; padding:0 16px; }
+  .doc-section{ background:#fff; padding:32px 40px; margin:24px 0; box-shadow:0 6px 20px rgba(0,0,0,.06); scroll-margin-top:80px; }
+  .doc-title{ font-family: ui-sans-serif, system-ui, -apple-system, "Noto Sans TC", sans-serif; font-weight:700; margin:0 0 12px; }
+  .controls{ font-family: ui-sans-serif, system-ui, -apple-system, "Noto Sans TC", sans-serif; display:flex; gap:8px; margin:4px 0 12px; }
+  .page-break{ break-after: page; height:0; border:0; margin:0; }
+
+  @media print{
+    body{ background:#fff; }
+    .toolbar, footer{ display:none !important; }
+    .paper{ box-shadow:none; margin:0 auto; padding:40px 48px; break-after: page; }
+    .title{ margin-top:24px; }
+    .del, .controls, .doc-title[data-auto="1"]{ display:none !important; }
+    /* 每節強制新頁：每個 doc-section 開頭都換頁 */
+    .doc-section{ box-shadow:none; break-before: page; }
+  }
+  .row.linkable .label{ cursor:pointer; text-decoration:underline; }
+  /* 匯入檔名不顯示用：自動識別為檔名時隱藏章節標題 */
+  .doc-title[data-auto="1"]{ display:none !important; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="toolbar" role="toolbar" aria-label="工具列">
+      <button id="btnAdd">新增項目</button>
+      <button id="btnAddApx">新增附錄</button>
+      <button id="btnRenumber">重新編號</button>
+      <span class="sep"></span>
+      <button id="btnSave">下載 .html</button>
+      <button id="btnExport">匯出 JSON</button>
+      <button id="btnImport">匯入 JSON</button>
+      <button id="btnPrint">列印 / 匯出 PDF</button>
+      <button id="btnImportDocs">匯入資料檔（多檔）</button>
+      <button id="btnAddBreak">插入分頁</button>
+      <button id="btnClearDocs">清空內容</button>
+      <label style="margin-left:8px">起始頁：<input id="startPage" type="number" min="1" value="2" style="width:72px"></label>
+      <button id="btnAutoPages">自動更新頁次/連結</button>
+      <button id="btnSelfTest" title="執行內建測試（於主控台可見詳情）">自我測試</button>
+      <span id="status" style="margin-left:auto;color:var(--muted);"></span>
+    </div>
+  </header>
+
+  <main class="paper">
+    <h1 id="docTitle" class="title" contenteditable="true" spellcheck="false">目　錄</h1>
+    <div class="right-head">頁　次</div>
+    <section id="toc" class="toc" aria-label="目錄清單"></section>
+  </main>
+
+  <section id="content" class="content" aria-label="合併內容"></section>
+
+  <footer>
+    提示：可直接點選項目名稱與頁次進行編輯、拖曳每列左側括號區可排序；會自動儲存至瀏覽器（離線免登入）。合併檔案可匯入 HTML / 圖片 / PDF；列印時自動隱藏控制鈕與檔名。現為「每節強制新頁」。
+  </footer>
+
+<script>
+(function(){
+  const $ = sel => document.querySelector(sel);
+  const tocEl = $('#toc');
+  const statusEl = $('#status');
+  const contentRoot = document.querySelector('#content');
+  const KEY = 'pif_toc_v1';
+
+  const defaults = [
+    {type:'item', title:'產品基本資料', page:'2'},
+    {type:'item', title:'完成產品登錄之證明文件', page:'3'},
+    {type:'item', title:'全成分名稱及其各別含量', page:'4'},
+    {type:'item', title:'產品標籤、仿單、外包裝或容器', page:'5'},
+    {type:'item', title:'製造場所符合化妝品優良製造準則之證明文件或聲明書', page:'7'},
+    {type:'item', title:'製造方法、流程', page:'9'},
+    {type:'item', title:'使用方法、部位、用量、頻率及族群', page:'10'},
+    {type:'item', title:'產品使用不良反應資料', page:'10'},
+    {type:'item', title:'產品及各成分之物理及化學特性', page:'11'},
+    {type:'item', title:'成分之毒理資料', page:'25'},
+    {type:'item', title:'產品安定性試驗報告', page:'45'},
+    {type:'item', title:'微生物檢測報告', page:'46'},
+    {type:'item', title:'防腐效能試驗報告', page:'47'},
+    {type:'item', title:'功能評估佐證資料', page:'48'},
+    {type:'item', title:'與產品接觸之包裝材質資料', page:'48'},
+    {type:'item', title:'產品安全資料', page:'49'},
+    {type:'appendix', title:'產品及各成分之物理化學特性相關資料', page:''},
+    {type:'appendix', title:'各成分之毒理相關資料', page:''}
+  ];
+
+  let state = load() || {title:'目　錄', startPage:2, items:[...defaults]};
+  if($('#docTitle')) $('#docTitle').innerText = state.title || '目　錄';
+  if($('#startPage')) $('#startPage').value = state.startPage || 2;
+
+  function render(){
+    tocEl.innerHTML = '';
+    let idx = 0, apx = 0;
+    state.items.forEach((it, i)=>{
+      const row = document.createElement('div');
+      row.className = 'row' + (it.type==='appendix' ? ' appendix' : '');
+      row.draggable = true;
+      row.dataset.index = i;
+
+      const num = document.createElement('div');
+      num.className='num drag-handle';
+      if(it.type==='appendix'){ num.textContent = '附錄 ' + (++apx) + '：'; }
+      else { num.textContent = '（' + (++idx) + '）'; }
+
+      const label = document.createElement('div');
+      label.className='label';
+      label.contentEditable = true; label.spellcheck = false; label.textContent = it.title || '';
+      label.addEventListener('input', ()=>{ it.title = label.innerText.trim(); autoSave(); });
+      // 單擊標題 = 導航；雙擊 = 編輯
+      label.addEventListener('mousedown', (e)=>{ if(it.anchor && e.detail===1){ e.preventDefault(); } });
+      label.addEventListener('dblclick', ()=>{ label.focus(); });
+
+      const leader = document.createElement('div'); leader.className='leader';
+
+      const page = document.createElement('div');
+      page.className='page'; page.contentEditable = true; page.spellcheck = false; page.textContent = it.page || '';
+      page.addEventListener('input', ()=>{ it.page = page.innerText.replace(/\s+/g,'').replace(/[^0-9ivxlcdmIVXLCDM一二三四五六七八九十]/g,''); autoSave(); });
+
+      const del = document.createElement('button'); del.className='del'; del.textContent='刪除';
+      del.addEventListener('click', ()=>{ state.items.splice(i,1); render(); autoSave(); });
+
+      // 目錄→錨點跳轉（非編輯狀態）
+      if(it.anchor) row.classList.add('linkable');
+      label.addEventListener('focus', ()=> row.classList.remove('linkable'));
+      label.addEventListener('blur', ()=> { if(it.anchor) row.classList.add('linkable'); });
+      row.addEventListener('click', (e)=>{
+        if(e.detail>=2) return; // 雙擊保留給編輯
+        if(e.target.classList.contains('page')||e.target.classList.contains('del')) return;
+        const go = ()=>{
+          let target = null;
+          if(it.anchor){ target = document.querySelector(it.anchor); }
+          if(!target){
+            const secs = Array.from(document.querySelectorAll('#content .doc-section'));
+            const idx = Math.min(i, secs.length-1);
+            if(idx>=0) target = secs[idx];
+            if(target){ const a = ensureAnchorForSection(target); it.anchor = a; row.classList.add('linkable'); autoSave(true); }
+          }
+          if(target){ try{ history.replaceState(null, '', it.anchor); }catch(_){ } target.scrollIntoView({behavior:'smooth', block:'start'}); }
+        };
+        if(!it.anchor){ try{ updateAnchorsAndPages(); }catch(_){ } setTimeout(go, 60); }
+        else { go(); }
+      });
+
+      row.append(num, label, leader, page, del);
+      // Drag & drop
+      row.addEventListener('dragstart', ev=>{ ev.dataTransfer.setData('text/plain', i); ev.dataTransfer.effectAllowed='move'; });
+      row.addEventListener('dragover', ev=>{ ev.preventDefault(); ev.dataTransfer.dropEffect='move'; });
+      row.addEventListener('drop', ev=>{
+        ev.preventDefault();
+        const from = +ev.dataTransfer.getData('text/plain');
+        const to = +row.dataset.index;
+        if(from===to) return;
+        const moved = state.items.splice(from,1)[0];
+        state.items.splice(to,0,moved);
+        render(); autoSave();
+      });
+
+      tocEl.appendChild(row);
+    });
+  }
+
+  function renumber(){ render(); autoSave(true); }
+
+  // Save / Load
+  function autoSave(silent=false){
+    try{
+      state.title = $('#docTitle').innerText.trim() || '目　錄';
+      var __sp = document.querySelector('#startPage');
+      state.startPage = parseInt(__sp && __sp.value ? __sp.value : state.startPage, 10) || state.startPage || 2;
+      localStorage.setItem(KEY, JSON.stringify(state));
+      if(!silent) flash('已儲存');
+    }catch(e){ console.warn(e); }
+  }
+  function load(){
+    try{ const raw = localStorage.getItem(KEY); return raw? JSON.parse(raw): null; }catch(e){ return null; }
+  }
+
+  // Toolbar actions
+  $('#btnAdd').addEventListener('click', ()=>{
+    state.items.push({type:'item', title:'新項目', page:''}); render(); autoSave();
+  });
+  $('#btnAddApx').addEventListener('click', ()=>{
+    state.items.push({type:'appendix', title:'新附錄標題', page:''}); render(); autoSave();
+  });
+  $('#btnRenumber').addEventListener('click', renumber);
+
+  const openPrintWindow = ()=>{
+    const styleTag = document.querySelector('style');
+    const style = styleTag ? styleTag.outerHTML : '';
+
+    const paperNode = document.querySelector('.paper') ? document.querySelector('.paper').cloneNode(true) : null;
+    const contentNode = document.querySelector('#content') ? document.querySelector('#content').cloneNode(true) : null;
+
+    // 列印專用：移除所有刪除/控制元素與自動檔名標題
+    ;[paperNode, contentNode].forEach(node=>{
+      if(!node) return;
+      node.querySelectorAll('.del, .controls, .doc-title[data-auto="1"]').forEach(el=> el.remove());
+    });
+
+    const paper = paperNode ? paperNode.outerHTML : '';
+    const content = contentNode ? contentNode.outerHTML : '';
+
+    // 列印視窗保險樣式
+    const extraStyle = '<style>@media print{.del,.controls,.doc-title[data-auto="1"]{display:none !important}} .del,.controls,.doc-title[data-auto="1"]{display:none !important}</style>';
+
+    const html = `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8">${style}${extraStyle}</head><body>${paper}${content}</body></html>`;
+    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const w = window.open(url, '_blank');
+    if(w){ w.addEventListener('load', ()=>{ try{ w.focus(); w.print(); }catch(e){} }, {once:true}); }
+    else { alert('彈出視窗被阻擋，請允許此頁開新視窗後再試一次。'); }
+  };
+  document.querySelector('#btnPrint').addEventListener('click', openPrintWindow);
+
+  $('#btnExport').addEventListener('click', ()=>{
+    const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json;charset=utf-8'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'PIF_目錄.json'; a.click(); URL.revokeObjectURL(a.href);
+  });
+  $('#btnImport').addEventListener('click', ()=>{
+    const inp = document.createElement('input'); inp.type='file'; inp.accept='.json,application/json';
+    inp.onchange = async ()=>{
+      const file = inp.files[0]; if(!file) return;
+      try{
+        const text = await file.text();
+        let obj = null;
+        try{ obj = JSON.parse(text); }catch(e){ flash('讀取失敗（無法解析 JSON）'); return; }
+        let items = null;
+        if(Array.isArray(obj)) items = obj;
+        else if(obj && Array.isArray(obj.items)) items = obj.items;
+        else if(obj && Array.isArray(obj.toc)) items = obj.toc;
+        if(!items){ flash('JSON 格式不正確（需要 items 陣列）'); return; }
+        const norm = items.map(it=>{
+          if(typeof it === 'string') return {type:'item', title: it, page:''};
+          return {type: it && it.type==='appendix' ? 'appendix' : 'item', title: (it && it.title) ? it.title : '未命名', page: (it && it.page) ? String(it.page) : '', anchor: (it && it.anchor) ? it.anchor : ''};
+        });
+        state.items = norm;
+        if(obj && obj.title) state.title = obj.title;
+        if(obj && typeof obj.startPage==='number'){ const sp = document.querySelector('#startPage'); if(sp){ sp.value = obj.startPage; } }
+        $('#docTitle').innerText = state.title || '目　錄';
+        render(); autoSave();
+        flash(`已載入 ${norm.length} 筆`);
+      }catch(err){ console.error(err); flash('讀取失敗'); }
+    };
+    inp.click();
+  });
+
+  $('#btnSave').addEventListener('click', ()=>{
+    // 以當前狀態組裝可單檔離線運作的 HTML
+    const html = document.documentElement.outerHTML;
+    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'PIF_可編輯目錄.html'; a.click(); URL.revokeObjectURL(a.href);
+  });
+
+  $('#docTitle').addEventListener('input', ()=> autoSave());
+
+  function flash(msg){ statusEl.textContent = msg; setTimeout(()=> statusEl.textContent='', 1400); }
+
+  function ensureAnchorForSection(sec){ if(!sec.id){ sec.id='sec-'+Math.random().toString(36).slice(2,9); } return '#'+sec.id; }
+
+  // —— 每節強制新頁：頁次計算改為「每看到一節就 +1」 ——
+  function estimatePageHeight(){
+    const probe = document.createElement('div');
+    probe.style.cssText='position:absolute;visibility:hidden;height:29.7cm;width:1px;';
+    document.body.appendChild(probe);
+    const h = probe.getBoundingClientRect().height; document.body.removeChild(probe);
+    return Math.max(800, Math.round(h - 2*48 - 40));
+  }
+  function updateAnchorsAndPages(){
+    const contentEl = document.querySelector('#content');
+    const pageH = estimatePageHeight();
+    const startInput = document.querySelector('#startPage');
+    const start = parseInt(startInput && startInput.value, 10) || 2;
+    try{ state.startPage = start; localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+
+    let page = start; // 下一個章節的起始頁
+    const map = [];
+    Array.from(contentEl.children).forEach(node=>{
+      if(node.classList && node.classList.contains('page-break')){ page += 1; return; }
+      if(node.classList && node.classList.contains('doc-section')){
+        const anchor = ensureAnchorForSection(node);
+        const h = node.getBoundingClientRect().height || 0;
+        const used = Math.max(1, Math.ceil(h / pageH));
+        map.push({anchor, page});
+        page += used; // 依實際高度推估使用頁數
+      }
+    });
+    const n = Math.min(state.items.length, map.length);
+    for(let i=0;i<n;i++){ state.items[i].anchor = map[i].anchor; state.items[i].page = String(map[i].page); }
+    render(); autoSave(true);
+    flash('已更新頁次與錨點（依章節實際頁數）');
+    return map.length;
+  }
+
+  // —— 合併內容：匯入資料檔、插入分頁、清空 ——
+  function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+  function addDocSection(title, innerHTML){
+    const art = document.createElement('article'); art.className='doc-section';
+    const h = document.createElement('h2'); h.className='doc-title'; h.contentEditable=true; h.spellcheck=false;
+    const t = (title||'')+'';
+    const isFile = /\.((html?|txt|md|jpe?g|png|webp|gif|svg|pdf))$/i.test(t);
+    if(isFile){ h.textContent=''; h.setAttribute('data-auto','1'); }
+    else { h.textContent = t || '未命名文件'; }
+    h.addEventListener('input', ()=>{ if(h.textContent.trim()){ h.removeAttribute('data-auto'); }});
+
+    const ctr = document.createElement('div'); ctr.className='controls';
+    const del = document.createElement('button'); del.className='del'; del.textContent='刪除本節'; del.addEventListener('click', ()=>{ art.remove(); });
+    ctr.appendChild(del);
+
+    const body = document.createElement('div'); body.className='doc-body'; body.innerHTML = innerHTML || '';
+    art.append(h, ctr, body);
+    contentRoot.appendChild(art);
+    return art;
+  }
+  function importFiles(){
+    const inp = document.createElement('input'); inp.type='file'; inp.multiple=true;
+    inp.accept='.html,.htm,.txt,.md,.jpg,.jpeg,.png,.webp,.gif,.svg,.pdf';
+    inp.onchange = async ()=>{
+      const files = Array.from(inp.files||[]);
+      for(const f of files){
+        const name = f.name;
+        const ext = (name.split('.').pop()||'').toLowerCase();
+        if(ext==='pdf'){
+          const url = URL.createObjectURL(f);
+          addDocSection(name, `<object data="${url}" type="application/pdf" width="100%" height="1200"></object>`);
+        } else if(['png','jpg','jpeg','webp','gif','svg'].includes(ext)){
+          const url = URL.createObjectURL(f);
+          addDocSection(name, `<img src="${url}" alt="${name}" style="max-width:100%;height:auto;"/>`);
+        } else if(['html','htm'].includes(ext)){
+          const text = await f.text();
+          const doc = new DOMParser().parseFromString(text,'text/html');
+          const inner = (doc.body && doc.body.innerHTML) ? doc.body.innerHTML : escapeHtml(text);
+          addDocSection(name, inner);
+        } else { // txt / md
+          const text = await f.text();
+          addDocSection(name, `<pre style="white-space:pre-wrap;word-break:break-word">${escapeHtml(text)}</pre>`);
+        }
+      }
+      flash('已匯入'); updateAnchorsAndPages(); setTimeout(updateAnchorsAndPages, 300); setTimeout(updateAnchorsAndPages, 1200);
+    };
+    inp.click();
+  }
+  function addPageBreak(){ const br = document.createElement('hr'); br.className='page-break'; contentRoot.appendChild(br); flash('已插入分頁'); updateAnchorsAndPages(); }
+  function clearDocs(){ contentRoot.innerHTML=''; flash('內容已清空'); updateAnchorsAndPages(); }
+
+  document.querySelector('#btnImportDocs').addEventListener('click', importFiles);
+  document.querySelector('#btnAddBreak').addEventListener('click', addPageBreak);
+  document.querySelector('#btnClearDocs').addEventListener('click', clearDocs);
+  const btnAuto = document.querySelector('#btnAutoPages'); if(btnAuto) btnAuto.addEventListener('click', updateAnchorsAndPages);
+  const startPageEl = document.querySelector('#startPage'); if(startPageEl){ startPageEl.addEventListener('input', ()=>{ try{ state.startPage = parseInt(startPageEl.value,10)||2; localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }); }
+
+  // —— 自我測試 ——
+  function selfTests(){
+    const results = [];
+    try{ render(); results.push(['render() 執行', true]); }catch(e){ results.push(['render() 執行', false, e.message]); }
+    try{ const nRows = tocEl.querySelectorAll('.row').length; results.push(['列數==items', nRows === state.items.length, `${nRows} vs ${state.items.length}`]); }catch(e){ results.push(['列數==items', false, e.message]); }
+    // 新增：autoSave() 相容性（避免舊版瀏覽器不支援 ?. 語法）
+    try{ autoSave(true); results.push(['autoSave() 相容性', true]); }catch(e){ results.push(['autoSave() 相容性', false, e.message]); }
+    // 每節強制新頁 & 依實際高度估算頁數
+    try{
+      const mapped = updateAnchorsAndPages();
+      const sections = document.querySelectorAll('#content .doc-section').length;
+      const okCount = typeof mapped==='number' && mapped===sections;
+      results.push(['updateAnchorsAndPages() 可執行', okCount, `sections=${sections}`]);
+    }catch(e){ results.push(['updateAnchorsAndPages() 可執行', false, e.message]); }
+    console.table(results.map(([name, ok, note])=>({name, ok, note: note||''})));
+    flash(results.every(r=>r[1])? '測試通過' : '測試有異常（詳見主控台）');
+    flash(results.every(r=>r[1])? '測試通過' : '測試有異常（詳見主控台）');
+  }
+  document.querySelector('#btnSelfTest').addEventListener('click', selfTests);
+
+  // 初始渲染與錨點計算
+  render();
+  setTimeout(()=>{ try{ updateAnchorsAndPages(); }catch(e){} }, 0);
+  // 視窗尺寸改變不影響「每節一頁」算法，但仍維持錨點
+  window.addEventListener('resize', ()=>{ clearTimeout(window.__tocTimer); window.__tocTimer=setTimeout(()=>{ try{ updateAnchorsAndPages(); }catch(e){} }, 200); });
+  // 內容區子節點異動時（新增/刪除章節），延遲重算
+  (function(){
+    const tgt = document.querySelector('#content');
+    if(!tgt) return;
+    const __mo = new MutationObserver(()=>{ clearTimeout(window.__tocTimer); window.__tocTimer=setTimeout(()=>{ try{ updateAnchorsAndPages(); }catch(e){} }, 200); });
+    __mo.observe(tgt, {childList:true, subtree:true});
+  })();
+})();
+</script>
+</body>
+</html>

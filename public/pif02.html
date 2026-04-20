@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PIF 02｜產品登錄證明</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="./style.css">
+<style>
+    body { opacity: 0; transition: opacity 0.4s ease-in-out; background-color: #f9fafb; }
+  
+    /* 放大整體可視寬度（畫面） */
+    .app-wrap{max-width:1400px; margin: 0 auto; padding: 24px;}
+  
+    .status-bar { padding: 12px 0; display: flex; align-items: center; justify-content: space-between; font-size: .9rem; color: var(--muted); }
+    .status-light { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: #9ca3af; margin-right: 8px; }
+    .status-light.syncing { background-color: #f59e0b; animation: pulse 1.5s infinite; }
+    .status-light.synced { background-color: #22c55e; }
+    .status-light.error { background-color: #ef4444; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  
+    #global-error { text-align: center; padding: 2rem; color: red; }
+  
+    /* 附件區：加寬右側預覽欄位 */
+    .attachment-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+      gap: 1.5rem;
+      align-items: start;
+    }
+  
+    /* 小螢幕自動改為上下排列 */
+    @media (max-width: 900px) {
+      .attachment-grid { grid-template-columns: 1fr; }
+    }
+  
+    .preview-box {
+      border: 2px dashed var(--line);
+      border-radius: .5rem;
+      min-height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fafafa;
+      color: var(--muted);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .preview-box img { max-width: 100%; height: auto; display: block; }
+  
+    .upload-btn { margin-top: .5rem; width: 100%; justify-content: center; }
+  
+    .title-input {
+      font-size: 1.1rem;
+      font-weight: 600;
+      padding: .5rem;
+      border: none;
+      background: transparent;
+      width: 100%;
+    }
+    .title-input:focus { box-shadow: 0 1px 0 var(--brand); outline: none; }
+  
+    #upload-status-pdf {
+      display: none;
+      padding: 0.75rem 1.25rem;
+      margin-top: 1rem;
+      border-radius: 8px;
+      font-weight: 500;
+      text-align: center;
+    }
+    .status-info { background-color: #e0e7ff; color: #3730a3; }
+    .status-success { background-color: #dcfce7; color: #166534; }
+    .status-error { background-color: #fee2e2; color: #991b1b; }
+    #upload-status-pdf i { margin-right: 0.5rem; }
+  
+    /* PDF 佔位的基本樣式（避免 style.css 未定義時不好看） */
+    .pdf-placeholder{
+      display:flex;
+      flex-direction: column;
+      align-items:center;
+      justify-content:center;
+      gap: .25rem;
+      color: #b91c1c;
+      text-decoration: none;
+      width: 100%;
+      height: 100%;
+      font-weight: 600;
+    }
+    .pdf-placeholder i{ font-size: 2rem; }
+  
+    /* 列印專用頂端區（比照 PIF07） */
+    .print-only { display: none; }
+
+    #print-header {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin: 0 0 12px 0;
+      background: #fff;
+    }
+
+    .print-header-grid {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .ph-left { flex: 1; min-width: 0; }
+    .ph-right { text-align: right; min-width: 220px; }
+
+    .ph-title {
+      font-size: 1.28rem;
+      font-weight: 800;
+      letter-spacing: .3px;
+      color: #111827;
+      margin: 0 0 4px 0;
+      line-height: 1.2;
+    }
+
+    .ph-sub {
+      font-size: .98rem;
+      color: #111827;
+      line-height: 1.35;
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    .ph-label {
+      font-weight: 700;
+      color: #374151;
+    }
+  
+    /* 列印時：隱藏 no-print / noprint，調整版面並顯示列印表頭 */
+    @media print {
+      @page { size: A4; margin: 10mm; }
+  
+      .no-print { display: none !important; }
+      .noprint, .noprint * { display: none !important; }
+  
+      body { opacity: 1 !important; background: #fff !important; }
+  
+      .app-wrap{
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+  
+      .card{ box-shadow: none !important; }
+  
+      /* 避免單一附件被切頁 */
+      .attachment-card{
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+  
+      /* 由左右雙欄改為上下排列，預覽放大 */
+      .attachment-grid{
+        grid-template-columns: 1fr !important;
+        gap: 0.75rem !important;
+      }
+  
+      .attachment-preview .preview-box{
+        min-height: 360px !important;
+        border: 1px solid #d1d5db !important;
+        background: #fff !important;
+      }
+  
+      /* 列印時優先全寬顯示圖片（不受「顯示寬度%」影響） */
+      .attachment-preview .preview-box img{
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+      }
+  
+      .attachment-preview .pdf-placeholder{
+        min-height: 360px;
+      }
+
+      /* 顯示列印專用表頭 */
+      .print-only { display: block !important; }
+    }
+  </style>  
+</head>
+<body>
+
+  <!-- 全站導覽＋PIF 頂端條 -->
+  <pif-nav class="noprint"></pif-nav>
+  <top-bar class="noprint"></top-bar>
+
+  <div class="container">
+    <status-bar class="noprint"></status-bar>
+
+    <div id="app-container" style="display: none;">
+
+      <!-- 列印專用頂端（PIF02 標題 / PIFID / 產品 / 公司） -->
+      <div id="print-header" class="print-only">
+        <div class="print-header-grid">
+          <div class="ph-left">
+            <div class="ph-title" id="printTitle"></div>
+            <p class="ph-sub" id="printProductName"></p>
+          </div>
+          <div class="ph-right">
+            <p class="ph-sub">
+              <span class="ph-label">PIFID：</span>
+              <span id="printPifId"></span>
+            </p>
+            <p class="ph-sub" id="printCompanyName"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 這裡只保留返回＋儲存，不再顯示登入資訊 -->
+      <div class="toolbar no-print">
+          <a id="back-link" href="#" class="btn"><i class="fa-solid fa-arrow-left"></i> 我的PIF</a>
+          <button id="btnSaveChanges" class="btn accent"><i class="fa-solid fa-cloud-arrow-up"></i> 儲存變更至雲端</button>
+      </div>
+
+      <div class="app-wrap">
+          <header class="no-print">
+              <div>
+                  <h1><i class="fa-solid fa-file-contract" style="color:var(--primary-color)"></i> PIF 02｜產品登錄證明</h1>
+                  <!-- 產品資訊交給 top-bar 顯示，這裡不再顯示，避免重複 -->
+                  <div id="project-subtitle" class="meta" style="display:none;"></div>
+              </div>
+              <div><span id="pif-id-badge" class="badge"></span></div>
+          </header>
+
+          <!-- 上方狀態列 -->
+          <div class="status-bar no-print">
+              <div>
+                  <span id="status-light" class="status-light"></span>
+                  <span id="status-text">正在初始化...</span>
+              </div>
+              <div style="display:flex; gap: 0.5rem;">
+                  <button id="btnAdd" class="btn"><i class="fa-solid fa-plus"></i> 新增附件</button>
+                  <button id="btnUploadPdf" class="btn"><i class="fa-solid fa-file-arrow-up"></i> 上傳本頁 PDF</button>
+                  <input type="file" id="pdfUploader" accept="application/pdf" style="display:none;">
+                  <button onclick="window.print()" class="btn"><i class="fa-solid fa-print"></i> 列印</button>
+              </div>
+          </div>
+          <div id="upload-status-pdf" class="no-print"></div>
+          
+          <div class="card" style="margin-top: 1rem;">
+              <div class="body">
+                  <div class="two-col">
+                      <div><label>主要登錄/通知號碼</label><input id="regNo" type="text" placeholder="若有多個，請填寫最主要的一個"></div>
+                      <div><label>主要登錄完成日期</label><input id="regDate" type="date"></div>
+                  </div>
+              </div>
+          </div>
+
+          <div id="list" style="margin-top:1.5rem; display: grid; gap: 1.5rem;"></div>
+      </div>
+    </div>
+
+    <div id="global-error"></div>
+  </div>
+
+<script type="module">
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { doc, getDoc, setDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { ref, uploadBytes, getDownloadURL, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+  import { auth, db, storage } from './firebase-config.js';
+  import '/components.js';
+
+  const $ = sel => document.querySelector(sel);
+  const uuid = () => (globalThis.crypto && crypto.randomUUID) ? crypto.randomUUID() : `id_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+  let pifDocRef;
+  let state = {
+      regNo: '',
+      regDate: '',
+      attachments: []
+  };
+  let pageContext = {};
+  let hasUnsavedChanges = false;
+
+  const status = {
+      light: $("#status-light"),
+      text: $("#status-text"),
+      set(state, msg) {
+          this.light.className = `status-light ${state}`;
+          this.text.textContent = msg;
+          if(state === 'synced' || state === 'error'){
+              setTimeout(() => this.set('ready', '就緒'), 3000);
+          }
+      },
+      markUnsaved(){
+          this.set('syncing', '有未儲存的變更');
+          hasUnsavedChanges = true;
+          $('#btnSaveChanges').disabled = false;
+      }
+  };
+
+  function startAuthFlow() {
+      onAuthStateChanged(auth, user => {
+          if (user) {
+              try {
+                  pageContext = setupPageContext();
+
+                  // 只設定 PIFID 標章，產品資訊交給 top-bar
+                  if (pageContext.pifId) {
+                      $('#pif-id-badge').textContent = pageContext.pifId;
+                  }
+
+                  pifDocRef = doc(db, 'pifs', pageContext.pifId);
+                  setupUIForUser(user);
+                  initializeData();
+                  $('#app-container').style.display = 'block';
+
+                  // 設定 top-bar 與列印表頭
+                  setupTopBarAndPrintHeader(user);
+              } catch (e) {
+                  $('#global-error').innerHTML = `<strong>啟動錯誤：</strong> ${e.message}。`;
+              }
+              document.body.style.opacity = '1';
+          } else {
+              window.location.href = 'login.html';
+          }
+      });
+  }
+
+  function safeDecode(v){
+      if(v==null) return "";
+      try { return decodeURIComponent(v); } catch { return v; }
+  }
+  function maybeDoubleDecode(v){
+      let out = v || "";
+      // 若前一頁已經 encodeURIComponent 過一次，URLSearchParams 會再編碼一次，可能出現 %25E5... 這種雙重編碼
+      for(let i=0;i<2;i++){
+          if(/%[0-9A-Fa-f]{2}/.test(out)) out = safeDecode(out);
+      }
+      return out;
+  }
+
+  function setupPageContext() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const context = { 
+          pifId: urlParams.get('id'),
+          companyName: maybeDoubleDecode(urlParams.get('companyName') || ""),
+          productName: maybeDoubleDecode(urlParams.get('productName') || "")
+      };
+      if (!context.pifId) throw new Error('網址中缺少專案ID');
+      return context;
+  }
+
+  function setupUIForUser(user) {
+      const params = new URLSearchParams({
+          id: pageContext.pifId,
+          companyName: pageContext.companyName || '',
+          productName: pageContext.productName || ''
+      });
+      $('#back-link').href = `pifs.html?${params.toString()}`;
+
+      $('#btnAdd').addEventListener('click', addAttachment);
+      $('#btnSaveChanges').addEventListener('click', saveData);
+      $('#btnSaveChanges').disabled = true;
+
+      $('#regNo').addEventListener('input', () => { state.regNo = $('#regNo').value; status.markUnsaved(); });
+      $('#regDate').addEventListener('input', () => { state.regDate = $('#regDate').value; status.markUnsaved(); });
+      
+      $('#btnUploadPdf').addEventListener('click', () => $('#pdfUploader').click());
+      $('#pdfUploader').addEventListener('change', handlePdfUpload);
+
+      window.addEventListener('beforeunload', e => {
+          if (hasUnsavedChanges) {
+              e.preventDefault();
+              e.returnValue = '';
+          }
+      });
+  }
+
+  function setupTopBarAndPrintHeader(user) {
+      const { pifId, companyName, productName } = pageContext || {};
+
+      // top-bar 顯示 PIF / 公司 / 產品資訊與登入狀態
+      const topBarEl = document.querySelector('top-bar');
+      if (topBarEl && typeof customElements !== 'undefined') {
+          customElements.whenDefined('top-bar').then(() => {
+              if (typeof topBarEl.setInfo === 'function') {
+                  topBarEl.setInfo(
+                      pifId || '',
+                      companyName || '',
+                      productName || '',
+                      'PIF 02 產品登錄證明'
+                  );
+              }
+              if (typeof topBarEl.setUser === 'function') {
+                  topBarEl.setUser(user);
+              }
+          }).catch(() => {});
+      }
+
+      // 列印專用表頭
+      const titleEl = document.getElementById('printTitle');
+      if (titleEl) {
+          const raw = document.title || '';
+          const stripped = raw.replace(/^PIF\s*02\s*｜\s*/i, '').trim();
+          titleEl.textContent = `PIF02 ${stripped || '產品登錄證明'}`;
+      }
+      const pifIdEl = document.getElementById('printPifId');
+      if (pifIdEl) pifIdEl.textContent = pifId || '';
+
+      const prodEl = document.getElementById('printProductName');
+      if (prodEl) prodEl.textContent = productName || '';
+
+      const compEl = document.getElementById('printCompanyName');
+      if (compEl) compEl.textContent = companyName || '';
+  }
+
+  async function initializeData() {
+      try {
+          status.set('syncing', '正在從雲端讀取資料...');
+          const docSnap = await getDoc(pifDocRef);
+          if (docSnap.exists()) {
+              const cloudData = docSnap.data();
+              if (cloudData.pif02) {
+                  state = {
+                      ...state,
+                      ...cloudData.pif02,
+                      attachments: (cloudData.pif02.attachments || []).map(item => ({...item, id: uuid()}))
+                  };
+              }
+              status.set('synced', '資料讀取成功');
+          } else {
+             throw new Error("在資料庫中找不到對應的專案文件");
+          }
+          render();
+      } catch (err) {
+          console.error("Initialization failed: ", err);
+          status.set('error', `讀取失敗: ${err.message}`);
+          $('#global-error').textContent = `讀取資料時發生嚴重錯誤: ${err.message}`;
+      }
+  }
+
+  function render() {
+      $('#regNo').value = state.regNo || '';
+      $('#regDate').value = state.regDate || '';
+
+      const listEl = $('#list');
+      listEl.innerHTML = '';
+      if (!state.attachments || state.attachments.length === 0) {
+          listEl.innerHTML = '<div class="card"><div class="body center muted" style="padding: 2rem;">尚未新增任何附件</div></div>';
+          return;
+      }
+      state.attachments.forEach(att => addAttachmentToDOM(att));
+  }
+  
+  function addAttachmentToDOM(att) {
+    const card = document.createElement('div');
+    card.className = 'card attachment-card';
+    card.setAttribute('data-id', att.id);
+
+    card.innerHTML =`
+      <div class="body">
+        <div class="attachment-grid">
+            <div class="attachment-fields">
+                <input class="title-input" data-field="title" value="${escapeHtml(att.title)}" placeholder="附件標題 (例如：產品登錄完成通知)">
+                <div class="two-col" style="gap:0.5rem; margin-top:0.5rem;">
+                    <div><label>機關/平台</label><input class="cell-input" data-field="authority" value="${escapeHtml(att.authority)}" placeholder="例如：衛福部食藥署"></div>
+                    <div><label>文號</label><input class="cell-input" data-field="docNo" value="${escapeHtml(att.docNo)}" placeholder="例如：FDA器字第 123 號"></div>
+                </div>
+                 <div class="two-col" style="gap:0.5rem; margin-top:0.5rem;">
+                    <div><label>發文日期</label><input class="cell-input" data-field="issueDate" type="date" value="${att.issueDate || ''}"></div>
+                    <div><label>顯示寬度 (%)</label><input class="cell-input" data-field="scale" type="number" min="20" max="100" step="5" value="${att.scale || 100}"></div>
+                </div>
+                <div style="margin-top:0.5rem;"><label>備註</label><textarea class="cell-input" data-field="notes" rows="2" placeholder="內部備註">${escapeHtml(att.notes)}</textarea></div>
+            </div>
+            <div class="attachment-preview">
+                <div class="preview-box">尚未上傳檔案</div>
+                <label class="btn primary btn-sm upload-btn no-print"><i class="fa-solid fa-upload"></i> 上傳檔案<input class="file-input" type="file" accept="image/*,.pdf" hidden></label>
+            </div>
+        </div>
+      </div>
+      <div class="card-footer no-print">
+          <span class="filename muted small">${att.filename ? `<i class="fa-solid fa-paperclip"></i> ${escapeHtml(att.filename)}` : ''}</span>
+          <button class="btn btn-danger btn-sm delete-btn"><i class="fa-solid fa-trash"></i> 刪除</button>
+      </div>`;
+
+    $('#list').appendChild(card);
+
+    card.querySelectorAll('.cell-input, .title-input').forEach(el => {
+        el.addEventListener('input', () => {
+            const field = el.dataset.field;
+            const attIndex = state.attachments.findIndex(a => a.id === att.id);
+            if (attIndex > -1) {
+                state.attachments[attIndex][field] = el.value;
+                if(field === 'scale'){
+                    const img = card.querySelector('.preview-box img');
+                    if(img) img.style.width = el.value + '%';
+                }
+                status.markUnsaved();
+            }
+        });
+    });
+    
+    card.querySelector('.file-input').addEventListener('change', (e) => handleFileUpload(e, att.id));
+    card.querySelector('.delete-btn').addEventListener('click', () => deleteAttachment(att.id));
+
+    renderPreview(card, att);
+  }
+
+  async function handleFileUpload(event, attachmentId) {
+      const file = event.target.files[0];
+      if (!pifDocRef || !file) return;
+
+      const card = $(`[data-id="${attachmentId}"]`);
+      const previewBox = card.querySelector('.preview-box');
+      previewBox.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 上傳中...`;
+      
+      const filePath = `pifs/${pageContext.pifId}/pif02/${attachmentId}-${file.name.replace(/[^a-zA-Z0-9_.-]/g, '_')}`;
+      const fileRef = ref(storage, filePath);
+
+      try {
+          const uploadResult = await uploadBytes(fileRef, file);
+          const downloadURL = await getDownloadURL(uploadResult.ref);
+          const attIndex = state.attachments.findIndex(a => a.id === attachmentId);
+          if (attIndex > -1) {
+              state.attachments[attIndex] = {
+                  ...state.attachments[attIndex],
+                  storagePath: filePath,
+                  downloadURL: downloadURL,
+                  filename: file.name,
+                  fileKind: file.type.startsWith('image/') ? 'image' : 'pdf',
+              };
+              renderPreview(card, state.attachments[attIndex]);
+              status.markUnsaved();
+          }
+      } catch (error) {
+          console.error("Upload failed", error);
+          previewBox.innerHTML = `上傳失敗`;
+          status.set('error', '檔案上傳失敗');
+      }
+  }
+  
+  function renderPreview(card, att) {
+      const previewBox = card.querySelector('.preview-box');
+      const filenameEl = card.querySelector('.filename');
+      
+      if (att.downloadURL && att.fileKind === 'image') {
+          previewBox.innerHTML = `<a href="${att.downloadURL}" target="_blank"><img src="${att.downloadURL}" alt="${escapeHtml(att.title)}" style="width:${att.scale || 100}%"></a>`;
+      } else if (att.fileKind === 'pdf') {
+          previewBox.innerHTML = `<a href="${att.downloadURL}" target="_blank" class="pdf-placeholder"><i class="fa-solid fa-file-pdf"></i><span>PDF 文件</span></a>`;
+      } else {
+          previewBox.innerHTML = `尚未上傳檔案`;
+      }
+      filenameEl.innerHTML = att.filename ? `<i class="fa-solid fa-paperclip"></i> ${escapeHtml(att.filename)}` : '';
+  }
+
+  function addAttachment() {
+      const newAtt = {
+        id: 'att_' + uuid(),
+        title: '登錄證明', authority: '', docNo: '', issueDate: new Date().toISOString().slice(0,10), notes: '',
+        fileKind: '', storagePath: null, downloadURL: null, scale: 100, filename: ''
+      };
+      state.attachments.unshift(newAtt);
+      render();
+      status.markUnsaved();
+  }
+
+  async function deleteAttachment(id) {
+    if (!confirm('確定刪除此附件？此操作在儲存前不會真的從雲端刪除檔案。')) return;
+    state.attachments = state.attachments.filter(a => a.id !== id);
+    render();
+    status.markUnsaved();
+  }
+
+  async function saveData() {
+      status.set('syncing', '正在儲存至雲端...');
+      $('#btnSaveChanges').disabled = true;
+
+      const dataToSave = {
+          regNo: state.regNo,
+          regDate: state.regDate,
+          attachments: state.attachments.map(({ id, ...rest }) => rest),
+          lastModified: Timestamp.now()
+      };
+      
+      try {
+          await setDoc(pifDocRef, { pif02: dataToSave }, { merge: true });
+          status.set('synced', '資料已成功儲存！');
+          hasUnsavedChanges = false;
+      } catch (err) {
+          console.error("Failed to save data: ", err);
+          status.set('error', `儲存失敗: ${err.message}`);
+          $('#btnSaveChanges').disabled = false;
+      }
+  }
+
+  function handlePdfUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      if (file.type !== "application/pdf") {
+          alert("請僅上傳 PDF 檔案。");
+          return;
+      }
+      uploadMainPdf(file, `pifs/${pageContext.pifId}/02.pdf`);
+  }
+
+  function uploadMainPdf(file, storagePath) {
+      const uploadTask = uploadBytesResumable(ref(storage, storagePath), file);
+      const button = $('#btnUploadPdf');
+      button.disabled = true;
+
+      uploadTask.on('state_changed', 
+          (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              setUploadStatusPdf(`<i class="fa-solid fa-upload"></i> 正在上傳 PDF... ${Math.round(progress)}%`, 'status-info');
+          }, 
+          (error) => {
+              console.error("Main PDF Upload failed:", error);
+              setUploadStatusPdf(`<i class="fa-solid fa-triangle-exclamation"></i> PDF 上傳失敗: ${error.code}`, 'status-error');
+              button.disabled = false;
+          }, 
+          () => {
+              setUploadStatusPdf('<i class="fa-solid fa-check-circle"></i> PDF 已成功上傳！儀表板狀態將會更新。', 'status-success');
+              button.disabled = false;
+              $('#pdfUploader').value = '';
+              setTimeout(() => setUploadStatusPdf('', 'none'), 5000);
+          }
+      );
+  }
+
+  function setUploadStatusPdf(msg, styleClass) {
+      const statusEl = $('#upload-status-pdf');
+      if (!msg || styleClass === 'none') {
+          statusEl.style.display = 'none';
+      } else {
+          statusEl.innerHTML = msg;
+          statusEl.className = `no-print ${styleClass}`;
+          statusEl.style.display = 'block';
+      }
+  }
+
+  const escapeHtml = (str) => {
+    return (str || '').replace(/[&<>"']/g, s => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[s]));
+  }
+
+  // 讓 top-bar / pif-nav 的登出事件也能生效
+  document.body.addEventListener('logout-request', () => {
+    signOut(auth).then(() => {
+      window.location.href = 'login.html';
+    });
+  });
+
+  startAuthFlow();
+</script>
+</body>
+</html>

@@ -1,0 +1,595 @@
+
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PIF 01 產品基本資料</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="style.css">
+    
+  <style>
+  body {
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+    background-color: #f8f9fa; /* Lighter gray background */
+  }
+
+  .main-content {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 2rem auto;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+
+  .form-section {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .form-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color, #6d28d9);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .form-grid-2-col {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+
+  .vendor-section {
+      background-color: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: var(--border-radius-lg);
+      margin-top: 1rem;
+  }
+
+  .vendor-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .vendor-card {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    background-color: #fff;
+    position: relative;
+    padding: 1.5rem;
+    transition: box-shadow 0.2s;
+    page-break-inside: avoid;
+  }
+
+  .vendor-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  .vendor-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .vendor-card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-dark);
+  }
+
+  .vendor-card .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    column-gap: 1.5rem;
+    row-gap: 1rem;
+  }
+  
+  .form-group-full {
+    grid-column: 1 / -1;
+  }
+
+  @media print {
+    body {
+        background-color: #fff;
+        opacity: 1;
+    }
+    header, .page-actions, .no-print {
+        display: none !important;
+    }
+    .main-content {
+        box-shadow: none;
+        border: none;
+        margin: 0;
+        padding: 0;
+        max-width: 100%;
+    }
+    .form-section {
+        border-color: #dee2e6;
+    }
+    .vendor-section {
+        background-color: #fff;
+        padding: 0;
+        border: 1px solid #dee2e6;
+    }
+     @page {
+        size: A4;
+        margin: 1.5cm;
+    }
+  }
+  </style>
+
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo"><i class="fa-solid fa-shield-halved"></i> CosPIF</a>
+                <ul class="nav-links">
+                    <li><a href="pif-i.html">我的專案</a></li>
+                    <li><a href="vendors.html">廠商資料庫</a></li>
+                </ul>
+                <div class="nav-actions" style="display: flex; align-items: center;">
+                    <span id="user-info" style="margin-right: 1.5rem; color: var(--text-muted);"></span>
+                    <button id="btnSignOut" class="btn-login btn-danger">登出</button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+<div id="app-container" style="display: none;">
+    <div class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 id="page-title">01 產品基本資料</h1>
+                <p id="project-subtitle" class="text-muted"></p>
+            </div>
+            <div class="page-actions">
+                <button id="btnPrint" class="btn-secondary"><i class="fa-solid fa-print"></i> 列印</button>
+                <button id="btnSave" class="btn-submit"><i class="fa-solid fa-save"></i> 儲存資料</button>
+            </div>
+        </div>
+        <span id="autosaveHint" class="text-sm text-muted" style="display: block; margin-top: -1rem; margin-bottom: 1.5rem; text-align: right;"></span>
+
+        <section class="form-section">
+            <h2 class="section-title"><i class="fa-solid fa-file-alt"></i> (1) 產品基本資料</h2>
+            <div class="form-grid-2-col">
+              <div class="form-group">
+                <label for="productName">產品名稱</label>
+                <input type="text" id="productName" class="form-input">
+              </div>
+              <div class="form-group">
+                <label for="companyName">公司名稱</label>
+                <input type="text" id="companyName" class="form-input">
+              </div>
+              <div class="form-group">
+                <label for="pifId">PIF ID</label>
+                <input type="text" id="pifId" class="form-input" readonly placeholder="儲存後自動產生">
+              </div>
+              <div class="form-group">
+                <label for="pifPrefix">PIF 字首</label>
+                <input type="text" id="pifPrefix" class="form-input" placeholder="請輸入 2 位大寫英文字母代碼" maxlength="2" style="text-transform: uppercase;">
+              </div>
+               <div class="form-group form-group-full">
+                <label for="prodUse">用途</label>
+                <input id="prodUse" type="text" class="form-input" placeholder="例：防曬、清潔、保濕…">
+              </div>
+            </div>
+        </section>
+
+        <section class="form-section">
+            <div class="form-grid-2-col">
+                <div>
+                    <h2 class="section-title"><i class="fa-solid fa-industry"></i> 製造作業場所資訊</h2>
+                    <div class="vendor-section">
+                        <div id="mfgBody" class="vendor-list"></div>
+                         <div style="text-align: right; margin-top: 1rem;">
+                            <button id="btnAddMfg" class="btn-secondary no-print"><i class="fa-solid fa-plus"></i> 新增製造場所</button>
+                         </div>
+                    </div>
+                </div>
+                 <div>
+                    <h2 class="section-title"><i class="fa-solid fa-box-open"></i> 包裝作業場所資訊</h2>
+                    <div class="vendor-section">
+                        <div id="pkgBody" class="vendor-list"></div>
+                        <div style="text-align: right; margin-top: 1rem;">
+                           <button id="btnAddPkg" class="btn-secondary no-print"><i class="fa-solid fa-plus"></i> 新增包裝場所</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="form-section">
+            <h2 class="section-title"><i class="fa-solid fa-user-tie"></i> 產品責任業者資訊</h2>
+            <div class="form-grid-2-col">
+                <div class="form-group">
+                    <label for="makerTax">統一編號</label>
+                    <div class="input-group">
+                    <input id="makerTax" type="text" class="form-input" placeholder="輸入統一編號後點擊查詢">
+                    <button type="button" id="lookup-maker-btn" class="btn-secondary no-print"><i class="fa-solid fa-search"></i> 查詢</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="makerName">責任業者名稱</label>
+                    <input id="makerName" type="text" class="form-input" placeholder="可由統一編號查詢帶入">
+                </div>
+                <div class="form-group form-group-full">
+                    <label for="makerAddr">地址</label>
+                    <textarea id="makerAddr" rows="2" class="form-input" placeholder="可由統一編號查詢帶入"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="makerTel">聯絡電話</label>
+                    <input id="makerTel" type="tel" class="form-input" placeholder="可由統一編號查詢帶入">
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<div id="global-error"></div>
+
+<script type="module">
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
+    import { auth, db, functions } from './firebase-config.js';
+
+    const $ = sel => document.querySelector(sel);
+    
+    // --- Page State ---
+    let pageMode = 'loading'; // loading, create, edit
+    let currentPifId = null;
+    let isSaving = false;
+
+    // --- Firebase Callable Functions ---
+    const generatePifId = httpsCallable(functions, 'generatePifId');
+    const createPifProject = httpsCallable(functions, 'createPifProject');
+
+    // --- App Initialization ---
+    function startApp() {
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                try {
+                    initializePage();
+                    $('#user-info').textContent = `歡迎, ${user.displayName || user.email}`;
+                    $('#btnSignOut').addEventListener('click', () => { signOut(auth).then(() => { window.location.href = 'login.html'; }); });
+                } catch (e) {
+                    console.error("Error during page initialization:", e);
+                    showGlobalError(`頁面初始化錯誤：${e.message}`);
+                }
+                document.body.style.opacity = '1';
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+    }
+
+    async function initializePage() {
+        const urlParams = new URLSearchParams(window.location.search);
+        currentPifId = urlParams.get('id');
+
+        if (currentPifId) {
+            pageMode = 'edit';
+            await loadAndRenderPifData();
+        } else {
+            pageMode = 'create';
+            renderForCreateMode();
+        }
+        
+        setupEventListeners();
+        $('#app-container').style.display = 'block';
+    }
+
+    // --- Data Loading and Rendering ---
+    async function loadAndRenderPifData() {
+        $('#page-title').textContent = '編輯產品資料';
+        const docRef = doc(db, 'pifs', currentPifId);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+            throw new Error(`找不到 PIF 專案 (ID: ${currentPifId})。`);
+        }
+
+        const pifData = docSnap.data();
+        const pif01Data = pifData.pif01 || {};
+
+        document.title = `PIF 01 - ${pifData.productName}`;
+        $('#project-subtitle').textContent = `專案: ${pifData.companyName} - ${pifData.productName}`;
+
+        $('#productName').value = pifData.productName || '';
+        $('#companyName').value = pifData.companyName || '';
+        $('#pifId').value = pifData.pifId || currentPifId;
+        $('#productName').readOnly = true;
+        $('#companyName').readOnly = true;
+        $('#pifPrefix').readOnly = true;
+
+        renderForm(pif01Data);
+    }
+
+    function renderForCreateMode() {
+        document.title = "建立新 PIF 專案";
+        $('#page-title').textContent = "建立新 PIF 專案";
+        $('#project-subtitle').textContent = "請填寫以下產品資訊，儲存後將自動產生 PIF ID。";
+        $('#productName').readOnly = false;
+        $('#companyName').readOnly = false;
+        $('#pifPrefix').readOnly = false;
+        renderForm({});
+    }
+
+    function renderForm(pif01Data) {
+        const defaultMfg = [{ name: '', addr: '', country: '', taxId: '' }];
+        const defaultPkg = [{ name: '', addr: '', country: '', taxId: '' }];
+
+        const state = {
+            basic: pif01Data.basic || { use: '' },
+            mfg: pif01Data.mfg && pif01Data.mfg.length > 0 ? pif01Data.mfg : defaultMfg,
+            pkg: pif01Data.pkg && pif01Data.pkg.length > 0 ? pif01Data.pkg : defaultPkg,
+            maker: pif01Data.maker || {}
+        };
+
+        $('#prodUse').value = state.basic.use || '';
+        if (pageMode === 'edit' && currentPifId) {
+            const prefixMatch = currentPifId.match(/^[A-Z]{2}/);
+            if (prefixMatch) {
+                $('#pifPrefix').value = prefixMatch[0];
+            }
+        }
+        
+        renderVendorList('mfg', state.mfg);
+        renderVendorList('pkg', state.pkg);
+        $('#makerName').value = state.maker.name || '';
+        $('#makerAddr').value = state.maker.addr || '';
+        $('#makerTel').value = state.maker.tel || '';
+        $('#makerTax').value = state.maker.tax || '';
+    }
+
+    // --- UI and Event Listeners ---
+    function setupEventListeners() {
+        $('#btnAddMfg').addEventListener('click', () => addVendorCard('mfg'));
+        $('#btnAddPkg').addEventListener('click', () => addVendorCard('pkg'));
+        $('#btnSave').addEventListener('click', saveController);
+        $('#btnPrint').addEventListener('click', () => window.print());
+        $('#lookup-maker-btn').addEventListener('click', lookupMaker);
+    }
+
+    function renderVendorList(kind, items) {
+        const container = $(`#${kind}Body`);
+        container.innerHTML = '';
+        items.forEach(item => addVendorCard(kind, item));
+        updateVendorCardHeaders(kind);
+    }
+
+    function addVendorCard(kind, item = {}) {
+        const container = $(`#${kind}Body`);
+        const card = document.createElement('div');
+        card.className = 'vendor-card';
+        
+        const placeholderName = kind === 'mfg' ? '製造廠' : '包裝廠';
+
+        card.innerHTML = `
+            <div class="vendor-card-header">
+                <h3 class="vendor-card-title">${placeholderName} #${container.children.length + 1}</h3>
+                <button type="button" class="btn-danger btn-sm del-vendor no-print"><i class="fa-solid fa-trash"></i></button>
+            </div>
+            <div class="form-grid">
+                <div class="form-group form-group-full">
+                    <label>廠商查詢 (統一編號)</label>
+                    <div class="input-group">
+                        <input type="text" class="form-input taxId" placeholder="輸入統一編號後點擊查詢" value="${item.taxId || ''}">
+                        <button type="button" class="btn-secondary lookup-row-btn no-print"><i class="fa-solid fa-search"></i> 查詢</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>名稱</label>
+                    <input type="text" class="form-input name" placeholder="${placeholderName}名稱" value="${item.name || ''}">
+                </div>
+                <div class="form-group">
+                    <label>地址</label>
+                    <input type="text" class="form-input addr" placeholder="廠商地址" value="${item.addr || ''}">
+                </div>
+                <div class="form-group">
+                    <label>國別</label>
+                    <input type="text" class="form-input country" placeholder="國別" value="${item.country || ''}">
+                </div>
+            </div>
+        `;
+
+        container.appendChild(card);
+        
+        card.querySelector('.del-vendor').addEventListener('click', () => {
+            card.remove();
+            updateVendorCardHeaders(kind);
+        });
+        card.querySelector('.lookup-row-btn').addEventListener('click', (e) => lookupTableRow(e));
+        
+        if (container.children.length > 0) {
+            updateVendorCardHeaders(kind);
+        }
+    }
+
+    function updateVendorCardHeaders(kind) {
+        const container = $(`#${kind}Body`);
+        const placeholderName = kind === 'mfg' ? '製造廠' : '包裝廠';
+        Array.from(container.children).forEach((card, index) => {
+            card.querySelector('.vendor-card-title').textContent = `${placeholderName} #${index + 1}`;
+        });
+    }
+
+    // --- Main Save Controller ---
+    async function saveController() {
+        if (isSaving) return;
+        isSaving = true;
+        const btn = $('#btnSave');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 儲存中...';
+        setSaveHint('儲存中...', 'var(--primary-color)');
+
+        try {
+            if (pageMode === 'create') {
+                await createNewPif();
+            } else {
+                await updateExistingPif();
+            }
+        } catch (error) {
+            console.error("Save failed:", error);
+            setSaveHint(`儲存失敗: ${error.message}`, 'var(--danger-color)');
+            alert(`儲存失敗: ${error.message}`);
+        } finally {
+            isSaving = false;
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-save"></i> 儲存資料';
+        }
+    }
+
+    async function createNewPif() {
+        const productName = $('#productName').value.trim();
+        const companyName = $('#companyName').value.trim();
+        const pifPrefix = $('#pifPrefix').value.trim().toUpperCase();
+
+        if (!productName || !companyName) throw new Error("請務必填寫「產品名稱」和「公司名稱」。");
+        if (!pifPrefix || !/^[A-Z]{2}$/.test(pifPrefix)) throw new Error("請務必填寫 2 位大寫英文字母的「PIF 字首」。");
+
+        setSaveHint('正在產生專案 ID...');
+        const idResult = await generatePifId({ prefix: pifPrefix });
+        if (!idResult.data.success || !idResult.data.pifId) {
+            throw new Error(idResult.data.error || '從後端獲取新 PIF ID 失敗。');
+        }
+        const newPifId = idResult.data.pifId;
+
+        const fullPifData = {
+            pifId: newPifId,
+            productName: productName,
+            companyName: companyName,
+            createdAt: new Date().toISOString(),
+            ownerId: auth.currentUser.uid,
+            pif01: getPif01DataFromForm(newPifId, productName, companyName)
+        };
+
+        setSaveHint('正在建立專案...');
+        await setDoc(doc(db, "pifs", newPifId), fullPifData);
+
+        setSaveHint('專案建立成功！正在導向專案入口...', 'var(--success-color)');
+        alert('專案已成功建立！');
+        const params = new URLSearchParams({ id: newPifId, companyName: encodeURIComponent(companyName), productName: encodeURIComponent(productName) });
+        window.location.href = `pifs.html?${params.toString()}`;
+    }
+
+    async function updateExistingPif() {
+        setSaveHint('正在更新資料...');
+        const pif01Data = getPif01DataFromForm(currentPifId, $('#productName').value, $('#companyName').value);
+        const docRef = doc(db, "pifs", currentPifId);
+        await setDoc(docRef, { pif01: pif01Data, updatedAt: new Date().toISOString() }, { merge: true });
+        setSaveHint('所有變更已儲存！', 'var(--success-color)');
+    }
+
+    // --- Data Gathering from Form ---
+    function getPif01DataFromForm(pifId, productName, companyName) {
+        const pifPrefix = $('#pifPrefix').value.trim().toUpperCase();
+        
+        const getVendorData = (card) => ({
+            taxId: card.querySelector('.taxId').value.trim(),
+            name: card.querySelector('.name').value.trim(),
+            addr: card.querySelector('.addr').value.trim(),
+            country: card.querySelector('.country').value.trim()
+        });
+
+        return {
+            basic: { pifId: pifId, prefix: pifPrefix, name: productName, use: $('#prodUse').value },
+            mfg: Array.from($('#mfgBody').querySelectorAll('.vendor-card')).map(getVendorData),
+            pkg: Array.from($('#pkgBody').querySelectorAll('.vendor-card')).map(getVendorData),
+            maker: { name: $('#makerName').value, addr: $('#makerAddr').value, tel: $('#makerTel').value, tax: $('#makerTax').value }
+        };
+    }
+
+    // --- Utility Functions ---
+    function setSaveHint(text, color = 'var(--text-muted)') {
+        const hintEl = $('#autosaveHint');
+        hintEl.textContent = text;
+        hintEl.style.color = color;
+    }
+
+    function showGlobalError(message) {
+        $('#app-container').style.display = 'none';
+        $('#global-error').innerHTML = `<strong>錯誤：</strong> ${message}`;
+        $('#global-error').style.display = 'block';
+    }
+    
+    async function lookupTableRow(event) {
+        const btn = event.currentTarget;
+        const card = btn.closest('.vendor-card');
+        const taxIdInput = card.querySelector('.taxId');
+        const nameInput = card.querySelector('.name');
+        const addrInput = card.querySelector('.addr');
+        const taxId = taxIdInput.value.trim();
+
+        if (!taxId) { alert('請先輸入統一編號。'); return; }
+        
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+        try {
+            const vendorRef = doc(db, 'vendors', taxId);
+            const docSnap = await getDoc(vendorRef);
+            if (docSnap.exists()) {
+                const vendor = docSnap.data();
+                nameInput.value = vendor.companyName || '';
+                addrInput.value = vendor.address || '';
+            } else {
+                alert('在廠商資料庫中找不到此統一編號的資料。');
+            }
+        } catch (error) {
+            console.error("Error looking up vendor in table: ", error);
+            alert(`查詢時發生錯誤: ${error.message}`);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-search"></i> 查詢';
+        }
+    }
+
+    async function lookupMaker() {
+        const taxId = $('#makerTax').value.trim();
+        if (!taxId) { alert('請先輸入統一編號。'); return; }
+        const lookupBtn = $('#lookup-maker-btn');
+        lookupBtn.disabled = true;
+        lookupBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 查詢中...';
+        try {
+            const vendorRef = doc(db, 'vendors', taxId);
+            const docSnap = await getDoc(vendorRef);
+            if (docSnap.exists()) {
+                const vendor = docSnap.data();
+                $('#makerName').value = vendor.name || '';
+                $('#makerAddr').value = vendor.address || '';
+                $('#makerTel').value = vendor.phone || '';
+                alert('廠商資料已成功帶入！');
+            } else {
+                alert('在中央廠商資料庫中找不到此統一編號的資料。');
+            }
+        } catch (error) {
+            console.error("Error looking up vendor: ", error);
+            alert(`查詢時發生錯誤: ${error.message}`);
+        } finally {
+            lookupBtn.disabled = false;
+            lookupBtn.innerHTML = '<i class="fa-solid fa-search"></i> 查詢';
+        }
+    }
+
+    startApp();
+</script>
+</body>
+</html>

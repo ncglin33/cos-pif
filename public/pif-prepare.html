@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PIF 暫存資料｜資料收集工作表</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<!-- 可沿用 pif01-3 原本的樣式 -->
+<link rel="stylesheet" href="./pif01-3.css">
+
+<style>
+  #upload-status-pdf { 
+      display: none; 
+      padding: 0.75rem 1.25rem; 
+      margin-top: 1rem; 
+      border-radius: 8px; 
+      font-weight: 500; 
+      text-align: center; 
+  }
+  .status-info { background-color: #e0e7ff; color: #3730a3; }
+  .status-success { background-color: #dcfce7; color: #166534; }
+  .status-error { background-color: #fee2e2; color: #991b1b; }
+  #upload-status-pdf i { margin-right: 0.5rem; }
+
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+    .staging-card {
+      page-break-inside: avoid;
+    }
+  }
+
+  .staging-layout {
+    margin-top: 1.5rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.1fr);
+    gap: 1.5rem;
+  }
+
+  .staging-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+  }
+
+  .staging-card h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .staging-card h2 i {
+    color: #2563eb;
+  }
+
+  .staging-card .subtitle {
+    margin: 0 0 0.8rem;
+    font-size: 0.85rem;
+    color: #6b7280;
+  }
+
+  .staging-field-group {
+    margin-bottom: 0.8rem;
+  }
+  .staging-field-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.25rem;
+  }
+  .staging-field-group small {
+    display: block;
+    font-size: 0.78rem;
+    color: #9ca3af;
+    margin-bottom: 0.2rem;
+  }
+  .staging-field-group input[type="text"],
+  .staging-field-group textarea {
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    padding: 0.45rem 0.55rem;
+    font-size: 0.85rem;
+    resize: vertical;
+  }
+  .staging-field-group textarea {
+    min-height: 70px;
+  }
+
+  .staging-two-cols {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+    gap: 0.75rem;
+  }
+
+  .completion-card {
+    margin-top: 0.25rem;
+  }
+  .completion-list {
+    list-style: none;
+    padding: 0;
+    margin: 0.2rem 0 0;
+    font-size: 0.82rem;
+  }
+  .completion-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 0.25rem;
+  }
+  .completion-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+  .completion-dot.ok {
+    background: #22c55e;
+  }
+  .completion-dot.partial {
+    background: #f97316;
+  }
+  .completion-dot.missing {
+    background: #ef4444;
+  }
+
+  .completion-hint {
+    margin-top: 0.4rem;
+    font-size: 0.78rem;
+    color: #6b7280;
+  }
+
+  .btn.secondary {
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    color: #374151;
+  }
+  .btn.secondary:hover {
+    background: #e5e7eb;
+  }
+
+  .btn.xs {
+    padding: 0.25rem 0.6rem;
+    font-size: 0.78rem;
+    border-radius: 999px;
+  }
+
+  .mt-2 { margin-top: .5rem; }
+
+  @media (max-width: 900px) {
+    .staging-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div id="app-container" style="display: none;">
+    <div class="toolbar no-print">
+        <a id="back-link" href="#" class="btn">
+          <i class="fa-solid fa-arrow-left"></i> 返回 PIF 列表
+        </a>
+        <button id="btnSaveChanges" class="btn primary">
+          <i class="fa-solid fa-cloud-arrow-up"></i> 儲存暫存資料至雲端
+        </button>
+        <button onclick="window.print()" class="btn secondary">
+          <i class="fa-solid fa-print"></i> 列印 / 匯出暫存資料
+        </button>
+        <div class="right">
+          <div id="user-info" style="display: inline-block; margin-right: 1rem; font-size: .9rem;"></div>
+          <button id="btnSignOut" class="btn danger">登出</button>
+        </div>
+    </div>
+
+    <div class="app-wrap">
+        <header style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+                <h1>
+                  <i class="fa-solid fa-clipboard-list"></i> PIF 暫存資料工作表
+                </h1>
+                <div id="project-subtitle" class="text-secondary" style="margin-top: 0.25rem;">
+                  請先將現有資料集中暫存，後續撰寫 PIF 各章節時可直接參考。
+                </div>
+            </div>
+            <div id="pif-id-badge" class="badge" style="font-size: 1rem; padding: .5rem .8rem; border-radius: .5rem;"></div>
+        </header>
+
+        <div class="status-bar no-print">
+            <div>
+                <span id="status-light" class="status-light"></span>
+                <span id="status-text">正在初始化...</span>
+            </div>
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+                <span style="font-size:0.8rem; color:#6b7280;">
+                  此頁僅作為資料集中與檢視完整性之用，不會自動送出 PIF。
+                </span>
+            </div>
+        </div>
+
+        <!-- 暫存表單版面 -->
+        <div class="staging-layout">
+            <!-- 左：主要內容暫存 -->
+            <section class="staging-card">
+                <h2><i class="fa-solid fa-box-open"></i> 一、產品與專案概況</h2>
+                <p class="subtitle">先描述這個產品或系列的大方向，方便 PIF 製作者快速理解。</p>
+
+                <div class="staging-field-group">
+                    <label for="stg-projectSummary">專案 / 產品概要</label>
+                    <small>可簡述產品定位、系列名稱、主打特色，例如：敏感肌保濕精華、兒童防曬系列…</small>
+                    <textarea id="stg-projectSummary" placeholder="例：本專案為酪梨乳酸洗髮精系列，主打溫和去屑與頭皮保濕，預計先於台灣市場上市。"></textarea>
+                </div>
+
+                <div class="staging-two-cols">
+                    <div class="staging-field-group">
+                        <label for="stg-productNames">產品名稱 / 系列</label>
+                        <small>可同時列出中文與英文名稱，或多個品項清單。</small>
+                        <textarea id="stg-productNames" placeholder="例：酪梨乳酸洗髮精、酪梨乳酸護髮素；Avocado Lactic Acid Shampoo / Conditioner"></textarea>
+                    </div>
+                    <div class="staging-field-group">
+                        <label for="stg-targetMarkets">目標市場與通路</label>
+                        <small>例如：台灣一般通路、藥妝通路、電商、日本輸出等。</small>
+                        <textarea id="stg-targetMarkets" placeholder="例：台灣藥妝通路、日本輸出；未來考慮歐盟線上電商。"></textarea>
+                    </div>
+                </div>
+
+                <div class="staging-field-group">
+                    <label for="stg-usageAndTarget">使用族群與使用方式</label>
+                    <small>例如：一般成人、敏感肌、兒童 / 嬰幼兒等，搭配預定使用部位與頻率。</small>
+                    <textarea id="stg-usageAndTarget" placeholder="例：一般成人與敏感性頭皮，每日或隔日使用；避免進入眼睛。"></textarea>
+                </div>
+
+                <hr style="margin:1rem 0; border:none; border-top:1px solid #e5e7eb;">
+
+                <!-- ★ 這裡是「全成分」 + 自動解析 -->
+                <h2><i class="fa-solid fa-flask"></i> 二、全成分與原料重點</h2>
+                <p class="subtitle">可先貼上目前的全成分表（INCI + w/w% 或區間），以及關鍵原料與預定濃度，後續再細化為 PIF 各章。</p>
+
+                <div class="staging-field-group">
+                    <label for="stg-formulaOverview">全成分（INCI + 濃度）</label>
+                    <small>建議依最終標籤順序列出全成分，可加上預定濃度或濃度區間，方便後續計算 SED 與 MOS。</small>
+                    <textarea id="stg-formulaOverview" placeholder="例：Water (Aqua), Avocado Oil (3–5%), Lactic Acid (0.3–0.8%), Sodium Cocoyl Isethionate (8–12%), Phenoxyethanol, Ethylhexylglycerin…"></textarea>
+                    <button type="button" id="btnParseFormula" class="btn secondary xs mt-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> 自動擷取成分並產生 JSON
+                    </button>
+                </div>
+
+                <div class="staging-two-cols">
+                    <div class="staging-field-group">
+                        <label for="stg-highRiskIngredients">高關注成分 / 法規重點</label>
+                        <small>例如：美白（熊果素、傳明酸）、防曬成分、防腐劑、酸類（AHA/BHA）等。</small>
+                        <textarea id="stg-highRiskIngredients" placeholder="例：含 2% Niacinamide 與 0.5% AHA，需注意敏感族群使用限制與標示。"></textarea>
+                    </div>
+                    <div class="staging-field-group">
+                        <label for="stg-rawMaterialDocs">原料 SDS / COA / 規格書</label>
+                        <small>可列出已取得之 SDS、COA、TDS 或尚缺的文件，以便後續追蹤。</small>
+                        <textarea id="stg-rawMaterialDocs" placeholder="例：主要活性與防腐已取得 SDS＋COA；界面活性劑尚缺新版 SDS。"></textarea>
+                    </div>
+                </div>
+
+                <!-- 新欄位：解析後成分 JSON -->
+                <div class="staging-field-group">
+                    <label for="stg-formulaParsed">解析後成分（pif03 批次匯入 JSON）</label>
+                    <small>
+                        會依全成分欄位自動切出每一個成分產生陣列格式：
+                        <code>[{ "order":1, "inciName":"Water (Aqua)", "percent":"qs", "note":"" }, …]</code><br>
+                        可直接複製到 pif03 匯入工具，或使用下方「下載 JSON 檔」。
+                    </small>
+                    <textarea id="stg-formulaParsed" placeholder='請先在上方點選「自動擷取成分並產生 JSON」，這裡會顯示結果。'></textarea>
+                    <button type="button" id="btnDownloadFormulaJson" class="btn secondary xs mt-2">
+                        <i class="fa-solid fa-download"></i> 下載 JSON 檔
+                    </button>
+                </div>
+            </section>
+
+            <!-- 右：宣稱、試驗與完整性檢視 -->
+            <section class="staging-card completion-card">
+                <h2><i class="fa-solid fa-bullhorn"></i> 三、宣稱與標示</h2>
+                <p class="subtitle">先把行銷宣稱、標示需求與警語集中整理，方便後續比對法規。</p>
+
+                <div class="staging-field-group">
+                    <label for="stg-claims">預定宣稱 / 行銷重點</label>
+                    <small>例如：美白、淡斑、保濕、修護、舒緩、抗痘、防曬等，愈具體愈好。</small>
+                    <textarea id="stg-claims" placeholder="例：主打『強效保濕與修護屏障』，次要訴求為溫和去屑與舒緩頭皮搔癢。"></textarea>
+                </div>
+
+                <div class="staging-field-group">
+                    <label for="stg-labeling">標示需求與語言版本</label>
+                    <small>例如：須準備繁中／英文標籤、日本版標示、INCI 清單呈現方式等。</small>
+                    <textarea id="stg-labeling" placeholder="例：需製作台灣中文版與英文版標籤；未來需追加日文標籤。"></textarea>
+                </div>
+
+                <div class="staging-field-group">
+                    <label for="stg-warnings">使用警語與注意事項</label>
+                    <small>例如：兒童需成人監護、避免接觸眼睛、噴霧類不可吸入等。</small>
+                    <textarea id="stg-warnings" placeholder="例：避免接觸眼睛，若不慎入眼請立即以清水沖洗；有傷口或紅腫時暫停使用。"></textarea>
+                </div>
+
+                <hr style="margin:1rem 0; border:none; border-top:1px solid #e5e7eb;">
+
+                <h2><i class="fa-solid fa-vial-circle-check"></i> 四、檢驗與文件現況</h2>
+                <p class="subtitle">列出已完成與尚在規劃中的試驗、文件與製造工廠品質系統資訊，方便 PIF 製作者檢視缺口。</p>
+
+                <div class="staging-field-group">
+                    <label for="stg-testsDone">已完成試驗 / 文件</label>
+                    <small>例如：安定性、微生物、PET、防曬 SPF / PA、保濕或美白功效等。</small>
+                    <textarea id="stg-testsDone" placeholder="例：完成 3 個月加速安定性與基本微生物檢驗；PET 與 SPF 體外評估已排程。"></textarea>
+                </div>
+
+                <div class="staging-field-group">
+                    <label for="stg-testsPlanned">尚需規劃或進行的試驗</label>
+                    <small>可作為與實驗室 / 檢驗單位溝通的待辦清單。</small>
+                    <textarea id="stg-testsPlanned" placeholder="例：需確認是否追加人體敏感性測試；若要輸出歐盟，需補足 CPSR 相關試驗。"></textarea>
+                </div>
+
+                <div class="staging-field-group">
+                    <label for="stg-docsMissing">尚缺之文件 / 資料</label>
+                    <small>例如：特定原料 SDS、新版配方表、供應商聲明書、授權文件等。</small>
+                    <textarea id="stg-docsMissing" placeholder="例：缺少日本進口商資訊與授權書；部分原料 SDS 僅有舊版。"></textarea>
+                </div>
+
+                <!-- 新增：製造工廠資訊 -->
+                <div class="staging-field-group">
+                    <label for="stg-manufacturerInfo">製造工廠與 GMP / 品質系統資訊</label>
+                    <small>記錄製造工廠名稱、地址、工廠登記字號、GMP / ISO 認證與適用範圍，以及委託或自設廠別等。</small>
+                    <textarea id="stg-manufacturerInfo" placeholder="例：XXX 生技股份有限公司（台南市○○路…），化粧品 GMP 工廠編號：XXXX；通過 ISO 22716 與 ISO 9001 認證；本產品採委託製造方式。"></textarea>
+                </div>
+
+                <hr style="margin:1rem 0; border:none; border-top:1px solid #e5e7eb;">
+
+                <h2><i class="fa-solid fa-circle-check"></i> 五、資料完整性檢視</h2>
+                <p class="subtitle">系統依欄位是否有填寫，給出簡單的「完整度」提示，僅供人工檢視參考。</p>
+
+                <ul class="completion-list" id="completion-list">
+                    <!-- JS 會動態填入 -->
+                </ul>
+
+                <p class="completion-hint">
+                    提示說明：<span style="color:#22c55e;">● 綠色</span> = 已有基本內容；
+                    <span style="color:#f97316;">● 橘色</span> = 有填但偏少； 
+                    <span style="color:#ef4444;">● 紅色</span> = 尚未填寫。
+                </p>
+
+                <div class="staging-field-group" style="margin-top:0.8rem;">
+                    <label for="stg-otherNotes">其他備註 / 溝通紀錄</label>
+                    <small>可記錄與廠商、實驗室或內部討論重點，供 PIF 製作者參考。</small>
+                    <textarea id="stg-otherNotes" placeholder="例：廠商希望先完成台灣 PIF，之後再針對歐盟版本追加資料。"></textarea>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<div id="global-error" style="display:none;"></div>
+
+<script type="module">
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { auth, db } from './firebase-config.js';
+
+  const $ = sel => document.querySelector(sel);
+
+  let pifDocRef;
+  let pageContext = {};
+  let stagingState = {};   // 暫存資料
+  let hasUnsavedChanges = false;
+
+  const statusBar = {
+      light: $("#status-light"),
+      text: $("#status-text"),
+      set(state, msg) {
+          this.light.className = `status-light ${state}`;
+          this.text.textContent = msg;
+          if (state === 'syncing') {
+              $('#btnSaveChanges').disabled = true;
+          } else {
+              $('#btnSaveChanges').disabled = false;
+          }
+          if (state === 'synced' || state === 'error') {
+              setTimeout(() => this.set('ready', '就緒'), 3000);
+          }
+      },
+      markUnsaved() {
+          if (hasUnsavedChanges) return;
+          this.set('syncing', '有未儲存的暫存資料變更');
+          hasUnsavedChanges = true;
+          $('#btnSaveChanges').disabled = false;
+      }
+  };
+
+  function startAuthFlow() {
+      onAuthStateChanged(auth, user => {
+          if (user) {
+              try {
+                  pageContext = setupPageContext();
+                  pifDocRef = doc(db, 'pifs', pageContext.pifId);
+                  setupUIForUser(user);
+                  initializeData();
+                  $('#app-container').style.display = 'block';
+              } catch (e) {
+                  $('#global-error').textContent = `啟動錯誤：${e.message}。請確認網址是否正確。`;
+                  $('#global-error').style.display = 'block';
+              }
+          } else {
+              window.location.href = `login.html?redirect=${encodeURIComponent(window.location.href)}`;
+          }
+          document.body.style.opacity = '1';
+      });
+  }
+
+  function setupPageContext() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const context = { 
+          pifId: urlParams.get('id'),
+          companyName: urlParams.get('companyName'),
+          productName: urlParams.get('productName')
+      };
+      if (!context.pifId) throw new Error('網址中缺少專案 ID');
+      return context;
+  }
+
+  function setupUIForUser(user) {
+      $('#user-info').textContent = user.email;
+      $('#pif-id-badge').textContent = pageContext.pifId;
+
+      const companyName = pageContext.companyName || '';
+      const productName = pageContext.productName || '';
+      if (companyName || productName) {
+          $('#project-subtitle').textContent = `${companyName} - ${productName}｜暫存資料工作表`;
+      }
+
+      $('#btnSignOut').addEventListener('click', () => signOut(auth));
+
+      const params = new URLSearchParams({
+          id: pageContext.pifId,
+          companyName: pageContext.companyName || '',
+          productName: pageContext.productName || ''
+      });
+      $('#back-link').href = `pif-i.html?${params.toString()}`;
+
+      $('#btnSaveChanges').addEventListener('click', saveData);
+      $('#btnSaveChanges').disabled = true;
+
+      window.addEventListener('beforeunload', e => {
+          if (hasUnsavedChanges) {
+              e.preventDefault();
+              e.returnValue = '';
+          }
+      });
+
+      bindStagingInputs();
+
+      const parseBtn = $('#btnParseFormula');
+      if (parseBtn) parseBtn.addEventListener('click', handleParseFormula);
+
+      const downloadBtn = $('#btnDownloadFormulaJson');
+      if (downloadBtn) downloadBtn.addEventListener('click', handleDownloadFormulaJson);
+  }
+
+  // ★ 新增 formulaParsed & manufacturerInfo
+  const STAGING_FIELDS = [
+      'projectSummary',
+      'productNames',
+      'targetMarkets',
+      'usageAndTarget',
+      'formulaOverview',
+      'highRiskIngredients',
+      'rawMaterialDocs',
+      'formulaParsed',
+      'claims',
+      'labeling',
+      'warnings',
+      'testsDone',
+      'testsPlanned',
+      'docsMissing',
+      'manufacturerInfo',
+      'otherNotes'
+  ];
+
+  function bindStagingInputs() {
+      STAGING_FIELDS.forEach(key => {
+          const el = $(`#stg-${key}`);
+          if (!el) return;
+          el.addEventListener('input', () => {
+              stagingState[key] = el.value;
+              statusBar.markUnsaved();
+              updateCompletionView();
+          });
+      });
+  }
+
+  async function initializeData() {
+      try {
+          statusBar.set('syncing', '正在從雲端讀取暫存資料...');
+          const snap = await getDoc(pifDocRef);
+          if (snap.exists()) {
+              const data = snap.data() || {};
+              stagingState = data.staging || {};
+              fillFormFromState();
+              updateCompletionView();
+              statusBar.set('synced', '暫存資料讀取成功');
+              hasUnsavedChanges = false;
+              $('#btnSaveChanges').disabled = true;
+          } else {
+              stagingState = {};
+              fillFormFromState();
+              updateCompletionView();
+              statusBar.set('ready', '就緒（新暫存檔）');
+          }
+      } catch (err) {
+          console.error('初始化暫存資料失敗：', err);
+          statusBar.set('error', `讀取失敗：${err.message}`);
+      }
+  }
+
+  function fillFormFromState() {
+      STAGING_FIELDS.forEach(key => {
+          const el = $(`#stg-${key}`);
+          if (!el) return;
+          el.value = stagingState[key] || '';
+      });
+  }
+
+  async function saveData() {
+      try {
+          statusBar.set('syncing', '正在將暫存資料儲存至雲端...');
+          await setDoc(pifDocRef, { staging: stagingState }, { merge: true });
+          statusBar.set('synced', '暫存資料已成功儲存！');
+          hasUnsavedChanges = false;
+          $('#btnSaveChanges').disabled = true;
+      } catch (err) {
+          console.error('儲存暫存資料失敗：', err);
+          statusBar.set('error', `儲存失敗：${err.message}`);
+      }
+  }
+
+  function isFieldFilled(key, minLength = 10) {
+      const v = (stagingState[key] || '').trim();
+      if (!v) return 'missing';
+      if (v.length < minLength) return 'partial';
+      return 'ok';
+  }
+
+  function updateCompletionView() {
+      const list = $('#completion-list');
+      if (!list) return;
+
+      const sections = [
+          { label: '專案 / 產品概要', keys: ['projectSummary', 'productNames', 'targetMarkets'] },
+          { label: '全成分與原料重點', keys: ['formulaOverview', 'highRiskIngredients', 'rawMaterialDocs', 'formulaParsed'] },
+          { label: '宣稱與標示', keys: ['claims', 'labeling', 'warnings'] },
+          { label: '檢驗、文件與製造工廠資訊', keys: ['testsDone', 'testsPlanned', 'docsMissing', 'manufacturerInfo'] },
+          { label: '其他備註 / 溝通紀錄', keys: ['otherNotes'] }
+      ];
+
+      list.innerHTML = '';
+
+      sections.forEach(sec => {
+          let scores = sec.keys.map(k => isFieldFilled(k));
+          let scoreValue = 'missing';
+          if (scores.includes('ok')) scoreValue = 'ok';
+          else if (scores.includes('partial')) scoreValue = 'partial';
+
+          const li = document.createElement('li');
+          const dot = document.createElement('span');
+          dot.className = 'completion-dot ' + scoreValue;
+          const text = document.createElement('span');
+          text.textContent = sec.label;
+          li.appendChild(dot);
+          li.appendChild(text);
+          list.appendChild(li);
+      });
+  }
+
+  // -------- 全成分解析 → JSON --------
+
+  function splitToSegments(text) {
+      if (!text) return [];
+      // 逗號、頓號、分號、換行都視為分隔
+      return text
+          .split(/[,，、；;|\n]/)
+          .map(s => s.trim())
+          .filter(Boolean);
+  }
+
+  function parsePercent(segment) {
+      // 抓 "3–5%" 或 "2%" 之類，保留原字串
+      const m = segment.match(/([\d.,]+(?:\s*[–\-~～]\s*[\d.,]+)?)\s*%/);
+      if (!m) return { inciName: segment.trim(), percent: '' };
+      const percentString = m[1].trim() + '%';
+      const inciName = segment.replace(m[0], '').trim().replace(/\s*\(\s*\)\s*$/, '');
+      return { inciName, percent: percentString };
+  }
+
+  function handleParseFormula() {
+      const raw = ($('#stg-formulaOverview')?.value || '').trim();
+      if (!raw) {
+          alert('請先在「全成分（INCI + 濃度）」欄位輸入內容。');
+          return;
+      }
+
+      const segments = splitToSegments(raw);
+      if (!segments.length) {
+          alert('找不到可以解析的成分，請確認全成分欄位內容。');
+          return;
+      }
+
+      const items = segments.map((seg, idx) => {
+          const { inciName, percent } = parsePercent(seg);
+          return {
+              order: idx + 1,
+              inciName,
+              percent: percent || '',
+              note: ''
+          };
+      });
+
+      const jsonStr = JSON.stringify(items, null, 2);
+      const out = $('#stg-formulaParsed');
+      if (out) {
+          out.value = jsonStr;
+      }
+      stagingState.formulaParsed = jsonStr;
+      statusBar.markUnsaved();
+      updateCompletionView();
+  }
+
+  function handleDownloadFormulaJson() {
+      const jsonText = ($('#stg-formulaParsed')?.value || '').trim();
+      if (!jsonText) {
+          alert('目前尚未產生 JSON，請先點「自動擷取成分並產生 JSON」。');
+          return;
+      }
+      let blob;
+      try {
+          // 確保是合法 JSON（避免匯入錯誤）
+          JSON.parse(jsonText);
+          blob = new Blob([jsonText], { type: 'application/json;charset=utf-8' });
+      } catch (e) {
+          alert('解析 JSON 時發生錯誤，請確認內容格式是否正確。\n\n錯誤訊息：' + e.message);
+          return;
+      }
+
+      const a = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      a.href = url;
+      const idPart = pageContext.pifId ? pageContext.pifId.replace(/[^A-Za-z0-9_\-]/g, '_') : 'formula';
+      a.download = `pif03_import_${idPart}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+  }
+
+  startAuthFlow();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>廠商製作 PIF 意願調查表 - CosPIF</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .pricing-container {
+            min-height: calc(100vh - 140px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+        .pricing-card {
+            max-width: 980px;
+            width: 100%;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.15);
+            padding: 2rem 2.5rem;
+        }
+        .pricing-title {
+            font-size: 1.6rem;
+            margin-bottom: .5rem;
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+        }
+        .pricing-subtitle {
+            color: #6b7280;
+            font-size: .95rem;
+            margin-bottom: 1.5rem;
+        }
+        .price-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 1.75rem;
+        }
+        @media (max-width: 768px) {
+            .pricing-card { padding: 1.5rem 1.25rem; }
+            .price-grid { grid-template-columns: 1fr; }
+        }
+        .price-panel {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            background: #f9fafb;
+            text-align: left;
+        }
+        .price-panel h3 {
+            font-size: 1.05rem;
+            margin-bottom: .75rem;
+        }
+        .form-row { margin-bottom: 1rem; }
+        .form-row label {
+            display: block;
+            font-size: .9rem;
+            margin-bottom: .35rem;
+            color: #374151;
+        }
+        .form-row input[type="text"],
+        .form-row input[type="tel"],
+        .form-row input[type="email"],
+        .form-row input[type="date"]{
+            width: 100%;
+            padding: .5rem .6rem;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            font-size: .95rem;
+            background: #fff;
+        }
+        .form-row textarea{
+            width: 100%;
+            padding: .55rem .6rem;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            font-size: .95rem;
+            background: #fff;
+            min-height: 90px;
+            resize: vertical;
+        }
+
+        .file-box {
+            background: #fff;
+            border: 1px dashed #d1d5db;
+            border-radius: 10px;
+            padding: .75rem .85rem;
+        }
+        .file-box input[type="file"]{
+            width: 100%;
+        }
+        .file-hint{
+            font-size: .8rem;
+            color: #6b7280;
+            margin-top: .35rem;
+        }
+        .thumbs {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: .5rem;
+            margin-top: .6rem;
+        }
+        @media (max-width: 520px){
+            .thumbs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        .thumb {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #fff;
+            padding: .25rem;
+        }
+        .thumb img{
+            width: 100%;
+            height: 110px;
+            object-fit: cover;
+            border-radius: 6px;
+            display: block;
+        }
+        .thumb .name{
+            font-size: .75rem;
+            color: #6b7280;
+            margin-top: .25rem;
+            word-break: break-word;
+        }
+
+        .btn-submit {
+            margin-top: 1rem;
+            margin-right: .5rem;
+            padding: .6rem 1.3rem;
+            border-radius: 999px;
+            border: none;
+            background: #2563eb;
+            color: #fff;
+            font-size: .9rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+        }
+        .btn-submit:hover { background: #1d4ed8; }
+        .btn-submit:disabled {
+            background: #93c5fd;
+            cursor: not-allowed;
+        }
+
+        .btn-print {
+            margin-top: 1rem;
+            padding: .5rem 1rem;
+            border-radius: 999px;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            font-size: .85rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+        }
+        .btn-print:hover { background: #f3f4f6; }
+
+        .note {
+            margin-top: .75rem;
+            font-size: .82rem;
+            color: #6b7280;
+        }
+
+        @media print {
+            header, footer, .btn-print, .btn-submit, #submission-status,
+            .file-box, .file-hint, #label-photos-preview {
+                display: none !important;
+            }
+            .pricing-container { padding: 0; }
+            .pricing-card {
+                box-shadow: none;
+                border-radius: 0;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container">
+        <nav>
+            <a href="index.html" class="logo"><i class="fa-solid fa-shield-halved"></i> CosPIF</a>
+            <ul class="nav-links">
+                <li><a href="index.html#features">核心功能</a></li>
+                <li><a href="index.html#about">關於我們</a></li>
+                <li><a href="pif-wish.html" class="active">PIF 意願調查</a></li>
+                <li><a href="pif-track.html">PIF 進度追蹤</a></li>
+            </ul>
+            <a href="login.html" class="btn-login">登入系統</a>
+        </nav>
+    </div>
+</header>
+
+<main>
+    <div class="pricing-container">
+        <div id="form-view" class="pricing-card">
+            <h2 class="pricing-title"><i class="fa-solid fa-clipboard-check"></i> 廠商製作 PIF 意願調查表</h2>
+            <p class="pricing-subtitle">
+                請由廠商填寫品名、背面標籤資訊與聯絡方式，並告知希望完成時間。
+                背面標籤可「文字」與／或「照片」方式提供。
+                <br>
+                送出後系統會產生一組<strong>追蹤序號</strong>，可用於查詢審核與後續 PIF 製作進度。
+            </p>
+
+            <div class="price-grid">
+                <!-- Left Panel -->
+                <div class="price-panel">
+                    <h3><i class="fa-solid fa-building"></i> 廠商與聯絡資訊</h3>
+
+                    <div class="form-row">
+                        <label for="vendor-name">廠商名稱 *</label>
+                        <input type="text" id="vendor-name" placeholder="例：XXX 生技股份有限公司">
+                    </div>
+                    
+                    <div class="form-row">
+                        <label for="company-tax-id">公司統編</label>
+                        <input type="text" id="company-tax-id" placeholder="例：12345678">
+                        <div class="file-hint">此欄位用於「公司歸戶」彙整申請案狀態。</div>
+                        <div style="margin-top:.35rem;display:flex;align-items:center;gap:.45rem;">
+                            <input type="checkbox" id="no-tax-id-toggle">
+                            <span style="font-size:.85rem;color:#6b7280;">尚無統編，改用「電話」欄位的手機號碼歸戶</span>
+                        </div>
+                    </div>
+
+                    </div>
+
+
+                    <div class="form-row">
+                        <label for="contact-name">聯絡人姓名 *</label>
+                        <input type="text" id="contact-name" placeholder="例：王小明">
+                    </div>
+
+                    <div class="form-row">
+                        <label for="contact-phone">電話 *</label>
+                        <input type="tel" id="contact-phone" placeholder="例：09xx-xxx-xxx">
+                    </div>
+
+                    <div class="form-row">
+                        <label for="contact-email">聯絡 Email *</label>
+                        <input type="email" id="contact-email" placeholder="例：contact@example.com">
+                    </div>
+
+                    <div class="form-row">
+                        <label for="contact-note">補充備註</label>
+                        <textarea id="contact-note" placeholder="可填寫聯絡偏好、期望合作模式等"></textarea>
+                    </div>
+                </div>
+
+                <!-- Right Panel -->
+                <div class="price-panel">
+                    <h3><i class="fa-solid fa-box"></i> 產品與標籤資訊</h3>
+
+                    <div class="form-row">
+                        <label for="product-name">品名／產品名稱 *</label>
+                        <input type="text" id="product-name" placeholder="例：酪梨保濕修護霜">
+                    </div>
+
+                    <div class="form-row">
+                        <label for="label-info">背面標籤文字（可直接貼上全文）</label>
+                        <textarea id="label-info" placeholder="例：全成分、用途、用法、注意事項、保存方式、容量、製造批號等"></textarea>
+                        <div class="file-hint">※ 若已上傳照片，文字可留空；至少需提供「文字或照片」其一。</div>
+                    </div>
+
+                    <div class="form-row">
+                        <label>背面標籤照片（可上傳 1-3 張）</label>
+                        <div class="file-box">
+                            <input type="file" id="label-photos" accept="image/*" multiple>
+                            <div class="file-hint">建議：清晰對焦、避免反光。單張檔案建議小於 5MB。</div>
+                        </div>
+                        <div id="label-photos-preview" class="thumbs" aria-live="polite"></div>
+                    </div>
+
+                    <div class="form-row">
+                        <label for="desired-date">希望完成時間 *</label>
+                        <input type="date" id="desired-date">
+                        <div class="note">若日期尚未確定，可先填預估日期，後續可由管理備註回覆調整建議。</div>
+                    </div>
+
+                    <button class="btn-submit" id="btn-submit">
+                        <i class="fa-solid fa-paper-plane"></i> 送出意願調查（取得追蹤序號）
+                    </button>
+                    <button class="btn-print" onclick="window.print()">
+                        <i class="fa-solid fa-print"></i> 列印／匯出 PDF
+                    </button>
+
+                    <p id="submission-status" class="note" style="display:none;"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2025 CosPIF 化妝品智慧科技系統. All Rights Reserved.</p>
+    </div>
+</footer>
+
+<script type="module">
+    import { db } from './firebase-config.js';
+    import {
+        collection,
+        addDoc,
+        doc,
+        updateDoc,
+        serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    // Firebase Storage (for label photos)
+    import {
+        getStorage,
+        ref as storageRef,
+        uploadBytes,
+        getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+
+    const storage = getStorage();
+
+    const vendorNameInput = document.getElementById('vendor-name');
+        const companyTaxIdInput = document.getElementById('company-tax-id');
+    const noTaxIdToggle = document.getElementById('no-tax-id-toggle');
+
+const contactNameInput = document.getElementById('contact-name');
+    const contactPhoneInput = document.getElementById('contact-phone');
+    const contactEmailInput = document.getElementById('contact-email');
+    const contactNoteInput = document.getElementById('contact-note');
+
+    const productNameInput = document.getElementById('product-name');
+    const labelInfoInput = document.getElementById('label-info');
+    const desiredDateInput = document.getElementById('desired-date');
+
+    const labelPhotosInput = document.getElementById('label-photos');
+    const labelPhotosPreview = document.getElementById('label-photos-preview');
+
+    const submitBtn = document.getElementById('btn-submit');
+    const submissionStatusEl = document.getElementById('submission-status');
+
+    const COLLECTION = 'pif_intent_submissions';
+
+    function isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function isValidCompanyTaxId(taxId) {
+        // 台灣統編通常為 8 碼數字（此處為簡易格式檢核）
+        return /^\d{8}$/.test((taxId || '').trim());
+    }
+
+
+    function isValidTWMobile(mobile) {
+        return /^09\d{8}$/.test((mobile || '').trim());
+    }
+
+
+    function showStatusMsg(msg, isError=false) {
+        submissionStatusEl.style.display = 'block';
+        submissionStatusEl.style.color = isError ? 'red' : '';
+        submissionStatusEl.textContent = msg;
+    }
+
+    function baseUrl() {
+        return window.location.href.split('?')[0];
+    }
+
+    function getSelectedLabelFiles() {
+        const files = Array.from(labelPhotosInput.files || []);
+        return files.slice(0, 3);
+    }
+
+    function renderPhotoPreviews() {
+        labelPhotosPreview.innerHTML = '';
+        const files = getSelectedLabelFiles();
+        if (!files.length) return;
+
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const div = document.createElement('div');
+                div.className = 'thumb';
+                div.innerHTML = `
+                    <img src="${reader.result}" alt="背面標籤照片預覽">
+                    <div class="name">${file.name}</div>
+                `;
+                labelPhotosPreview.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    labelPhotosInput.addEventListener('change', renderPhotoPreviews);
+
+    function generateTrackingCode() {
+        // 10 碼：PIF + 年月日(6) + 1 位亂數字母
+        const now = new Date();
+        const yy = String(now.getFullYear()).slice(2);
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const rand = Math.random().toString(36).slice(2, 3).toUpperCase();
+        const tail = Math.random().toString(36).slice(2, 4).toUpperCase();
+        return `PIF${yy}${mm}${dd}${rand}${tail}`;
+    }
+
+    async function uploadLabelPhotos(docId, files) {
+        const urls = [];
+        let index = 1;
+
+        for (const file of files) {
+            const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+            const path = `${COLLECTION}/${docId}/label_${index}_${Date.now()}_${safeName}`;
+            const refObj = storageRef(storage, path);
+            await uploadBytes(refObj, file);
+            const url = await getDownloadURL(refObj);
+            urls.push(url);
+            index += 1;
+        }
+
+        return urls;
+    }
+
+    async function submitIntent() {
+        const vendorName = (vendorNameInput.value || '').trim();
+        const companyTaxId = (companyTaxIdInput?.value || '').trim();
+
+        const contactName = (contactNameInput.value || '').trim();
+        const contactPhone = (contactPhoneInput.value || '').trim();
+        const contactEmail = (contactEmailInput.value || '').trim();
+        const contactNote = (contactNoteInput.value || '').trim();
+
+        const productName = (productNameInput.value || '').trim();
+        const labelInfo = (labelInfoInput.value || '').trim();
+        const desiredFinishDate = (desiredDateInput.value || '').trim();
+
+        const labelFiles = getSelectedLabelFiles();
+
+        if (!vendorName) return alert('請填寫「廠商名稱」。');
+
+        const noTaxId = !!noTaxIdToggle?.checked;
+        let companyKey = '';
+
+        if (noTaxId) {
+            if (!contactPhone) return alert('您已勾選「尚無統編」，請填寫「電話」欄位的手機號碼以便歸戶。');
+            if (!isValidTWMobile(contactPhone)) return alert('請在「電話」欄位輸入有效的手機號碼（09 開頭 10 碼）。');
+            companyKey = contactPhone;
+        } else {
+            if (!companyTaxId) return alert('請填寫「公司統編」，或勾選「尚無統編，改用手機號碼歸戶」。');
+            if (!isValidCompanyTaxId(companyTaxId)) return alert('公司統編格式似乎不正確，請輸入 8 碼數字。');
+            companyKey = companyTaxId;
+        }
+
+        // 同步保存至 localStorage，方便其他頁（如公司歸戶儀表板、評估送審）自動帶入
+        try { if (companyKey) localStorage.setItem('cospif_companyKey', companyKey); } catch(e) {}
+
+
+        if (!contactName) return alert('請填寫「聯絡人姓名」。');
+        if (!contactPhone) return alert('請填寫「電話」。');
+        if (!contactEmail) return alert('請填寫「聯絡 Email」。');
+        if (!isValidEmail(contactEmail)) return alert('聯絡 Email 格式似乎不正確。');
+
+        if (!productName) return alert('請填寫「品名／產品名稱」。');
+
+        // 文字或照片至少提供其一
+        if (!labelInfo && labelFiles.length === 0) {
+            return alert('請提供「背面標籤文字」或「背面標籤照片」至少一項。');
+        }
+
+        if (!desiredFinishDate) return alert('請填寫「希望完成時間」。');
+
+        const trackingCode = generateTrackingCode();
+        const trackingCodeUpper = trackingCode.toUpperCase();
+        const trackingUrl = `pif-track.html?code=${encodeURIComponent(trackingCode)}`;
+
+        showStatusMsg('正在送出意願調查...');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 送出中...';
+
+        try {
+            // 1) 先建立文件
+            const data = {
+                trackingCode,
+                trackingCodeUpper,
+                trackingUrl,
+
+                vendorName,
+                companyTaxId: noTaxId ? null : (companyTaxId || null),
+                companyMobileKey: noTaxId ? (contactPhone || null) : null,
+                companyKeyType: noTaxId ? 'mobile' : 'taxId',
+                companyKey: companyKey,
+                contactName,
+                contactPhone,
+                contactEmail,
+                note: contactNote,
+
+                productName,
+                labelInfo,
+                labelPhotoUrls: [],
+                desiredFinishDate,
+
+                status: 'pending',
+                adminNote: '',
+                // pifId 由後台核准後填入
+                pifId: '',
+
+                url: baseUrl(),
+                submittedAt: serverTimestamp(),
+            };
+
+            const docRef = await addDoc(collection(db, COLLECTION), data);
+
+            // 2) 上傳照片（如果有）
+            if (labelFiles.length > 0) {
+                showStatusMsg('正在上傳背面標籤照片...');
+                const urls = await uploadLabelPhotos(docRef.id, labelFiles);
+                await updateDoc(doc(db, COLLECTION, docRef.id), {
+                    labelPhotoUrls: urls
+                });
+            }
+
+            alert(
+                `送出成功！
+
+您的 PIF 追蹤序號：${trackingCode}
+
+` +
+                `請妥善保存，可用於查詢審核與後續 PIF 製作進度。`
+            );
+
+            window.location.href = trackingUrl;
+
+        } catch (err) {
+            console.error(err);
+            showStatusMsg('送出失敗：' + (err.message || '未知錯誤'), true);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> 送出意願調查（取得追蹤序號）';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+
+                // ✅ 若先前已設定公司歸戶代碼（統編或手機），可自動帶入
+        try {
+            const cachedKey = (localStorage.getItem('cospif_companyKey') || '').trim();
+
+            if (cachedKey) {
+                if (/^\d{8}$/.test(cachedKey)) {
+                    if (companyTaxIdInput && !companyTaxIdInput.value) {
+                        companyTaxIdInput.value = cachedKey;
+                    }
+                    if (noTaxIdToggle) noTaxIdToggle.checked = false;
+                } else if (/^09\d{8}$/.test(cachedKey)) {
+                    if (contactPhoneInput && !contactPhoneInput.value) {
+                        contactPhoneInput.value = cachedKey;
+                    }
+                    if (noTaxIdToggle) noTaxIdToggle.checked = true;
+                }
+            }
+        } catch (e) {}
+
+        // ✅ 無統編模式：改用手機號碼作為公司歸戶代碼
+        if (noTaxIdToggle && companyTaxIdInput) {
+            const syncNoTaxUI = () => {
+                const on = !!noTaxIdToggle.checked;
+                companyTaxIdInput.disabled = on;
+                if (on) companyTaxIdInput.value = '';
+            };
+            noTaxIdToggle.addEventListener('change', syncNoTaxUI);
+            syncNoTaxUI();
+        }
+
+
+                submitBtn.addEventListener('click', submitIntent);
+        renderPhotoPreviews();
+    });
+</script>
+
+</body>
+</html>

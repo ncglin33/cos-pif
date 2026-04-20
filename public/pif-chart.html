@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CosPIF - PIF 文件製作流程</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .pifchart-sub-hero {
+            position: relative;
+            padding: 4rem 0 3rem;
+            background: radial-gradient(circle at top left, #dbeafe 0, #eff6ff 40%, #ffffff 100%);
+        }
+        .pifchart-sub-hero .container,
+        .pifchart-flow-section .container {
+            max-width: 1100px;
+        }
+
+        .pifchart-title {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        .pifchart-subtitle {
+            max-width: 820px;
+            font-size: 0.98rem;
+            color: #4b5563;
+        }
+        .pifchart-badges {
+            margin-top: 0.9rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.55rem;
+        }
+        .pifchart-badge {
+            border-radius: 999px;
+            background: #111827;
+            color: #f9fafb;
+            padding: 0.25rem 0.85rem;
+            font-size: 0.78rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .pifchart-flow-section {
+            padding: 2.8rem 0 2.2rem;
+            background: #f9fafb;
+        }
+        .pifchart-section-title {
+            font-size: 1.6rem;
+            margin-bottom: 0.4rem;
+        }
+        .pifchart-section-sub {
+            font-size: 0.92rem;
+            color: #4b5563;
+            max-width: 820px;
+            margin-bottom: 1.8rem;
+        }
+
+        .pifchart-flow-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 1rem;
+        }
+        .pifchart-card {
+            position: relative;
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 1.1rem 1.1rem 1rem;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04);
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+        .pifchart-step-badge {
+            position: absolute;
+            top: -12px;
+            left: 14px;
+            padding: 0.2rem 0.55rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            background: #1d4ed8;
+            color: #ffffff;
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .pifchart-step-badge span {
+            font-weight: 600;
+        }
+        .pifchart-card-title {
+            font-size: 1rem;
+            margin-top: 0.2rem;
+        }
+        .pifchart-card-role {
+            font-size: 0.8rem;
+            color: #6b7280;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .pifchart-card p {
+            font-size: 0.85rem;
+            margin: 0.2rem 0;
+            color: #374151;
+        }
+        .pifchart-card ul {
+            margin: 0.2rem 0 0.3rem;
+            padding-left: 1.1rem;
+            font-size: 0.8rem;
+            color: #4b5563;
+        }
+        .pifchart-card li {
+            margin-bottom: 0.18rem;
+        }
+        .pifchart-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            border-radius: 999px;
+            border: 1px solid #d1d5db;
+            padding: 0.12rem 0.6rem;
+            font-size: 0.75rem;
+            color: #4b5563;
+            background: #f9fafb;
+            margin-right: 0.25rem;
+            margin-top: 0.15rem;
+        }
+
+        /* === Step quick links (只保留 STEP1-3) === */
+        .pifchart-link-row {
+            margin-top: 0.55rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+        }
+        .pifchart-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.35rem 0.65rem;
+            font-size: 0.78rem;
+            border-radius: 10px;
+            border: 1px solid #dbeafe;
+            background: #eff6ff;
+            color: #1d4ed8;
+            text-decoration: none;
+            transition: all .15s ease;
+        }
+        .pifchart-link-btn:hover {
+            transform: translateY(-1px);
+            border-color: #bfdbfe;
+            background: #e0ecff;
+        }
+
+        /* ===== Swimlane ===== */
+        .pifchart-lane-section {
+            padding: 2.5rem 0;
+            background: #ffffff;
+        }
+        .pifchart-lane-grid {
+            max-width: 1100px;
+            margin: 0 auto;
+            border-radius: 14px;
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+        }
+        .pifchart-lane-header {
+            display: grid;
+            grid-template-columns: 1.1fr 1.1fr 1.1fr;
+            background: #f3f4f6;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .pifchart-lane-header div {
+            padding: 0.6rem 0.8rem;
+            font-size: 0.86rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .pifchart-lane-header i {
+            color: #2563eb;
+        }
+        .pifchart-lane-row {
+            display: grid;
+            grid-template-columns: 1.1fr 1.1fr 1.1fr;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .pifchart-lane-row:last-child {
+            border-bottom: none;
+        }
+        .pifchart-lane-cell {
+            padding: 0.6rem 0.8rem;
+            font-size: 0.82rem;
+            border-right: 1px solid #e5e7eb;
+        }
+        .pifchart-lane-cell:last-child {
+            border-right: none;
+        }
+        .pifchart-lane-step {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+        }
+        .pifchart-lane-step span {
+            font-size: 0.78rem;
+            border-radius: 999px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            padding: 0.08rem 0.55rem;
+        }
+        .pifchart-lane-cell ul {
+            margin: 0.15rem 0 0;
+            padding-left: 1.1rem;
+        }
+        .pifchart-lane-cell li {
+            margin-bottom: 0.15rem;
+        }
+
+        /* ===== Summary ===== */
+        .pifchart-summary-section {
+            padding: 2.4rem 0 3rem;
+            background: #f9fafb;
+        }
+        .pifchart-summary-grid {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 1.8rem;
+            align-items: flex-start;
+        }
+        .pifchart-summary-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 1.4rem 1.5rem;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 10px 26px rgba(15, 23, 42, 0.04);
+        }
+        .pifchart-summary-card h3 {
+            margin: 0 0 0.6rem;
+            font-size: 1.05rem;
+        }
+        .pifchart-summary-card p {
+            margin: 0 0 0.4rem;
+            font-size: 0.86rem;
+            color: #4b5563;
+        }
+        .pifchart-summary-list {
+            margin: 0.4rem 0 0;
+            padding-left: 1.1rem;
+            font-size: 0.82rem;
+            color: #374151;
+        }
+        .pifchart-summary-list li {
+            margin-bottom: 0.25rem;
+        }
+        .pifchart-summary-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            margin-top: 0.55rem;
+        }
+        .pifchart-summary-tag {
+            border-radius: 999px;
+            border: 1px solid #d1d5db;
+            padding: 0.18rem 0.7rem;
+            font-size: 0.78rem;
+            background: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            color: #374151;
+        }
+
+        @media (max-width: 960px) {
+            .pifchart-lane-header, .pifchart-lane-row { grid-template-columns: 1fr 1fr; }
+            .pifchart-lane-header div:nth-child(3),
+            .pifchart-lane-row .pifchart-lane-cell:nth-child(3) { display: none; }
+            .pifchart-summary-grid { grid-template-columns: 1fr; }
+            .pifchart-sub-hero { padding-top: 3.2rem; }
+            .pifchart-title { font-size: 1.6rem; }
+        }
+        @media (max-width: 640px) {
+            .pifchart-flow-grid { grid-template-columns: 1fr; }
+            .pifchart-lane-header, .pifchart-lane-row { grid-template-columns: 1fr; }
+            .pifchart-lane-header div:nth-child(2), .pifchart-lane-header div:nth-child(3),
+            .pifchart-lane-row .pifchart-lane-cell:nth-child(2),
+            .pifchart-lane-row .pifchart-lane-cell:nth-child(3) { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo">
+                    <img src="img/cospif-logo.png" alt="CosPIF Logo">
+                </a>
+                <ul class="nav-links">
+                    <li><a href="index.html#features">核心功能</a></li>
+                    <li><a href="index.html#pricing">價格試算</a></li>
+                    <li><a href="cosmetic.html">化妝品知識</a></li>
+                    <li><a href="index.html#about">關於我們</a></li>
+                    <li><a href="pif-chart.html" class="active">PIF 流程圖</a></li>
+                    <li><a href="qa-list.html">常見問題QA</a></li>
+                    <li><a href="contact.html">聯絡我們</a></li>
+                </ul>
+                <a href="login.html" class="btn-login">登入系統</a>
+            </nav>
+        </div>
+    </header>
+
+<main>
+    <section class="pifchart-sub-hero">
+        <div class="container">
+            <h1 class="pifchart-title">以「公司視角」掌握 PIF 專案生成過程</h1>
+            <p class="pifchart-subtitle">
+                將公司最常用的「PIF製作」情境拆解為清楚里程碑：
+                <strong>意願提交 → 費用試算 → 費用確認/合約 → PIF ID 建立 → 試驗/文件 → SA 安全評估與簽署 → 結案</strong>。
+            </p>
+            <div class="pifchart-badges">
+                <div class="pifchart-badge"><i class="fa-solid fa-building-user"></i><span>公司歸戶流程</span></div>
+                <div class="pifchart-badge"><i class="fa-solid fa-credit-card"></i><span>分期/發票/收據</span></div>
+                <div class="pifchart-badge"><i class="fa-solid fa-shield-heart"></i><span>PIF 合規導向</span></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="pifchart-flow-section">
+        <div class="container">
+            <h2 class="pifchart-section-title">七大步驟：從意願調查到結案</h2>
+            <p class="pifchart-section-sub">
+                依你的指示：<strong>只保留 STEP1~3 的快速連結</strong>，
+                STEP4~7 不提供跳轉按鈕，避免誤導或過度綁定頁面路徑。
+            </p>
+
+            <div class="pifchart-flow-grid">
+                <!-- STEP 1 -->
+                <article class="pifchart-card">
+                    <div class="pifchart-step-badge"><span>STEP 1</span> 意願調查</div>
+                    <h3 class="pifchart-card-title">提出意願調查 / 專案需求</h3>
+                    <div class="pifchart-card-role"><i class="fa-solid fa-building"></i> 公司端填寫</div>
+                    <p>公司登入後由「PIF 意願調查」提交需求，系統建立意願紀錄並歸戶至公司。</p>
+                    <ul>
+                        <li>填寫品名/品項數/預期完成時間</li>
+                        <li>勾選需要的試驗與 SA 模組</li>
+                        <li>送出後於「我的申請案」追蹤</li>
+                    </ul>
+                    <div>
+                        <span class="pifchart-chip"><i class="fa-solid fa-list-check"></i> 意願調查</span>
+                    </div>
+                    <div class="pifchart-link-row">
+                        <a class="pifchart-link-btn" href="pif-wish.html">
+                            <i class="fa-solid fa-arrow-right-to-bracket"></i> 進入 STEP1：pif-wish
+                        </a>
+                    </div>
+                </article>
+
+                <!-- STEP 2 -->
+                <article class="pifchart-card">
+                    <div class="pifchart-step-badge"><span>STEP 2</span> 費用估算</div>
+                    <h3 class="pifchart-card-title">專案初評與費用試算</h3>
+                    <div class="pifchart-card-role"><i class="fa-solid fa-flask"></i> CosPIF 專案團隊</div>
+                    <p>專案團隊依意願內容引用價格模組，回填「試算金額/試算明細」。</p>
+                    <ul>
+                        <li>依品項數、試驗項目與 SA 成本估算</li>
+                        <li>建立估算版次/備註</li>
+                        <li>公司端可先檢視試算</li>
+                    </ul>
+                    <div>
+                        <span class="pifchart-chip"><i class="fa-solid fa-calculator"></i> 試算模組</span>
+                    </div>
+                    <div class="pifchart-link-row">
+                        <a class="pifchart-link-btn" href="price-eva.html">
+                            <i class="fa-solid fa-arrow-right-to-bracket"></i> 進入 STEP2：price-eva
+                        </a>
+                    </div>
+                </article>
+
+                <!-- STEP 3 -->
+                <article class="pifchart-card">
+                    <div class="pifchart-step-badge"><span>STEP 3</span> 費用確認</div>
+                    <h3 class="pifchart-card-title">正式報價、合約與分期設定</h3>
+                    <div class="pifchart-card-role"><i class="fa-solid fa-handshake"></i> 公司端確認</div>
+                    <p>公司確認正式金額與付款方式，系統/財務後台同步產生分期欄位。</p>
+                    <ul>
+                        <li>可選付款比例</li>
+                        <li>每期可設定到期日與已收標記</li>
+                        <li>狀態更新：待確認 → 已確認</li>
+                    </ul>
+                    <div>
+                        <span class="pifchart-chip"><i class="fa-solid fa-file-signature"></i> 合約/分期</span>
+                    </div>
+                    <div class="pifchart-link-row">
+                        <a class="pifchart-link-btn" href="pif-contract-public.html">
+                            <i class="fa-solid fa-arrow-right-to-bracket"></i> 進入 STEP3：pif-contract
+                        </a>
+                    </div>
+                </article>
+
+                <!-- STEP 4 -->
+                <article class="pifchart-card">
+                    <div class="pifchart-step-badge"><span>STEP 4</span> PIF 建檔</div>
+                    <h3 class="pifchart-card-title">PIF ID 建立與基礎資料上架</h3>
+                    <div class="pifchart-card-role"><i class="fa-solid fa-diagram-project"></i> 系統自動 + 管理端</div>
+                    <p>費用確認後建立 PIF ID，將意願資料對應到 PIF 專案主檔。</p>
+                    <ul>
+                        <li>PIF 基本資訊與責任廠商</li>
+                        <li>PIF 各成分、理化/毒理資料</li>
+                        <li>公司端可看到「對應 PIF ID」</li>
+                    </ul>
+                    <div>
+                        <span class="pifchart-chip"><i class="fa-solid fa-barcode"></i> PIF ID 產生</span>
+                    </div>
+                </article>
+
+                <!-- STEP 5 -->
+                <article class="pifchart-card">
+                    <div class="pifchart-step-badge"><span>STEP 5</span> 試驗與文件</div>
+                    <h3 class="pifchart-card-title">試驗執行、報告上傳與版本控管</h3>
+                    <div class="pifchart-card-role"><i class="fa-solid fa-vials"></i> 試驗單位 & 管理端</div>
+                    <p>依PIF專案需求完成微生物、防腐挑戰、安定性、功效等檢測並上傳報告。</p>
+                    <ul>
+                        <li>對應各 PIF 模組的 PDF</li>
+                        <li>記錄試驗編號/日期</li>
+                        <li>公司端可下載備查</li>
+                    </ul>
+                    <div>
+                        <span class="pifchart-chip"><i class="fa-solid fa-cloud-arrow-up"></i> 雲端報告</span>
+                    </div>
+                </article>
+
+                <!-- STEP 6 -->
+                <article class="pifchart-card">
+                    <div class="pifchart-step-badge"><span>STEP 6</span> 安全評估</div>
+                    <h3 class="pifchart-card-title">SA 風險整合、結論與簽署</h3>
+                    <div class="pifchart-card-role"><i class="fa-solid fa-user-shield"></i> SA</div>
+                    <p>SA 依毒理/理化/微生物與試驗結果完成安全評估結論，案件轉入完成狀態。</p>
+                    <ul>
+                        <li>MOS/NOAEL 與物種差異修正係數支援</li>
+                        <li>可分「一般成人版/含兒童版」</li>
+                        <li>完成簽署日期與資格紀錄</li>
+                    </ul>
+                    <div>
+                        <span class="pifchart-chip"><i class="fa-solid fa-shield-heart"></i> SA Summary</span>
+                    </div>
+                </article>
+
+                <!-- STEP 7 -->
+                <article class="pifchart-card">
+                    <div class="pifchart-step-badge"><span>STEP 7</span> 結案</div>
+                    <h3 class="pifchart-card-title">收款沖帳、發票/收據與專案結案</h3>
+                    <div class="pifchart-card-role"><i class="fa-solid fa-file-invoice-dollar"></i> 會計 / 管理端</div>
+                    <p>依分期收款，完成沖帳與發票/收據管理，全部款項到齊後標記結案。</p>
+                    <ul>
+                        <li>回寫 payStatus / paidAt / receiptNo</li>
+                        <li>收據號：COSPIF-YYMM-流水號</li>
+                        <li>支援應收帳齡與依公司彙總</li>
+                    </ul>
+                    <div>
+                        <span class="pifchart-chip"><i class="fa-solid fa-coins"></i> 財務結案</span>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="pifchart-lane-section">
+        <div class="pifchart-lane-grid">
+            <div class="pifchart-lane-header">
+                <div><i class="fa-solid fa-building"></i> 公司端視角</div>
+                <div><i class="fa-solid fa-laptop-code"></i> CosPIF 管理/專案端</div>
+                <div><i class="fa-solid fa-user-shield"></i> SA / 試驗與審核</div>
+            </div>
+
+            <div class="pifchart-lane-row">
+                <div class="pifchart-lane-cell">
+                    <div class="pifchart-lane-step"><span>STEP 1</span> 意願調查</div>
+                    <ul><li>新增意願調查</li><li>確認公司統編資料</li></ul>
+                </div>
+                <div class="pifchart-lane-cell">
+                    <ul><li>接收意願</li><li>初步規格與成本評估</li></ul>
+                </div>
+                <div class="pifchart-lane-cell">
+                    <ul><li>提供可行試驗清單建議</li></ul>
+                </div>
+            </div>
+
+            <div class="pifchart-lane-row">
+                <div class="pifchart-lane-cell">
+                    <div class="pifchart-lane-step"><span>STEP 2–3</span> 試算/費用確認</div>
+                    <ul><li>檢視試算金額</li><li>確認正式報價與分期</li></ul>
+                </div>
+                <div class="pifchart-lane-cell">
+                    <ul><li>回填試算明細</li><li>建立分期欄位與到期日</li></ul>
+                </div>
+                <div class="pifchart-lane-cell">
+                    <ul><li>必要時確認試驗規格</li></ul>
+                </div>
+            </div>
+
+            <div class="pifchart-lane-row">
+                <div class="pifchart-lane-cell">
+                    <div class="pifchart-lane-step"><span>STEP 4–5</span> PIF 建檔/試驗</div>
+                    <ul><li>提供配方/包材/標示文件</li><li>追蹤報告上傳狀態</li></ul>
+                </div>
+                <div class="pifchart-lane-cell">
+                    <ul><li>建立 PIF ID</li><li>安排試驗與版本控管</li></ul>
+                </div>
+                <div class="pifchart-lane-cell">
+                    <ul><li>出具檢測報告</li><li>格式符合 PIF</li></ul>
+                </div>
+            </div>
+
+            <div class="pifchart-lane-row">
+                <div class="pifchart-lane-cell">
+                    <div class="pifchart-lane-step"><span>STEP 6–7</span> SA/付款結案</div>
+                    <ul><li>下載完整 PIF</li><li>完成尾款與結案</li></ul>
+                </div>
+                <div class="pifchart-lane-cell">
+                    <ul><li>彙整資料供 SA</li><li>沖帳與收據編碼</li></ul>
+                </div>
+                <div class="pifchart-lane-cell">
+                    <ul><li>安全評估簽署</li><li>可應付查核</li></ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="pifchart-summary-section">
+        <div class="pifchart-summary-grid">
+            <article class="pifchart-summary-card">
+                <h3>公司端建議操作節奏</h3>
+                <p>用同一套狀態語意，讓公司端、SA、會計端的溝通更順暢。</p>
+                <ul class="pifchart-summary-list">
+                    <li>以意願調查作為新案入口。</li>
+                    <li>看到「待確認費用」就優先完成合約與分期。</li>
+                    <li>試驗期間定期檢查報告上傳狀態。</li>
+                    <li>SA 完成後再進入尾款與結案流程。</li>
+                </ul>
+                <div class="pifchart-summary-tags">
+                    <span class="pifchart-summary-tag"><i class="fa-solid fa-gauge-high"></i> 狀態一致</span>
+                    <span class="pifchart-summary-tag"><i class="fa-solid fa-calendar-check"></i> 里程碑管理</span>
+                </div>
+            </article>
+
+            <article class="pifchart-summary-card">
+                <h3>對應帳務報表</h3>
+                <p>後續可無縫併入「更完整會計作帳版」的報表區塊。</p>
+                <ul class="pifchart-summary-list">
+                    <li>依公司彙總：應收/已收/未收</li>
+                    <li>依月份彙總：收入趨勢</li>
+                    <li>應收帳齡：即將到期/逾期</li>
+                    <li>明細 CSV：匯入內部作帳</li>
+                </ul>
+                <div class="pifchart-summary-tags">
+                    <span class="pifchart-summary-tag"><i class="fa-solid fa-file-csv"></i> CSV 匯出</span>
+                    <span class="pifchart-summary-tag"><i class="fa-solid fa-receipt"></i> 收據規則一致</span>
+                </div>
+            </article>
+        </div>
+    </section>
+</main>
+
+<footer>
+        <div class="container">
+            <p>&copy; 2025 CosPIF 化妝品 PIF 智慧科技整合系統. 勝美生技有限公司 All Rights Reserved.</p>
+        </div>
+    </footer>
+
+</body>
+</html>

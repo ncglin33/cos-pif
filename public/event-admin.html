@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>報名管理</title>
+  <style>
+    :root{
+      --bg:#0b1220; --text:#e8eefc; --muted:#a9b7d6;
+      --line:rgba(255,255,255,.12); --shadow: 0 10px 30px rgba(0,0,0,.25);
+      --radius: 16px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", Arial;
+      background: radial-gradient(1200px 700px at 10% 10%, rgba(125,211,252,.18), transparent 55%),
+                  linear-gradient(180deg, #070b14, var(--bg));
+    }
+    .wrap{max-width:1180px;margin:0 auto;padding:18px 14px 60px}
+    .bar{
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      padding:12px; border:1px solid var(--line); border-radius: var(--radius);
+      background: rgba(255,255,255,.04); box-shadow: var(--shadow);
+    }
+    .pill{
+      font-size:12px; padding:6px 10px; border-radius:999px;
+      border:1px solid var(--line); color:var(--muted);
+      background: rgba(255,255,255,.03);
+    }
+    button{
+      border:1px solid var(--line);
+      background: rgba(125,211,252,.12);
+      color: var(--text);
+      padding:10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight:700;
+    }
+    button.secondary{background: rgba(255,255,255,.06)}
+    button.danger{background: rgba(251,113,133,.14)}
+    select, input{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.22);
+      color: var(--text);
+      outline:none;
+    }
+    .grid{display:grid;grid-template-columns: 1fr; gap:12px; margin-top:12px}
+    .card{
+      border:1px solid var(--line); border-radius: var(--radius);
+      background: rgba(255,255,255,.04); box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .hd{
+      padding:12px 14px; border-bottom:1px solid var(--line);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      background: rgba(255,255,255,.03);
+    }
+    .hd h2{margin:0;font-size:15px}
+    .bd{padding:12px 14px}
+    table{width:100%; border-collapse: collapse}
+    th, td{
+      text-align:left; padding:10px 8px; border-bottom:1px solid rgba(255,255,255,.08);
+      font-size:13px; vertical-align:top;
+    }
+    th{color:var(--muted); font-weight:700}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace}
+    .msg{
+      padding:10px 12px; border-radius: 12px; border:1px solid var(--line);
+      background: rgba(255,255,255,.03); font-size:13px; color:var(--muted);
+    }
+    .tag{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid var(--line);display:inline-block}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="bar">
+      <div style="font-weight:900">報名管理</div>
+      <span class="pill" id="userPill">未登入</span>
+      <div style="flex:1"></div>
+
+      <select id="eventSelect">
+        <option value="">載入活動中…</option>
+      </select>
+
+      <select id="statusSelect">
+        <option value="">全部狀態</option>
+        <option value="submitted">submitted</option>
+        <option value="confirmed">confirmed</option>
+        <option value="paid">paid</option>
+        <option value="cancelled">cancelled</option>
+      </select>
+
+      <input id="kw" placeholder="關鍵字：姓名/手機/序號" style="min-width:220px" />
+
+      <button id="reloadBtn" class="secondary">重新載入</button>
+      <button id="exportBtn">匯出 CSV</button>
+      <button id="loginBtn">Google 登入</button>
+      <button id="logoutBtn" class="danger" style="display:none">登出</button>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="hd">
+          <h2>報名清單</h2>
+          <span class="pill" id="countPill">0 筆</span>
+        </div>
+        <div class="bd">
+          <div id="msg" class="msg">提示：此頁需要 Firestore 規則限制為管理者才可讀 registrations。</div>
+          <div style="overflow:auto; margin-top:10px">
+            <table>
+              <thead>
+                <tr>
+                  <th>時間</th>
+                  <th>序號</th>
+                  <th>姓名 / 手機</th>
+                  <th>人數</th>
+                  <th>發票</th>
+                  <th>狀態</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // ====== Firebase 設定（請改成你的） ======
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import {
+      getFirestore, collection, doc, getDocs, query, where, orderBy, limit,
+      updateDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const el = (id)=>document.getElementById(id);
+    const userPill = el("userPill");
+    const loginBtn = el("loginBtn");
+    const logoutBtn = el("logoutBtn");
+    const eventSelect = el("eventSelect");
+    const statusSelect = el("statusSelect");
+    const kw = el("kw");
+    const tbody = el("tbody");
+    const countPill = el("countPill");
+    const msg = el("msg");
+
+    let currentUser = null;
+    let events = [];
+
+    function fmtTime(ts){
+      try{
+        if(ts?.toDate) return ts.toDate().toISOString().replace("T"," ").slice(0,19);
+      }catch(e){}
+      return "—";
+    }
+    function escapeHtml(s){
+      return String(s ?? "").replace(/[&<>"']/g, (m) => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      })[m]);
+    }
+
+    async function loadEvents(){
+      const snap = await getDocs(query(collection(db,"events")));
+      events = [];
+      snap.forEach(d => events.push({id:d.id, ...d.data()}));
+      events.sort((a,b)=>String(a.title||"").localeCompare(String(b.title||"")));
+      eventSelect.innerHTML = `<option value="">全部活動</option>` + events.map(e=>{
+        const t = e.title || "(未命名)";
+        return `<option value="${e.id}">${escapeHtml(t)}</option>`;
+      }).join("");
+    }
+
+    async function loadRegs(){
+      tbody.innerHTML = "";
+      countPill.textContent = "載入中…";
+
+      try{
+        // 基本篩選（示範）：eventId + status
+        // 若你要更強的多欄位搜尋，建議用 Cloud Functions / Algolia / Meilisearch
+        let qy = query(collection(db,"registrations"), orderBy("createdAt","desc"), limit(500));
+
+        const eid = eventSelect.value;
+        const st = statusSelect.value;
+
+        // Firestore 的 where+orderBy 有索引需求；你可依實際需求建立 composite index
+        if (eid && st){
+          qy = query(
+            collection(db,"registrations"),
+            where("eventId","==",eid),
+            where("status","==",st),
+            orderBy("createdAt","desc"),
+            limit(500)
+          );
+        }else if (eid){
+          qy = query(
+            collection(db,"registrations"),
+            where("eventId","==",eid),
+            orderBy("createdAt","desc"),
+            limit(500)
+          );
+        }else if (st){
+          qy = query(
+            collection(db,"registrations"),
+            where("status","==",st),
+            orderBy("createdAt","desc"),
+            limit(500)
+          );
+        }
+
+        const snap = await getDocs(qy);
+        const rows = [];
+        snap.forEach(d => rows.push({id:d.id, ...d.data()}));
+
+        // 前端關鍵字過濾（姓名/手機/序號）
+        const k = kw.value.trim();
+        const filtered = !k ? rows : rows.filter(r=>{
+          const n = r?.attendee?.name || "";
+          const p = r?.attendee?.phone || "";
+          return r.id.includes(k) || String(n).includes(k) || String(p).includes(k);
+        });
+
+        countPill.textContent = `${filtered.length} 筆`;
+        filtered.forEach(r=>{
+          const inv = r.invoice?.type === "3" ? `三聯 ${r.invoice?.title||""}（${r.invoice?.taxId||""}）`
+                    : r.invoice?.type === "2" ? `二聯 ${r.invoice?.title||""}`
+                    : "不需要";
+          const status = r.status || "—";
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${escapeHtml(fmtTime(r.createdAt))}</td>
+            <td class="mono">${escapeHtml(r.id)}</td>
+            <td>
+              <div style="font-weight:800">${escapeHtml(r?.attendee?.name || "—")}</div>
+              <div class="mono" style="color:#a9b7d6">${escapeHtml(r?.attendee?.phone || "—")}</div>
+            </td>
+            <td>${escapeHtml(String(r.attendeeCount ?? 1))}</td>
+            <td>${escapeHtml(inv)}</td>
+            <td><span class="tag">${escapeHtml(status)}</span></td>
+            <td>
+              <button data-act="confirm" data-id="${r.id}" class="secondary">confirmed</button>
+              <button data-act="paid" data-id="${r.id}" class="secondary">paid</button>
+              <button data-act="cancel" data-id="${r.id}" class="danger">cancel</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+      }catch(err){
+        console.error(err);
+        countPill.textContent = "0 筆";
+        msg.textContent = "載入失敗：請確認你已登入、Firestore 規則允許讀取 registrations，或建立必要索引。";
+      }
+    }
+
+    tbody.addEventListener("click", async (e)=>{
+      const btn = e.target.closest("button");
+      if(!btn) return;
+      const id = btn.dataset.id;
+      const act = btn.dataset.act;
+      if(!id || !act) return;
+
+      let status = "";
+      if(act === "confirm") status = "confirmed";
+      if(act === "paid") status = "paid";
+      if(act === "cancel") status = "cancelled";
+
+      try{
+        await updateDoc(doc(db,"registrations", id), { status, updatedAt: new Date() });
+        await loadRegs();
+      }catch(err){
+        console.error(err);
+        alert("更新失敗：請確認權限與網路");
+      }
+    });
+
+    el("reloadBtn").addEventListener("click", loadRegs);
+    [eventSelect, statusSelect].forEach(x => x.addEventListener("change", loadRegs));
+    kw.addEventListener("input", ()=>loadRegs());
+
+    el("exportBtn").addEventListener("click", ()=>{
+      // 以目前表格匯出 CSV（簡化版）
+      const lines = [];
+      lines.push(["createdAt","id","name","phone","count","invoice","status"].join(","));
+      [...tbody.querySelectorAll("tr")].forEach(tr=>{
+        const tds = [...tr.querySelectorAll("td")].map(td=>td.innerText.replace(/\s+/g," ").trim());
+        // 取前 6 欄 + 狀態
+        const createdAt = tds[0] || "";
+        const id = tds[1] || "";
+        const namePhone = tds[2] || "";
+        const count = tds[3] || "";
+        const invoice = tds[4] || "";
+        const status = tds[5] || "";
+        // namePhone 拆
+        const name = (namePhone.split("\n")[0]||"").trim();
+        const phone = (namePhone.split("\n")[1]||"").trim();
+        const row = [createdAt,id,name,phone,count,invoice,status].map(v => `"${String(v).replaceAll('"','""')}"`).join(",");
+        lines.push(row);
+      });
+      const blob = new Blob([lines.join("\n")], {type:"text/csv;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "registrations.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    loginBtn.addEventListener("click", async ()=>{
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    });
+    logoutBtn.addEventListener("click", async ()=>{
+      await signOut(auth);
+    });
+
+    onAuthStateChanged(auth, async (u)=>{
+      currentUser = u || null;
+      if(!u){
+        userPill.textContent = "未登入";
+        loginBtn.style.display = "";
+        logoutBtn.style.display = "none";
+        tbody.innerHTML = "";
+        countPill.textContent = "0 筆";
+        return;
+      }
+      userPill.textContent = u.email || "已登入";
+      loginBtn.style.display = "none";
+      logoutBtn.style.display = "";
+      try{
+        await loadEvents();
+        await loadRegs();
+      }catch(err){
+        console.error(err);
+        msg.textContent = "初始化失敗：請確認 Firestore 權限。";
+      }
+    });
+  </script>
+</body>
+</html>

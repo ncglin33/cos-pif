@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>取消訂閱｜CosPIF 化妝品知識刊物</title>
+  <style>
+    :root{
+      --bg:#0b1220; --card:#0f1a33; --muted:rgba(255,255,255,.7);
+      --text:#fff; --line:rgba(255,255,255,.12); --btn:#111827;
+      --accent:#ff2d8d;
+    }
+    body{margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","Microsoft JhengHei",Arial,sans-serif; background:linear-gradient(135deg,#0b1220,#251a3a); color:var(--text);}
+    .wrap{max-width:760px; margin:0 auto; padding:26px 14px;}
+    .card{background:rgba(255,255,255,.06); border:1px solid var(--line); border-radius:16px; padding:18px; box-shadow:0 12px 40px rgba(0,0,0,.25);}
+    h1{margin:0 0 8px; font-size:20px;}
+    p{margin:8px 0; color:var(--muted); line-height:1.7;}
+    .row{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;}
+    input{flex:1; min-width:220px; padding:10px 12px; border-radius:12px; border:1px solid var(--line); background:rgba(0,0,0,.2); color:#fff; outline:none;}
+    button{padding:10px 14px; border-radius:999px; border:0; background:var(--accent); color:#fff; font-weight:800; cursor:pointer;}
+    button.secondary{background:rgba(255,255,255,.12);}
+    .status{margin-top:12px; padding:12px; border-radius:12px; border:1px dashed rgba(255,255,255,.22); background:rgba(0,0,0,.15); color:#fff;}
+    .small{font-size:12px; color:rgba(255,255,255,.65);}
+    a{color:#9dd6ff;}
+    .top{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;}
+    .badge{display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:999px; background:rgba(255,255,255,.1); border:1px solid var(--line); font-weight:700;}
+  </style>
+
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-functions-compat.js"></script>
+
+  <!-- 你的專案 firebase config（你系統既有檔） -->
+  <script src="firebase-config.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="badge">🧾 CosPIF 化妝品知識刊物</div>
+      <a class="small" href="kb-issue.html" target="_blank" rel="noopener">查看最新刊物 →</a>
+    </div>
+
+    <div class="card">
+      <h1>取消訂閱</h1>
+      <p>若你是從「刊物出版通知信」點進來，本頁會自動完成取消訂閱。</p>
+      <p class="small">（若你只是想停止某一類通知，可稍後再加上「只退訂月刊/週刊」的選項。）</p>
+
+      <div id="tokenBox" class="status" style="display:none;"></div>
+
+      <div id="manualBox" style="margin-top:14px;">
+        <p>你也可以輸入 Email，系統會寄出「取消訂閱確認信」（48 小時內有效）。</p>
+        <div class="row">
+          <input id="email" type="email" placeholder="輸入 Email（例：name@example.com）" autocomplete="email" />
+          <button id="btnRequest">寄出確認信</button>
+          <button id="btnReset" class="secondary" type="button">清除</button>
+        </div>
+        <div id="manualStatus" class="status" style="display:none;"></div>
+      </div>
+
+      <div style="margin-top:14px;" class="small">
+        若有任何問題，請回覆管理單位或至網站「聯絡我們」。
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const qs = new URLSearchParams(location.search);
+    const token = (qs.get('token') || '').trim();
+
+    function show(el, html){
+      el.style.display = '';
+      el.innerHTML = html;
+    }
+    function hide(el){ el.style.display='none'; el.innerHTML=''; }
+
+    function initFirebase(){
+      // firebase-config.js 可能提供 firebaseConfig 或 window.firebaseConfig
+      const cfg = window.firebaseConfig || window.firebaseConfigObj || window.firebaseConfigData || window.firebaseConfig_;
+      // 也支援變數名 firebaseConfig
+      const cfg2 = (typeof firebaseConfig !== 'undefined') ? firebaseConfig : null;
+
+      const finalCfg = cfg || cfg2;
+      if (!finalCfg) throw new Error("Missing firebaseConfig. Please ensure firebase-config.js defines firebaseConfig or window.firebaseConfig.");
+
+      if (!firebase.apps || firebase.apps.length === 0){
+        firebase.initializeApp(finalCfg);
+      }
+      return firebase.app();
+    }
+
+    async function run(){
+      const tokenBox = document.getElementById('tokenBox');
+      const manualStatus = document.getElementById('manualStatus');
+      const emailEl = document.getElementById('email');
+      const btnRequest = document.getElementById('btnRequest');
+      const btnReset = document.getElementById('btnReset');
+
+      let app;
+      try{
+        app = initFirebase();
+      }catch(err){
+        show(tokenBox, "⚠️ Firebase 初始化失敗：<br><div class='small'>" + String(err && err.message || err) + "</div>");
+        document.getElementById('manualBox').style.display='none';
+        return;
+      }
+
+      const functions = firebase.app().functions('asia-east1');
+      const requestFn = functions.httpsCallable('requestKbUnsubscribe');
+      const confirmFn = functions.httpsCallable('confirmKbUnsubscribe');
+
+      if (token){
+        show(tokenBox, "⏳ 正在處理取消訂閱…");
+        try{
+          const r = await confirmFn({ token });
+          const em = (r && r.data && r.data.email) ? r.data.email : "";
+          show(tokenBox, "✅ 已取消訂閱" + (em ? ("：<b>" + em + "</b>") : "") + "<div class='small'>你可以關閉此頁面。</div>");
+        }catch(err){
+          const msg = (err && err.message) ? err.message : String(err);
+          show(tokenBox, "❌ 取消訂閱失敗：<br><div class='small'>" + msg + "</div><div class='small'>若 token 過期，請改用下方輸入 Email 重新寄出確認信。</div>");
+        }
+      }else{
+        hide(tokenBox);
+      }
+
+      btnReset.addEventListener('click', ()=>{
+        emailEl.value = '';
+        hide(manualStatus);
+      });
+
+      btnRequest.addEventListener('click', async ()=>{
+        const email = (emailEl.value || '').trim().toLowerCase();
+        if (!email){
+          show(manualStatus, "⚠️ 請先輸入 Email。");
+          return;
+        }
+        btnRequest.disabled = true;
+        btnRequest.textContent = '寄送中…';
+        try{
+          await requestFn({ email });
+          show(manualStatus, "✅ 已寄出取消訂閱確認信，請至信箱點擊確認連結。");
+        }catch(err){
+          const msg = (err && err.message) ? err.message : String(err);
+          show(manualStatus, "❌ 寄送失敗：<br><div class='small'>" + msg + "</div>");
+        }finally{
+          btnRequest.disabled = false;
+          btnRequest.textContent = '寄出確認信';
+        }
+      });
+    }
+    run();
+  </script>
+</body>
+</html>

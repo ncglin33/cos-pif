@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>後台管理 - 批次匯入毒理資料</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .container { max-width: 1200px; }
+        .card { margin-bottom: 1.5rem; }
+        #drop-zone {
+            border: 2px dashed var(--line);
+            border-radius: .75rem;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        #drop-zone.dragover {
+            background-color: var(--brand-bg-subtle);
+            border-color: var(--brand);
+        }
+        #file-info { margin-top: 1rem; color: var(--muted); }
+        #preview-zone { display: none; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: #fff; border-radius: .75rem; border: 1px solid var(--line); overflow: hidden; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
+        th, td { padding: .7rem .9rem; border-bottom: 1px solid var(--line); text-align: left; font-size: .8rem; }
+        thead { background: #f9fafb; }
+        th { color: var(--muted); font-weight: 500; }
+        tbody tr:last-child td { border-bottom: none; }
+        .id-cell { font-family: monospace; color: var(--brand); font-weight: 600; }
+        #status-message { margin-top: 1rem; padding: 1rem; border-radius: .5rem; text-align: center; display: none; }
+        .status-success { background-color: var(--ok-bg); color: var(--ok-text); }
+        .status-error { background-color: var(--error-bg); color: var(--error-text); }
+    </style>
+</head>
+<body>
+
+    <header class="no-print">
+        <div class="wrap">
+            <h1><a href="dashboard.html" style="color: inherit; text-decoration: none;">管理後台</a></h1>
+            <div class="controls header-right">
+                <div id="user-info" style="display: inline-block; margin-left: 1rem;"></div>
+                <button id="btnSignOut" class="btn btn-danger">登出</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <header>
+            <h2>批次匯入毒理資料 (源頭淨化版)</h2>
+            <p class="subtitle">上傳檔案 -> 預覽並確認資料 -> 最終寫入資料庫。</p>
+        </header>
+
+        <div class="card">
+            <h3>步驟一: 上傳檔案</h3>
+            <p>支援 UTF-8 編碼的 CSV 檔案。第一行必須是標頭。`inciName` 是唯一必要的欄位。</p>
+            <div id="drop-zone">
+                <p><i class="fa-solid fa-upload"></i> 將 CSV 檔案拖曳至此，或點擊選擇</p>
+                <input type="file" id="file-input" accept=".csv,text/csv" hidden>
+                <div id="file-info">尚未選擇檔案</div>
+            </div>
+        </div>
+
+        <div id="preview-zone" class="card">
+            <h3>步驟二: 預覽並確認</h3>
+            <p>請仔細檢查下方的「原始 INCI Name」與「標準化 ID」。系統將使用「標準化 ID」作為資料庫的唯一識別碼 (Document ID)，並將「原始 INCI Name」存入 `inciName` 欄位。</p>
+            <div style="overflow-x: auto;">
+                <table id="preview-table">
+                    <thead></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div id="status-message"></div>
+             <div style="margin-top: 1.5rem; text-align: right;">
+                <button id="btn-confirm-write" class="btn primary"><i class="fa-solid fa-check-double"></i> 確認並寫入資料庫</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { doc, setDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { db, auth } from './firebase-config.js';
+
+        const $ = sel => document.querySelector(sel);
+
+        let parsedRecords = [];
+
+        function startApp() {
+            onAuthStateChanged(auth, user => {
+                if (user) {
+                    setupUI(user);
+                    document.body.style.opacity = '1';
+                } else {
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+
+        function setupUI(user) {
+            $('#user-info').textContent = user.email;
+            $('#btnSignOut').addEventListener('click', () => signOut(auth).then(() => { window.location.href = 'login.html'; }));
+
+            const dropZone = $('#drop-zone');
+            const fileInput = $('#file-input');
+            
+            dropZone.addEventListener('click', () => fileInput.click());
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+            });
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) handleFile(e.target.files[0]);
+            });
+
+            $('#btn-confirm-write').addEventListener('click', handleConfirmAndWrite);
+        }
+
+        function handleFile(file) {
+            if (!file || !(file.type === 'text/csv' || file.name.endsWith('.csv'))) {
+                alert('錯誤：請選擇 .csv 檔案。');
+                return;
+            }
+            $('#file-info').textContent = `已選擇檔案: ${file.name}`;
+            parseFile(file);
+        }
+
+        function parseFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const lines = e.target.result.split(/\r\n|\n/);
+                    if (lines.length < 2) throw new Error("CSV 檔案至少需要包含標頭和一行資料。");
+
+                    const headers = lines[0].split(',').map(h => h.trim());
+                    if (!headers.includes('inciName')) throw new Error("CSV 標頭中必須包含 'inciName' 欄位。");
+
+                    parsedRecords = [];
+                    for (let i = 1; i < lines.length; i++) {
+                        if (!lines[i].trim()) continue;
+                        const values = lines[i].split(',').map(v => v.trim());
+                        const record = {};
+                        headers.forEach((header, j) => {
+                           record[header] = values[j] || '';
+                        });
+                        parsedRecords.push(record);
+                    }
+                    renderPreviewTable(parsedRecords, headers);
+                } catch (err) {
+                    alert(`檔案解析失敗: ${err.message}`);
+                    parsedRecords = [];
+                    $('#preview-zone').style.display = 'none';
+                }
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        function getSanitizedDocId(name) {
+            if (!name || typeof name !== 'string') return `invalid_name_${Date.now()}`;
+            return name.trim().toLowerCase().replace(/\//g, '_');
+        }
+
+        function renderPreviewTable(records, headers) {
+            const previewTable = $('#preview-table');
+            const thead = previewTable.querySelector('thead');
+            const tbody = previewTable.querySelector('tbody');
+            
+            thead.innerHTML = `<tr><th>原始 INCI Name</th><th class="id-cell">標準化 ID</th>${headers.filter(h => h !== 'inciName').map(h => `<th>${h}</th>`).join('')}</tr>`;
+            tbody.innerHTML = records.map(record => {
+                const originalInci = record.inciName || '[空白]';
+                const sanitizedId = getSanitizedDocId(originalInci);
+                return `
+                    <tr>
+                        <td>${originalInci}</td>
+                        <td class="id-cell">${sanitizedId}</td>
+                        ${headers.filter(h => h !== 'inciName').map(h => `<td>${record[h] || '-'}</td>`).join('')}
+                    </tr>
+                `;
+            }).join('');
+
+            $('#preview-zone').style.display = 'block';
+        }
+
+        async function handleConfirmAndWrite() {
+            if (parsedRecords.length === 0) {
+                alert("沒有可寫入的資料。");
+                return;
+            }
+
+            const btn = $('#btn-confirm-write');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 正在寫入...';
+            
+            const statusMsg = $('#status-message');
+            statusMsg.style.display = 'none';
+
+            try {
+                const batch = writeBatch(db);
+                let writeCount = 0;
+
+                parsedRecords.forEach(record => {
+                    const originalInci = record.inciName;
+                    if (!originalInci || !originalInci.trim()) return; // Skip empty INCI names
+
+                    const docId = getSanitizedDocId(originalInci);
+                    const docRef = doc(db, "rms", docId);
+                    
+                    // The data object to be written to Firestore
+                    const dataToSet = {};
+                    for (const key in record) {
+                        // Ensure we use the original, untouched inciName for the field value
+                        if (key === 'inciName') {
+                            dataToSet.inciName = record.inciName;
+                        } else {
+                            dataToSet[key] = record[key];
+                        }
+                    }
+
+                    batch.set(docRef, dataToSet, { merge: true });
+                    writeCount++;
+                });
+
+                await batch.commit();
+
+                statusMsg.className = 'status-success';
+                statusMsg.innerHTML = `<i class="fa-solid fa-check-circle"></i> 成功！共 ${writeCount} 筆資料已寫入或更新至資料庫。`;
+                statusMsg.style.display = 'block';
+
+            } catch (error) {
+                console.error("Error writing to database: ", error);
+                statusMsg.className = 'status-error';
+                statusMsg.innerHTML = `<i class="fa-solid fa-exclamation-triangle"></i> 寫入失敗: ${error.message}`;
+                statusMsg.style.display = 'block';
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-check-double"></i> 確認並寫入資料庫';
+        }
+
+        startApp();
+    </script>
+</body>
+</html>

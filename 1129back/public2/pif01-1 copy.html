@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PIF 封面</title>
+<style>
+  :root{
+    --fg:#111; --muted:#666; --line:#e5e7eb; --brand:#2563eb;
+    --accent: #2563eb; /* Add accent color */
+    --danger: #dc2626; /* Add danger color */
+  }
+  html,body{background:#fff;color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei",Segoe UI,Roboto,Arial,sans-serif;line-height:1.5; opacity: 0; transition: opacity 0.4s ease-in-out;}
+  h1,h2{margin:0;font-size:1.8rem;text-align:center;}
+  h2{font-size:1.2rem; color:var(--muted); font-weight:400; margin-top:.25rem;}
+  .toolbar{position:sticky;top:0;background:rgba(255,255,255,.95);backdrop-filter:blur(4px);border-bottom:1px solid var(--line);z-index:50}
+  .toolbar .wrap{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;padding:.6rem .8rem}
+  button{border:1px solid var(--line);background:#fff;padding:.45rem .7rem;border-radius:.5rem;cursor:pointer}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  button.accent{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .container{max-width:800px;margin:0 auto;padding:2rem .8rem 4rem}
+  .cover-box{border:1px solid var(--line); border-radius:1rem; padding: 2.5rem 2rem; margin-top:2.5rem;}
+  .form-grid{display:grid; grid-template-columns:150px 1fr; gap:1.2rem; align-items:center;}
+  label{font-weight:500; text-align:right; color:var(--muted);}
+  input[type="text"],input[type="date"], textarea.form-input{width:100%;padding:.5rem .6rem;border:1px solid var(--line);border-radius:.5rem}
+  .text-muted{color:var(--muted)}
+  .small{font-size:.82rem}
+  .no-print{}
+  #global-error { text-align: center; padding: 2rem; color: var(--danger); }
+
+  @media print{
+    .toolbar, .no-print{display:none!important}
+    .container{padding:2rem; max-width:none;}
+    input, textarea, select {border:none!important; padding-left:0;}
+    .cover-box{border:2px solid #000; padding: 3rem; margin-top:3rem;}
+    h1{font-size:2.2rem;}
+    h2{font-size:1.4rem;}
+     label{font-size:1.1rem}
+    input{font-size:1.1rem}
+  }
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+  <div id="app-container" style="visibility: hidden;">
+    <div class="toolbar no-print">
+      <div class="wrap">
+        <a id="back-link" href="#" class="btn"><i class="fa-solid fa-arrow-left"></i> 返回我的PIF</a>
+        <button onclick="importJSON()">匯入 JSON</button>
+        <button onclick="exportJSON()">匯出 JSON</button>
+        <button onclick="downloadHTML()">下載 HTML</button>
+        <button onclick="window.print()" class="primary">列印 / 匯出 PDF</button>
+        <button id="btnSave" class="btn accent"><i class="fa-solid fa-cloud-arrow-up"></i> 雲端儲存</button>
+        <span id="saveHint" class="text-muted small" style="margin-left: 10px;"></span>
+      </div>
+    </div>
+
+    <div class="container">
+      <h1>產品資訊檔案</h1>
+      <h2>Product Information File (PIF)</h2>
+
+      <div class="cover-box">
+          <div class="form-grid">
+              <label>產品名稱</label>
+              <input id="productName" type="text" placeholder="請輸入完整產品名稱">
+              
+              <label>PIFID代號</label>
+              <input id="productVersion" type="text" placeholder="例如：v1.0 或 P2024-001">
+
+              <label>公司 / 品牌</label>
+              <input id="company" type="text" placeholder="公司或品牌名稱">
+
+              <label>PIF製作</label>
+              <input id="author" type="text" placeholder="製作者姓名">
+
+              <label>安全評估人員</label>
+              <input id="assessor" type="text" placeholder="安全評估人員姓名">
+
+              <label>檔案完成日期</label>
+              <input id="completionDate" type="date">
+          </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="global-error" style="color: red; text-align: center; margin-top: 20px;"></div>
+
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from './firebase-config.js';
+
+const KEY = 'pif_cover_v1';
+let localState = {
+  productName: '',
+  productVersion: '',
+  company: '',
+  author: '',
+  assessor: '',
+  completionDate: new Date().toISOString().slice(0, 10),
+};
+
+const $ = sel => document.querySelector(sel);
+let pifDocRef;
+let pageContext = {};
+let isSaving = false;
+
+function saveLocal() {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(localState));
+    setSaveHint('已自動保存 (本地)');
+  } catch (e) {
+    console.error("Local save failed", e);
+  }
+}
+
+function loadLocal() {
+  try {
+    const stored = localStorage.getItem(KEY);
+    if (stored) {
+      Object.assign(localState, JSON.parse(stored));
+    }
+  } catch (e) {
+    console.error("Local load failed", e);
+  }
+}
+
+// --- Firebase related functions ---
+function startAuthFlow() {
+  onAuthStateChanged(auth, user => {
+    if (user) {
+      try {
+        pageContext = setupPageContext();
+        pifDocRef = doc(db, 'pifs', pageContext.pifId);
+        initializePage(); // Call initializePage inside here
+      } catch (e) {
+        console.error("Error during page initialization:", e);
+        showGlobalError(`頁面初始化錯誤：${e.message}`);
+      }
+      document.body.style.opacity = '1';
+    } else {
+      window.location.href = `login.html?redirect=${encodeURIComponent(window.location.href)}`;
+    }
+  });
+}
+
+function setupPageContext() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const context = { 
+      pifId: urlParams.get('id'),
+      companyName: urlParams.get('companyName'),
+      productName: urlParams.get('productName')
+  };
+  if (!context.pifId) throw new Error('網址中缺少專案 ID');
+  return context;
+}
+
+async function initializePage() {
+  // 1. Load data from URL first (overwriting localState defaults)
+  loadFromURL();
+
+  // 2. Then try to load from Firestore
+  await loadPifData();
+  
+  // 3. Render to the DOM
+  render();
+
+  // 4. Setup event listeners
+  setupEventListeners();
+  
+  // 5. Finally, make app-container visible
+  $('#app-container').style.visibility = 'visible';
+}
+
+async function loadPifData() {
+  setSaveHint('正在從雲端讀取資料...');
+  try {
+    const docSnap = await getDoc(pifDocRef);
+    if (docSnap.exists()) {
+      const pifData = docSnap.data();
+      const pif01_1Data = pifData.pif01_1 || {}; // Assuming cover data is stored under pif01_1
+      
+      // Update localState with Firestore data, prioritizing Firestore
+      // Also update productName, productVersion, company from root pifData if not in pif01_1
+      localState.productName = pif01_1Data.productName || pifData.productName || '';
+      localState.productVersion = pif01_1Data.productVersion || pifData.pifId || '';
+      localState.company = pif01_1Data.company || pifData.companyName || '';
+      localState.author = pif01_1Data.author || '';
+      localState.assessor = pif01_1Data.assessor || '';
+      localState.completionDate = pif01_1Data.completionDate || new Date().toISOString().slice(0, 10);
+      
+      setSaveHint('資料讀取成功');
+    } else {
+      setSaveHint('專案文件不存在或尚無雲端資料');
+      // If no Firestore data, but URL params exist, initialize with them
+      localState.productName = pageContext.productName || '';
+      localState.productVersion = pageContext.pifId || '';
+      localState.company = pageContext.companyName || '';
+    }
+  } catch (error) {
+    console.error("Error loading PIF data from Firestore:", error);
+    setSaveHint(`讀取失敗: ${error.message}`, 'var(--danger)');
+  }
+}
+
+async function saveData() {
+  if (isSaving) return;
+  isSaving = true;
+  $('#btnSave').disabled = true;
+  $('#btnSave').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 儲存中...';
+  setSaveHint('正在儲存至雲端...');
+
+  try {
+    const dataToSave = getDataFromForm(); // Use the new function to get data
+
+    await setDoc(pifDocRef, { pif01_1: dataToSave }, { merge: true });
+    
+    setSaveHint('資料已成功儲存！', 'var(--brand)');
+    saveLocal(); // Also update local storage after successful cloud save
+  } catch (error) {
+    console.error("Cloud save failed:", error);
+    setSaveHint(`儲存失敗: ${error.message}`, 'var(--danger)');
+    alert(`儲存失敗: ${error.message}`);
+  } finally {
+    isSaving = false;
+    $('#btnSave').disabled = false;
+    $('#btnSave').innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> 雲端儲存';
+  }
+}
+
+// New function to collect data from form fields
+function getDataFromForm() {
+  return {
+    productName: $('#productName').value.trim(),
+    productVersion: $('#productVersion').value.trim(),
+    company: $('#company').value.trim(),
+    author: $('#author').value.trim(),
+    assessor: $('#assessor').value.trim(),
+    completionDate: $('#completionDate').value,
+  };
+}
+
+function setSaveHint(text, color = 'var(--muted)') {
+  const hintEl = $('#saveHint');
+  hintEl.textContent = text;
+  hintEl.style.color = color;
+}
+
+function showGlobalError(message) {
+  $('#app-container').style.visibility = 'hidden'; // Hide app-container on error
+  $('#global-error').innerHTML = `<strong>錯誤：</strong> ${message}`;
+  $('#global-error').style.display = 'block';
+}
+
+function setupEventListeners() {
+  $('#btnSave').addEventListener('click', saveData);
+
+  const queryParams = new URLSearchParams({
+    id: pageContext.pifId,
+    companyName: pageContext.companyName,
+    productName: pageContext.productName
+  }).toString();
+  $('#back-link').href = `pif-i.html?${queryParams}`;
+
+  // Attach input event listeners to all relevant fields for local auto-save
+  Object.keys(localState).forEach(key => {
+    const el = $(`#${key}`);
+    if (el) {
+      el.addEventListener('input', () => {
+        localState[key] = el.value;
+        saveLocal(); // Local save on input
+      });
+    }
+  });
+}
+
+// --- Original functions (modified to use localState) ---
+function loadFromURL() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const pifId = urlParams.get('id');
+  const companyName = urlParams.get('companyName');
+  const productName = urlParams.get('productName');
+
+  if (pifId) {
+    localState.productVersion = pifId;
+  }
+  if (companyName) {
+    localState.company = decodeURIComponent(companyName);
+  }
+  if (productName) {
+    localState.productName = decodeURIComponent(productName);
+  }
+}
+
+function render() {
+  // Ensure all form fields are populated from localState
+  Object.keys(localState).forEach(key => {
+    const el = $(`#${key}`);
+    if (el) {
+      el.value = localState[key] || '';
+    }
+  });
+}
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(localState, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `PIF_Cover_${localState.productName || 'data'}.json`;
+  a.click();
+}
+
+function importJSON() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const imported = JSON.parse(e.target.result);
+        Object.assign(localState, imported);
+        render();
+        saveLocal();
+        alert('JSON 檔案已成功匯入。');
+      } catch (err) {
+        alert('匯入失敗，檔案格式錯誤。');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function downloadHTML(){
+    const doc = document.documentElement.cloneNode(true);
+    doc.querySelectorAll('script, .no-print').forEach(el => el.remove());
+    const html = "<!DOCTYPE html>\n" + doc.outerHTML;
+    const blob = new Blob([html], {type: 'text/html'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `PIF_Cover_${localState.productName || 'report'}.html`;
+    a.click();
+}
+
+// Initial app start - this should be the single entry point
+startAuthFlow();
+
+</script>
+</body>
+</html>

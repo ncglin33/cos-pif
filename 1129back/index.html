@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CosPIF 智慧科技整合系統 - 首頁</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+
+    <!-- AI 客服專用樣式 -->
+    <style>
+        .ai-chat-toggle {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            z-index: 999;
+            border-radius: 999px;
+            border: none;
+            background: #2563eb;
+            color: #fff;
+            padding: 0.8rem 1.1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            box-shadow: 0 12px 30px rgba(37, 99, 235, 0.4);
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .ai-chat-toggle i {
+            font-size: 1.1rem;
+        }
+
+        .ai-chat-window {
+            position: fixed;
+            right: 24px;
+            bottom: 96px;
+            width: 340px;
+            max-height: 520px;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.35);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(10px);
+            transition: all 0.2s ease-out;
+            font-size: 0.9rem;
+        }
+        .ai-chat-window.ai-open {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+        .ai-chat-header {
+            padding: 0.75rem 1rem;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .ai-chat-header-title {
+            display: flex;
+            flex-direction: column;
+        }
+        .ai-chat-header-title span:first-child {
+            font-weight: 600;
+        }
+        .ai-chat-header-title span:last-child {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+        .ai-chat-close {
+            border: none;
+            background: transparent;
+            color: #fff;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .ai-chat-messages {
+            flex: 1;
+            padding: 0.75rem 0.75rem 0.5rem;
+            background: #f9fafb;
+            overflow-y: auto;
+        }
+        .ai-msg {
+            max-width: 80%;
+            padding: 0.5rem 0.7rem;
+            border-radius: 12px;
+            margin-bottom: 0.4rem;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+        .ai-msg-bot {
+            background: #e5edff;
+            color: #1f2933;
+            border-bottom-left-radius: 4px;
+        }
+        .ai-msg-user {
+            background: #2563eb;
+            color: #fff;
+            border-bottom-right-radius: 4px;
+            margin-left: auto;
+        }
+        .ai-msg-time {
+            font-size: 0.7rem;
+            color: #9ca3af;
+            margin-bottom: 0.4rem;
+        }
+        .ai-chat-input {
+            border-top: 1px solid #e5e7eb;
+            padding: 0.5rem;
+            background: #fff;
+            display: flex;
+            align-items: flex-end;
+            gap: 0.45rem;
+        }
+        .ai-chat-input textarea {
+            flex: 1;
+            resize: none;
+            border-radius: 10px;
+            border: 1px solid #d1d5db;
+            padding: 0.4rem 0.5rem;
+            font-size: 0.85rem;
+            max-height: 80px;
+        }
+        .ai-chat-input button {
+            border-radius: 999px;
+            border: none;
+            background: #2563eb;
+            color: #fff;
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .ai-chat-input button:disabled {
+            background: #93c5fd;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 600px) {
+            .ai-chat-window {
+                right: 12px;
+                left: 12px;
+                width: auto;
+            }
+            .ai-chat-toggle {
+                right: 12px;
+                bottom: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo">
+                    <img src="img/cospif-logo.png" alt="CosPIF Logo">
+                </a>
+                <ul class="nav-links">
+                    <li><a href="index.html#features">核心功能</a></li>
+                    <li><a href="index.html#about">關於我們</a></li>
+                    <!-- 將聯絡我們改成 AI 客服，點擊可打開對話視窗 -->
+                    <li><a href="#" id="open-ai-chat-link">AI 客服</a></li>
+                </ul>
+                <a href="login.html" class="btn-login">登入系統</a>
+            </nav>
+        </div>
+    </header>
+    
+
+    <main>
+        <section class="hero">
+            <div class="hero-background"></div>
+            <div class="hero-content">
+                <h1>CosPIF 智慧科技整合系統</h1>
+                <p>專為化妝品產業設計，從產品資訊檔案建立、毒理查詢到 PIF 文件管理與 AI 生成整合應用，一站式解決方案，讓製作PIF變得前所未有的簡單。</p>
+                <a href="register.html" class="btn-login" style="font-size: 1.2rem; padding: 0.8rem 2.5rem;">立即註冊CosPIF 開始體驗AI科技整合系統 <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+        </section>
+
+        <section id="features" class="features">
+            <div class="container">
+                <h2 class="section-title">三大核心，點燃效率</h2>
+                <p class="section-subtitle">我們整合了最新 AI（雙 AI）技術，為您提供最全面的 PIF 解決方案。</p>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <img src="https://images.pexels.com/photos/5926382/pexels-photo-5926382.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="PIF 智能製作" class="feature-image">
+                        <div class="feature-content">
+                            <h3>PIF 智慧整合科技製作</h3>
+                            <p>引導式流程，從原料到成品，系統化建立、管理與匯出化妝品的產品資訊檔案（PIF），告別繁瑣的文書作業。</p>
+                        </div>
+                    </div>
+                    <div class="feature-card">
+                        <img src="https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="AI 智慧配方" class="feature-image">
+                        <div class="feature-content">
+                            <h3>AI 智慧查詢與 PIF 撰寫</h3>
+                            <p>藉由強大的雙 AI 模型分析，提供 PIF 文件建議、安全評估與法規符合性檢查，加速您的產品研發流程。</p>
+                        </div>
+                    </div>
+                    <div class="feature-card">
+                        <img src="https://images.pexels.com/photos/205316/pexels-photo-205316.png?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="全球化妝品法規資料庫" class="feature-image">
+                        <div class="feature-content">
+                            <h3>全球化妝品毒理與法規資料庫</h3>
+                            <p>即時更新的全球毒理與化妝品法規資料庫，讓您的產品在不同市場暢行無阻，輕鬆應對法規規範。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <section id="about" class="about-section">
+                <div class="container about-container" style="display: flex; align-items: center; gap: 2rem;">
+                  <div class="about-content" style="flex: 1.5;">
+                    <h2>關於 CosPIF</h2>
+                    <p>
+                      CosPIF 由擁有三十餘年資深化妝品與安全評估專家團隊策畫，結合最新
+                      AI 輔助技術打造的「化妝品產品資訊檔案（PIF）智慧科技整合平台」。
+                    </p>
+                    <p>
+                      我們秉持嚴謹商品、品質、法規與學術觀點，結合數據驅動與雲端化的方式，完成過去需大量人工整理及團隊比對的繁瑣工作。
+                    </p>
+                    <p>
+                      CosPIF 內建龐大的化妝品原料專業資料與實際使用情境，搭配 AI 輔助資料庫與演算法推理引擎，從原料選擇、配方設計到 PIF 文件彙整，一站式完成，大幅降低錯誤風險與建立負擔。
+                    </p>
+                    <ul>
+                      <li><strong>專家策畫的 PIF 流程：</strong>依原廠標準與實際需求設計，讓第一次使用 CosPIF 也有清楚的引導。</li>
+                      <li><strong>AI 輔助審核與統整：</strong>協助查詢規範文字、比對資料一致性，降低出錯風險。</li>
+                      <li><strong>原料毒理與理化性質整合：</strong>快速查詢 NOAEL、LD50 等數據與 GHS 分類等資訊，支援安全評估與法規檢視。</li>
+                      <li><strong>教學與產學共用：</strong>同時支援教學需求，讓學生與業界專業人員能共享同一套標準化的實作平台。</li>
+                    </ul>
+                  </div>
+              
+                  <div class="about-image" style="flex: 1;">
+                    <img src="img/AI.jpg" alt="AI 生成化妝品概念圖" style="width:100%; height:auto; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.08);">
+                  </div>
+                </div>
+            </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 CosPIF 化妝品 PIF 智慧科技整合系統. 勝美生技有限公司 All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <!-- AI 客服視窗 -->
+    <div class="ai-chat-window" id="aiChatWindow">
+        <div class="ai-chat-header">
+            <div class="ai-chat-header-title">
+                <span>CosPIF AI 客服</span>
+                <span>針對 PIF / 防曬 / 功效評估快速諮詢</span>
+            </div>
+            <button class="ai-chat-close" id="aiChatClose" aria-label="Close chat">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ai-chat-messages" id="aiChatMessages">
+            <div class="ai-msg ai-msg-bot">
+                您好，這裡是 CosPIF AI 小助手 👋<br>
+                可以提問：PIF 製作流程、防腐挑戰測試、功效評估價格、或是系統操作問題。
+            </div>
+        </div>
+        <div class="ai-chat-input">
+            <textarea id="aiChatInput" rows="1" placeholder="請輸入您的問題，例如：如何開始建立一份新的 PIF？"></textarea>
+            <button id="aiChatSend" aria-label="Send message">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- AI 客服浮動按鈕 -->
+    <button class="ai-chat-toggle" id="aiChatToggle">
+        <i class="fa-solid fa-comments"></i>
+        AI 客服
+    </button>
+
+    <!-- AI 客服腳本 -->
+    <script>
+        const chatWindow   = document.getElementById('aiChatWindow');
+        const chatToggle   = document.getElementById('aiChatToggle');
+        const chatClose    = document.getElementById('aiChatClose');
+        const chatInput    = document.getElementById('aiChatInput');
+        const chatSendBtn  = document.getElementById('aiChatSend');
+        const chatMessages = document.getElementById('aiChatMessages');
+        const openLink     = document.getElementById('open-ai-chat-link');
+
+        // --- 設定 API 端點 ---
+        const API_ENDPOINT = '/api/v1/ai-chat';
+
+        function openChat() {
+            chatWindow.classList.add('ai-open');
+            chatInput.focus();
+        }
+        function closeChat() {
+            chatWindow.classList.remove('ai-open');
+        }
+
+        chatToggle.addEventListener('click', openChat);
+        chatClose.addEventListener('click', closeChat);
+
+        if (openLink) {
+            openLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                openChat();
+            });
+        }
+
+        function appendMessage(role, text) {
+            const msg = document.createElement('div');
+            msg.classList.add('ai-msg');
+            msg.classList.add(role === 'user' ? 'ai-msg-user' : 'ai-msg-bot');
+            // 使用正規表達式來安全地處理換行符，同時允許基本的 HTML 標籤
+            msg.innerHTML = text.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, '<br>').replace(/<a href/g, '<a target="_blank" href');
+            chatMessages.appendChild(msg);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function setSendingState(isSending) {
+            chatSendBtn.disabled = isSending;
+            if (isSending) {
+                chatSendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            } else {
+                chatSendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+            }
+        }
+
+        async function sendMessage() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            appendMessage('user', text);
+            chatInput.value = '';
+            setSendingState(true);
+
+            try {
+                const resp = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: text,
+                        source: 'homepage-chat',
+                        page: window.location.href
+                    })
+                });
+
+                let replyText = '感謝您的提問，我們的團隊將會檢視並儘快回覆您。';
+
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data && data.reply) {
+                        replyText = data.reply;
+                    }
+                } else {
+                    const errorData = await resp.json();
+                    replyText = errorData.reply || '目前 AI 服務暫時無法連線，我們已收到您的問題，將由專人為您服務。';
+                }
+                
+                appendMessage('bot', replyText);
+
+            } catch (err) {
+                console.error('AI chat error:', err);
+                appendMessage('bot', '無法連線至 AI 客服。請檢查您的網路連線，或稍後再試。');
+            } finally {
+                setSendingState(false);
+                chatInput.style.height = 'auto'; // 將高度重設
+            }
+        }
+
+        chatSendBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // 自動調整 textarea 高度
+        chatInput.addEventListener('input', () => {
+            chatInput.style.height = 'auto';
+            chatInput.style.height = (chatInput.scrollHeight) + 'px';
+        });
+
+    </script>
+</body>
+</html>

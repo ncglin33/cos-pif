@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KB 後台｜文獻/引用編輯（kb_refs）</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <style>
+    :root{ --line:#e7eaf0; --ink:#0f172a; --muted:#64748b; }
+    .container{ max-width: 1800px; }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.85rem 1rem; background:#fff;
+      border:1px solid var(--line); border-radius:16px;
+      margin:.9rem 0 1rem;
+    }
+    .topbar .left{ display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
+    .topbar a{ text-decoration:none; color:var(--ink); font-weight:800; }
+    .badge{
+      display:inline-flex; align-items:center; gap:.35rem;
+      border:1px solid var(--line); border-radius:999px;
+      padding:.25rem .6rem; font-size:.82rem; background:#fff; color:var(--muted);
+    }
+    .layout{ display:grid; grid-template-columns:460px 1fr; gap:1rem; align-items:start; }
+    @media (max-width:1180px){ .layout{ grid-template-columns:1fr; } }
+    .card{
+      background:#fff; border:1px solid var(--line);
+      border-radius:16px; box-shadow:0 1px 3px rgba(0,0,0,.05);
+      padding:1rem;
+    }
+    .row{ display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+    .grow{ flex:1 1 auto; min-width:180px; }
+    .input, select, textarea{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:.5rem .6rem;
+      font-size:.95rem;
+      outline:none;
+      background:#fff;
+    }
+    textarea{ min-height:110px; resize:vertical; }
+    .input:focus, select:focus, textarea:focus{
+      border-color:#bfdbfe; box-shadow:0 0 0 3px rgba(59,130,246,.15);
+    }
+    .btnx{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:12px;
+      padding:.48rem .7rem;
+      cursor:pointer;
+      font-weight:800;
+      display:inline-flex; align-items:center; gap:.4rem;
+      user-select:none;
+    }
+    .btnx:hover{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+    .btn-danger{ border-color:#fecaca; }
+    .btn-danger:hover{ background:#fff1f2; border-color:#fca5a5; color:#b91c1c; }
+    .btn-primary{ border-color:#bfdbfe; background:#eff6ff; color:#1d4ed8; }
+    .btn-primary:hover{ background:#dbeafe; border-color:#93c5fd; }
+    .muted{ color:var(--muted); }
+    .small{ font-size:.86rem; }
+    .kbd{ font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace; font-size:.85rem; }
+    .hr{ border:none; border-top:1px solid #eef2f7; margin:.9rem 0; }
+    .warn{ padding:.6rem .7rem; border:1px solid #fde68a; background:#fffbeb; border-radius:12px; color:#92400e; }
+    .ok{ padding:.6rem .7rem; border:1px solid #bbf7d0; background:#f0fdf4; border-radius:12px; color:#166534; }
+    .disabled{ opacity:.55; pointer-events:none; }
+    .list{ display:flex; flex-direction:column; gap:.45rem; margin-top:.6rem; }
+    .item{ border:1px solid var(--line); border-radius:12px; padding:.55rem .65rem; cursor:pointer; background:#fff; }
+    .item:hover{ background:#eff6ff; border-color:#bfdbfe; }
+    .item .t{ font-weight:900; }
+    .item .m{ color:var(--muted); font-size:.85rem; margin-top:.15rem; line-height:1.35; }
+    .pill{
+      display:inline-flex; align-items:center; gap:.35rem;
+      border:1px solid #e7e7ef; border-radius:999px;
+      padding:.18rem .5rem; background:#fafafe; font-size:.82rem; color:#334155;
+    }
+    .twoCol{ display:grid; grid-template-columns:1fr 1fr; gap:.8rem; }
+    @media (max-width:980px){ .twoCol{ grid-template-columns:1fr; } }
+    .preview{
+      border:1px solid var(--line); border-radius:16px;
+      padding:1rem; background:#fff; overflow:auto; max-height:46vh;
+    }
+    .pv .title{ font-size:1.25rem; font-weight:900; margin:.2rem 0 .35rem; }
+    .pv .meta{ color:var(--muted); font-size:.9rem; display:flex; gap:.35rem; flex-wrap:wrap; }
+    .chip{
+      display:inline-flex; align-items:center; gap:.35rem;
+      border:1px solid #e7e7ef; border-radius:999px;
+      padding:.28rem .55rem; background:#fafafe; font-size:.86rem; user-select:none;
+    }
+    .pv .sec{ margin-top:.75rem; }
+    .pv .sec .h{ font-weight:900; margin-bottom:.25rem; }
+    .pv .sec .b{ line-height:1.7; white-space:pre-wrap; }
+    .mono{ font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace; }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="left">
+        <a href="index.html"><i class="fa-solid fa-house"></i> 首頁</a>
+        <span class="badge" id="authBadge">未登入</span>
+        <span class="badge" id="roleBadge">role: —</span>
+      </div>
+      <div class="row">
+        <span class="muted small" id="userInfo"></span>
+        <button class="btnx" id="btnSignOut"><i class="fa-solid fa-right-from-bracket"></i> 登出</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside class="card">
+        <h2 style="margin:.1rem 0 .35rem;">文獻 / 引用後台</h2>
+        <div class="muted small">
+          編輯 <code>kb_refs</code> 文獻資料：供文章 JSON 的 <span class="kbd">refIds</span> 連結引用清單使用。
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row">
+          <input class="input grow" id="qRefs" placeholder="搜尋：refId / title / authors / year / journal / doi / url / tags…" />
+          <select id="statusFilter" style="width:160px;">
+            <option value="all" selected>all</option>
+            <option value="published">published</option>
+            <option value="draft">draft</option>
+            <option value="archived">archived</option>
+          </select>
+          <button class="btnx" id="btnReload" title="重新載入"><i class="fa-solid fa-rotate"></i></button>
+        </div>
+
+        <div class="row" style="margin-top:.55rem;">
+          <input class="input grow" id="newRefId" placeholder="新 refId（docId）例：r_iso_24444_2019 或 r_20251231_001" />
+          <button class="btnx" id="btnNewRef"><i class="fa-solid fa-plus"></i> 新增</button>
+        </div>
+
+        <div class="row" style="margin-top:.55rem;">
+          <select id="typeFilter" style="width: 100%;">
+            <option value="all" selected>type: all</option>
+            <option value="standard">standard</option>
+            <option value="journal">journal</option>
+            <option value="book">book</option>
+            <option value="web">web</option>
+            <option value="report">report</option>
+            <option value="thesis">thesis</option>
+            <option value="other">other</option>
+          </select>
+        </div>
+
+        <div class="list" id="refList"></div>
+        <div id="msg" style="margin-top:.7rem;"></div>
+      </aside>
+
+      <main class="card" id="editorWrap">
+        <div class="row" style="justify-content:space-between;">
+          <h2 style="margin:.1rem 0;">文獻編輯</h2>
+          <div class="row">
+            <button class="btnx" id="btnCopyRefId" title="複製 refId"><i class="fa-solid fa-clipboard"></i> 複製 refId</button>
+            <button class="btnx btn-primary" id="btnAutoId" title="用 DOI/標題自動建議 refId"><i class="fa-solid fa-wand-magic-sparkles"></i> 建議 refId</button>
+            <button class="btnx" id="btnSave"><i class="fa-solid fa-floppy-disk"></i> 儲存</button>
+            <button class="btnx btn-danger" id="btnDelete"><i class="fa-solid fa-trash"></i> 刪除</button>
+          </div>
+        </div>
+
+        <div class="muted small" id="currentIdLine" style="margin-top:.3rem;">refId: —</div>
+
+        <div class="hr"></div>
+
+        <div class="twoCol">
+          <div>
+            <label class="muted small">refId（docId）</label>
+            <input class="input" id="refId" placeholder="例如：r_iso_18861_2023 / r_20251231_001" />
+          </div>
+          <div>
+            <label class="muted small">status</label>
+            <select id="status">
+              <option value="draft">draft</option>
+              <option value="published">published</option>
+              <option value="archived">archived</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="twoCol" style="margin-top:.65rem;">
+          <div>
+            <label class="muted small">type</label>
+            <select id="type">
+              <option value="standard">standard</option>
+              <option value="journal">journal</option>
+              <option value="book">book</option>
+              <option value="web">web</option>
+              <option value="report">report</option>
+              <option value="thesis">thesis</option>
+              <option value="other">other</option>
+            </select>
+          </div>
+          <div>
+            <label class="muted small">year（年份）</label>
+            <input class="input" id="year" placeholder="例如：2024" inputmode="numeric" />
+          </div>
+        </div>
+
+        <div style="margin-top:.65rem;">
+          <label class="muted small">title（標題）</label>
+          <textarea id="title" placeholder="文獻/標準完整標題"></textarea>
+        </div>
+
+        <div style="margin-top:.65rem;">
+          <label class="muted small">authors（作者；一行一個或逗號分隔）</label>
+          <textarea id="authors" placeholder="例如：ISO, CEN&#10;Wanil Kim, ..."></textarea>
+        </div>
+
+        <div class="twoCol" style="margin-top:.65rem;">
+          <div>
+            <label class="muted small">journal / source（期刊/來源/出版者）</label>
+            <input class="input" id="source" placeholder="例如：ISO / Journal of ... / TFDA" />
+          </div>
+          <div>
+            <label class="muted small">publisher（出版者；可空）</label>
+            <input class="input" id="publisher" placeholder="例如：International Organization for Standardization" />
+          </div>
+        </div>
+
+        <div class="twoCol" style="margin-top:.65rem;">
+          <div>
+            <label class="muted small">volume / issue / pages（可空）</label>
+            <input class="input" id="vnp" placeholder="例如：12(3), 210-220" />
+          </div>
+          <div>
+            <label class="muted small">doi（可空）</label>
+            <input class="input" id="doi" placeholder="10.xxxx/xxxxx" />
+          </div>
+        </div>
+
+        <div style="margin-top:.65rem;">
+          <label class="muted small">url（可空）</label>
+          <input class="input" id="url" placeholder="https://..." />
+        </div>
+
+        <div class="twoCol" style="margin-top:.65rem;">
+          <div>
+            <label class="muted small">accessDate（網頁取用日期；可空）</label>
+            <input class="input" id="accessDate" placeholder="YYYY-MM-DD" />
+          </div>
+          <div>
+            <label class="muted small">language（可空）</label>
+            <input class="input" id="language" placeholder="zh / en" />
+          </div>
+        </div>
+
+        <div style="margin-top:.65rem;">
+          <label class="muted small">tags（標籤；一行一個或逗號分隔）</label>
+          <textarea id="tags" placeholder="例如：防曬&#10;ISO&#10;UVA-PF"></textarea>
+        </div>
+
+        <div style="margin-top:.65rem;">
+          <label class="muted small">abstract / notes（摘要/備註；可空）</label>
+          <textarea id="notes" placeholder="簡要摘要、重點、或你要在 KB 顯示的備註…"></textarea>
+        </div>
+
+        <div class="twoCol" style="margin-top:.65rem;">
+          <div>
+            <div class="muted small">createdAt</div>
+            <div class="mono" id="createdAt">—</div>
+          </div>
+          <div>
+            <div class="muted small">updatedAt</div>
+            <div class="mono" id="updatedAt">—</div>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row" style="justify-content:space-between;">
+          <h3 style="margin:.2rem 0;">即時預覽（建議引用格式）</h3>
+          <span class="chip"><i class="fa-solid fa-hashtag"></i> refId：<span class="mono" id="refIdPreview">—</span></span>
+        </div>
+        <div class="preview pv" id="preview"></div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module">
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, serverTimestamp }
+      from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { db, auth } from "./firebase-config.js";
+
+    const $ = (s) => document.querySelector(s);
+    const COL_REFS = "kb_refs";
+
+    let canEdit = false;
+    let refsAll = [];
+    let currentId = "";
+    let currentData = null;
+
+    function esc(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;").replaceAll("'","&#39;");
+    }
+    function msg(html, kind="ok"){
+      $("#msg").innerHTML = `<div class="${kind === "ok" ? "ok" : "warn"}">${html}</div>`;
+      setTimeout(() => { if ($("#msg").innerHTML) $("#msg").innerHTML = ""; }, 3800);
+    }
+    function clone(obj){ return JSON.parse(JSON.stringify(obj || {})); }
+    function normalizeId(s){ return String(s || "").trim(); }
+    function fmtTs(ts){
+      if (!ts) return "";
+      try{
+        if (typeof ts === "string") return ts;
+        if (typeof ts?.toDate === "function") return ts.toDate().toISOString();
+        if (typeof ts?.seconds === "number") return new Date(ts.seconds * 1000).toISOString();
+      }catch{}
+      return "";
+    }
+    function parseList(text){
+      const s = String(text || "");
+      const parts = s.split(/\n|,/g).map(x => x.trim()).filter(Boolean);
+      const seen = new Set(); const out = [];
+      for (const p of parts){
+        const k = p.toLowerCase(); if (seen.has(k)) continue;
+        seen.add(k); out.push(p);
+      }
+      return out;
+    }
+    function listToText(arr){
+      const a = Array.isArray(arr) ? arr : (arr ? [String(arr)] : []);
+      return a.map(x => String(x||"").trim()).filter(Boolean).join("\n");
+    }
+    function safeYear(y){
+      const s = String(y || "").trim();
+      if (!s) return "";
+      const m = s.match(/(19\d{2}|20\d{2}|21\d{2})/);
+      return m ? m[1] : s;
+    }
+    function slugify(s){
+      return String(s||"")
+        .toLowerCase()
+        .replace(/^https?:\/\//,"")
+        .replace(/[^a-z0-9]+/g,"_")
+        .replace(/^_+|_+$/g,"")
+        .slice(0, 42);
+    }
+    function buildSuggestedId(d){
+      const doi = (d.doi || "").trim();
+      const year = safeYear(d.year);
+      if (doi){
+        const k = slugify(doi);
+        return `r_${k}${year ? "_" + year : ""}`;
+      }
+      const title = (d.title || "").trim();
+      if (title){
+        const k = slugify(title);
+        return `r_${k}${year ? "_" + year : ""}`;
+      }
+      const dt = new Date();
+      const y = dt.getFullYear();
+      const m = String(dt.getMonth()+1).padStart(2,"0");
+      const da = String(dt.getDate()).padStart(2,"0");
+      const hh = String(dt.getHours()).padStart(2,"0");
+      const mm = String(dt.getMinutes()).padStart(2,"0");
+      return `r_${y}${m}${da}_${hh}${mm}`;
+    }
+    function formatCitation(d){
+      const authors = Array.isArray(d.authors) ? d.authors : parseList(d.authorsText || "");
+      const authorStr = authors.length ? authors.join("; ") : "";
+      const year = safeYear(d.year);
+      const title = (d.title || "").trim();
+      const source = (d.source || "").trim();
+      const vnp = (d.vnp || "").trim();
+      const doi = (d.doi || "").trim();
+      const url = (d.url || "").trim();
+
+      let line1 = "";
+      if (authorStr && year) line1 = `${authorStr} (${year}).`;
+      else if (authorStr) line1 = `${authorStr}.`;
+      else if (year) line1 = `(${year}).`;
+
+      let line2 = title ? `${title}` : "（未填標題）";
+      if (!/[。.!?]$/.test(line2)) line2 += ".";
+
+      let line3 = "";
+      if (source) line3 += source;
+      if (vnp){
+        if (line3) line3 += `, ${vnp}`;
+        else line3 += vnp;
+      }
+      if (line3 && !/[。.!?]$/.test(line3)) line3 += ".";
+
+      let line4 = "";
+      if (doi) line4 = `DOI: ${doi}`;
+      else if (url) line4 = `URL: ${url}`;
+
+      return [line1, line2, line3, line4].filter(Boolean).join("\n");
+    }
+
+    function refreshPreview(){
+      const d = getEditorData();
+      const rid = (d.refId || currentId || "").trim();
+      $("#refIdPreview").textContent = rid || "—";
+
+      const chips = [
+        d.type ? `type: ${d.type}` : "",
+        d.status ? `status: ${d.status}` : "",
+        safeYear(d.year) ? `year: ${safeYear(d.year)}` : "",
+        rid ? `id: ${rid}` : ""
+      ].filter(Boolean).map(x => `<span class="chip">${esc(x)}</span>`).join("");
+
+      const citation = formatCitation(d);
+      const tags = (Array.isArray(d.tags) && d.tags.length) ? d.tags : [];
+
+      $("#preview").innerHTML = `
+        <div class="title">${esc((d.title || "").trim() || "（未填標題）")}</div>
+        <div class="meta">${chips}</div>
+
+        <div class="sec">
+          <div class="h">Citation (KB)</div>
+          <div class="b mono">${esc(citation || "—")}</div>
+        </div>
+
+        ${tags.length ? `
+          <div class="sec">
+            <div class="h">tags</div>
+            <div class="b">${esc(tags.join(" · "))}</div>
+          </div>` : ""}
+
+        ${d.notes ? `
+          <div class="sec">
+            <div class="h">notes</div>
+            <div class="b">${esc(d.notes)}</div>
+          </div>` : ""}
+      `;
+    }
+
+    async function evaluateRoles(user){
+      canEdit = false;
+      if (!user){
+        $("#authBadge").textContent = "未登入";
+        $("#roleBadge").textContent = "role: —";
+        $("#userInfo").textContent = "";
+        $("#editorWrap").classList.add("disabled");
+        return;
+      }
+      $("#authBadge").textContent = "已登入";
+      $("#userInfo").textContent = user.email || "";
+
+      if (typeof window.__refForcedRefresh === "undefined") window.__refForcedRefresh = false;
+
+      try{
+        const token = await user.getIdTokenResult(!window.__refForcedRefresh);
+        window.__refForcedRefresh = true;
+
+        const claims = token?.claims || {};
+        const rolesObj = (claims.roles && typeof claims.roles === "object") ? claims.roles : {};
+        const roles = {
+          admin: !!claims.admin,
+          systemAdmin: !!claims.systemAdmin,
+          secretary: !!claims.secretary,
+          editor: !!claims.editor,
+          reviewer: !!claims.reviewer,
+          client: !!claims.client,
+          ...rolesObj
+        };
+
+        const ok = !!(roles.admin || roles.systemAdmin || roles.editor || roles.secretary);
+        canEdit = ok;
+
+        const roleKeys = ["admin","systemAdmin","secretary","editor","reviewer","client"];
+        const roleList = roleKeys.filter(k => !!roles[k]).join(", ");
+        $("#roleBadge").textContent = `role: ${roleList || "（none）"}`;
+
+        if (!ok){
+          $("#editorWrap").classList.add("disabled");
+          msg("你已登入，但缺少 admin/systemAdmin/editor/secretary 權限（已鎖定編輯）。", "warn");
+        } else {
+          $("#editorWrap").classList.remove("disabled");
+        }
+      }catch(e){
+        console.error(e);
+        $("#roleBadge").textContent = "role: （讀取失敗）";
+        $("#editorWrap").classList.add("disabled");
+        msg("無法讀取使用者權限（請確認自訂 claims 與 Firestore Rules）。", "warn");
+      }
+    }
+
+    $("#btnSignOut").addEventListener("click", async () => {
+      try{ await signOut(auth); }catch(e){ console.error(e); }
+    });
+
+    async function loadRefs(){
+      $("#refList").innerHTML = `<div class="muted small">讀取文獻清單中…</div>`;
+      try{
+        const snaps = await getDocs(collection(db, COL_REFS));
+        refsAll = snaps.docs.map(d => ({ id: d.id, ...d.data() }));
+        refsAll.sort((a,b) => {
+          const ua = Number(a.updatedAt?.seconds || 0);
+          const ub = Number(b.updatedAt?.seconds || 0);
+          if (ua !== ub) return ub - ua;
+          const ca = Number(a.createdAt?.seconds || 0);
+          const cb = Number(b.createdAt?.seconds || 0);
+          return cb - ca;
+        });
+        renderRefList();
+      }catch(e){
+        console.error(e);
+        $("#refList").innerHTML = `<div class="warn">讀取失敗：${esc(e.message || e)}</div>`;
+      }
+    }
+
+    function refText(r){
+      const authors = Array.isArray(r.authors) ? r.authors.join(" ") : (r.authors || "");
+      const tags = Array.isArray(r.tags) ? r.tags.join(" ") : (r.tags || "");
+      return `${r.id} ${r.refId||""} ${r.title||""} ${authors} ${r.year||""} ${r.source||""} ${r.publisher||""} ${r.doi||""} ${r.url||""} ${tags} ${r.type||""} ${r.status||""}`.toLowerCase();
+    }
+
+    function renderRefList(){
+      const q = ($("#qRefs").value || "").trim().toLowerCase();
+      const stf = ($("#statusFilter").value || "all").trim().toLowerCase();
+      const tpf = ($("#typeFilter").value || "all").trim().toLowerCase();
+
+      const filtered = refsAll.filter(r => {
+        if (stf !== "all"){
+          const st = String(r.status || "").toLowerCase();
+          if (st !== stf) return false;
+        }
+        if (tpf !== "all"){
+          const tp = String(r.type || "").toLowerCase();
+          if (tp !== tpf) return false;
+        }
+        if (!q) return true;
+        return refText(r).includes(q);
+      });
+
+      const box = $("#refList");
+      box.innerHTML = "";
+      if (!filtered.length){
+        box.innerHTML = `<div class="muted small">沒有符合的文獻</div>`;
+        return;
+      }
+
+      filtered.slice(0, 350).forEach(r => {
+        const div = document.createElement("div");
+        div.className = "item";
+        const title = (r.title || "").trim() || "（未填標題）";
+        const year = safeYear(r.year);
+        const metaParts = [
+          r.type ? `<span class="pill">type:${esc(r.type)}</span>` : "",
+          r.status ? `<span class="pill">status:${esc(r.status)}</span>` : "",
+          year ? `<span class="pill">year:${esc(year)}</span>` : "",
+        ].filter(Boolean).join(" ");
+        const sub = [
+          r.source ? `source:${r.source}` : "",
+          r.doi ? `doi:${r.doi}` : "",
+          `id:${r.id}`
+        ].filter(Boolean).join(" · ");
+
+        div.innerHTML = `
+          <div class="t">${esc(title)}</div>
+          <div class="m">${metaParts}</div>
+          <div class="m">${esc(sub)}</div>
+        `;
+        div.addEventListener("click", () => openRef(r.id));
+        box.appendChild(div);
+      });
+
+      if (filtered.length > 350){
+        const more = document.createElement("div");
+        more.className = "muted small";
+        more.style.marginTop = ".5rem";
+        more.textContent = `（顯示前 350 筆；請再縮小搜尋條件）`;
+        box.appendChild(more);
+      }
+    }
+
+    async function openRef(id){
+      const rid = normalizeId(id);
+      if (!rid) return;
+      try{
+        const snap = await getDoc(doc(db, COL_REFS, rid));
+        if (!snap.exists()){
+          msg(`找不到文獻：<span class="kbd">${esc(rid)}</span>`, "warn");
+          return;
+        }
+        currentId = rid;
+        currentData = { id: rid, ...snap.data() };
+        $("#currentIdLine").textContent = `refId: ${currentId}`;
+        setEditorData(currentData);
+      }catch(e){
+        console.error(e);
+        msg(`讀取失敗：${esc(e.message || e)}`, "warn");
+      }
+    }
+
+    function setEditorData(d){
+      const x = clone(d || {});
+      x.refId = x.refId || x.id || currentId || "";
+      x.type = x.type || "journal";
+      x.status = x.status || "draft";
+
+      $("#refId").value = x.refId || "";
+      $("#status").value = x.status || "draft";
+      $("#type").value = x.type || "journal";
+      $("#year").value = safeYear(x.year || "");
+      $("#title").value = x.title || "";
+      $("#authors").value = listToText(x.authors);
+      $("#source").value = x.source || "";
+      $("#publisher").value = x.publisher || "";
+      $("#vnp").value = x.vnp || "";
+      $("#doi").value = x.doi || "";
+      $("#url").value = x.url || "";
+      $("#accessDate").value = x.accessDate || "";
+      $("#language").value = x.language || "";
+      $("#tags").value = listToText(x.tags);
+      $("#notes").value = x.notes || "";
+
+      $("#createdAt").textContent = fmtTs(x.createdAt) || "—";
+      $("#updatedAt").textContent = fmtTs(x.updatedAt) || "—";
+      refreshPreview();
+    }
+
+    function getEditorData(){
+      const d = clone(currentData || {});
+      d.refId = normalizeId($("#refId").value) || currentId || "";
+      d.status = ($("#status").value || "draft").trim();
+      d.type = ($("#type").value || "journal").trim() || "journal";
+      d.year = safeYear($("#year").value);
+      d.title = ($("#title").value || "").trim();
+      d.authors = parseList($("#authors").value);
+      d.source = ($("#source").value || "").trim();
+      d.publisher = ($("#publisher").value || "").trim();
+      d.vnp = ($("#vnp").value || "").trim();
+      d.doi = ($("#doi").value || "").trim();
+      d.url = ($("#url").value || "").trim();
+      d.accessDate = ($("#accessDate").value || "").trim();
+      d.language = ($("#language").value || "").trim();
+      d.tags = parseList($("#tags").value);
+      d.notes = ($("#notes").value || "").trim();
+      return d;
+    }
+
+    async function newRef(){
+      if (!canEdit) return msg("你沒有編輯權限", "warn");
+      const id = normalizeId($("#newRefId").value);
+      if (!id) return msg("refId 不可為空", "warn");
+      try{
+        const ref = doc(db, COL_REFS, id);
+        const snap = await getDoc(ref);
+        if (snap.exists()){
+          msg(`已存在：<span class="kbd">${esc(id)}</span>（已開啟）`);
+          await openRef(id);
+          return;
+        }
+
+        const data = {
+          refId: id,
+          status: "draft",
+          type: "journal",
+          year: "",
+          title: "",
+          authors: [],
+          source: "",
+          publisher: "",
+          vnp: "",
+          doi: "",
+          url: "",
+          accessDate: "",
+          language: "",
+          tags: [],
+          notes: "",
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        };
+
+        await setDoc(ref, data, { merge: true });
+        currentId = id;
+        currentData = { id, ...data };
+        $("#currentIdLine").textContent = `refId: ${currentId}`;
+        setEditorData(currentData);
+
+        msg("已新增（draft）");
+        $("#newRefId").value = "";
+        await loadRefs();
+        await openRef(currentId);
+      }catch(e){
+        console.error(e);
+        msg(`新增失敗：${esc(e.message || e)}`, "warn");
+      }
+    }
+
+    async function saveRef(){
+      if (!canEdit) return msg("你沒有編輯權限", "warn");
+      const d = getEditorData();
+      const newId = normalizeId(d.refId || currentId);
+      if (!newId) return msg("refId 不可為空", "warn");
+
+      const renaming = (currentId && newId !== currentId);
+
+      try{
+        d.updatedAt = serverTimestamp();
+        d.refId = newId;
+
+        if (!currentId){
+          d.createdAt = serverTimestamp();
+          await setDoc(doc(db, COL_REFS, newId), d, { merge: true });
+          currentId = newId;
+        } else if (renaming){
+          const oldId = currentId;
+          d.createdAt = currentData?.createdAt || serverTimestamp();
+          await setDoc(doc(db, COL_REFS, newId), d, { merge: true });
+          await deleteDoc(doc(db, COL_REFS, oldId));
+          currentId = newId;
+        } else {
+          await updateDoc(doc(db, COL_REFS, currentId), d);
+        }
+
+        $("#currentIdLine").textContent = `refId: ${currentId}`;
+        msg("已儲存");
+        await loadRefs();
+        await openRef(currentId);
+      }catch(e){
+        console.error(e);
+        msg(`儲存失敗：${esc(e.message || e)}`, "warn");
+      }
+    }
+
+    async function deleteRef(){
+      if (!canEdit) return msg("你沒有編輯權限", "warn");
+      if (!currentId) return msg("尚未選取文獻", "warn");
+      if (!confirm(`確定刪除文獻：${currentId}？此動作不可復原。`)) return;
+
+      try{
+        await deleteDoc(doc(db, COL_REFS, currentId));
+        msg("已刪除");
+        currentId = "";
+        currentData = null;
+        $("#currentIdLine").textContent = "refId: —";
+        setEditorData({ refId:"", status:"draft", type:"journal", year:"", title:"", authors:[], source:"", publisher:"", vnp:"", doi:"", url:"", accessDate:"", language:"", tags:[], notes:"" });
+        await loadRefs();
+      }catch(e){
+        console.error(e);
+        msg(`刪除失敗：${esc(e.message || e)}`, "warn");
+      }
+    }
+
+    async function copyRefId(){
+      const d = getEditorData();
+      const text = (d.refId || currentId || "").trim();
+      if (!text) return msg("refId 目前是空的", "warn");
+      try{
+        await navigator.clipboard.writeText(text);
+        msg(`已複製：<span class="kbd">${esc(text)}</span>`);
+      }catch{
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+        msg(`已複製：<span class="kbd">${esc(text)}</span>`);
+      }
+    }
+
+    function suggestRefId(){
+      const d = getEditorData();
+      const suggested = buildSuggestedId(d);
+      $("#refId").value = suggested;
+      refreshPreview();
+      msg(`已建議 refId：<span class="kbd">${esc(suggested)}</span>（可再修改後儲存）`);
+    }
+
+    $("#btnReload").addEventListener("click", loadRefs);
+    $("#btnNewRef").addEventListener("click", newRef);
+    $("#btnSave").addEventListener("click", saveRef);
+    $("#btnDelete").addEventListener("click", deleteRef);
+    $("#btnCopyRefId").addEventListener("click", copyRefId);
+    $("#btnAutoId").addEventListener("click", suggestRefId);
+
+    $("#qRefs").addEventListener("input", renderRefList);
+    $("#statusFilter").addEventListener("change", renderRefList);
+    $("#typeFilter").addEventListener("change", renderRefList);
+
+    ["refId","status","type","year","title","authors","source","publisher","vnp","doi","url","accessDate","language","tags","notes"]
+      .forEach(id => {
+        const el = document.getElementById(id);
+        el?.addEventListener("input", refreshPreview);
+        el?.addEventListener("change", refreshPreview);
+      });
+
+    onAuthStateChanged(auth, async (user) => {
+      await evaluateRoles(user);
+      const params = new URLSearchParams(location.search);
+      const refId = normalizeId(params.get("refId") || params.get("id"));
+      await loadRefs();
+      if (refId) await openRef(refId);
+      else setEditorData({ refId:"", status:"draft", type:"journal", year:"", title:"", authors:[], source:"", publisher:"", vnp:"", doi:"", url:"", accessDate:"", language:"", tags:[], notes:"" });
+    });
+  </script>
+</body>
+</html>

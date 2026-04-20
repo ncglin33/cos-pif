@@ -1,0 +1,6 @@
+kind: "frameworkbackend"
+runtime: "nodejs20"
+# 針對純靜態網站，我們告訴 Firebase 輸出目錄是當前目錄
+runConfig:
+  maxInstances: 10
+  memoryPerInstanceMiB: 512

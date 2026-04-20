@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PIF 製作入口</title>
+    <link rel="stylesheet" href="pifs.css">
+    <style>
+      /* Hide page content by default */
+      body {
+        opacity: 0;
+        transition: opacity 0.4s ease-in-out;
+      }
+      .controls .admin-only { display: none; }
+      body.admin .controls .admin-only { display: inline-block; }
+    </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="row">
+        <h1 id="project-title">PIF 製作入口 (會員版)</h1>
+        <div class="controls">
+          <button id="btnAdmin" class="btn admin-only">會員管理</button>
+          <div id="user-info" style="display: inline-block; margin-left: 1rem;"></div>
+          <button id="btnSignOut" class="btn">登出</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="grid" class="grid"></div>
+    <div class="footer"></div>
+  </main>
+
+  <script type="module">
+    // Firebase SDK Imports (Upgraded to V10)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // --- URL Constants ---
+    const AUTH_CENTER_URL = 'https://my-pif-64857823-900de.web.app';
+    const LOGIN_PAGE_URL = `${AUTH_CENTER_URL}/login.html`;
+
+    // --- Firebase Configuration (points to the central my-PIF project) ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyCwlaU1as4KQQABJYCfudKCwUt38TbaNek",
+        authDomain: "my-pif-64857823-900de.firebaseapp.com",
+        projectId: "my-pif-64857823-900de",
+        storageBucket: "my-pif-64857823-900de.appspot.com",
+        messagingSenderId: "143235873399",
+        appId: "1:143235873399:web:536efc772d9c29706c6472"
+    };
+
+    // --- Firebase Init ---
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    let currentUser = null;
+
+    // --- Web Component for Cards ---
+    class PIFCard extends HTMLElement { 
+        constructor() { super(); this.attachShadow({ mode: 'open' }); }
+        connectedCallback() { this.render(); }
+        static get observedAttributes() { return ['no', 'title', 'href']; }
+        attributeChangedCallback() { this.render(); }
+        render() {
+            const no = this.getAttribute('no') || '';
+            const title = this.getAttribute('title') || '未命名';
+            const href = this.getAttribute('href') || '#';
+            this.shadowRoot.innerHTML = `
+                <style>
+                  :host { display: block; contain: content; }
+                  .card { background: var(--card, #fff); border: 1px solid var(--line, #e2e8f0); border-radius: 16px; padding: 14px; box-shadow: 0.3px 0.5px 0.7px hsl(0deg 0% 63% / 0.34); transition: all 0.25s ease-out; }
+                  .card:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0.3px 0.5px 0.7px hsl(0deg 0% 63% / 0.36), 0.8px 1.6px 2px -0.8px hsl(0deg 0% 63% / 0.36), 2.1px 4.1px 5.2px -1.7px hsl(0deg 0% 63% / 0.36); }
+                  .title { display: flex; align-items: center; gap: 8px; font-weight: 700; transition: color 0.2s ease-out; }
+                  .card:hover .title { color: var(--accent, #2563eb); }
+                  .badge { display: inline-block; min-width: 46px; text-align: center; font-variant-numeric: tabular-nums; background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; border-radius: 999px; padding: 2px 8px; font-size: 12px; }
+                  .t { font-size: 14px; }
+                  .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+                  a.btn { text-decoration: none; display: inline-flex; align-items: center; color: var(--ink, #0f172a); background: #fff; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight:500; box-shadow: 0.2px 0.4px 0.5px hsl(220 3% 69% / 0.34); transition: all 0.2s ease-out; }
+                  a.btn:hover { transform: translateY(-1px); box-shadow: 0 1px 2px -1px #0002; }
+                </style>
+                <div class="card">
+                    <div class="title"><span class="badge">${no}</span><span class="t">${title}</span></div>
+                    <div class="actions">
+                        <a class="btn" href="${href}" target="_blank" rel="noopener">前往</a>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    customElements.define('pif-card', PIFCard);
+    
+    // --- UTILITY FUNCTION --- 
+    function redirectToLogin() {
+        console.log('Redirecting to login...');
+        const redirectUrl = encodeURIComponent(window.location.href);
+        window.location.href = `${LOGIN_PAGE_URL}?redirectUrl=${redirectUrl}`;
+    }
+
+    // --- INTEGRATED AUTH GUARD & MAIN APP LOGIC ---
+
+    function startApp() {
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const userDocRef = doc(db, "users", user.uid);
+                const userDoc = await getDoc(userDocRef);
+
+                if (userDoc.exists() && userDoc.data().status === 'approved') {
+                    currentUser = { ...user, ...userDoc.data() };
+                    setupUIForUser();
+                    renderGrid();
+                    // Fade in the page now that everything is ready
+                    document.body.style.opacity = '1'; 
+                } else {
+                    console.warn('User is authenticated but not approved or document not found. Redirecting to login...');
+                    alert('您的帳號尚未被批准，或資料不存在，將返回登入頁。');
+                    redirectToLogin();
+                }
+            } else {
+                console.log('Auth state changed to logged out. Redirecting to login...');
+                redirectToLogin();
+            }
+        });
+    }
+
+    function setupUIForUser() {
+        document.body.classList.toggle('admin', currentUser.role === 'admin');
+        const userInfoEl = document.getElementById('user-info');
+        userInfoEl.textContent = currentUser.email;
+        document.getElementById('btnAdmin').addEventListener('click', () => window.location.href = `${AUTH_CENTER_URL}/admin.html`);
+        document.getElementById('btnSignOut').addEventListener('click', () => {
+            signOut(auth).then(() => { 
+                alert('您已成功登出。');
+                window.location.href = AUTH_CENTER_URL; 
+            });
+        });
+    }
+
+    const pifModules = [
+        { no: 'PIF', title: '封面', href: 'cover.html' },
+        { no: 'PIF 00', title: '產品資訊檔案目錄', href: 'pif00.html' },
+        { no: 'PIF 01', title: '產品基本資料', href: 'pif01.html' },
+        { no: 'PIF 02', title: '完成產品登錄之證明文件', href: 'pif02.html' },
+        { no: 'PIF 03', 'title': '產品配方', href: 'pif03.html' },
+        { no: 'PIF 04', title: '原料品質與安全性資料', href: 'pif04.html' },
+        { no: 'PIF 05', title: '產品安定性試驗報告', href: 'pif05.html' },
+        { no: 'PIF 06', title: '微生物檢測報告', href: 'pif06.html' },
+        { no: 'PIF 07', title: '防腐效能試驗報告', href: 'pif07.html' },
+        { no: 'PIF 08', title: '功能性成分之佐證資料', href: 'pif08.html' },
+        { no: 'PIF 09', title: '產品檢驗報告', href: 'pif09.html' },
+        { no: 'PIF 10', title: '容器相容性試驗', href: 'pif10.html' },
+        { no: 'PIF 11', title: '製造方法', href: 'pif11.html' },
+        { no: 'PIF 12', title: 'GMP符合性文件', href: 'pif12.html' },
+        { no: 'PIF 13', title: '不良反應彙整', href: 'pif13.html' },
+        { no: 'PIF 14', title: '產品安全評估報告', href: 'pif14.html' },
+    ];
+
+    function renderGrid() {
+        const grid = document.getElementById('grid');
+        grid.innerHTML = '';
+        pifModules.forEach(pif => {
+            const card = document.createElement('pif-card');
+            card.setAttribute('no', pif.no);
+            card.setAttribute('title', pif.title);
+            card.setAttribute('href', pif.href);
+            grid.appendChild(card);
+        });
+    }
+
+    // --- Cross-Domain Auth Guard Logic (from auth_guard_cos.js) ---
+    function initializeAuthGuard() {
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = `${AUTH_CENTER_URL}/auth-bridge.html`;
+        document.body.appendChild(iframe);
+
+        const authTimeout = setTimeout(() => {
+            console.error('Auth bridge timeout! Redirecting to login.');
+            redirectToLogin();
+        }, 8000);
+
+        window.addEventListener('message', (event) => {
+            if (event.origin !== AUTH_CENTER_URL) {
+                return; // Ignore messages from other origins
+            }
+
+            const { status } = event.data;
+            clearTimeout(authTimeout);
+
+            if (status === 'loggedIn') {
+                console.log('Auth Guard: Access granted. Starting application.');
+                startApp();
+            } else {
+                console.log('Auth Guard: Access denied. Redirecting to login.');
+                redirectToLogin();
+            }
+        }, false);
+    }
+
+    // --- Start the whole process ---
+    initializeAuthGuard();
+
+  </script>
+</body>
+</html>

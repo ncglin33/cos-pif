@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>產品資訊檔案 Product Information File (PIF)</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="./pif01-3.css">
+
+<style>
+  /* 封面用：讓基本資料區塊往下留白一點，看起來像封面配置 */
+  .cover-basic-info { margin-top: 2.5rem; }
+
+  /* 列印專用抬頭（含 LOGO） */
+  .print-header {
+      display: none;
+      margin: 0 0 1rem 0;
+      border-bottom: 1px solid #dee2e6;
+      padding: 0.5rem 0 0.75rem;
+  }
+  .print-header .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: bold;
+      color: #333;
+      text-decoration: none;
+      margin-bottom: 0.4rem;
+  }
+  .print-header .logo img.logo-img-print {
+      height: 26px;
+      width: auto;
+      display: block;
+  }
+  .print-header h1 {
+      font-size: 1.4rem;
+      margin: 0 0 0.5rem;
+  }
+  .print-header .project-info {
+      font-size: 0.95rem;
+  }
+  .print-header .info-item {
+      margin-bottom: 0.25rem;
+  }
+
+  @media print {
+      /* 封面列印：只保留最上面的 LOGO 與抬頭 */
+      .page-main-title,
+      #project-subtitle,
+      #pif-id-badge {
+          display: none !important;
+      }
+      body {
+          background-color: #fff;
+      }
+      .toolbar.no-print,
+      .status-bar.no-print {
+          display: none !important;
+      }
+      .print-header {
+          display: block;
+      }
+  }
+</style>
+</head>
+<body>
+
+<div class="print-header">
+  <div class="logo">
+    <img src="img/cospif-logo.png" alt="CosPIF Logo" class="logo-img-print">
+    <span>CosPIF</span>
+  </div>
+  <h1 id="print-title">產品資訊檔案 Product Information File (PIF)</h1>
+  <div class="project-info">
+    <div class="info-item"><strong>PIF ID:</strong> <span id="print-pif-id"></span></div>
+    <div class="info-item"><strong>廠商名稱:</strong> <span id="print-company-name"></span></div>
+    <div class="info-item"><strong>產品名稱:</strong> <span id="print-product-name"></span></div>
+    <div class="info-item"><strong>PIF 版本:</strong> <span id="print-pif-version"></span></div>
+    <div class="info-item"><strong>製作日期:</strong> <span id="print-pif-date"></span></div>
+  </div>
+</div>
+
+<div id="app-container" style="display: none;">
+    <div class="toolbar no-print">
+        <a id="back-link" href="#" class="btn"><i class="fa-solid fa-arrow-left"></i> 返回 PIF 列表</a>
+        <button id="btnSaveChanges" class="btn primary"><i class="fa-solid fa-cloud-arrow-up"></i> 儲存變更至雲端</button>
+        <div class="right">
+          <div id="user-info" style="display: inline-block; margin-right: 1rem; font-size: .9rem;"></div>
+          <button id="btnSignOut" class="btn danger">登出</button>
+        </div>
+    </div>
+    <div class="app-wrap">
+        <header style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+                <h1 class="page-main-title"><i class="fa-solid fa-id-card"></i>產品資訊檔案 Product Information File (PIF)</h1>
+                <div id="project-subtitle" class="text-secondary" style="margin-top: 0.25rem;">此頁面包含產品基本資料與照片。照片的任何變更都需要手動儲存。</div>
+            </div>
+            <div id="pif-id-badge" class="badge" style="font-size: 1rem; padding: .5rem .8rem; border-radius: .5rem;"></div>
+        </header>
+
+        <div class="status-bar no-print">
+            <div>
+                <span id="status-light" class="status-light"></span>
+                <span id="status-text">正在初始化...</span>
+            </div>
+            <div>
+                <button onclick="window.print()" class="btn"><i class="fa-solid fa-print"></i> 列印 / 匯出 PDF</button>
+            </div>
+        </div>
+
+        <!-- Product Basic Info -->
+        <div id="product-info-container" class="cover-basic-info"></div>
+
+        <!-- Vendor Info Container -->
+        <div class="vendor-info-container">
+            <div id="responsible-vendor-container"></div>
+            <div id="sites-container"></div>
+        </div>
+
+            </div>
+</div>
+
+<div id="global-error" style="display:none;"></div>
+
+<script type="module">
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { doc, getDoc, setDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+  import { auth, db, storage } from './firebase-config.js';
+
+  const $ = sel => document.querySelector(sel);
+  let pifDocRef;
+  let state = {}; // Holds pif01_3 photo data
+  let pageContext = {};
+  let localFiles = {};
+  let hasUnsavedChanges = false;
+
+  const status = {
+      light: $("#status-light"),
+      text: $("#status-text"),
+      set: function(state, msg) {
+          this.light.className = `status-light ${state}`;
+          this.text.textContent = msg;
+          $('#btnSaveChanges').disabled = (state === 'syncing');
+          if(state === 'synced' || state === 'error'){
+              setTimeout(() => this.set('ready', '就緒'), 3000);
+          }
+      },
+      markUnsaved: function() {
+          if (hasUnsavedChanges) return;
+          this.set('syncing', '有未儲存的變更');
+          hasUnsavedChanges = true;
+          $('#btnSaveChanges').disabled = false;
+      }
+  };
+
+  // --- Initialization ---
+  function startAuthFlow() {
+      onAuthStateChanged(auth, user => {
+          if (user) {
+              try {
+                  pageContext = setupPageContext();
+                  pifDocRef = doc(db, 'pifs', pageContext.pifId);
+                  setupUIForUser(user);
+                  initializeData();
+                  $('#app-container').style.display = 'block';
+              } catch (e) {
+                  $('#global-error').textContent = `啟動錯誤：${e.message}。請確認網址是否正確。`;
+                  $('#global-error').style.display = 'block';
+              }
+          } else {
+              window.location.href = `login.html?redirect=${encodeURIComponent(window.location.href)}`;
+          }
+          document.body.style.opacity = '1';
+      });
+  }
+
+  function setupPageContext() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const context = { 
+          pifId: urlParams.get('id'),
+          companyName: urlParams.get('companyName'),
+          productName: urlParams.get('productName')
+      };
+      if (!context.pifId) throw new Error('網址中缺少專案 ID');
+      return context;
+  }
+
+  function setupUIForUser(user) {
+      $('#user-info').textContent = user.email;
+      $('#pif-id-badge').textContent = pageContext.pifId;
+
+      $('#btnSignOut').addEventListener('click', () => signOut(auth));
+      
+      // Construct the back-link href with URL parameters
+      const params = new URLSearchParams({
+          id: pageContext.pifId,
+          companyName: pageContext.companyName,
+          productName: pageContext.productName
+      });
+      $('#back-link').href = `pif-i.html?${params.toString()}`;
+
+      $('#btnSaveChanges').addEventListener('click', saveData);
+      $('#btnSaveChanges').disabled = true;
+
+      document.querySelectorAll('.photo-card').forEach(card => {
+          const photoType = card.dataset.photoType;
+          card.querySelector('.file-input').addEventListener('change', e => handleFileSelection(e, photoType));
+          card.querySelector('.delete-btn').addEventListener('click', () => deletePhoto(photoType));
+      });
+
+      window.addEventListener('beforeunload', e => {
+          if (hasUnsavedChanges) {
+              e.preventDefault();
+              e.returnValue = '';
+          }
+      });
+  }
+
+  async function initializeData() {
+      try {
+          status.set('syncing', '正在從雲端讀取資料...');
+          const docSnap = await getDoc(pifDocRef);
+          if (docSnap.exists()) {
+              const cloudData = docSnap.data();
+              renderBasicInfo(cloudData.pif01 || {}, cloudData);
+              state = cloudData.pif01_3 || {};
+              renderAllPhotos();
+              status.set('synced', '資料讀取成功');
+          } else {
+             console.warn("在資料庫中找不到對應的專案文件，將會建立新的。");
+             status.set('ready', '就緒 (新檔案)');
+          }
+      } catch (err) {
+          console.error("Initialization failed: ", err);
+          status.set('error', `讀取失敗: ${err.message}`);
+      }
+  }
+  
+  // --- Rendering (Final, Compatible Version) ---
+  function renderBasicInfo(pif01Data, rootData) {
+      const escape = str => str ? String(str).replace(/[&<>"'/]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[s]) : '—';
+      
+      // 1. Basic Product Info
+      const productName = rootData.productName || pif01Data.basic?.name;
+      const productNameEn = rootData.productNameEn || pif01Data.basic?.productNameEn; // Correctly get English name
+      const weight = pif01Data.basic?.weight;
+      const category = pif01Data.basic?.category;
+      const form = pif01Data.basic?.form;
+      const safetyAssessor = pif01Data.basic?.safetyAssessor;
+      const pifMaker = pif01Data.basic?.pifMaker;
+      const pifVersion = pif01Data.basic?.pifVersion || pif01Data.meta?.pifVersion || pif01Data.meta?.version;
+      const createdDate = pif01Data.basic?.createdDate || pif01Data.basic?.pifDate || pif01Data.meta?.createdDate || pif01Data.meta?.createdAt;
+
+      const productInfoContainer = $('#product-info-container');
+      productInfoContainer.innerHTML = `
+        <div class="info-card">
+            <div class="info-grid">
+                <div><label>產品中文名稱</label><div class="value">${escape(productName)}</div></div>
+                <div><label>產品英文名稱</label><div class="value">${escape(productNameEn)}</div></div>
+                <div><label>產品類別</label><div class="value">${escape(category)}</div></div>
+                <div><label>產品形式</label><div class="value">${escape(form)}</div></div>
+                <div><label>安全評估人員</label><div class="value">${escape(safetyAssessor)}</div></div>
+                <div><label>PIF製作人員</label><div class="value">${escape(pifMaker)}</div></div>
+            </div>
+        </div>
+      `;
+
+      const createField = (label, value) => {
+          if (!value || String(value).trim() === '') return '';
+          return `<div class="vendor-field"><span class="label">${escape(label)}</span><span class="value">${escape(value)}</span></div>`;
+      };
+
+      // 2. Responsible Vendor (Maker)
+      const maker = pif01Data.maker;
+      const respVendorContainer = $('#responsible-vendor-container');
+      if (maker) {
+          respVendorContainer.innerHTML = `
+              <div class="vendor-block">
+                  <h3 class="vendor-block-title"><i class="fa-solid fa-user-tie"></i> 責任業者</h3>
+                  <div class="vendor-details-grid">
+                      ${createField('名稱', maker.name || maker.companyName)}
+                      ${createField('地址', maker.addr)}
+                      ${createField('電話', maker.tel)}
+                      ${createField('統一編號', maker.tax)}
+                  </div>
+              </div>
+          `;
+      }
+
+      // 3. Manufacturing and Packaging Sites
+
+      // 工廠 / 包裝場所資訊：封面不顯示
+      const companyName = rootData.companyName || pageContext.companyName || '';
+      $('#project-subtitle').textContent = `${companyName} - ${productName || '產品資料'}`;
+
+      // 列印抬頭：同步基本資訊
+      const printPifIdEl = $('#print-pif-id');
+      const printCompanyEl = $('#print-company-name');
+      const printProductEl = $('#print-product-name');
+      const printVersionEl = $('#print-pif-version');
+      const printDateEl = $('#print-pif-date');
+      if (printPifIdEl) printPifIdEl.textContent = pageContext.pifId || '';
+      if (printCompanyEl) printCompanyEl.textContent = companyName || '';
+      if (printProductEl) printProductEl.textContent = productName || '';
+      if (printVersionEl) printVersionEl.textContent = escape(pifVersion) || '';
+      if (printDateEl) printDateEl.textContent = escape(createdDate) || '';
+  }
+
+
+  function renderAllPhotos() {
+      document.querySelectorAll('.photo-card').forEach(card => {
+          const photoType = card.dataset.photoType;
+          renderPhotoCard(photoType);
+      });
+  }
+
+  function renderPhotoCard(photoType) {
+      const card = $(`[data-photo-type="${photoType}"]`);
+      if (!card) return;
+      
+      const previewBox = card.querySelector('.preview-box');
+      const deleteBtn = card.querySelector('.delete-btn');
+      const photoData = state[photoType];
+
+      if (photoData && photoData.downloadURL) {
+          previewBox.innerHTML = `<img src="${photoData.downloadURL}" alt="${photoType}">`;
+          previewBox.appendChild(deleteBtn);
+          deleteBtn.style.display = 'none'; 
+      } else {
+          previewBox.innerHTML = `
+              <i class="fa-solid fa-image placeholder-icon"></i>
+              <span class="placeholder-text">尚未上傳</span>
+          `;
+           previewBox.appendChild(deleteBtn);
+      }
+  }
+
+  // --- Actions & Event Handlers ---
+  function handleFileSelection(event, photoType) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      localFiles[photoType] = file;
+      
+      const previewUrl = URL.createObjectURL(file);
+      const card = $(`[data-photo-type="${photoType}"]`);
+      const previewBox = card.querySelector('.preview-box');
+      const deleteBtn = card.querySelector('.delete-btn');
+      previewBox.innerHTML = `<img src="${previewUrl}" alt="Local preview">`;
+      previewBox.appendChild(deleteBtn);
+
+      status.markUnsaved();
+  }
+
+  function deletePhoto(photoType) {
+      if (!confirm(`確定要刪除「${photoType}」照片嗎？\n此操作需要儲存後才會同步至雲端。`)) return;
+
+      state[photoType] = { _deleted: true }; 
+      localFiles[photoType] = { _deleted: true };
+
+      const card = $(`[data-photo-type="${photoType}"]`);
+      const previewBox = card.querySelector('.preview-box');
+      const deleteBtn = card.querySelector('.delete-btn');
+      previewBox.innerHTML = `
+          <i class="fa-solid fa-image placeholder-icon"></i>
+          <span class="placeholder-text">已標示為刪除</span>
+      `;
+      previewBox.appendChild(deleteBtn);
+
+      status.markUnsaved();
+  }
+  
+  async function saveData() {
+      status.set('syncing', '正在儲存至雲端...');
+      
+      for (const photoType in localFiles) {
+          const file = localFiles[photoType];
+          
+          if (file._deleted) {
+              const oldStoragePath = state[photoType]?.storagePath;
+              if (oldStoragePath) {
+                  try {
+                      await deleteObject(ref(storage, oldStoragePath));
+                  } catch (e) {
+                      console.warn(`Could not delete old file ${oldStoragePath}:`, e);
+                  }
+              }
+              delete state[photoType];
+          } else {
+              const filePath = `pifs/${pageContext.pifId}/pif01-3/${photoType}-${file.name}`;
+              const fileRef = ref(storage, filePath);
+              
+              try {
+                  const uploadResult = await uploadBytes(fileRef, file);
+                  const downloadURL = await getDownloadURL(uploadResult.ref);
+                  
+                  const oldStoragePath = state[photoType]?.storagePath;
+                  if (oldStoragePath && oldStoragePath !== filePath) {
+                      try { await deleteObject(ref(storage, oldStoragePath)); } catch (e) { console.warn("Could not delete old file:", e); }
+                  }
+
+                  state[photoType] = {
+                      downloadURL: downloadURL,
+                      storagePath: filePath,
+                      filename: file.name,
+                      lastModified: Timestamp.now()
+                  };
+              } catch (err) {
+                  status.set('error', `檔案 ${file.name} 上傳失敗: ${err.message}`);
+                  console.error("Upload failed:", err);
+                  return;
+              }
+          }
+      }
+
+      try {
+          await setDoc(pifDocRef, { pif01_3: state }, { merge: true });
+          status.set('synced', '資料已成功儲存！');
+          hasUnsavedChanges = false;
+          localFiles = {};
+          initializeData(); 
+      } catch (err) {
+          status.set('error', `資料庫儲存失敗: ${err.message}`);
+          console.error("Firestore save failed: ", err);
+      }
+  }
+
+  startAuthFlow();
+</script>
+</body>
+</html>

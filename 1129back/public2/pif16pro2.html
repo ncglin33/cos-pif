@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PIF 16｜產品安全資料（雲端整合版）</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="./style.css">
+<style>
+  .toolbar .wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 1rem;
+  }
+
+  .toolbar-group {
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+  }
+  
+  .toolbar-group.user-info {
+    display: none; /* Hidden by default */
+    align-items: center;
+    gap: .75rem;
+  }
+  
+  .user-email {
+    font-size: 0.9rem;
+    color: #6c757d;
+  }
+
+  button.danger-ghost {
+    background: transparent;
+    border: 1px solid #dc3545;
+    color: #dc3545;
+  }
+  button.danger-ghost:hover {
+    background: #dc3545;
+    color: #fff;
+  }
+</style>
+</head>
+<body>
+  <pif-nav></pif-nav>
+  <div class="toolbar no-print">
+    <div class="wrap">
+      <div class="toolbar-group">
+        <a href="/pifs.html" class="ghost" style="text-decoration:none; color:inherit"><button><i class="fa-solid fa-chevron-left"></i> 回 PIF 列表</button></a>
+        <button id="add-row-btn" class="ghost"><i class="fa-solid fa-plus"></i> 新增成分</button>
+      </div>
+       <div class="toolbar-group">
+        <button id="ai-fill-btn" class="warn"><i class="fa-solid fa-wand-magic-sparkles"></i> AI 輔助填寫</button>
+        <button onclick="window.print()" class="ghost"><i class="fa-solid fa-print"></i> 列印</button>
+        <button id="save-to-cloud-btn" class="primary"><i class="fa-solid fa-cloud-arrow-up"></i> 儲存至雲端</button>
+      </div>
+       <div class="toolbar-group user-info" id="user-info-group">
+        <span class="user-email" id="user-email-display"></span>
+        <button id="logout-btn" class="danger-ghost"><i class="fa-solid fa-right-from-bracket"></i> 登出</button>
+      </div>
+      <span class="muted small" id="autosave-hint"></span>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1>PIF 16｜產品安全資料</h1>
+    <div class="grid-top">
+      <div class="top-left">
+        <label>產品名稱</label>
+        <input data-path="product.name" type="text" readonly>
+        <div class="two-col" style="margin-top:.6rem">
+          <div>
+            <label>產品型態</label>
+            <select id="product-ptype" data-path="product.ptype">
+              <option value="leaveon_face">留置：面部/眼周（一般成人）</option>
+              <option value="leaveon_body">留置：身體（一般成人）</option>
+              <option value="rinseoff">沖洗：沐浴/洗髮/潔面</option>
+              <option value="custom">自訂</option>
+            </select>
+          </div>
+          <div>
+            <label>適用族群</label>
+            <select data-path="product.population">
+              <option value="adult">成人（BW 自動=60）</option>
+              <option value="teen">青少年（BW 自動=50）</option>
+              <option value="child">兒童（BW 自動=30）</option>
+              <option value="infant">嬰幼兒（BW 自動=15）</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="top-right">
+        <div class="meta">
+          <div><label>PIF 編號</label><input data-path="product.pifId" type="text" readonly></div>
+          <div><label>廠商名稱</label><input data-path="product.brandName" type="text" readonly></div>
+          <div><label>報告日期</label><input data-path="product.rptDate" type="date"></div>
+          <div><label>批號</label><input data-path="product.batch" type="text" placeholder="例如：A240901"></div>
+          <div><label>樣品編號</label><input data-path="product.sampleNo" type="text" placeholder="例如：SUN-2025-01"></div>
+          <div><label>安全評估人</label><input data-path="product.assessor" type="text" placeholder="姓名／資格"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>暴露假設（全域預設）</h3>
+      <div class="body">
+        <div class="three-col">
+          <div><label>每次使用量 A (g/次)</label><input data-path="exp.A" type="number" step="0.01" min="0"></div>
+          <div><label>每日使用頻率 F (次/日)</label><input data-path="exp.F" type="number" step="0.01" min="0"></div>
+          <div><label>殘留因子 RF</label><input data-path="exp.RF" type="number" step="0.001" min="0"></div>
+        </div>
+        <div class="two-col" style="margin-top:.6rem">
+          <div><label>MoS 門檻</label><input data-path="exp.mosTh" type="number" step="1" min="1"></div>
+          <div><label class="muted">體重 BW</label><input data-path="exp.BW" type="number" readonly></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card no-print">
+      <h3><i class="fa-solid fa-wand-magic-sparkles"></i> AI 輔助設定</h3>
+      <div class="body">
+        <div class="three-col">
+          <div><label>預設 NOAEL (mg/kg/day)</label><input id="ai-noael" type="number" value="500"></div>
+          <div><label>預設吸收率 DA(%)</label><input id="ai-da" type="number" step="0.1" value="1"></div>
+          <div><label>預設生物轉換係數</label><input id="ai-bio" type="number" step="0.01" value="0.5"></div>
+        </div>
+        <div class="small muted" style="margin-top: .5rem">按下「AI 輔助填寫」按鈕時，將會使用此處設定的值，自動填入下方表格中對應的空白欄位。</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>成分安全與 MoS 計算</h3>
+      <div class="body" id="table-host"></div>
+    </div>
+    
+    <div class="card">
+      <h3>安全評估結論</h3>
+      <div class="body">
+        <textarea data-path="product.summary" rows="5" placeholder="可輸入整體結論"></textarea>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import "./components.js";
+
+  const firebaseConfig = JSON.parse(atob('eyJwcm9qZWN0SWQiOiJjb3MtcGlmIiwiYXBwSWQiOiIxOjk5MzMzMjIzNzgxNzpjZWI6M2JiMzNiOTdjNjBmZDAzMzQ0MTkyOCIsInN0b3JhZ2VCdWNrZXQiOiJjb3MtcGlmLmZpcmViYXNlc3RvcmFnZS5hcHAiLCJhcGlLZXkiOiJBSXphU3lBUEk3cmVSNmNtUmlJX1VKam5PelRXekdnaEpVTkFUUzAiLCJhdXRoRG9tYWluIjoiY29zLXBpZi5maXJlYmFzZWFwcC5jb20iLCJtZXNzYWdpbmdTZW5kZXJJZCI6Ijk5MzMzMjIzNzgxNyJ9'));
+  
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const $ = sel => document.querySelector(sel);
+
+  let state = {
+    product:{ name:"", brandName:"", pifId:"", batch:"", sampleNo:"", rptDate:new Date().toISOString().slice(0,10), assessor:"", ptype:"leaveon_face", population:"adult", summary:"" },
+    exp:{A:2.0, F:1, RF:1, BW:60, mosTh:100},
+    rows: []
+  };
+
+  const toNum = (x) => {
+    const s = String(x ?? '').trim();
+    if (s === '') return null;
+    const n = parseFloat(s.replace(/[^\d.\-]/g,''));
+    return isNaN(n) ? null : n;
+  }
+  const fmt = (v) => v == null ? "" : v;
+
+  function render() {
+    document.querySelectorAll('[data-path]').forEach(el => {
+      const path = el.dataset.path.split('.');
+      let value = state;
+      for (const key of path) {
+        value = value?.[key];
+      }
+      if (el.type === 'date' && value) {
+        el.value = new Date(value).toISOString().slice(0,10);
+      } else {
+        el.value = fmt(value);
+      }
+    });
+    renderTable();
+    const ts = localStorage.getItem(`${KEY_PREFIX}${state.product.pifId}_ts`);
+    $("#autosave-hint").textContent = ts ? `本機草稿於 ${new Date(parseInt(ts)).toLocaleString()} 已自動保存` : "";
+  }
+
+  function renderTable() {
+    const host = $("#table-host");
+    const headers = `<tr>
+        <th style="width:18%">成分名稱 / INCI</th>
+        <th style="width:7%">含量 C(%)</th>
+        <th style="width:10%">NOAEL-ref</th>
+        <th style="width:9%">NOAEL (mg/kg/day)</th>
+        <th style="width:8%">生物轉換係數</th>
+        <th style="width:7%">吸收率 DA(%)</th>
+        <th style="width:10%">SED (mg/kg/day)</th>
+        <th style="width:7%">MoS</th>
+        <th style="width:8%">判定</th>
+        <th style="width:18%">備註</th>
+        <th style="width:6%" class="no-print">操作</th>
+    </tr>`;
+    const rows = state.rows.map((r,i) => {
+      const calc = computeRow(r);
+      return `<tr id="row-${i}">
+        <td><textarea data-path="rows.${i}.name" placeholder="成分中文名 / INCI">${fmt(r.name)}</textarea></td>
+        <td><input data-path="rows.${i}.C" value="${fmt(r.C)}" placeholder="%" readonly></td>
+        <td><textarea data-path="rows.${i}.NOAELref" placeholder="參考文獻/來源（例如：SCCS 2021 報告）">${fmt(r.NOAELref)}</textarea></td>
+        <td><input data-path="rows.${i}.NOAEL" value="${fmt(r.NOAEL)}" placeholder="mg/kg/day"></td>
+        <td><input data-path="rows.${i}.bioF" value="${fmt(r.bioF)}" placeholder="例如 0.5"></td>
+        <td><input data-path="rows.${i}.DA" value="${fmt(r.DA)}" placeholder="%"></td>
+        <td class="right">${calc.SED.toFixed(4)}</td>
+        <td class="right">${calc.MoSText}</td>
+        <td class="center ${calc.okCls}">${calc.okText}</td>
+        <td><textarea data-path="rows.${i}.note" placeholder="限制/警語/來源">${fmt(r.note)}</textarea></td>
+        <td class="center no-print"><button class="remove-row-btn" data-idx="${i}">刪除</button></td>
+      </tr>`;
+    }).join("");
+    host.innerHTML = `<div style="overflow-x:auto"><table><thead>${headers}</thead><tbody>${rows}</tbody></table></div>`;
+  }
+  
+  const getExp = () => ({
+    A: toNum(state.exp.A) ?? 0, F: toNum(state.exp.F) ?? 0, RF: toNum(state.exp.RF) ?? 0,
+    BW: toNum(state.exp.BW) ?? 60, mosTh: toNum(state.exp.mosTh) ?? 100
+  });
+
+  function computeRow(r) {
+    const C = (toNum(r.C) ?? 0) / 100;
+    const NOAEL = toNum(r.NOAEL) ?? 0;
+    const DA = (toNum(r.DA) ?? 100) / 100;
+    const bioF = toNum(r.bioF);
+    // 若未填寫生物轉換係數，預設採用 0.5（較保守）
+    const BF = bioF == null ? 0.5 : bioF;
+    const e = getExp();
+    const mgPerDay = (e.A||0)*(e.F||0)*(e.RF||0) * C * DA * 1000;
+    const SED = (e.BW > 0) ? (mgPerDay / e.BW) : 0;
+    // 將生物轉換係數納入 MoS 計算：MoS = NOAEL × BF / SED
+    const MoS = (SED > 0 && NOAEL > 0) ? ((NOAEL * BF) / SED) : null;
+    const MoSText = MoS == null ? "—" : (MoS > 10000 ? ">10000" : MoS.toFixed(0));
+    const ok = MoS != null && MoS >= e.mosTh;
+    const okCls = MoS == null ? "warnbg" : (ok ? "pass" : "fail");
+    const okText = MoS == null ? "待評估" : (ok ? "合格" : "不合格");
+    return { SED, MoS, MoSText, okCls, okText };
+  }
+
+  function handleStateChange(e) {
+    const el = e.target;
+    const path = el.dataset.path;
+    if (!path || el.readOnly) return;
+
+    const keys = path.split('.');
+    let target = state;
+    for (let i = 0; i < keys.length - 1; i++) {
+      target = target[keys[i]];
+    }
+    const finalKey = keys[keys.length - 1];
+    
+    target[finalKey] = el.value;
+
+    if (path === 'product.ptype') {
+      const presets = { leaveon_face: {A:2.0, F:1, RF:1}, leaveon_body: {A:8.0, F:1, RF:1}, rinseoff: {A:10.0, F:1, RF:0.02}, custom: {} };
+      Object.assign(state.exp, presets[el.value] || {});
+      updateAIDefaults(el.value);
+    } else if (path === 'product.population') {
+      const weights = { adult: 60, teen: 50, child: 30, infant: 15 };
+      state.exp.BW = weights[el.value] || 60;
+    }
+    
+    saveLocal();
+    render();
+  }
+  
+  function updateAIDefaults(ptype) {
+      const isLeaveOn = ptype.startsWith('leaveon');
+      $('#ai-da').value = isLeaveOn ? 1 : 0.1;
+      $('#ai-bio').value = 0.5;
+  }
+
+  function getAIConclusion() {
+    return `基於本次送測樣品【${state.product.name}】之全成分配方、各項毒理學數據及暴露情境，本產品之安全臨界值 (MoS) 計算結果皆大於 ${state.exp.mosTh}，且不含國內外禁用或高風險物質，符合我國 TFDA 現行法規要求。在正常、可預期之使用條件下，本產品對消費者應屬安全。`;
+  }
+
+  async function loadCloudData(pifId) {
+    if (!pifId) return;
+    console.log(`Cloud Sync: Rebuilding data for PIF ID: ${pifId}`);
+    try {
+        const pifDoc = await getDoc(doc(db, "pifs", pifId));
+        if (!pifDoc.exists()) throw new Error(`在雲端找不到 PIF ID 為 ${pifId} 的專案。`);
+        
+        const cloudData = pifDoc.data();
+        const pif01 = cloudData.pif01 || {};
+        const pif03 = cloudData.pif03 || {};
+        const pif16_cloud = cloudData.pif16;
+
+        Object.assign(state.product, pif16_cloud?.product || {});
+        Object.assign(state.product, pif01);
+        Object.assign(state.exp, pif16_cloud?.exp || {});
+        
+        if (pif03.recipe && pif03.recipe.length > 0) {
+            console.log("Cloud Sync: Rebuilding rows from pif03 recipe.");
+            state.rows = pif03.recipe.map(item => {
+                const savedRow = pif16_cloud?.rows?.find(r => r.name === item.inci);
+                return {
+                    name: item.inci || "",
+                    C: item.pct || "",
+                    NOAELref: savedRow?.NOAELref || "",
+                    NOAEL: savedRow?.NOAEL || "",
+                    bioF: (savedRow && savedRow.bioF !== undefined && savedRow.bioF !== null && savedRow.bioF !== "") ? savedRow.bioF : "0.5",
+                    DA: savedRow?.DA || "100",
+                    note: savedRow?.note || ""
+                };
+            });
+        } else {
+             const baseRows = pif16_cloud?.rows || [{
+               name:"(此PIF無配方，請手動新增)",
+               C:"",
+               NOAELref:"",
+               NOAEL:"",
+               bioF:"0.5",
+               DA:"100",
+               note:""
+             }];
+             state.rows = baseRows.map(r => ({
+               ...r,
+               NOAELref: r.NOAELref || "",
+               bioF: (r.bioF !== undefined && r.bioF !== null && r.bioF !== "") ? r.bioF : "0.5"
+             }));
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        state.product.pifId = params.get('id') || state.product.pifId;
+        state.product.name = params.get('productName') || state.product.name;
+        state.product.brandName = params.get('companyName') || state.product.brandName;
+
+        if (!state.product.summary) {
+          state.product.summary = getAIConclusion();
+        }
+
+        updateAIDefaults(state.product.ptype);
+        saveLocal(); 
+        render();
+        console.log("Cloud Sync: Data rebuilt, grafted, and rendered successfully.");
+
+    } catch (error) {
+        console.error("從 Firestore 載入資料時發生錯誤:", error);
+        alert(`自動同步雲端資料時發生錯誤：${error.message}`);
+    }
+  }
+
+  async function saveToCloud() {
+    if (!state.product.pifId) return alert("錯誤：缺少 PIF ID，無法儲存至雲端。");
+    const btn = $("#save-to-cloud-btn");
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 儲存中...`;
+    
+    try {
+      const pifRef = doc(db, "pifs", state.product.pifId);
+      await setDoc(pifRef, { 
+        pif16: state, 
+        lastModified: serverTimestamp() 
+      }, { merge: true });
+      
+      alert("您的 PIF 16 安全評估報告已成功儲存至雲端！");
+      localStorage.removeItem(KEY_PREFIX + state.product.pifId);
+      localStorage.removeItem(`${KEY_PREFIX}${state.product.pifId}_ts`);
+      $("#autosave-hint").textContent = `雲端同步於 ${new Date().toLocaleString()} 完成`;
+
+    } catch (error) {
+      console.error("儲存至雲端時發生錯誤:", error);
+      alert(`儲存至雲端時發生嚴重錯誤：${error.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> 儲存至雲端`;
+    }
+  }
+
+  function aiFill(){
+    const noaelVal = $('#ai-noael').value;
+    const daVal = $('#ai-da').value;
+    const bioVal = $('#ai-bio').value;
+    if(!confirm(`AI 輔助將使用以下設定，填入**所有**成分的對應欄位：\n\n- NOAEL: ${noaelVal}\n- 吸收率 (DA%): ${daVal}\n- 生物轉換係數: ${bioVal}\n\n此操作會覆蓋現有數值，是否繼續？`)) return;
+    
+    state.rows.forEach(row => {
+        if(row.NOAEL === '') row.NOAEL = noaelVal;
+        row.DA = daVal;
+        row.bioF = bioVal;
+    });
+    
+    saveLocal();
+    render();
+    alert(`AI 輔助填寫完成！`);
+  }
+
+  const KEY_PREFIX="pif16_state_v2.4_";
+  function saveLocal(){
+    if (!state.product.pifId) return;
+    const key = KEY_PREFIX + state.product.pifId;
+    try {
+      localStorage.setItem(key, JSON.stringify(state));
+      localStorage.setItem(`${key}_ts`, String(Date.now()));
+       $("#autosave-hint").textContent = `本機草稿於 ${new Date().toLocaleString()} 已自動保存`;
+    } catch(e) { console.warn("無法儲存本機草稿。"); }
+  }
+  
+  function loadLocal(pifId){
+    if (!pifId) return false;
+    const key = KEY_PREFIX + pifId;
+    const s = localStorage.getItem(key);
+    if(s){
+      try {
+        const loadedState = JSON.parse(s);
+        state = loadedState;
+        console.log(`Loaded local draft for ${pifId}`);
+        return true;
+      } catch (e) {
+        console.error("解析本機草稿時發生錯誤:", e);
+        return false;
+      }
+    }
+    return false;
+  }
+
+  (function init(){
+    const params = new URLSearchParams(window.location.search);
+    const pifId = params.get('id');
+
+    if (pifId) {
+      loadLocal(pifId);
+    } else {
+      updateAIDefaults('leaveon_face');
+      render();
+      return;
+    }
+    
+    const userInfoGroup = document.getElementById('user-info-group');
+    const userEmailDisplay = document.getElementById('user-email-display');
+
+    onAuthStateChanged(auth, user => {
+      if (user) {
+          userInfoGroup.style.display = 'flex';
+          userEmailDisplay.textContent = user.email;
+          loadCloudData(pifId);
+      } else {
+          userInfoGroup.style.display = 'none';
+          userEmailDisplay.textContent = '';
+          
+          const productName = params.get('productName');
+          const companyName = params.get('companyName');
+          state.product.pifId = pifId;
+          if (productName) state.product.name = productName;
+          if (companyName) state.product.brandName = companyName;
+          if(!state.rows.length) {
+            state.rows.push({name:"(請登入以同步雲端配方...)", C:"", NOAELref:"", NOAEL:"", bioF:"0.5", DA:"100", note:""});
+          }
+          if (!state.product.summary) {
+            state.product.summary = getAIConclusion();
+          }
+          updateAIDefaults(state.product.ptype);
+          render();
+      }
+    });
+    
+    document.addEventListener('input', handleStateChange);
+    $("#save-to-cloud-btn").addEventListener("click", saveToCloud);
+    $("#ai-fill-btn").addEventListener("click", aiFill);
+    $("#add-row-btn").addEventListener("click", () => {
+        state.rows.push({name:"", C:"", NOAELref:"", NOAEL:"", bioF:"0.5", DA:"100", note:""});
+        saveLocal();
+        renderTable();
+    });
+    $("#table-host").addEventListener('click', e => {
+      if (e.target.classList.contains('remove-row-btn')) {
+        state.rows.splice(e.target.dataset.idx, 1);
+        saveLocal();
+        renderTable();
+      }
+    });
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      if (confirm('您確定要登出嗎？')) {
+        signOut(auth).then(() => {
+          alert('您已成功登出。');
+          window.location.href = 'login.html';
+        }).catch((error) => {
+          console.error('登出時發生錯誤:', error);
+          alert('登出失敗，請稍後再試。');
+        });
+      }
+    });
+  })();
+</script>
+</body>
+</html>

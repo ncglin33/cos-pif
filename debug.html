@@ -1,0 +1,82 @@
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firestore 連線偵錯</title>
+    <style>
+        body { font-family: monospace; background-color: #000; color: #0f0; padding: 2rem; }
+        h1 { color: #f00; }
+        pre { background-color: #111; border: 1px solid #333; padding: 1rem; word-wrap: break-word; white-space: pre-wrap; color: #fff; }
+        .status { padding: 1rem; margin-bottom: 1rem; font-weight: bold; }
+        .success { border: 1px solid #0f0; color: #0f0; }
+        .error { border: 1px solid #f00; color: #f00; }
+    </style>
+</head>
+<body>
+
+<h1>Firestore 連線偵錯頁面</h1>
+<div id="auth-status" class="status">正在檢查登入狀態...</div>
+<div id="firestore-status" class="status">正在等待登入...</div>
+<pre id="output">偵錯資訊將會顯示在這裡...</pre>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCwlaU1as4KQQABJYCfudKCwUt38TbaNek",
+        authDomain: "my-pif-64857823-900de.firebaseapp.com",
+        projectId: "my-pif-64857823-900de",
+        storageBucket: "my-pif-64857823-900de.appspot.com",
+        messagingSenderId: "143235873399",
+        appId: "1:143235873399:web:536efc772d9c29706c6472"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const authStatus = document.getElementById('auth-status');
+    const firestoreStatus = document.getElementById('firestore-status');
+    const output = document.getElementById('output');
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            authStatus.textContent = "登入驗證成功 ✅";
+            authStatus.className = "status success";
+            output.textContent = JSON.stringify({ uid: user.uid, email: user.email }, null, 2);
+
+            firestoreStatus.textContent = "正在從 Firestore 讀取您的個人資料...";
+            
+            try {
+                const userDocRef = doc(db, "users", user.uid);
+                const userDoc = await getDoc(userDocRef);
+
+                if (userDoc.exists()) {
+                    firestoreStatus.textContent = "Firestore 資料讀取成功 ✅";
+                    firestoreStatus.className = "status success";
+                    output.textContent += "\n\n--- Firestore Document Data ---\n" + JSON.stringify(userDoc.data(), null, 2);
+                } else {
+                    firestoreStatus.textContent = "Firestore 資料讀取失敗 ❌: 找不到您的個人資料文件。";
+                    firestoreStatus.className = "status error";
+                    output.textContent += "\n\n--- Firestore Document Data ---\nDOCUMENT NOT FOUND IN 'users/' COLLECTION FOR YOUR UID.";
+                }
+            } catch (error) {
+                firestoreStatus.textContent = "Firestore 連線或讀取時發生致命錯誤 ❌";
+                firestoreStatus.className = "status error";
+                output.textContent += "\n\n--- Firestore Error ---\n" + JSON.stringify({ name: error.name, message: error.message, code: error.code }, null, 2);
+            }
+
+        } else {
+            authStatus.textContent = "登入驗證失敗 ❌: 沒有偵測到任何登入中的使用者。";
+            authStatus.className = "status error";
+            firestoreStatus.textContent = "已停止。";
+        }
+    });
+</script>
+
+</body>
+</html>

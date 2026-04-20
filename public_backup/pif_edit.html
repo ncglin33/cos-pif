@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>編輯 PIF 專案</title>
+    <link rel="stylesheet" href="./style.css">
+    <link 
+      rel="stylesheet" 
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" 
+      integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" 
+      crossorigin="anonymous" 
+      referrerpolicy="no-referrer" />
+</head>
+<body>
+    <div id="app-container">
+        <main>
+            <form id="pif-form" class="form-container" style="max-width: 800px; margin: 2rem auto;">
+                <div class="form-title">
+                    <h1 class="app-title" style="font-size: 1.75rem;">編輯 PIF 專案</h1>
+                    <p id="welcome-message" style="font-size: 1rem; margin-top: 0.5rem;">修改產品資訊後，請儲存變更。</p>
+                </div>
+
+                <div id="error-message"></div>
+                <div id="success-message"></div>
+                
+                <div class="loading-state" id="loading-indicator">
+                    <h3><i class="fa-solid fa-spinner fa-spin"></i> 正在載入專案資料...</h3>
+                </div>
+
+                <div id="form-content" style="display: none;">
+                    <div class="input-group">
+                        <label for="companyName">公司名稱</label>
+                        <input type="text" id="companyName" name="companyName" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="productName">產品名稱</label>
+                        <input type="text" id="productName" name="productName" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="contactPerson">主要聯絡人</label>
+                        <input type="text" id="contactPerson" name="contactPerson">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="contactEmail">聯絡人 Email</label>
+                        <input type="email" id="contactEmail" name="contactEmail">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="status">專案狀態</label>
+                        <select id="status" name="status" style="width: 100%; padding: 0.75rem; border: 1px solid var(--line-color); border-radius: 0.5rem; font-size: 1rem;">
+                            <option value="草稿">草稿</option>
+                            <option value="進行中">進行中</option>
+                            <option value="已完成">已完成</option>
+                        </select>
+                    </div>
+
+                    <footer style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                        <a href="pif-i.html" class="btn btn-secondary">取消</a>
+                        <button type="submit" id="submit-btn" class="btn btn-primary">儲存變更</button>
+                    </footer>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <script type="module" src="./pif_edit.js"></script>
+</body>
+</html>

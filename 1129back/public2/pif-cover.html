@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PIF 00 封面</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<style>
+:root{--bg:#fff;--ink:#111;--muted:#666;--line:#e2e8f0;--brand:#2563eb;}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC",Helvetica,Arial,sans-serif;color:var(--ink);background-color:#f8fafc;padding:0;line-height:1.6; opacity: 0; transition: opacity 0.4s ease-in-out;}
+.app-wrap{max-width:900px; margin: 24px auto;}
+.toolbar{position:sticky;top:0;background:rgba(248,250,252,.9);backdrop-filter:blur(4px);z-index:10;border-bottom:1px solid var(--line);padding:8px;margin-bottom:24px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;}
+.btn{padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: var(--ink);}
+.btn.primary{background:var(--brand);color:#fff;border-color:var(--brand);}
+
+/* --- Base Cover Styles --- */
+.cover-page-container { background: #fff; padding: 40px; border: 1px solid var(--line); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); position: relative; }
+.cover-page { min-height: 1050px; display: flex; flex-direction: column; }
+.cover-title { font-size: 2.2rem; font-weight: bold; text-align: center; margin: 20px 0 40px 0; border-bottom: 2px solid var(--ink); padding-bottom: 16px;}
+.section{margin-bottom: 16px;}
+.section-title{font-size:1.0rem;font-weight:700;color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:10px;}
+.info-grid{display:grid;grid-template-columns:140px 1fr;gap:10px;font-size:1.0rem;}
+.info-grid dt{font-weight:bold;color:var(--muted);}
+.table{width:100%;border-collapse:collapse;margin-top:8px; font-size: 0.9rem;}
+.table th, .table td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top;}
+.table th{background:#f8fafc;font-weight:600;}
+.footer { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--line); font-size: 0.9rem; color: var(--muted); }
+#loading-spinner { font-size: 2rem; text-align: center; padding: 4rem; color: var(--muted); }
+
+/* --- Preview & Print Styles --- */
+.preview-container.draft::after, .print-body.draft .cover-page-container::after {
+    content: 'DRAFT'; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg);
+    font-size: 15rem; color: rgba(0, 0, 0, 0.07); font-weight: bold; z-index: 9999; pointer-events: none;
+}
+
+.preview-container.compact .cover-page, .print-body.compact .cover-page {
+    font-size: 0.9rem; line-height: 1.5;
+}
+.preview-container.compact .cover-title, .print-body.compact .cover-title {
+    font-size: 1.8rem; margin: 10px 0 20px 0; padding-bottom: 10px;
+}
+.preview-container.compact .section, .print-body.compact .section {
+    margin-bottom: 12px;
+}
+.preview-container.compact .section-title, .print-body.compact .section-title {
+    font-size: 0.9rem; padding-bottom: 4px; margin-bottom: 8px;
+}
+.preview-container.compact .info-grid, .print-body.compact .info-grid {
+    grid-template-columns: 110px 1fr; gap: 6px; font-size: 0.9rem;
+}
+.preview-container.compact .table, .print-body.compact .table {
+    font-size: 0.8rem;
+}
+.preview-container.compact .table th, .preview-container.compact .table td, .print-body.compact .table th, .print-body.compact .table td {
+    padding: 4px 8px;
+}
+.preview-container.compact .footer, .print-body.compact .footer {
+     padding-top: 12px; font-size: 0.8rem; 
+}
+
+@media print {
+    @page {
+        size: A4;
+        margin: 20mm; /* The key change: Standardized page margin */
+    }
+    body { background-color: #fff; padding: 0; margin: 0; }
+    .app-wrap { max-width: 100%; margin: 0; }
+    .toolbar { display: none !important; }
+    .cover-page-container { 
+        border: none; 
+        box-shadow: none; 
+        padding: 0; /* Removed padding, now handled by @page */
+        width: 100%; 
+        height: 100%; 
+        position: relative; 
+    }
+    .cover-page { 
+        min-height: 0; 
+        height: 100%; 
+        page-break-after: always; 
+        display: flex; 
+        flex-direction: column; 
+    }
+}
+</style>
+</head>
+<body>
+
+<div id="app-container" style="display: none;">
+    <div class="app-wrap">
+        <div class="toolbar no-print">
+            <a id="back-link" href="pifs.html" class="btn"><i class="fa-solid fa-arrow-left"></i> 返回專案儀表板</a>
+            <div style="display: flex; gap: 8px; align-items: center; margin-left: auto;">
+                <label for="printStyle">預覽風格:</label>
+                <select id="printStyle" class="btn">
+                    <option value="standard">標準</option>
+                    <option value="draft">草稿</option>
+                    <option value="compact">緊湊</option>
+                </select>
+                <button id="btnPrint" class="btn primary"><i class="fa-solid fa-print"></i> 列印封面</button>
+            </div>
+        </div>
+
+        <div id="preview-container" class="cover-page-container">
+            <div id="cover-page" class="cover-page">
+                <div id="loading-spinner">
+                    <i class="fa-solid fa-spinner fa-spin"></i> 正在載入資料...
+                </div>
+                <div id="cover-content" style="display: none; flex-direction: column; flex-grow: 1;">
+                    <h1 class="cover-title">產品資訊檔案<br>Product Information File</h1>
+                    
+                    <div class="section">
+                        <dl class="info-grid">
+                            <dt>公司名稱</dt><dd id="info-companyName"></dd>
+                            <dt>產品名稱</dt><dd id="info-productName"></dd>
+                            <dt>PIF ID</dt><dd id="info-pifId"></dd>
+                            <dt>產品類別</dt><dd id="info-prodCategory"></dd>
+                            <dt>產品形式</dt><dd id="info-prodForm"></dd>
+                            <dt>用途</dt><dd id="info-prodUse"></dd>
+                        </dl>
+                    </div>
+
+                    <div class="section">
+                        <h2 class="section-title">製造作業場所資訊</h2>
+                        <table class="table"><thead><tr><th>#</th><th>製造廠名稱</th><th>地址</th><th>國別</th></tr></thead><tbody id="mfgBody"></tbody></table>
+                    </div>
+
+                    <div class="section">
+                        <h2 class="section-title">包裝作業場所資訊</h2>
+                        <table class="table"><thead><tr><th>#</th><th>包裝廠名稱</th><th>地址</th><th>國別</th></tr></thead><tbody id="pkgBody"></tbody></table>
+                    </div>
+
+                    <div class="section">
+                        <h2 class="section-title">產品責任業者資訊</h2>
+                         <dl class="info-grid">
+                            <dt>責任業者名稱</dt><dd id="info-makerName"></dd>
+                            <dt>地址</dt><dd id="info-makerAddr"></dd>
+                            <dt>聯絡電話</dt><dd id="info-makerTel"></dd>
+                            <dt>統一編號</dt><dd id="info-makerTax"></dd>
+                        </dl>
+                    </div>
+                    
+                    <div class="footer">
+                         <dl class="info-grid">
+                            <dt>製作者</dt><dd><input type="text" id="info-author" class="btn" style="width: 100%; text-align: left; font-size: inherit;"></dd>
+                            <dt>製作日期</dt><dd id="info-creationDate"></dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { auth, db } from './firebase-config.js';
+
+    const $ = sel => document.querySelector(sel);
+
+    let pifId = null;
+
+    function startApp() {
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                $('#app-container').style.display = 'block';
+                initializePage().catch(err => {
+                    console.error("Initialization failed:", err);
+                    $('#loading-spinner').innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> 載入失敗: ${err.message}`;
+                    $('#loading-spinner').style.color = 'var(--err)';
+                });
+                document.body.style.opacity = '1';
+                 if(user.displayName) {
+                    $('#info-author').value = user.displayName;
+                }
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+    }
+
+    async function initializePage() {
+        const urlParams = new URLSearchParams(window.location.search);
+        pifId = urlParams.get('id');
+        if (!pifId) {
+            throw new Error("網址中缺少 PIF ID。");
+        }
+
+        const backLinkParams = new URLSearchParams({ id: pifId, companyName: urlParams.get('companyName'), productName: urlParams.get('productName') });
+        $('#back-link').href = `pifs.html?${backLinkParams.toString()}`;
+
+        const docRef = doc(db, 'pifs', pifId);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+            throw new Error(`在資料庫中找不到 PIF 專案 (ID: ${pifId})`);
+        }
+        
+        renderCover(docSnap.data());
+
+        $('#loading-spinner').style.display = 'none';
+        $('#cover-content').style.display = 'flex';
+
+        setupEventListeners();
+    }
+
+    function setupEventListeners() {
+        $('#btnPrint').addEventListener('click', () => {
+            const style = $('#printStyle').value;
+            document.body.className = 'print-body'; // Add base print class
+            if (style === 'draft') document.body.classList.add('draft');
+            if (style === 'compact') document.body.classList.add('compact');
+            window.print();
+        });
+
+        $('#printStyle').addEventListener('change', (e) => {
+            const style = e.target.value;
+            const previewer = $('#preview-container');
+            previewer.className = 'cover-page-container'; // Reset classes
+            if (style === 'draft' || style === 'compact') {
+                previewer.classList.add(style);
+            }
+        });
+    }
+
+    function renderCover(pifData) {
+        const pif01 = pifData.pif01 || {};
+        const basic = pif01.basic || {};
+        const maker = pif01.maker || {};
+        const mfg = pif01.mfg || [];
+        const pkg = pif01.pkg || [];
+
+        $('#info-companyName').textContent = pifData.companyName || '-';
+        $('#info-productName').textContent = pifData.productName || '-';
+        $('#info-pifId').textContent = pifData.pifId || '-';
+        $('#info-prodCategory').textContent = basic.category || '-';
+        $('#info-prodForm').textContent = basic.form || '-';
+        $('#info-prodUse').textContent = basic.use || '-';
+
+        $('#info-makerName').textContent = maker.name || '-';
+        $('#info-makerAddr').textContent = maker.addr || '-';
+        $('#info-makerTel').textContent = maker.tel || '-';
+        $('#info-makerTax').textContent = maker.tax || '-';
+
+        renderTable('mfgBody', mfg, ['name', 'addr', 'country']);
+        renderTable('pkgBody', pkg, ['name', 'addr', 'country']);
+        
+        const today = new Date();
+        $('#info-creationDate').textContent = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`;
+    }
+
+    function renderTable(tbodyId, items, columns) {
+        const tbody = $(`#${tbodyId}`);
+        tbody.innerHTML = '';
+        if (!items || items.length === 0) {
+            const tr = tbody.insertRow();
+            const td = tr.insertCell();
+            td.colSpan = columns.length + 1;
+            td.textContent = '無資料';
+            td.style.textAlign = 'center';
+            td.style.color = 'var(--muted)';
+        } else {
+            items.forEach((item, index) => {
+                const tr = tbody.insertRow();
+                tr.insertCell().textContent = index + 1;
+                columns.forEach(col => {
+                    tr.insertCell().textContent = item[col] || '-';
+                });
+            });
+        }
+    }
+
+    startApp();
+</script>
+</body>
+</html>

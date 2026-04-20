@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KB 後台｜QA 編輯器</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    .container{ max-width: 1700px; }
+
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.85rem 1rem; background:#fff;
+      border:1px solid var(--line); border-radius:16px;
+      margin:.9rem 0 1rem;
+    }
+    .topbar .left{ display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
+    .topbar a{ text-decoration:none; color:var(--ink); font-weight:800; }
+    .badge{
+      display:inline-flex; align-items:center; gap:.35rem;
+      border:1px solid var(--line); border-radius:999px;
+      padding:.25rem .6rem; font-size:.82rem; background:#fff; color:var(--muted);
+    }
+
+    .layout{
+      display:grid; grid-template-columns: 440px 1fr; gap: 1rem; align-items:start;
+    }
+    @media (max-width: 1100px){ .layout{ grid-template-columns: 1fr; } }
+
+    .card{
+      background:#fff; border:1px solid var(--line);
+      border-radius:16px; box-shadow:0 1px 3px rgba(0,0,0,.05);
+      padding: 1rem 1rem;
+    }
+
+    .row{ display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+    .row > *{ flex: none; }
+    .grow{ flex: 1 1 auto; }
+
+    .input, select, textarea{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:.5rem .6rem;
+      font-size:.95rem;
+      outline:none;
+      background:#fff;
+    }
+    textarea{ min-height: 120px; resize: vertical; }
+    .input:focus, select:focus, textarea:focus{
+      border-color:#bfdbfe; box-shadow:0 0 0 3px rgba(59,130,246,.15);
+    }
+
+    .btnx{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius: 12px;
+      padding:.48rem .7rem;
+      cursor:pointer;
+      font-weight:800;
+      display:inline-flex; align-items:center; gap:.4rem;
+    }
+    .btnx:hover{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+    .btn-danger{ border-color:#fecaca; }
+    .btn-danger:hover{ background:#fff1f2; border-color:#fca5a5; color:#b91c1c; }
+
+    .muted{ color:var(--muted); }
+    .small{ font-size:.86rem; }
+    .kbd{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:.85rem; }
+
+    .list{
+      display:flex; flex-direction:column; gap:.45rem; margin-top:.6rem;
+      max-height: calc(100vh - 260px);
+      overflow:auto;
+      padding-right: 2px;
+    }
+    .item{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:.55rem .65rem;
+      cursor:pointer;
+      background:#fff;
+    }
+    .item:hover{ background:#eff6ff; border-color:#bfdbfe; }
+    .item .t{ font-weight:900; }
+    .item .m{ color:var(--muted); font-size:.85rem; margin-top:.15rem; line-height:1.25; }
+
+    .hr{ border:none; border-top:1px solid #eef2f7; margin: .9rem 0; }
+    .warn{
+      padding:.6rem .7rem;
+      border:1px solid #fde68a;
+      background:#fffbeb;
+      border-radius:12px;
+      color:#92400e;
+    }
+    .ok{
+      padding:.6rem .7rem;
+      border:1px solid #bbf7d0;
+      background:#f0fdf4;
+      border-radius:12px;
+      color:#166534;
+    }
+    .disabled{ opacity:.55; pointer-events:none; }
+
+    .split{
+      display:grid; grid-template-columns: 1fr 1fr; gap: .8rem;
+    }
+    @media (max-width: 980px){ .split{ grid-template-columns: 1fr; } }
+
+    .preview{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:.8rem .9rem;
+      background:#fff;
+      overflow:auto;
+      max-height: 70vh;
+    }
+    .preview h1{ font-size: 1.3rem; margin:.2rem 0 .45rem; }
+    .preview h2{ font-size: 1.05rem; margin:1rem 0 .45rem; }
+    .preview p, .preview li{ line-height:1.75; }
+    .chip{
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:.22rem .55rem;
+      font-size:.82rem;
+      color:var(--muted);
+      background:#fff;
+    }
+    .pill{
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:.3rem .55rem;
+      background:#fff;
+      font-weight:800;
+      cursor:pointer;
+      display:inline-flex; align-items:center; gap:.35rem;
+    }
+    .pill.active{ background:#2563eb; border-color:#2563eb; color:#fff; }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="left">
+        <a href="index.html"><i class="fa-solid fa-house"></i> 首頁</a>
+        <a href="qa-list.html" style="margin-left:.3rem;"><i class="fa-solid fa-circle-question"></i> 前台 QA</a>
+        <span class="badge" id="authBadge">未登入</span>
+        <span class="badge" id="roleBadge">role: —</span>
+      </div>
+      <div class="row">
+        <span class="muted small" id="userInfo"></span>
+        <button class="btnx" id="btnSignOut"><i class="fa-solid fa-right-from-bracket"></i> 登出</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside class="card">
+        <h2 style="margin:.1rem 0 .4rem;">QA 後台</h2>
+        <div class="muted small">管理 <code>qa_database</code>：分類/標籤/問題/答案/狀態。</div>
+
+        <div class="hr"></div>
+
+        <div class="row">
+          <input class="input grow" id="q" placeholder="搜尋：question / category / tags / docId…" />
+          <button class="btnx" id="btnReload" title="重新載入"><i class="fa-solid fa-rotate"></i></button>
+        </div>
+
+        <div class="row" style="margin-top:.55rem;">
+          <input class="input grow" id="newId" placeholder="新 QA docId（可空＝自動產生，例如 qa_20251227_001）" />
+          <button class="btnx" id="btnNew"><i class="fa-solid fa-plus"></i> 新增</button>
+        </div>
+
+        <div class="list" id="list"></div>
+        <div id="msg" style="margin-top:.7rem;"></div>
+      </aside>
+
+      <main class="card" id="editorWrap">
+        <div class="row" style="justify-content:space-between;">
+          <h2 style="margin:.1rem 0;">QA 編輯</h2>
+          <div class="row">
+            <button class="btnx" id="btnOpenFront"><i class="fa-solid fa-up-right-from-square"></i> 開前台定位</button>
+            <button class="btnx" id="btnSave"><i class="fa-solid fa-floppy-disk"></i> 儲存</button>
+          </div>
+        </div>
+
+        <div class="muted small" id="currentIdLine" style="margin-top:.3rem;">docId: —</div>
+
+        <div class="hr"></div>
+
+        <div class="split">
+          <div>
+            <label class="muted small">docId（新增時可改，既有項目鎖定）</label>
+            <input class="input" id="docId" placeholder="qa_20251227_001" />
+          </div>
+          <div>
+            <label class="muted small">status</label>
+            <select id="status">
+              <option value="">（空）</option>
+              <option value="published">published</option>
+              <option value="draft">draft</option>
+              <option value="archived">archived</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="split" style="margin-top:.65rem;">
+          <div>
+            <label class="muted small">category（分類）</label>
+            <input class="input" id="category" placeholder="例如：PIF / 財務 / 權限 / 匯入 / 防曬…" />
+          </div>
+          <div>
+            <label class="muted small">no（可空；排序用）</label>
+            <input class="input" id="no" placeholder="例如：101（可留空）" inputmode="numeric" />
+          </div>
+        </div>
+
+        <div style="margin-top:.65rem;">
+          <label class="muted small">tags（用 , 分隔）</label>
+          <input class="input" id="tags" placeholder="例如：PIF16, 安全評估, MOS" />
+        </div>
+
+        <div class="split" style="margin-top:.65rem;">
+          <div>
+            <label class="muted small">question（問題）</label>
+            <textarea id="question" placeholder="輸入問題…"></textarea>
+          </div>
+          <div>
+            <label class="muted small">answer（答案）</label>
+            <textarea id="answer" placeholder="輸入答案…（可用 Markdown）"></textarea>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row" style="justify-content:space-between;">
+          <h3 style="margin:.2rem 0;">即時預覽</h3>
+          <div class="row">
+            <span class="chip">答案支援 Markdown 預覽</span>
+            <button class="pill active" id="btnPreviewMd" type="button"><i class="fa-brands fa-markdown"></i> Markdown</button>
+            <button class="pill" id="btnPreviewText" type="button"><i class="fa-regular fa-file-lines"></i> 文字</button>
+          </div>
+        </div>
+        <div class="preview" id="preview"></div>
+
+        <div class="hr"></div>
+
+        <div class="row" style="justify-content:space-between;">
+          <div class="muted small" id="metaLine">createdAt: —　updatedAt: —</div>
+          <div class="row">
+            <button class="btnx" id="btnDuplicate" title="複製成新 doc"><i class="fa-solid fa-clone"></i> 複製新增</button>
+            <button class="btnx btn-danger" id="btnDelete"><i class="fa-solid fa-trash"></i> 刪除</button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module">
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { db, auth } from "./firebase-config.js";
+
+    const COL = "qa_database";
+    const $ = (s) => document.querySelector(s);
+
+    let allQa = [];
+    let currentId = "";
+    let currentData = null;
+    let canEdit = false;
+    let previewMode = "md"; // md | text
+
+    function esc(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+    }
+    function msg(html, kind="ok"){
+      $("#msg").innerHTML = `<div class="${kind === "ok" ? "ok" : "warn"}">${html}</div>`;
+      setTimeout(() => { if ($("#msg").innerHTML) $("#msg").innerHTML = ""; }, 3500);
+    }
+    function normalizeId(s){ return String(s || "").trim(); }
+
+    function nowId(){
+      const d = new Date();
+      const pad = (n)=> String(n).padStart(2,"0");
+      const y = d.getFullYear();
+      const mo = pad(d.getMonth()+1);
+      const da = pad(d.getDate());
+      const hh = pad(d.getHours());
+      const mm = pad(d.getMinutes());
+      const ss = pad(d.getSeconds());
+      const rnd = Math.random().toString(16).slice(2,6);
+      return `qa_${y}${mo}${da}_${hh}${mm}${ss}_${rnd}`;
+    }
+
+    function parseTagsInput(s){
+      return String(s || "")
+        .split(/[，,;；|/]/)
+        .map(x => x.trim())
+        .filter(Boolean)
+        .slice(0, 30);
+    }
+    function fmtTs(ts){
+      try{
+        if (!ts) return "—";
+        const d = ts.toDate ? ts.toDate() : (ts instanceof Date ? ts : null);
+        if (!d) return "—";
+        return d.toISOString().slice(0,19).replace("T"," ");
+      }catch(_){ return "—"; }
+    }
+
+    async function evaluateRoles(user){
+      canEdit = false;
+
+      if (!user){
+        $("#authBadge").textContent = "未登入";
+        $("#roleBadge").textContent = "role: —";
+        $("#userInfo").textContent = "";
+        $("#editorWrap").classList.add("disabled");
+        return;
+      }
+
+      $("#authBadge").textContent = "已登入";
+      $("#userInfo").textContent = user.email || "";
+
+      if (typeof window.__qaForcedRefresh === "undefined") window.__qaForcedRefresh = false;
+
+      try{
+        const token = await user.getIdTokenResult(!window.__qaForcedRefresh);
+        window.__qaForcedRefresh = true;
+
+        const claims = token?.claims || {};
+        const rolesObj = (claims.roles && typeof claims.roles === "object") ? claims.roles : {};
+
+        const roles = {
+          admin: !!claims.admin,
+          systemAdmin: !!claims.systemAdmin,
+          secretary: !!claims.secretary,
+          editor: !!claims.editor,
+          reviewer: !!claims.reviewer,
+          client: !!claims.client,
+          ...rolesObj
+        };
+
+        const ok = !!(roles.admin || roles.systemAdmin || roles.editor || roles.secretary);
+        canEdit = ok;
+
+        const roleKeys = ["admin","systemAdmin","secretary","editor","reviewer","client"];
+        const roleList = roleKeys.filter(k => !!roles[k]).join(", ");
+        $("#roleBadge").textContent = `role: ${roleList || "（none）"}`;
+
+        if (!ok){
+          $("#editorWrap").classList.add("disabled");
+          msg("你已登入，但缺少 admin/systemAdmin/editor/secretary 權限（已鎖定編輯）。若你剛被指派權限，請登出再登入或重新整理。", "warn");
+        }else{
+          $("#editorWrap").classList.remove("disabled");
+        }
+      }catch(e){
+        console.error(e);
+        $("#roleBadge").textContent = "role: （讀取失敗）";
+        $("#editorWrap").classList.add("disabled");
+        msg("無法讀取使用者權限（請確認自訂 claims 與 Firestore Rules）。", "warn");
+      }
+    }
+
+    async function loadList(){
+      $("#list").innerHTML = `<div class="muted small">讀取中…</div>`;
+      try{
+        const snaps = await getDocs(collection(db, COL));
+        allQa = snaps.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        allQa.sort((a,b) => {
+          const ta = a.updatedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
+          const tb = b.updatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
+          return tb - ta;
+        });
+
+        renderList();
+      }catch(e){
+        console.error(e);
+        $("#list").innerHTML = `<div class="warn">讀取 qa_database 失敗：${esc(e.message || e)}</div>`;
+      }
+    }
+
+    function renderList(){
+      const q = ($("#q").value || "").trim().toLowerCase();
+      const filtered = !q ? allQa : allQa.filter(a => {
+        const tags = Array.isArray(a.tags) ? a.tags.join(" ") : (a.tags || "");
+        const text = `${a.id} ${a.question||""} ${a.answer||""} ${a.category||""} ${tags} ${a.status||""}`.toLowerCase();
+        return text.includes(q);
+      });
+
+      const box = $("#list");
+      if (!filtered.length){
+        box.innerHTML = `<div class="muted small">沒有符合的 QA</div>`;
+        return;
+      }
+
+      box.innerHTML = "";
+      filtered.slice(0, 500).forEach(a => {
+        const div = document.createElement("div");
+        div.className = "item";
+        const t = (a.question || "").trim() || a.id;
+        const tags = Array.isArray(a.tags) ? a.tags.slice(0,4).join(", ") : "";
+        const m = [
+          a.category ? `分類：${a.category}` : "分類：未分類",
+          a.status ? `status:${a.status}` : "",
+          tags ? `tags:${tags}` : "",
+          `docId:${a.id}`
+        ].filter(Boolean).join(" · ");
+        div.innerHTML = `<div class="t">${esc(t)}</div><div class="m">${esc(m)}</div>`;
+        div.addEventListener("click", () => openQa(a.id));
+        box.appendChild(div);
+      });
+    }
+
+    function getEditorData(){
+      const data = JSON.parse(JSON.stringify(currentData || {}));
+      data.status = ($("#status").value || "").trim();
+      data.category = ($("#category").value || "").trim();
+
+      let noRaw = ($("#no").value || "").trim();
+      if (noRaw === "") data.no = null;
+      else {
+        const n = Number(noRaw);
+        data.no = Number.isFinite(n) ? n : noRaw;
+      }
+
+      data.tags = parseTagsInput($("#tags").value || "");
+      data.question = ($("#question").value || "").trim();
+      data.answer = ($("#answer").value || "").trim();
+      return data;
+    }
+
+    function setEditorData(obj, isNew=false){
+      currentData = JSON.parse(JSON.stringify(obj || {}));
+      $("#docId").value = currentId || "";
+      $("#docId").disabled = !isNew;
+
+      $("#status").value = currentData.status || "";
+      $("#category").value = currentData.category || "";
+      $("#no").value = (currentData.no ?? "") === null ? "" : String(currentData.no ?? "");
+      $("#tags").value = Array.isArray(currentData.tags) ? currentData.tags.join(", ") : (currentData.tags || "");
+      $("#question").value = currentData.question || "";
+      $("#answer").value = currentData.answer || "";
+
+      $("#currentIdLine").textContent = `docId: ${currentId || "—"}`;
+
+      const createdAt = fmtTs(currentData.createdAt);
+      const updatedAt = fmtTs(currentData.updatedAt);
+      $("#metaLine").textContent = `createdAt: ${createdAt}　updatedAt: ${updatedAt}`;
+
+      refreshPreview();
+    }
+
+    async function openQa(id){
+      const docId = normalizeId(id);
+      if (!docId) return;
+      currentId = docId;
+      $("#currentIdLine").textContent = `docId: ${currentId}`;
+      try{
+        const snap = await getDoc(doc(db, COL, currentId));
+        if (!snap.exists()){
+          msg("找不到該筆 QA。", "warn");
+          return;
+        }
+        setEditorData({ id: snap.id, ...snap.data() }, false);
+      }catch(e){
+        console.error(e);
+        msg(`開啟失敗：${esc(e.message || e)}`, "warn");
+      }
+    }
+
+    function newQa(){
+      const custom = normalizeId($("#newId").value);
+      currentId = custom || nowId();
+      $("#newId").value = "";
+
+      const init = {
+        status: "draft",
+        category: "",
+        no: null,
+        tags: [],
+        question: "",
+        answer: "",
+        createdAt: null,
+        updatedAt: null,
+      };
+      setEditorData(init, true);
+    }
+
+    async function saveQa(){
+      if (!canEdit){
+        msg("你沒有編輯權限。", "warn");
+        return;
+      }
+      const isNew = $("#docId").disabled === false;
+      const idInput = normalizeId($("#docId").value);
+      if (!idInput){
+        msg("docId 不可空。", "warn");
+        return;
+      }
+
+      const data = getEditorData();
+      const ref = doc(db, COL, idInput);
+
+      try{
+        if (isNew){
+          await setDoc(ref, { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() }, { merge: true });
+          currentId = idInput;
+          $("#docId").disabled = true;
+          msg(`已新增並儲存：<span class="kbd">${esc(currentId)}</span>`);
+        }else{
+          await updateDoc(ref, { ...data, updatedAt: serverTimestamp() });
+          msg(`已儲存：<span class="kbd">${esc(currentId)}</span>`);
+        }
+
+        const snap = await getDoc(ref);
+        setEditorData({ id: snap.id, ...snap.data() }, false);
+        await loadList();
+      }catch(e){
+        console.error(e);
+        msg(`儲存失敗：${esc(e.message || e)}`, "warn");
+      }
+    }
+
+    async function deleteQa(){
+      if (!canEdit){
+        msg("你沒有編輯權限。", "warn");
+        return;
+      }
+      if (!currentId){
+        msg("尚未選取 QA。", "warn");
+        return;
+      }
+      if (!confirm(`確定刪除 QA：${currentId} ?`)) return;
+
+      try{
+        await deleteDoc(doc(db, COL, currentId));
+        msg(`已刪除：<span class="kbd">${esc(currentId)}</span>`);
+        currentId = "";
+        currentData = null;
+        $("#currentIdLine").textContent = "docId: —";
+        setEditorData({}, true);
+        await loadList();
+      }catch(e){
+        console.error(e);
+        msg(`刪除失敗：${esc(e.message || e)}`, "warn");
+      }
+    }
+
+    function duplicateQa(){
+      if (!currentData || !currentId){
+        msg("請先選取一筆 QA 再複製。", "warn");
+        return;
+      }
+      const base = getEditorData();
+      currentId = nowId();
+      $("#docId").value = currentId;
+      $("#docId").disabled = false;
+      currentData = { ...base, status: "draft" };
+      $("#currentIdLine").textContent = `docId: ${currentId}（新）`;
+      msg("已複製成新草稿，請按「儲存」建立新 doc。");
+      refreshPreview();
+    }
+
+    function openFront(){
+      if (!currentId) return;
+      const url = `qa-list.html#qa-${encodeURIComponent(currentId)}`;
+      window.open(url, "_blank");
+    }
+
+    function refreshPreview(){
+      const data = getEditorData();
+      const tags = Array.isArray(data.tags) ? data.tags : [];
+
+      const head = `
+        <h1>${esc((data.question || "").trim() || "（未填問題）")}</h1>
+        <div style="margin:.35rem 0 .65rem; display:flex; gap:.35rem; flex-wrap:wrap;">
+          <span class="chip">分類：${esc(data.category || "未分類")}</span>
+          ${data.status ? `<span class="chip">status:${esc(data.status)}</span>` : ``}
+          ${tags.map(t => `<span class="chip">#${esc(t)}</span>`).join("")}
+        </div>
+      `;
+
+      const ans = (data.answer || "");
+      const body = (previewMode === "md")
+        ? `<div>${marked.parse(ans || "（未填答案）")}</div>`
+        : `<pre style="white-space:pre-wrap; line-height:1.7; margin:0;">${esc(ans || "（未填答案）")}</pre>`;
+
+      $("#preview").innerHTML = head + body;
+    }
+
+    $("#btnReload").addEventListener("click", loadList);
+    $("#q").addEventListener("input", renderList);
+
+    $("#btnNew").addEventListener("click", newQa);
+    $("#btnSave").addEventListener("click", saveQa);
+    $("#btnDelete").addEventListener("click", deleteQa);
+    $("#btnDuplicate").addEventListener("click", duplicateQa);
+    $("#btnOpenFront").addEventListener("click", openFront);
+
+    $("#btnPreviewMd").addEventListener("click", () => {
+      previewMode = "md";
+      $("#btnPreviewMd").classList.add("active");
+      $("#btnPreviewText").classList.remove("active");
+      refreshPreview();
+    });
+    $("#btnPreviewText").addEventListener("click", () => {
+      previewMode = "text";
+      $("#btnPreviewText").classList.add("active");
+      $("#btnPreviewMd").classList.remove("active");
+      refreshPreview();
+    });
+
+    ["status","category","no","tags","question","answer"].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("input", refreshPreview);
+      el.addEventListener("change", refreshPreview);
+    });
+
+    $("#btnSignOut").addEventListener("click", async () => {
+      try{ await signOut(auth); location.href = "login.html"; }catch(e){ console.error(e); }
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+      await evaluateRoles(user);
+      await loadList();
+
+      try{
+        const u = new URL(location.href);
+        const id = (u.searchParams.get("id") || "").trim();
+        if (id) openQa(id);
+        else newQa();
+      }catch(_){
+        newQa();
+      }
+    });
+  </script>
+</body>
+</html>

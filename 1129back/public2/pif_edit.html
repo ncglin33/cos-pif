@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>編輯 PIF 專案</title>
+
+    <!-- 原本共用樣式 -->
+    <link rel="stylesheet" href="./style.css">
+    <link 
+      rel="stylesheet" 
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" 
+      integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" 
+      crossorigin="anonymous" 
+      referrerpolicy="no-referrer" />
+
+    <!-- ✅ 編輯頁專用：美化 + 欄位加寬 -->
+    <style>
+      body {
+        background: #f3f4f6;
+      }
+
+      /* 放大整塊卡片 */
+      #pif-form.form-container {
+        max-width: 960px !important;
+        width: 100%;
+        margin: 3rem auto;
+        padding: 2.5rem 3rem;
+        border-radius: 1rem;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+      }
+
+      #pif-form .form-title {
+        margin-bottom: 1.5rem;
+        text-align: left;
+      }
+      #pif-form .form-title h1 {
+        font-size: 2rem;
+        margin: 0;
+      }
+      #pif-form .form-title p {
+        margin: .5rem 0 0 0;
+        color: var(--text-secondary);
+      }
+
+      /* 讓標籤在左、欄位在右 → 欄位變更寬 */
+      #form-content .input-group {
+        display: grid;
+        grid-template-columns: 140px minmax(0, 1fr);
+        align-items: center;
+        column-gap: 1rem;
+        margin-bottom: 1.25rem;
+      }
+
+      #form-content .input-group label {
+        margin-bottom: 0;
+        text-align: right;
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-size: 0.92rem;
+      }
+
+      #form-content .input-group input,
+      #form-content .input-group select {
+        width: 100%;
+        padding: 0.75rem 0.9rem;
+        border-radius: 0.6rem;
+        font-size: 1rem;
+      }
+
+      /* 錯誤 / 成功訊息美化一點 */
+      #error-message, #success-message {
+        margin-bottom: 1rem;
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+      }
+
+      /* footer 按鈕區塊 */
+      #pif-form footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        margin-top: 2rem;
+      }
+
+      /* 載入中區塊跟卡片風格一致 */
+      .loading-state {
+        border-radius: 0.75rem;
+        border: 1px dashed var(--line-color);
+        background: #f9fafb;
+        margin-top: 1rem;
+      }
+
+      /* 小螢幕改回直式排列，避免擠在一起 */
+      @media (max-width: 768px) {
+        #pif-form.form-container {
+          max-width: 100% !important;
+          margin: 1.5rem 1rem;
+          padding: 1.75rem 1.25rem;
+        }
+        #form-content .input-group {
+          grid-template-columns: 1fr;
+          row-gap: 0.4rem;
+        }
+        #form-content .input-group label {
+          text-align: left;
+        }
+      }
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <main>
+            <form id="pif-form" class="form-container">
+                <div class="form-title">
+                    <h1 class="app-title">編輯 PIF 專案</h1>
+                    <p id="welcome-message">修改產品資訊後，請儲存變更。</p>
+                </div>
+
+                <div id="error-message" style="display:none;"></div>
+                <div id="success-message" style="display:none;"></div>
+                
+                <div class="loading-state" id="loading-indicator">
+                    <h3><i class="fa-solid fa-spinner fa-spin"></i> 正在載入專案資料...</h3>
+                </div>
+
+                <div id="form-content" style="display: none;">
+                    <div class="input-group">
+                        <label for="companyName">公司名稱</label>
+                        <input type="text" id="companyName" name="companyName" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="productName">產品名稱</label>
+                        <input type="text" id="productName" name="productName" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="contactPerson">主要聯絡人</label>
+                        <input type="text" id="contactPerson" name="contactPerson">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="contactEmail">聯絡人 Email</label>
+                        <input type="email" id="contactEmail" name="contactEmail">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="status">專案狀態</label>
+                        <select id="status" name="status">
+                            <option value="草稿">草稿</option>
+                            <option value="進行中">進行中</option>
+                            <option value="已完成">已完成</option>
+                        </select>
+                    </div>
+
+                    <footer>
+                        <a href="pif-i.html" class="btn btn-secondary">取消</a>
+                        <button type="submit" id="submit-btn" class="btn btn-primary">儲存變更</button>
+                    </footer>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <script type="module" src="./pif_edit.js"></script>
+</body>
+</html>

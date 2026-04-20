@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CosPIF 智慧科技整合系統 - 首頁</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* 最新消息 + QA 區塊 */
+        .info-section {
+            padding: 3rem 0;
+            background: #f3f4f6;
+        }
+        .info-grid {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1.5fr;
+            gap: 2.5rem;
+            align-items: flex-start;
+        }
+        .info-block h2 {
+            margin: 0 0 0.5rem;
+            font-size: 1.6rem;
+        }
+        .info-subtitle {
+            margin: 0 0 1.5rem;
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        .news-item {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 0.9rem 1rem;
+            margin-bottom: 0.9rem;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+            border: 1px solid #e5e7eb;
+        }
+        .news-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            margin-bottom: 0.3rem;
+            color: #6b7280;
+        }
+        .news-date {
+            font-weight: 500;
+        }
+        .news-tag {
+            padding: 0.1rem 0.4rem;
+            border-radius: 999px;
+            border: 1px solid #d1d5db;
+            font-size: 0.75rem;
+            background: #f9fafb;
+        }
+        .news-item h3 {
+            margin: 0.1rem 0 0.3rem;
+            font-size: 1rem;
+        }
+        .news-item p {
+            margin: 0;
+            font-size: 0.88rem;
+            color: #4b5563;
+        }
+        .link-more {
+            display: inline-block;
+            margin-top: 0.5rem;
+            font-size: 0.86rem;
+            color: #2563eb;
+            text-decoration: none;
+        }
+        .link-more:hover {
+            text-decoration: underline;
+        }
+
+        .qa-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 1rem;
+        }
+        .qa-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.25rem;
+            font-size: 0.9rem;
+            margin-bottom: 0.4rem;
+        }
+        .qa-q {
+            color: #2563eb;
+            font-weight: 600;
+            margin-top: 0.05rem;
+        }
+        .qa-link {
+            color: #111827;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .qa-link:hover {
+            color: #2563eb;
+            text-decoration: underline;
+        }
+        .qa-open-btn {
+            margin-top: 0.6rem;
+        }
+        .qa-tip {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+
+        /* QA 精選加強版面：熱門標籤 + 使用小攻略 */
+        .qa-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.4rem;
+            margin-bottom: 0.75rem;
+        }
+        .qa-tag {
+            border-radius: 999px;
+            border: 1px solid #d1d5db;
+            padding: 0.25rem 0.7rem;
+            font-size: 0.78rem;
+            background: #ffffff;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            white-space: nowrap;
+        }
+        .qa-tag i {
+            font-size: 0.8rem;
+            opacity: 0.85;
+        }
+        .qa-tag:hover {
+            background: #eff6ff;
+            border-color: #2563eb;
+            color: #2563eb;
+        }
+
+        .qa-meta-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 0.75rem;
+            margin-top: 0.4rem;
+        }
+        .qa-meta-block {
+            background: #f9fafb;
+            border-radius: 10px;
+            padding: 0.6rem 0.8rem;
+            border: 1px dashed #e5e7eb;
+        }
+        .qa-meta-block h3 {
+            margin: 0 0 0.35rem;
+            font-size: 0.82rem;
+            color: #374151;
+        }
+        .qa-meta-block ul {
+            margin: 0;
+            padding-left: 1.1rem;
+        }
+        .qa-meta-block li {
+            font-size: 0.78rem;
+            color: #4b5563;
+            margin-bottom: 0.2rem;
+        }
+
+        /* 簡單的主按鈕樣式 */
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.6rem 1.3rem;
+            border-radius: 999px;
+            border: none;
+            background: #2563eb;
+            color: #fff;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .btn-primary i {
+            margin-left: 0.3rem;
+        }
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        /* 首頁價格試算區塊（摘要卡片） */
+        .pricing-section {
+            padding: 3rem 0 3.5rem;
+            background: #ffffff;
+        }
+        .pricing-section .section-title {
+            text-align: center;
+        }
+        .pricing-section .section-subtitle {
+            text-align: center;
+            max-width: 720px;
+            margin: 0.3rem auto 2rem;
+        }
+        .pricing-grid-home {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1.6rem;
+        }
+        .pricing-card-home {
+            background: #f9fafb;
+            border-radius: 16px;
+            padding: 1.4rem 1.5rem 1.3rem;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 210px;
+        }
+        .pricing-card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.8rem;
+            margin-bottom: 0.4rem;
+        }
+        .pricing-card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #d1d5db;
+            background: #ffffff;
+            flex-shrink: 0;
+        }
+        .pricing-card-home h3 {
+            margin: 0;
+            font-size: 1.05rem;
+        }
+        .pricing-card-home p {
+            margin: 0.4rem 0 0.6rem;
+            font-size: 0.86rem;
+            color: #4b5563;
+        }
+        .pricing-card-home ul {
+            margin: 0;
+            padding-left: 1.1rem;
+            font-size: 0.82rem;
+            color: #4b5563;
+        }
+        .pricing-card-home li {
+            margin-bottom: 0.15rem;
+        }
+        .pricing-card-footer {
+            margin-top: 0.9rem;
+            display: flex;
+            justify-content: flex-start;
+        }
+        .pricing-link {
+            font-size: 0.86rem;
+        }
+
+        @media (max-width: 900px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            .qa-meta-grid {
+                grid-template-columns: 1fr;
+            }
+            .pricing-grid-home {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* QA Widget 專用樣式（右下角視窗） */
+        .qa-widget {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            z-index: 1100;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        .qa-widget #qa-widget-toggle {
+            border-radius: 999px;
+            border: none;
+            background: #2563eb;
+            color: #fff;
+            padding: 0.8rem 1.1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.35);
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        .qa-widget #qa-widget-toggle i.fa-times {
+            display: none;
+        }
+        .qa-widget.open #qa-widget-toggle i.fa-question-circle {
+            display: none;
+        }
+        .qa-widget.open #qa-widget-toggle i.fa-times {
+            display: inline-block;
+        }
+
+        .qa-widget-window {
+            position: fixed;
+            right: 24px;
+            bottom: 96px;
+            width: 340px;
+            max-height: 520px;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.35);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(10px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        .qa-widget.open .qa-widget-window {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .qa-widget-header {
+            padding: 0.9rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            background: linear-gradient(135deg, #1d4ed8, #2563eb);
+            color: #fff;
+        }
+        .qa-widget-header h3 {
+            margin: 0;
+            font-size: 0.98rem;
+        }
+        .qa-widget-header p {
+            margin: 0.15rem 0 0;
+            font-size: 0.78rem;
+            opacity: 0.9;
+        }
+
+        .qa-widget-messages {
+            padding: 0.8rem 0.9rem;
+            flex: 1;
+            overflow-y: auto;
+            background: #f9fafb;
+        }
+        .qa-widget-messages .message {
+            margin-bottom: 0.6rem;
+            font-size: 0.86rem;
+        }
+        .qa-widget-messages .message p {
+            margin: 0;
+            padding: 0.55rem 0.7rem;
+            border-radius: 14px;
+            max-width: 90%;
+        }
+        .qa-widget-messages .message-user p {
+            margin-left: auto;
+            background: #2563eb;
+            color: #fff;
+        }
+        .qa-widget-messages .message-bot p {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.07);
+        }
+        .qa-widget-messages .message.loading p {
+            display: inline-flex;
+            gap: 4px;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+        }
+        .qa-widget-messages .message.loading span {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: #9ca3af;
+            animation: qa-loading-dot 1s infinite ease-in-out;
+        }
+        .qa-widget-messages .message.loading span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .qa-widget-messages .message.loading span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes qa-loading-dot {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        .qa-widget-input {
+            padding: 0.6rem 0.7rem;
+            border-top: 1px solid #e5e7eb;
+            background: #f9fafb;
+            display: flex;
+            gap: 0.4rem;
+            align-items: center;
+        }
+        .qa-widget-input input {
+            flex: 1;
+            border-radius: 10px;
+            border: 1px solid #d1d5db;
+            padding: 0.45rem 0.55rem;
+            font-size: 0.85rem;
+        }
+        .qa-widget-input button {
+            border-radius: 999px;
+            border: none;
+            background: #2563eb;
+            color: #fff;
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        @media (max-width: 600px) {
+            .qa-widget-window {
+                right: 12px;
+                left: 12px;
+                width: auto;
+            }
+            .qa-widget {
+                right: 12px;
+                bottom: 12px;
+            }
+        }
+    
+        /* 訂閱 Widget（左下角圓形按鈕 + 小視窗） */
+        .sub-widget{
+            position: fixed;
+            left: 24px;
+            bottom: 24px;
+            z-index: 1100;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        .sub-widget #sub-widget-toggle{
+            width: 58px;
+            height: 58px;
+            border-radius: 999px;
+            border: none;
+            background: #111827;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.35);
+            cursor: pointer;
+            position: relative;
+        }
+        /* Poll floating button */
+        #poll-widget-toggle{
+            width: 58px;
+            height: 58px;
+            border-radius: 999px;
+            border: none;
+            background: #2563eb;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 12px 28px rgba(37, 99, 235, 0.35);
+            cursor: pointer;
+            text-decoration: none;
+        }
+        #poll-widget-toggle:hover{ filter: brightness(1.05); }
+        #poll-widget-toggle i{ font-size: 20px; }
+        
+        .sub-widget #sub-widget-toggle i{
+            font-size: 1.1rem;
+        }
+        .sub-widget .sub-tooltip{
+            position: absolute;
+            left: 68px;
+            bottom: 8px;
+            background: #111827;
+            color: #fff;
+            border-radius: 999px;
+            padding: 0.38rem 0.65rem;
+            font-size: 0.82rem;
+            opacity: 0;
+            transform: translateX(-6px);
+            pointer-events: none;
+            transition: opacity .15s ease, transform .15s ease;
+            white-space: nowrap;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.22);
+        }
+        .sub-widget:hover .sub-tooltip{ opacity: 1; transform: translateX(0); }
+
+        .sub-widget #sub-widget-toggle::after{
+            content:"";
+            position:absolute;
+            inset:-6px;
+            border-radius: 999px;
+            border: 2px solid rgba(37,99,235,.35);
+            animation: sub-pulse 1.6s infinite ease-out;
+        }
+        @keyframes sub-pulse{
+            0%{ transform: scale(0.92); opacity: .9; }
+            70%{ transform: scale(1.22); opacity: 0; }
+            100%{ transform: scale(1.22); opacity: 0; }
+        }
+
+        .sub-widget-window{
+            position: fixed;
+            left: 24px;
+            bottom: 96px;
+            width: 320px;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.35);
+            overflow: hidden;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(10px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        .sub-widget.open .sub-widget-window{
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+        .sub-widget-head{
+            padding: 0.85rem 0.95rem;
+            border-bottom: 1px solid #e5e7eb;
+            background: linear-gradient(135deg, #111827, #2563eb);
+            color: #fff;
+        }
+        .sub-widget-head h3{
+            margin: 0;
+            font-size: 0.95rem;
+        }
+        .sub-widget-head p{
+            margin: 0.2rem 0 0;
+            font-size: 0.78rem;
+            opacity: .92;
+        }
+        .sub-widget-body{
+            padding: 0.85rem 0.95rem 0.95rem;
+            background: #f9fafb;
+        }
+        .sub-row{ display:flex; gap:.45rem; align-items:center; }
+        .sub-row + .sub-row{ margin-top: .6rem; }
+        .sub-input{
+            flex: 1;
+            border-radius: 10px;
+            border: 1px solid #d1d5db;
+            padding: 0.5rem 0.55rem;
+            font-size: 0.9rem;
+            background:#fff;
+        }
+        .sub-seg{
+            display:flex; gap:.4rem; flex-wrap:wrap;
+        }
+        .sub-pill{
+            border-radius: 999px;
+            border: 1px solid #d1d5db;
+            background: #fff;
+            padding: 0.35rem 0.7rem;
+            font-size: 0.82rem;
+            cursor: pointer;
+            user-select:none;
+        }
+        .sub-pill.active{
+            border-color:#2563eb;
+            color:#2563eb;
+            background:#eff6ff;
+        }
+        .sub-actions{
+            display:flex;
+            gap:.45rem;
+            align-items:center;
+            justify-content: space-between;
+            margin-top: .75rem;
+        }
+        .sub-btn{
+            border-radius: 999px;
+            border: none;
+            background: #2563eb;
+            color: #fff;
+            padding: 0.55rem 0.9rem;
+            font-size: 0.88rem;
+            cursor: pointer;
+            display:inline-flex;
+            align-items:center;
+            gap:.35rem;
+        }
+        .sub-btn:disabled{ opacity:.6; cursor:not-allowed; }
+        .sub-link{
+            font-size: .84rem;
+            color:#2563eb;
+            text-decoration:none;
+        }
+        .sub-link:hover{ text-decoration: underline; }
+
+        .sub-msg{
+            margin-top:.55rem;
+            font-size:.82rem;
+            color:#6b7280;
+            line-height:1.5;
+        }
+        .sub-msg.ok{ color:#166534; }
+        .sub-msg.err{ color:#b91c1c; }
+
+        @media (max-width: 600px) {
+            .sub-widget{
+                left: 12px;
+                bottom: 12px;
+            }
+            .sub-widget-window{
+                left: 12px;
+                right: 12px;
+                width: auto;
+            }
+        }
+
+    
+        /* ---------- Header Auth UI ---------- */
+        .auth-actions{ display:flex; align-items:center; gap: .75rem; }
+        .user-chip{
+            display:flex; align-items:center; gap:.55rem;
+            padding:.32rem .55rem;
+            border:1px solid #e5e7eb;
+            border-radius:999px;
+            background:#ffffff;
+        }
+        .user-chip .user-email{
+            font-size:.92rem;
+            font-weight:800;
+            max-width: 220px;
+            overflow:hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .user-chip .user-role{
+            font-size:.78rem;
+            padding:.12rem .45rem;
+            border:1px solid #e5e7eb;
+            border-radius:999px;
+            background:#f8fafc;
+            color:#334155;
+        }
+        .btn-logout{
+            padding:.42rem .8rem !important;
+            font-size:.9rem !important;
+        }
+        @media (max-width: 860px){
+            .user-chip .user-email{ max-width: 140px; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo">
+                    <img src="img/cospif-logo.png" alt="CosPIF Logo">
+                </a>
+                <ul class="nav-links">
+                    <li><a href="index.html#features">核心功能</a></li>
+                    <li><a href="news-list.html">最新消息</a></li>
+                    <li><a href="pif-chart.html">PIF流程</a></li>
+                    <li><a href="qa-list.html">QA知識庫</a></li>
+                    <li><a href="cosmetic.html">化妝品知識</a></li>
+                    <li><a href="kb-issue.html">化妝品智慧月刊</a></li>
+                    <li><a href="index.html#about">關於我們</a></li>
+                    <li><a href="contact.html">聯絡我們</a></li>
+                  </ul>                 
+                <div id="authArea" class="auth-actions">
+                    <a href="login.html" class="btn-login" id="btnLogin">登入系統</a>
+                    <div class="user-chip" id="userChip" style="display:none;">
+                        <span class="user-email" id="userEmail">—</span>
+                        <span class="user-role" id="userRole">—</span>
+                        <a href="#" class="btn-login btn-logout" id="btnLogout">登出</a>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+    
+
+    <main>
+        <section class="hero">
+            <div class="hero-background"></div>
+            <div class="hero-content">
+                <h1>CosPIF 智慧科技整合系統</h1>
+                <p>專為化妝品產業設計，從產品資訊檔案建立、毒理查詢到 PIF 文件管理與 AI 生成整合應用，一站式解決方案，讓製作 PIF 變得前所未有的簡單。</p>
+                <a href="register.html" class="btn-login" style="font-size: 1.2rem; padding: 0.8rem 2.5rem;">
+                    立即註冊 CosPIF 開始體驗 AI 科技整合系統 <i class="fa-solid fa-arrow-right"></i>
+                </a>
+                <div style="margin-top: 14px;">
+                  <a href="https://cosproof.web.app/index.html" class="btn-login" style="background: transparent; border: 2px solid rgba(255,255,255,0.85); color: #fff; font-size: 1.05rem; padding: 0.7rem 2.2rem;">
+                      CosPIF檢測服務平台 <i class="fa-solid fa-square-poll-vertical"></i>
+                  </a>
+                </div>
+        
+            </div>
+        </section>
+
+        <!-- 最新消息 + QA 精選 區塊 -->
+        <section id="news-qa" class="info-section">
+            <div class="info-grid">
+                <!-- 左：最新消息（由 Firestore news 集合載入） -->
+                <div class="info-block">
+                    <h2>最新消息</h2>
+                    <p class="info-subtitle">CosPIF 系統更新與重要公告</p>
+
+                    <!-- 這裡由 JS 動態塞入 -->
+                    <div id="news-list-front"></div>
+
+                    <a href="news-list.html" class="link-more">更多消息</a>
+                </div>
+
+                <!-- 右：常見 QA 精選 -->
+                <div class="info-block">
+                    <h2>常見問題 QA 精選</h2>
+                    <p class="info-subtitle">快速了解 CosPIF 的操作與 PIF 建置流程</p>
+
+                    <ul class="qa-list">
+                        <li>
+                            <span class="qa-q">Q：</span>
+                            <a class="qa-link" data-qa-query="第一次使用 CosPIF 需要準備什麼？">
+                                第一次使用 CosPIF 需要準備哪些帳號與資料？
+                            </a>
+                        </li>
+                        <li>
+                            <span class="qa-q">Q：</span>
+                            <a class="qa-link" data-qa-query="如何新增一筆新的 PIF？">
+                                如何在系統中新增一筆新的 PIF？
+                            </a>
+                        </li>
+                        <li>
+                            <span class="qa-q">Q：</span>
+                            <a class="qa-link" data-qa-query="PIF16 要寫哪些安全評估內容？">
+                                PIF16 安全評估結論建議包含哪些重點？
+                            </a>
+                        </li>
+                        <li>
+                            <span class="qa-q">Q：</span>
+                            <a class="qa-link" data-qa-query="毒理資料匯入看不到，怎麼排查？">
+                                匯入毒理資料後在 PIF16 看不到內容要怎麼排查？
+                            </a>
+                        </li>
+                        <li>
+                            <span class="qa-q">Q：</span>
+                            <a class="qa-link" data-qa-query="忘記密碼無法登入怎麼辦？">
+                                忘記密碼或帳號無法登入時應該怎麼處理？
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- 熱門關鍵字 Tag：同樣使用 qa-link class，可直接帶入搜尋 -->
+                    <div class="qa-tags">
+                        <button class="qa-link qa-tag" data-qa-query="PIF 建置流程">
+                            <i class="fa-solid fa-diagram-project"></i> PIF 建置流程
+                        </button>
+                        <button class="qa-link qa-tag" data-qa-query="毒理資料匯入格式">
+                            <i class="fa-solid fa-flask"></i> 毒理資料匯入格式
+                        </button>
+                        <button class="qa-link qa-tag" data-qa-query="PIF16 安全評估">
+                            <i class="fa-solid fa-shield-heart"></i> PIF16 安全評估
+                        </button>
+                        <button class="qa-link qa-tag" data-qa-query="雲端 PDF 上傳">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> 雲端 PDF 上傳
+                        </button>
+                        <button class="qa-link qa-tag" data-qa-query="帳號與權限管理">
+                            <i class="fa-solid fa-user-gear"></i> 帳號與權限管理
+                        </button>
+                    </div>
+
+                    <!-- 使用小攻略與推薦問法 -->
+                    <div class="qa-meta-grid">
+                        <div class="qa-meta-block">
+                            <h3>建議問法</h3>
+                            <ul>
+                                <li>「如何撰寫 PIF16 安全評估結論？」</li>
+                                <li>「CSV 匯入毒理資料有錯誤訊息時怎麼處理？」</li>
+                                <li>「我要建立一個新產品的 PIF，步驟是？」</li>
+                            </ul>
+                        </div>
+                        <div class="qa-meta-block">
+                            <h3>適合查詢主題</h3>
+                            <ul>
+                                <li>PIF 各章節需準備的資料</li>
+                                <li>毒理、理化與微生物試驗說明</li>
+                                <li>系統操作與帳號登入問題</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary qa-open-btn" id="open-qa-from-section">
+                        打開 QA 智慧搜尋 <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+
+                    <p class="qa-tip">
+                        小提示：點選上方任一問題或熱門標籤，系統會自動打開右下角 QA 視窗並帶入關鍵字幫您搜尋。
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="features">
+            <div class="container">
+                <h2 class="section-title">三大核心，點燃效率</h2>
+                <p class="section-subtitle">我們整合了最新 AI（雙 AI）技術，為您提供最全面的 PIF 解決方案。</p>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <img src="https://images.pexels.com/photos/5926382/pexels-photo-5926382.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="PIF 智能製作" class="feature-image">
+                        <div class="feature-content">
+                            <h3>PIF 智慧整合科技製作</h3>
+                            <p>引導式流程，從原料到成品，系統化建立、管理與匯出化妝品的產品資訊檔案（PIF），告別繁瑣的文書作業。</p>
+                        </div>
+                    </div>
+                    <div class="feature-card">
+                        <img src="https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="AI 智慧配方" class="feature-image">
+                        <div class="feature-content">
+                            <h3>AI 智慧查詢與 PIF 撰寫</h3>
+                            <p>藉由強大的雙 AI 模型分析，提供 PIF 文件建議、安全評估與法規符合性檢查，加速您的產品研發流程。</p>
+                        </div>
+                    </div>
+                    <div class="feature-card">
+                        <img src="https://images.pexels.com/photos/205316/pexels-photo-205316.png?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="全球化妝品法規資料庫" class="feature-image">
+                        <div class="feature-content">
+                            <h3>全球化妝品毒理與法規資料庫</h3>
+                            <p>即時更新的全球毒理與化妝品法規資料庫，讓您的產品在不同市場暢行無阻，輕鬆應對法規規範。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 首頁價格試算摘要區 -->
+        <section id="pricing" class="pricing-section">
+            <div class="container">
+                <h2 class="section-title">價格試算與功效評估</h2>
+                <p class="section-subtitle">
+                    利用簡單的試算工具，快速估算 PIF 建置、試驗與功效評估專案的概估費用，作為預算與專案規劃的參考依據。
+                </p>
+
+                <div class="pricing-grid-home">
+                    <!-- 左：PIF & 試驗價格試算 -->
+                    <article class="pricing-card-home">
+                        <div>
+                            <div class="pricing-card-header">
+                                <div class="pricing-card-icon">
+                                    <i class="fa-solid fa-calculator"></i>
+                                </div>
+                                <div>
+                                    <h3>PIF 建置與試驗價格試算</h3>
+                                    <p>依「產品品項數」估算 PIF 建置、化妝品有效性檢測、PET防腐挑戰、產品安定性、微生物檢測與 SA簽署等費用。</p>
+                                </div>
+                            </div>
+                            <ul>
+                                <li>快速了解每項產品大約需要投入的檢測與文件成本</li>
+                                <li>可勾選是否包含防腐、理化、微生物與 SA 報告</li>
+                                <li>適合業者與學研單位進行專案預算溝通</li>
+                            </ul>
+                        </div>
+                        <div class="pricing-card-footer">
+                            <a href="price.html" class="btn-primary pricing-link">
+                                開啟 PIF 價格試算 <i class="fa-solid fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </article>
+
+                    <!-- 右：功效評估價格試算 -->
+                    <article class="pricing-card-home">
+                        <div>
+                            <div class="pricing-card-header">
+                                <div class="pricing-card-icon">
+                                    <i class="fa-solid fa-sun"></i>
+                                </div>
+                                <div>
+                                    <h3>防曬與功效評估試算</h3>
+                                    <p>依「受測產品數量」試算 SPF、PA、防曬體外評估，以及保濕、美白等功效評估概估費用。</p>
+                                </div>
+                            </div>
+                            <ul>
+                                <li>體外 SPF與UVA星號、防曬人體 SPF與PA 試驗</li>
+                                <li>保濕、美白／淡斑等功效評估試驗</li>
+                                <li>金額為新台幣，提供預算討論與專案設計參考</li>
+                            </ul>
+                        </div>
+                        <div class="pricing-card-footer">
+                            <a href="price-eva.html" class="btn-primary pricing-link">
+                                開啟功效評估試算 <i class="fa-solid fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="about-section">
+            <div class="container about-container" style="display: flex; align-items: center; gap: 2rem;">
+              <div class="about-content" style="flex: 1.5;">
+                <h2>關於 CosPIF</h2>
+                <p>
+                  CosPIF 由擁有三十餘年資深化妝品與安全評估專家團隊策畫，結合最新
+                  AI 輔助技術打造的「化妝品產品資訊檔案（PIF）智慧科技整合平台」。
+                </p>
+                <p>
+                  我們秉持嚴謹商品、品質、法規與學術觀點，結合數據驅動與雲端化的方式，完成過去需大量人工整理及團隊比對的繁瑣工作。
+                </p>
+                <p>
+                  CosPIF 內建龐大的化妝品原料專業資料與實際使用情境，搭配 AI 輔助資料庫與演算法推理引擎，從原料選擇、配方設計到 PIF 文件彙整，一站式完成，大幅降低錯誤風險與建立負擔。
+                </p>
+                <ul>
+                  <li><strong>專家策畫的 PIF 流程：</strong>依國際標準與實際法規需求設計，讓第一次使用 CosPIF 也有清楚的引導。</li>
+                  <li><strong>AI 輔助審核與統整：</strong>協助查詢規範文字、比對資料一致性，降低出錯風險。</li>
+                  <li><strong>原料毒理與理化性質整合：</strong>快速查詢 NOAEL、LD50 等數據與 GHS 分類等資訊，支援安全評估與法規檢視。</li>
+                  <li><strong>教學與產學共用：</strong>同時支援教學需求，讓學生與業界專業人員能共享同一套標準化的實作平台。</li>
+                </ul>
+              </div>
+          
+              <div class="about-image" style="flex: 1;">
+                <img src="img/AI.jpg" alt="AI 生成化妝品概念圖" style="width:100%; height:auto; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.08);">
+              </div>
+            </div>
+        </section>
+              
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 CosPIF 化妝品 PIF 智慧科技整合系統. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+
+    <!-- Magazine Subscribe Widget -->
+    <div id="sub-widget" class="sub-widget" aria-label="化妝品月刊訂閱">
+        <button id="sub-widget-toggle" title="訂閱刊物">
+            <i class="fa-solid fa-newspaper"></i>
+        </button>
+        <span class="sub-tooltip">免費訂閱月刊</span>
+
+        <div class="sub-widget-window">
+            <div class="sub-widget-head">
+                <h3>化妝品刊物免費訂閱</h3>
+                <p>免費訂閱：每月上線通知（Email）</p>
+            </div>
+            <div class="sub-widget-body">
+                <div class="sub-row">
+                    <div class="sub-seg" id="subFrequencySeg">
+                        <span class="sub-pill active" data-f="monthly">月刊</span>
+                    </div>
+                </div>
+                <div class="sub-row">
+                    <input id="subEmail" class="sub-input" placeholder="輸入 Email（例：name@example.com）" autocomplete="email" />
+                </div>
+                <div class="sub-actions">
+                    <button id="subBtn" class="sub-btn">
+                        <i class="fa-solid fa-bell"></i> 免費訂閱
+                    </button>
+                    <a class="sub-link" href="kb-issue.html" target="_blank" rel="noopener">
+                        查看刊物 <i class="fa-solid fa-up-right-from-square"></i>
+                    </a>
+                </div>
+                <div id="subMsg" class="sub-msg">提示：按左下角圓形按鈕可收合；本功能不佔首頁版面；目前提供月刊免費訂閱。</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QA Search Widget -->
+    <div id="qa-widget" class="qa-widget">
+        <button id="qa-widget-toggle">
+            <i class="fas fa-question-circle"></i>
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="qa-widget-window">
+            <div class="qa-widget-header">
+                <h3>常見問題 QA 智慧搜尋</h3>
+                <p>由 QA 資料庫智慧比對回答</p>
+            </div>
+            <div id="qa-widget-messages" class="qa-widget-messages">
+                <div class="message message-bot">
+                    <p>您好！我是 CosPIF 的智慧小助手，會根據 QA 資料庫內容幫您找答案。請先輸入關鍵字或問題句。</p>
+                </div>
+            </div>
+            <div class="qa-widget-input">
+                <input type="text" id="qa-widget-input-field" placeholder="請在此輸入您的問題...">
+                <button id="qa-widget-send-btn"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firestore：QA + 最新消息 -->
+    <script type="module">
+    import { collection, getDocs, query, orderBy, limit, where, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { db, auth } from "./firebase-config.js";
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const widget = document.getElementById('qa-widget');
+        const toggleButton = document.getElementById('qa-widget-toggle');
+        const inputField = document.getElementById('qa-widget-input-field');
+        const sendButton = document.getElementById('qa-widget-send-btn');
+        const messagesContainer = document.getElementById('qa-widget-messages');
+        const openAiChatLink = document.getElementById('open-ai-chat-link');
+        const openQaFromSectionBtn = document.getElementById('open-qa-from-section');
+        const qaLinks = document.querySelectorAll('.qa-link');
+
+        const newsListFront = document.getElementById('news-list-front');
+
+        /* ---------- 0. Header 登入狀態顯示 ---------- */
+        const btnLogin = document.getElementById('btnLogin');
+        const userChip = document.getElementById('userChip');
+        const userEmail = document.getElementById('userEmail');
+        const userRole = document.getElementById('userRole');
+        const btnLogout = document.getElementById('btnLogout');
+
+        function deriveRolesFromClaims(claims){
+            const rolesObj = (claims && claims.roles && typeof claims.roles === 'object') ? claims.roles : {};
+            const roles = {
+                admin: !!claims?.admin || !!rolesObj.admin,
+                systemAdmin: !!claims?.systemAdmin || !!rolesObj.systemAdmin,
+                secretary: !!claims?.secretary || !!rolesObj.secretary,
+                editor: !!claims?.editor || !!rolesObj.editor,
+                reviewer: !!claims?.reviewer || !!rolesObj.reviewer,
+                client: !!claims?.client || !!rolesObj.client,
+                user: !!claims?.user || !!rolesObj.user
+            };
+            return roles;
+        }
+
+        function rolesToText(roles){
+            const keys = ["admin","systemAdmin","secretary","editor","reviewer","client","user"];
+            const list = keys.filter(k => roles && roles[k]);
+            return list.length ? list.join(', ') : 'user';
+        }
+
+        function routeByRoles(roles){
+            if (roles?.admin || roles?.systemAdmin) return "admin.html";
+            if (roles?.client) return "index-c-company.html";
+            return "index.html";
+        }
+
+        if (btnLogout){
+            btnLogout.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                try { await signOut(auth); } catch(err) { console.error(err); }
+            });
+        }
+
+        // 監聽登入狀態：更新頂端「登入系統 / email+role+登出」
+        onAuthStateChanged(auth, async (user) => {
+            if (!btnLogin || !userChip) return;
+
+            if (!user){
+                btnLogin.style.display = '';
+                userChip.style.display = 'none';
+                if (userEmail) userEmail.textContent = '—';
+                if (userRole) userRole.textContent = '—';
+                return;
+            }
+
+            btnLogin.style.display = 'none';
+            userChip.style.display = 'flex';
+            if (userEmail) userEmail.textContent = user.email || '(no email)';
+
+            try{
+                const token = await user.getIdTokenResult(true);
+                const claims = token?.claims || {};
+                const roles = deriveRolesFromClaims(claims);
+                if (userRole) userRole.textContent = rolesToText(roles);
+
+                // 點 userChip 快速到對應入口（不自動跳轉，避免干擾）
+                userChip.style.cursor = 'pointer';
+                userChip.title = '點此前往對應入口（admin / client / user）';
+                userChip.onclick = (ev) => {
+                    if (ev?.target?.id === 'btnLogout') return;
+                    const dest = routeByRoles(roles);
+                    if (dest && dest !== location.pathname.split('/').pop()) location.href = dest;
+                };
+            }catch(err){
+                console.error(err);
+                if (userRole) userRole.textContent = 'user';
+            }
+        });
+
+
+
+        /* ---------- 0. 刊物訂閱（左下角圓形按鈕） ---------- */
+        const subWidget = document.getElementById('sub-widget');
+        const subToggle = document.getElementById('sub-widget-toggle');
+        const subEmail = document.getElementById('subEmail');
+        const subBtn = document.getElementById('subBtn');
+        const subMsg = document.getElementById('subMsg');
+        const subSeg = document.getElementById('subFrequencySeg');
+
+        let subFrequency = "monthly";
+
+        function openSubWidget(){
+            if (!subWidget) return;
+            subWidget.classList.add('open');
+            try { subEmail && subEmail.focus(); } catch(e){}
+        }
+        function toggleSubWidget(){
+            if (!subWidget) return;
+            if (subWidget.classList.contains('open')) subWidget.classList.remove('open');
+            else openSubWidget();
+        }
+
+        if (subToggle) subToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleSubWidget();
+        });
+
+        // 點外面關閉（不影響 QA widget）
+        document.addEventListener('click', (e) => {
+            if (!subWidget) return;
+            if (!subWidget.classList.contains('open')) return;
+            const within = subWidget.contains(e.target);
+            if (!within) subWidget.classList.remove('open');
+        }, true);
+
+        // 目前僅提供月刊：subFrequency 固定為 monthly
+
+        function setSubMsg(text, kind){
+            if (!subMsg) return;
+            subMsg.className = 'sub-msg' + (kind ? ' ' + kind : '');
+            subMsg.textContent = text;
+        }
+
+        function validEmail(email){
+            const s = (email || '').trim();
+            if (!s) return false;
+            // 簡單驗證即可（避免太嚴格）
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) && s.length <= 120;
+        }
+
+        async function subscribe(){
+            const email = (subEmail?.value || '').trim();
+            if (!validEmail(email)) {
+                setSubMsg('請輸入有效的 Email。', 'err');
+                return;
+            }
+            if (!subBtn) return;
+
+            subBtn.disabled = true;
+            setSubMsg('訂閱送出中…', '');
+
+            try {
+                await addDoc(collection(db, 'kb_subscribers'), {
+                    email,
+                    frequency: subFrequency,
+                    source: 'index',
+                    status: 'active',
+                    createdAt: serverTimestamp()
+                });
+                setSubMsg('已完成訂閱！之後刊物上線會通知您。', 'ok');
+                if (subEmail) subEmail.value = '';
+            } catch (err) {
+                console.error('subscribe failed:', err);
+                setSubMsg('訂閱失敗：請稍後再試（或檢查 Firestore rules 是否已允許公開 create）。', 'err');
+            } finally {
+                subBtn.disabled = false;
+            }
+        }
+
+        if (subBtn) subBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            subscribe();
+        });
+        if (subEmail) subEmail.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                subscribe();
+            }
+        });
+
+
+
+        /* ---------- 1. 從 Firestore news 集合載入首頁最新消息 ---------- */
+
+        async function loadNewsForIndex() {
+            if (!newsListFront) return;
+            newsListFront.innerHTML = '<p>最新消息載入中…</p>';
+
+            try {
+                const newsCol = collection(db, 'news');
+
+                // 1) 先抓「置頂」(pinned) 的消息（不做 orderBy，避免需要額外建立複合索引；前端自行排序）
+                const pinnedSnap = await getDocs(query(newsCol, where('status', '==', 'published'), where('pinned', '==', true), limit(10)));
+                const pinnedItems = pinnedSnap.docs
+                    .map(d => ({ id: d.id, ...(d.data() || {}) }))
+                    .filter(x => x.status === 'published')
+                    .sort((a, b) => {
+                        const ta = (a.pinnedAt && a.pinnedAt.toDate) ? a.pinnedAt.toDate().getTime()
+                            : (a.createdAt && a.createdAt.toDate) ? a.createdAt.toDate().getTime() : 0;
+                        const tb = (b.pinnedAt && b.pinnedAt.toDate) ? b.pinnedAt.toDate().getTime()
+                            : (b.createdAt && b.createdAt.toDate) ? b.createdAt.toDate().getTime() : 0;
+                        return tb - ta;
+                    })
+                    .slice(0, 3);
+
+                const pinnedIds = new Set(pinnedItems.map(x => x.id));
+                const remaining = 3 - pinnedItems.length;
+
+                // 2) 不足的名額再用「最新已發布」補滿
+                let normalItems = [];
+                if (remaining > 0) {
+                    const qNews = query(
+                        newsCol,
+                        where('status', '==', 'published'),
+                        orderBy('createdAt', 'desc'),
+                        limit(10)
+                    );
+                    const snap = await getDocs(qNews);
+                    snap.forEach(docSnap => {
+                        if (normalItems.length >= remaining) return;
+                        if (pinnedIds.has(docSnap.id)) return;
+                        normalItems.push({ id: docSnap.id, ...(docSnap.data() || {}) });
+                    });
+                }
+
+                const items = [...pinnedItems, ...normalItems];
+
+                if (!items.length) {
+                    newsListFront.innerHTML = '<p>目前尚無已發布的最新消息。</p>';
+                    return;
+                }
+
+                newsListFront.innerHTML = '';
+
+                items.forEach(data => {
+                    const createdAt = data.createdAt && data.createdAt.toDate ? data.createdAt.toDate() : null;
+                    const dateStr = createdAt ? createdAt.toISOString().slice(0, 10) : '';
+
+                    const category = data.category || '公告';
+                    const title = data.title || '(未命名消息)';
+                    const preview = (data.content || '').replace(/\s+/g, ' ').slice(0, 80);
+                    const isPinned = data.pinned === true;
+
+                    const article = document.createElement('article');
+                    article.className = 'news-item';
+                    article.innerHTML = `
+                        <div class="news-meta">
+                            <span class="news-date">${dateStr}</span>
+                            ${isPinned ? '<span class="news-tag" style="background:#fff7ed;border:1px solid #fdba74;color:#9a3412;">置頂</span>' : ''}
+                            <span class="news-tag">${category}</span>
+                        </div>
+                        <h3>${title}</h3>
+                        <p>${preview}${data.content && data.content.length > 80 ? '…' : ''}</p>
+                    `;
+                    newsListFront.appendChild(article);
+                });
+
+            } catch (err) {
+                console.error('載入最新消息失敗：', err);
+                newsListFront.innerHTML = '<p>載入最新消息時發生錯誤，請稍後再試。</p>';
+            }
+        }
+
+        loadNewsForIndex();
+
+        /* ---------- 2. QA 資料庫搜尋邏輯 ---------- */
+
+        // --- QA 資料快取 ---
+        let qaCache = null;
+        let qaLoading = false;
+
+        async function loadQaDatabase() {
+            if (qaCache) return qaCache;
+            if (qaLoading) {
+                // 若同時多次呼叫，等第一次完成
+                return new Promise((resolve, reject) => {
+                    const check = () => {
+                        if (qaCache) resolve(qaCache);
+                        else if (!qaLoading && !qaCache) reject(new Error("QA 資料載入失敗"));
+                        else setTimeout(check, 100);
+                    };
+                    check();
+                });
+            }
+            qaLoading = true;
+            try {
+                const snap = await getDocs(collection(db, "qa_database"));
+                qaCache = snap.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter(item => item.question && item.answer);
+                return qaCache;
+            } catch (err) {
+                console.error("載入 QA 資料庫發生錯誤：", err);
+                throw err;
+            } finally {
+                qaLoading = false;
+            }
+        }
+
+        // --- 簡單文字正規化與相似度計算（字元層級，適合中英文混合） ---
+        function normalizeText(str) {
+            return (str || "")
+                .toLowerCase()
+                .replace(/\s+/g, "")
+                .trim();
+        }
+
+        function charSetSimilarity(a, b) {
+            const s1 = new Set(a);
+            const s2 = new Set(b);
+            if (!s1.size || !s2.size) return 0;
+            let inter = 0;
+            for (const ch of s1) if (s2.has(ch)) inter++;
+            const union = new Set([...s1, ...s2]).size;
+            return union ? inter / union : 0;
+        }
+
+        function scoreQa(queryNorm, qaItem) {
+            const qNorm = normalizeText(qaItem.question);
+            const aNorm = normalizeText(qaItem.answer);
+
+            if (!qNorm && !aNorm) return 0;
+            let score = 0;
+
+            // 完整字串包含
+            if (qNorm.includes(queryNorm) || queryNorm.includes(qNorm)) {
+                score += 2;
+            }
+
+            // 與問題的字元集合相似度
+            score += charSetSimilarity(queryNorm, qNorm) * 3;
+
+            // 與答案的字元集合相似度
+            score += charSetSimilarity(queryNorm, aNorm) * 1.5;
+
+            return score;
+        }
+
+        async function searchQa(messageText) {
+            const qaList = await loadQaDatabase();
+            if (!qaList || !qaList.length) {
+                return "目前 QA 資料庫尚無資料，請稍後再試或請管理員先匯入 QA。";
+            }
+
+            const queryNorm = normalizeText(messageText);
+            if (!queryNorm) {
+                return "請輸入想查詢的關鍵字或完整問題，我會協助從 QA 資料庫中找出最接近的答案。";
+            }
+
+            const scored = qaList
+                .map(item => ({
+                    item,
+                    score: scoreQa(queryNorm, item)
+                }))
+                .filter(x => x.score > 0.2) // 過濾掉非常不相關的
+                .sort((a, b) => b.score - a.score);
+
+            if (!scored.length) {
+                return "目前在 QA 資料庫中找不到相近的問題與答案。\n\n建議您：\n1. 嘗試改用其他關鍵字（例如：PIF16、安全評估、匯入毒理 資料…）\n2. 或請管理員補充相關 QA 內容。";
+            }
+
+            const top = scored[0].item;
+            const others = scored.slice(1, 4).map(s => s.item);
+
+            let reply = `以下是與您問題最接近的 QA：\n\n`;
+            reply += `Q：${top.question}\n`;
+            reply += `A：${top.answer}`;
+
+            if (others.length) {
+                reply += `\n\n其他可能相關的問題（可用關鍵字再搜尋）：\n`;
+                others.forEach((q, idx) => {
+                    reply += `${idx + 1}. ${q.question}\n`;
+                });
+            }
+
+            return reply;
+        }
+
+        /* ---------- 3. QA Widget UI 控制 ---------- */
+
+        function openWidget() {
+            if (!widget) return;
+            widget.classList.add('open');
+            if (inputField) {
+                setTimeout(() => inputField.focus(), 50);
+            }
+        }
+
+        function toggleWidget() {
+            if (!widget) return;
+            if (widget.classList.contains('open')) {
+                widget.classList.remove('open');
+            } else {
+                openWidget();
+            }
+        }
+
+        if (toggleButton) {
+            toggleButton.addEventListener('click', () => toggleWidget());
+        }
+
+        if (openAiChatLink) {
+            openAiChatLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                openWidget();
+            });
+        }
+
+        if (openQaFromSectionBtn) {
+            openQaFromSectionBtn.addEventListener('click', () => {
+                openWidget();
+            });
+        }
+
+        if (qaLinks && qaLinks.length > 0) {
+            qaLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const query = link.getAttribute('data-qa-query') || link.innerText;
+                    openWidget();
+                    if (inputField) {
+                        inputField.value = query;
+                        setTimeout(() => inputField.focus(), 50);
+                    }
+                });
+            });
+        }
+
+        function addMessage(text, sender, isLoading = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', `message-${sender}`);
+            if (isLoading) {
+                messageDiv.classList.add('loading');
+                messageDiv.innerHTML = '<p><span></span><span></span><span></span></p>';
+            } else {
+                messageDiv.innerHTML = `<p>${text.replace(/\n/g, '<br>')}</p>`;
+            }
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            return messageDiv;
+        }
+
+        async function sendMessage() {
+            const messageText = (inputField?.value || '').trim();
+            if (!messageText) return;
+
+            addMessage(messageText, 'user');
+            if (inputField) inputField.value = '';
+
+            const loadingIndicator = addMessage('', 'bot', true);
+
+            try {
+                const reply = await searchQa(messageText);
+                messagesContainer.removeChild(loadingIndicator);
+                addMessage(reply, 'bot');
+            } catch (error) {
+                console.error('Error searching QA:', error);
+                try { messagesContainer.removeChild(loadingIndicator); } catch (e) {}
+                addMessage('抱歉，目前無法讀取 QA 資料庫，請稍後再試或聯絡系統管理員。', 'bot');
+            }
+        }
+
+        if (sendButton) {
+            sendButton.addEventListener('click', () => sendMessage());
+        }
+
+        if (inputField) {
+            inputField.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        }
+    });
+    </script>
+</body>
+</html>

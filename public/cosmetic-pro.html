@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>化妝品專業｜防曬（Sunscreen）專題 - CosPIF</title>
+
+  <!-- Keep consistent with your existing KB page -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    body{ background:#f9fafb; }
+
+    .page-header{ background:#fff; padding:2rem 0; border-bottom:1px solid #e5e7eb; margin-bottom:1.25rem; }
+    .page-header .container{ display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; }
+    .page-header h1{ margin:0; font-size:1.85rem; letter-spacing:.2px; }
+    .page-header p{ margin:.35rem 0 0; color:#6b7280; max-width:820px; line-height:1.65; }
+    .back-link{ display:inline-flex; align-items:center; gap:.5rem; color:#4b5563; text-decoration:none; font-size:.92rem; white-space:nowrap; margin-top:.25rem; }
+    .back-link:hover{ color:#111827; }
+
+    .pro-wrap .container{ max-width:1180px; }
+
+    /* layout */
+    .pro-layout{
+      display:grid;
+      grid-template-columns: 290px 1fr 320px;
+      gap: 1rem;
+      align-items:start;
+    }
+    @media (max-width: 1120px){
+      .pro-layout{ grid-template-columns: 280px 1fr; }
+      .pro-right{ display:none; }
+    }
+    @media (max-width: 820px){
+      .pro-layout{ grid-template-columns: 1fr; }
+      .pro-left{ position:static !important; }
+      .pro-right{ display:block; }
+    }
+
+    /* card */
+    .card{
+      background:#fff;
+      border:1px solid #e5e7eb;
+      border-radius:16px;
+      box-shadow:0 4px 6px -1px rgb(0 0 0 / .05), 0 2px 4px -2px rgb(0 0 0 / .05);
+    }
+
+    /* left toc */
+    .pro-left{ position:sticky; top:16px; }
+    .toc{ padding:1rem; }
+    .toc-title{ display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-bottom:.65rem; }
+    .toc-title strong{ font-size:1rem; }
+    .toc small{ color:#6b7280; }
+    .toc a{
+      display:flex; gap:.55rem; align-items:flex-start;
+      padding:.5rem .6rem; border-radius:12px;
+      color:#111827; text-decoration:none; font-size:.92rem;
+    }
+    .toc a:hover{ background:#eff6ff; color:#1d4ed8; }
+    .toc a.active{ background:#2563eb; color:#fff; }
+    .toc a .dot{ width:.55rem; height:.55rem; border-radius:999px; background:#d1d5db; margin-top:.35rem; flex:0 0 auto; }
+    .toc a.active .dot{ background:#bfdbfe; }
+    .toc .divider{ height:1px; background:#f3f4f6; margin:.75rem 0; }
+
+    /* main article */
+    .article{ padding:1.25rem 1.25rem 1rem; }
+    .badge-row{ display:flex; flex-wrap:wrap; gap:.5rem; margin:.25rem 0 1rem; }
+    .badge{
+      display:inline-flex; align-items:center; gap:.4rem;
+      border:1px solid #e5e7eb; background:#fff;
+      border-radius:999px; padding:.35rem .65rem; font-size:.82rem;
+      color:#374151;
+    }
+    .badge i{ color:#2563eb; }
+
+    .article h2{
+      margin:1.35rem 0 .55rem;
+      font-size:1.35rem;
+      padding-top: .25rem;
+      scroll-margin-top: 90px;
+    }
+    .article h3{ margin:1rem 0 .4rem; font-size:1.07rem; }
+    .article p, .article li{ color:#374151; line-height:1.8; }
+    .article ul{ padding-left:1.2rem; }
+    .article .note{
+      border-left:4px solid #2563eb;
+      background:#eff6ff;
+      padding:.75rem .9rem;
+      border-radius:12px;
+      color:#1f2937;
+      margin:.75rem 0;
+    }
+    .article .warning{
+      border-left:4px solid #f59e0b;
+      background:#fffbeb;
+      padding:.75rem .9rem;
+      border-radius:12px;
+      color:#1f2937;
+      margin:.75rem 0;
+    }
+    .kpi{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:.75rem;
+      margin:.75rem 0 1.1rem;
+    }
+    @media (max-width: 980px){ .kpi{ grid-template-columns:1fr; } }
+    .kpi .box{ padding:.9rem; border-radius:14px; border:1px solid #e5e7eb; background:#fff; }
+    .kpi .box .k{ font-size:.8rem; color:#6b7280; }
+    .kpi .box .v{ font-size:1.05rem; font-weight:700; margin-top:.15rem; }
+
+    /* term chips */
+    .term{
+      display:inline-flex; align-items:center; gap:.35rem;
+      border:none; background:transparent;
+      color:#1d4ed8; cursor:pointer;
+      padding:0 .1rem;
+      text-decoration:underline;
+      text-underline-offset:3px;
+      font:inherit;
+    }
+    .term:hover{ color:#1e40af; }
+    .term i{ font-size:.9em; opacity:.75; }
+
+    /* right panel */
+    .pro-right{ position:sticky; top:16px; }
+    .right-card{ padding:1rem; }
+    .right-card h3{ margin:.1rem 0 .6rem; font-size:1.05rem; }
+    .mini{ color:#6b7280; font-size:.9rem; line-height:1.6; }
+    .pillbar{ display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.6rem; }
+    .pilltag{
+      display:inline-flex; align-items:center; gap:.35rem;
+      border:1px solid #e5e7eb; background:#fff; color:#111827;
+      border-radius:999px; padding:.32rem .55rem;
+      font-size:.82rem; cursor:pointer;
+    }
+    .pilltag:hover{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+
+    .searchrow{
+      display:flex; align-items:center; gap:.5rem;
+      border:1px solid #d1d5db; background:#f9fafb;
+      border-radius:999px; padding:.5rem .75rem;
+      margin:.2rem 0 .7rem;
+    }
+    .searchrow i{ color:#6b7280; }
+    .searchrow input{ border:none; outline:none; background:transparent; width:100%; font-size:.93rem; }
+
+    /* glossary modal */
+    .modal-backdrop{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.35);
+      display:none;
+      align-items:center; justify-content:center;
+      padding: 1rem;
+      z-index: 9999;
+    }
+    .modal{
+      width: min(900px, 98vw);
+      max-height: min(82vh, 900px);
+      overflow:auto;
+      background:#fff;
+      border-radius:18px;
+      border:1px solid #e5e7eb;
+      box-shadow:0 18px 40px rgba(0,0,0,.18);
+    }
+    .modal-head{
+      padding:1rem 1.1rem;
+      display:flex; align-items:flex-start; justify-content:space-between; gap:1rem;
+      border-bottom:1px solid #f3f4f6;
+      position:sticky; top:0; background:#fff; z-index:1;
+    }
+    .modal-title{ margin:0; font-size:1.1rem; }
+    .modal-sub{ margin:.25rem 0 0; color:#6b7280; font-size:.9rem; line-height:1.55; }
+    .modal-close{
+      border:1px solid #e5e7eb; background:#fff; color:#111827;
+      border-radius:999px; padding:.35rem .7rem; cursor:pointer;
+    }
+    .modal-close:hover{ background:#f3f4f6; }
+    .modal-body{ padding:1rem 1.1rem 1.2rem; }
+    .kv{
+      display:grid; grid-template-columns: 170px 1fr; gap:.35rem .8rem;
+      border:1px solid #e5e7eb; border-radius:14px; padding:.85rem;
+      background:#fff;
+    }
+    @media (max-width: 720px){ .kv{ grid-template-columns:1fr; } }
+    .kv .k{ color:#6b7280; font-size:.86rem; }
+    .kv .v{ color:#111827; }
+    .modal-body h4{ margin:1rem 0 .35rem; font-size:1rem; }
+    .refs a{ color:#1d4ed8; text-decoration:none; }
+    .refs a:hover{ text-decoration:underline; }
+
+    /* mobile helper */
+    .floating{
+      position:fixed;
+      right:16px; bottom:16px;
+      display:none;
+      z-index: 1200;
+    }
+    @media (max-width: 820px){
+      .floating{ display:flex; flex-direction:column; gap:.5rem; }
+    }
+    .fab{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:46px; height:46px;
+      border-radius:999px;
+      border:1px solid #e5e7eb;
+      background:#fff;
+      box-shadow:0 10px 22px rgba(0,0,0,.10);
+      cursor:pointer;
+    }
+    .fab:hover{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+
+    /* reference list */
+    .ref-list li{ margin:.35rem 0; }
+    .muted{ color:#6b7280; }
+    .hr{ height:1px; background:#f3f4f6; margin:1rem 0; }
+
+    code.inline{ background:#f3f4f6; border:1px solid #e5e7eb; padding:.12rem .35rem; border-radius:8px; font-size:.92em; }
+  </style>
+</head>
+<body>
+
+  <!-- Header copied to match your existing cosmetic.html navigation -->
+  <header>
+    <div class="container">
+      <nav>
+        <a href="index.html" class="logo">
+          <img src="img/cospif-logo.png" alt="CosPIF Logo">
+        </a>
+        <ul class="nav-links">
+          <li><a href="index.html#features">核心功能</a></li>
+          <li><a href="index.html#about">關於我們</a></li>
+          <li><a href="news-list.html">最新消息</a></li>
+          <li><a href="qa-list.html">QA 知識庫</a></li>
+          <li><a href="cosmetic.html">化妝品知識庫</a></li>
+          <li><a href="kb-article.html">化妝品專業庫</a></li>
+          <li><a href="kb-issue.html">化妝品智慧月刊</a></li>
+          <li><a href="contact.html">聯絡我們</a></li>
+        </ul>
+        <a href="login.html" class="btn-login">登入系統</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="page-header">
+    <div class="container">
+      <div>
+        <h1>化妝品專業｜防曬（Sunscreen）專題</h1>
+        <p>
+          這份文件以<strong>「防曬」</strong>為第一個主題，採用「章節式專業解說 + 參考文獻」呈現。
+          文中出現的<strong>專有名詞</strong>與<strong>UV 濾劑原料</strong>可直接點選，快速查看名詞說明（並可一鍵跳回你的
+          <a href="cosmetic.html" style="color:#1d4ed8;text-decoration:none;">化妝品知識庫</a>做延伸查詢）。
+        </p>
+        <p class="muted" style="margin-top:.5rem;">
+          教學/研修用途；非醫療建議。實際產品宣稱與可用成分仍以各地法規與檢測報告為準。
+        </p>
+      </div>
+      <a href="cosmetic.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> 返回化妝品知識庫</a>
+    </div>
+  </section>
+
+  <main class="pro-wrap">
+    <div class="container">
+      <div class="pro-layout">
+
+        <!-- LEFT: TOC -->
+        <aside class="pro-left card">
+          <div class="toc">
+            <div class="toc-title">
+              <strong><i class="fa-solid fa-list"></i> 目錄</strong>
+              <small id="readProgress">0%</small>
+            </div>
+
+            <a href="#s1" class="toc-link"><span class="dot"></span><span>1. 防曬的科學基礎（UV 與皮膚）</span></a>
+            <a href="#s2" class="toc-link"><span class="dot"></span><span>2. 防曬產品類型與 UV 濾劑</span></a>
+            <a href="#s3" class="toc-link"><span class="dot"></span><span>3. 指標與標示：SPF、UVA、Broad Spectrum</span></a>
+            <a href="#s4" class="toc-link"><span class="dot"></span><span>4. 檢測方法：ISO 與常見評估流程</span></a>
+            <a href="#s5" class="toc-link"><span class="dot"></span><span>5. 配方設計要點：溶解、分散、成膜、光安定</span></a>
+            <a href="#s6" class="toc-link"><span class="dot"></span><span>6. 安全與爭議：刺激、光敏、環境議題</span></a>
+            <a href="#s7" class="toc-link"><span class="dot"></span><span>7. 使用策略：劑量、補擦、與其他產品搭配</span></a>
+            <a href="#refs" class="toc-link"><span class="dot"></span><span>參考文獻 / 重要標準</span></a>
+
+            <div class="divider"></div>
+            <a href="#glossary" class="toc-link"><span class="dot"></span><span>名詞/原料索引（可點選）</span></a>
+          </div>
+        </aside>
+
+        <!-- MAIN: ARTICLE -->
+        <section class="card article" id="articleRoot">
+          <div class="badge-row">
+            <span class="badge"><i class="fa-solid fa-sun"></i> 主題：防曬</span>
+            <span class="badge"><i class="fa-solid fa-flask"></i> 配方/原料</span>
+            <span class="badge"><i class="fa-solid fa-clipboard-check"></i> 檢測/宣稱</span>
+            <span class="badge"><i class="fa-solid fa-scale-balanced"></i> 法規與風險溝通</span>
+          </div>
+
+          <div class="kpi">
+            <div class="box">
+              <div class="k">測試用塗抹量（概念）</div>
+              <div class="v"><button class="term" data-term="2mg/cm2">2 mg/cm² <i class="fa-solid fa-circle-info"></i></button></div>
+            </div>
+            <div class="box">
+              <div class="k">常見核心指標</div>
+              <div class="v">
+                <button class="term" data-term="SPF">SPF <i class="fa-solid fa-circle-info"></i></button> /
+                <button class="term" data-term="UVA-PF">UVA-PF <i class="fa-solid fa-circle-info"></i></button>
+              </div>
+            </div>
+            <div class="box">
+              <div class="k">廣譜關鍵概念</div>
+              <div class="v"><button class="term" data-term="Critical Wavelength">Critical Wavelength <i class="fa-solid fa-circle-info"></i></button></div>
+            </div>
+          </div>
+
+          <div class="note">
+            <strong>快速讀法：</strong>
+            若你要把這份內容變成「課程講義」，建議先讀第 3、4 章（指標/檢測），再回頭補第 1、2 章（機制/原料）。
+          </div>
+
+          <h2 id="s1">1. 防曬的科學基礎（UV 與皮膚）</h2>
+          <p>
+            「防曬」不是單純避免曬黑，而是<strong>降低紫外線（UV）對皮膚造成的急性與慢性損傷</strong>。
+            紫外線依波長可分為 <button class="term" data-term="UVC">UVC</button>、<button class="term" data-term="UVB">UVB</button>、<button class="term" data-term="UVA">UVA</button>：
+          </p>
+          <ul>
+            <li><strong>UVB（約 280–320 nm）</strong>：與日曬紅斑（erythema）關聯最強，是 <button class="term" data-term="SPF">SPF</button> 主要評估的目標。</li>
+            <li><strong>UVA（約 320–400 nm）</strong>：能量較低但穿透較深，與光老化、色素沉著、UVA 誘導的暗沉/黑化等更相關，因此需要看 <button class="term" data-term="UVA-PF">UVA-PF</button> 或廣譜指標。</li>
+            <li><strong>UVC（100–280 nm）</strong>：多被大氣吸收，日常日照暴露通常可忽略（人工光源情境另論）。</li>
+          </ul>
+
+          <p>
+            從皮膚生物學角度，UV 造成的主要風險可概括為：
+          </p>
+          <ul>
+            <li><strong>急性反應：</strong>紅斑、灼熱、屏障受損（角質層含水下降）。</li>
+            <li><strong>慢性影響：</strong>光老化（膠原蛋白降解、彈力纖維變性）、色素沉著、光敏反應風險增加。</li>
+          </ul>
+
+          <div class="warning">
+            <strong>重點：</strong>同一個產品「SPF 很高」不代表 UVA 也強。
+            專業溝通時要同時描述 UVB 與 UVA 的防護（或明確說明檢測與宣稱範圍）。
+          </div>
+
+          <h2 id="s2">2. 防曬產品類型與 UV 濾劑</h2>
+          <p>
+            防曬配方的核心是 <button class="term" data-term="UV Filter">UV 濾劑（UV Filter）</button>，
+            按材料特性常被分為「有機（吸收型）」與「無機（散射/反射型）」兩大類（市面也常見混合型）。
+          </p>
+
+          <h3>2.1 有機 UV 濾劑（吸收型）</h3>
+          <p>
+            有機濾劑多為小分子，利用共軛結構吸收 UV 能量並轉換為較低能量形式釋放。
+            常見代表（可點選查看簡介）：
+            <button class="term" data-term="Avobenzone">Avobenzone</button>、
+            <button class="term" data-term="Octocrylene">Octocrylene</button>、
+            <button class="term" data-term="Ethylhexyl Triazone">Ethylhexyl Triazone</button>、
+            <button class="term" data-term="Diethylamino Hydroxybenzoyl Hexyl Benzoate">Diethylamino Hydroxybenzoyl Hexyl Benzoate</button>、
+            <button class="term" data-term="Bemotrizinol">Bemotrizinol</button>、
+            <button class="term" data-term="Bisoctrizole">Bisoctrizole</button>。
+          </p>
+
+          <h3>2.2 無機 UV 濾劑（散射/反射型）</h3>
+          <p>
+            典型無機濾劑是金屬氧化物粒子，例如
+            <button class="term" data-term="Zinc Oxide">Zinc Oxide</button>（ZnO）與
+            <button class="term" data-term="Titanium Dioxide">Titanium Dioxide</button>（TiO₂）。
+            它們藉由散射/反射與部分吸收共同提供防護。粒徑、表面處理與分散品質會影響膚感、白泛與防護效率。
+          </p>
+
+          <div class="note">
+            <strong>配方實務提醒：</strong>
+            「有機 vs 無機」不是好壞，而是取決於目標：高 SPF、透明膚感、耐水、敏感肌、油脂相容性、光安定、以及法規可用清單。
+          </div>
+
+          <h2 id="s3">3. 指標與標示：SPF、UVA、Broad Spectrum</h2>
+          <h3>3.1 SPF 是什麼？</h3>
+          <p>
+            <button class="term" data-term="SPF">SPF</button>（Sun Protection Factor）是以人體皮膚紅斑反應為基礎的比例概念，
+            反映產品對 UVB（紅斑）的防護能力。它通常建立於標準塗抹量 <button class="term" data-term="2mg/cm2">2 mg/cm²</button> 的測試條件上。
+          </p>
+
+          <h3>3.2 UVA 防護：UVA-PF、PPD、PA 系統</h3>
+          <p>
+            UVA 相關的數值或分級系統，目的在描述產品對 UVA（包含 UVA 誘導的色素反應）的防護。
+            常見名詞包含 <button class="term" data-term="UVA-PF">UVA-PF</button>、<button class="term" data-term="PPD">PPD</button> 以及亞洲常見的 <button class="term" data-term="PA">PA</button> 標示（例如 PA+++）。
+          </p>
+
+          <h3>3.3 Broad Spectrum 與 Critical Wavelength</h3>
+          <p>
+            「廣譜」概念要求產品在 UVA 與 UVB 都有一定程度的覆蓋。
+            在許多規範或建議中，常會用 <button class="term" data-term="Critical Wavelength">Critical Wavelength（臨界波長）</button> 與
+            UVA/UVB 的比例作為判準。專業文件常同時呈現「<strong>SPF</strong> + <strong>UVA 指標</strong> + <strong>光譜曲線</strong>」來說明廣譜能力。
+          </p>
+
+          <div class="warning">
+            <strong>風險溝通：</strong>
+            「SPF 50」與「SPF 30」的差異不是線性。
+            以消費者溝通來說，更關鍵往往是「用量是否足夠」與「是否定時補擦」。
+          </div>
+
+          <h2 id="s4">4. 檢測方法：ISO 與常見評估流程</h2>
+          <p>
+            現代防曬宣稱通常依循國際標準化方法進行測試，最常被引用的是：
+            <button class="term" data-term="ISO 24444">ISO 24444</button>（in vivo SPF）、
+            <button class="term" data-term="ISO 24443">ISO 24443</button>（in vitro UVA）、
+            <button class="term" data-term="ISO 16217">ISO 16217</button>（耐水浸泡程序）、
+            <button class="term" data-term="ISO 18861">ISO 18861</button>（耐水保留率百分比）。
+          </p>
+
+          <h3>4.1 SPF：in vivo（人體）測試概念</h3>
+          <ul>
+            <li>以受試者皮膚在 UV 暴露下的紅斑反應為終點，計算未防護與防護狀態的比值。</li>
+            <li>測試條件包含塗抹量、塗抹均勻性、乾燥時間、光源校正等，對結果影響很大。</li>
+          </ul>
+
+          <h3>4.2 UVA：in vitro（體外）光譜法概念</h3>
+          <ul>
+            <li>以塗布於特定基材上的防曬膜，測得 UVA 光譜吸收/透過特性，估算 <button class="term" data-term="UVA-PF">UVA-PF</button> 等指標。</li>
+            <li>「成膜」與「膜厚均勻性」是重點，因此配方的成膜劑、油相結構與流變都會影響。</li>
+          </ul>
+
+          <h3>4.3 耐水：Water resistance 的兩個角度</h3>
+          <ul>
+            <li><button class="term" data-term="ISO 16217">ISO 16217</button>：規範浸水程序（in vivo）以取得浸水後 SPF。</li>
+            <li><button class="term" data-term="ISO 18861">ISO 18861</button>：用「浸水前 SPF」與「浸水後 SPF」比較，得到耐水保留率（百分比）。</li>
+          </ul>
+
+          <div class="note">
+            <strong>評估建議：</strong>
+            在產品開發中，常見的最小資料集（Minimum Data Set）可包含：
+            <em>SPF（ISO 24444）、UVA（ISO 24443）、光安定性（內部方法/第三方）、耐水（依市場）</em>，
+            再加上皮膚相容性與包材相容性測試，才能支撐更完整的宣稱與風險管理。
+          </div>
+
+          <h2 id="s5">5. 配方設計要點：溶解、分散、成膜、光安定</h2>
+
+          <h3>5.1 溶解度與油相設計（有機濾劑）</h3>
+          <p>
+            多數有機濾劑偏油溶，會受到油相極性、溶劑選擇與共溶策略影響。
+            例如某些 UVA 濾劑（如 <button class="term" data-term="Avobenzone">Avobenzone</button>）常需要搭配合適溶劑或穩定策略，以避免析出與降低光安定風險。
+          </p>
+
+          <h3>5.2 分散與表面處理（無機濾劑）</h3>
+          <p>
+            ZnO/TiO₂ 的粒子分散品質會強烈影響白泛、膚感、耐水性與 UV 覆蓋。
+            常見做法包含使用分散劑、選擇適當的表面包覆（如氧化鋁/矽氧烷等）以及控制研磨/剪切條件。
+          </p>
+
+          <h3>5.3 成膜與耐水（film former）</h3>
+          <p>
+            防曬的「有效性」不只來自原料光譜，也取決於皮膚上形成的膜是否連續、均勻、耐摩擦與耐汗水。
+            因此會搭配成膜劑與耐水設計，並用 <button class="term" data-term="ISO 16217">耐水測試</button> 檢驗。
+          </p>
+
+          <h3>5.4 光安定（photostability）與抗氧化</h3>
+          <p>
+            <button class="term" data-term="Photostability">Photostability（光安定）</button> 指 UV 濾劑在光照下是否維持結構與防護能力。
+            配方上可透過濾劑組合、抗氧化系統與包覆技術降低光致降解風險，但仍需以測試數據支持。
+          </p>
+
+          <div class="warning">
+            <strong>常見開發陷阱：</strong>
+            「配方在室溫安定」≠「光照下安定」。
+            防曬應把「光安定」視為與「微生物/安定性」同等重要的品質屬性之一。
+          </div>
+
+          <h2 id="s6">6. 安全與爭議：刺激、光敏、環境議題</h2>
+          <p>
+            防曬的安全評估涵蓋：皮膚刺激/致敏、眼刺激風險、光毒性/光敏性、吸入暴露（噴霧/粉體）、以及環境面議題等。
+            以下是常見討論點（僅作專業框架，具體結論需依法規與風險評估報告）：
+          </p>
+          <ul>
+            <li><strong>刺激/熏眼：</strong>與濾劑本身、溶劑、揮發相、表面活性劑與防腐系統都有關。</li>
+            <li><strong>敏感肌：</strong>常需在防護力與配方簡化之間取得平衡，並搭配實測的相容性資料。</li>
+            <li><strong>環境議題：</strong>特定濾劑在特定地區可能有水域保護相關規範或倡議，產品出海需做市場差異化準備。</li>
+          </ul>
+
+          <div class="note">
+            <strong>專業建議：</strong>
+            在 PIF/COSPIF 文件中，防曬產品的「原料光譜/濃度、安定性、微生物、包材相容、檢測報告」的鏈結完整性，
+            往往比單一指標（例如 SPF）更能支撐合規與風險溝通。
+          </div>
+
+          <h2 id="s7">7. 使用策略：劑量、補擦、與其他產品搭配</h2>
+          <h3>7.1 劑量與補擦</h3>
+          <p>
+            實驗室 SPF 測試採用 <button class="term" data-term="2mg/cm2">2 mg/cm²</button> 的塗抹量；但日常多數人塗抹不足，
+            會造成實際保護力顯著下降。因此在產品教育上，需強調「足量」與「補擦」。
+          </p>
+
+          <h3>7.2 與保養/彩妝疊擦</h3>
+          <ul>
+            <li><strong>保養前置：</strong>若前置保養過油或成膜過強，可能影響防曬成膜與均勻性。</li>
+            <li><strong>彩妝疊擦：</strong>粉底/蜜粉可提升體感，但補擦時要避免搓揉破壞膜。</li>
+            <li><strong>戶外活動：</strong>需要同時考慮耐汗、耐水、摩擦（衣物/毛巾）等情境。</li>
+          </ul>
+
+          <div class="hr"></div>
+
+          <h2 id="glossary">名詞 / 原料索引（可點選）</h2>
+          <p class="muted">快速開啟名詞卡片。若想查你的 Firestore 知識庫，點「在知識庫搜尋」。</p>
+          <div class="pillbar" id="glossaryPills"></div>
+
+          <h2 id="refs">參考文獻 / 重要標準（節選）</h2>
+          <ol class="ref-list">
+            <li>ISO 24444: Cosmetics — Sun protection test methods — In vivo determination of the SPF. <a href="https://www.iso.org/standard/72250.html" target="_blank" rel="noopener">ISO summary</a></li>
+            <li>ISO 24443: Cosmetics — Determination of sunscreen UVA photoprotection in vitro. <a href="https://www.iso.org/standard/75059.html" target="_blank" rel="noopener">ISO summary</a></li>
+            <li>ISO 16217: Cosmetics — Sun protection test methods — Water immersion procedure for determining water resistance. <a href="https://www.iso.org/standard/61437.html" target="_blank" rel="noopener">ISO summary</a></li>
+            <li>ISO 18861: Cosmetics — Sun protection test methods — Percentage of water resistance. <a href="https://www.iso.org/standard/63659.html" target="_blank" rel="noopener">ISO summary</a></li>
+            <li>European Commission Recommendation 2006/647/EC (Sunscreen products and claims). <a href="https://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri=OJ%3AL%3A2006%3A265%3A0039%3A0043%3Aen%3APDF" target="_blank" rel="noopener">PDF</a></li>
+            <li>DermNet NZ. Topical sunscreen agents / labelling guidelines. <a href="https://dermnetnz.org/topics/topical-sunscreen-agents" target="_blank" rel="noopener">Article</a></li>
+            <li>Zou W. et al. Sunscreen testing: A critical perspective and future roadmap (review). <a href="https://www.sciencedirect.com/science/article/pii/S0165993622002072" target="_blank" rel="noopener">ScienceDirect page</a></li>
+          </ol>
+
+          <p class="muted" style="margin-top:1rem;">
+            下一步若你要擴充：我可以用同一模板再做「美白」「防腐」「保濕」「抗老」等專題頁，並把名詞卡片改成自動從 <code class="inline">cosmetic_knowledge</code> 讀取（本頁已保留查詢入口）。
+          </p>
+        </section>
+
+        <!-- RIGHT: QUICK GLOSSARY SEARCH -->
+        <aside class="pro-right card">
+          <div class="right-card">
+            <h3><i class="fa-solid fa-book-open"></i> 名詞/原料快速查</h3>
+            <div class="mini">
+              直接輸入 <strong>SPF</strong>、<strong>UVA-PF</strong>、<strong>Avobenzone</strong>、<strong>ZnO</strong> 等，立即打開名詞卡片。
+            </div>
+
+            <div class="searchrow" style="margin-top:.8rem;">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input id="glossarySearch" type="text" placeholder="搜尋名詞或原料…">
+            </div>
+
+            <div class="pillbar" id="glossaryQuick"></div>
+
+            <div class="hr"></div>
+
+            <div class="mini">
+              小技巧：點文章中的藍色底線名詞也可以開啟說明；或點名詞卡片內的「在知識庫搜尋」跳回你原本的
+              <a href="cosmetic.html" style="color:#1d4ed8;text-decoration:none;">化妝品知識庫</a>頁做延伸。
+            </div>
+          </div>
+        </aside>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- floating buttons for mobile -->
+  <div class="floating">
+    <button class="fab" id="fabGlossary" title="開啟名詞查詢"><i class="fa-solid fa-circle-info"></i></button>
+    <button class="fab" id="fabTop" title="回到頂端"><i class="fa-solid fa-arrow-up"></i></button>
+  </div>
+
+  <!-- glossary modal -->
+  <div class="modal-backdrop" id="glossaryModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <div>
+          <h3 class="modal-title" id="modalTitle">名詞</h3>
+          <div class="modal-sub" id="modalSub">—</div>
+        </div>
+        <button class="modal-close" id="modalClose" type="button"><i class="fa-solid fa-xmark"></i> 關閉</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    const G = {
+      "UVA": {
+        title: "UVA（320–400 nm）",
+        subtitle: "穿透較深、與光老化/色素沉著關聯較大；需要以 UVA 指標/光譜評估。",
+        kv: {
+          "範圍": "約 320–400 nm（可再分 UVA2 320–340、UVA1 340–400）",
+          "常見終點": "光老化、色素暗沉、UVA 誘導黑化等（非紅斑為主）",
+          "對應指標": "UVA-PF / PPD / PA 等"
+        },
+        expl: [
+          "若只追求高 SPF（偏 UVB），可能仍有 UVA 缺口，因此專業文件常同時提供 UVA 指標與光譜圖。",
+        ],
+        refs: [
+          { label: "ISO 24443 (UVA in vitro)", url: "https://www.iso.org/standard/75059.html" }
+        ],
+        kb: ["UVA", "UVA-PF", "廣譜"]
+      },
+      "UVB": {
+        title: "UVB（280–320 nm）",
+        subtitle: "與紅斑/曬傷關聯最強；SPF 主要評估對象。",
+        kv: {
+          "範圍": "約 280–320 nm",
+          "常見終點": "紅斑（erythema）、曬傷",
+          "對應指標": "SPF（in vivo）"
+        },
+        expl: [
+          "SPF 是以紅斑反應為基礎的比例指標，因此更接近 UVB 防護能力。",
+        ],
+        refs: [
+          { label: "ISO 24444 (SPF in vivo)", url: "https://www.iso.org/standard/72250.html" }
+        ],
+        kb: ["UVB", "SPF"]
+      },
+      "UVC": {
+        title: "UVC（100–280 nm）",
+        subtitle: "多被大氣吸收；日照暴露通常可忽略（人工光源情境另論）。",
+        kv: {
+          "範圍": "100–280 nm",
+          "日常暴露": "通常非常低",
+          "注意": "若涉及特定工業/殺菌光源，需另做暴露評估"
+        },
+        expl: [],
+        refs: []
+      },
+
+      "UV Filter": {
+        title: "UV 濾劑（UV Filter）",
+        subtitle: "防曬配方的核心成分：吸收、散射或反射 UV，降低皮膚暴露。",
+        kv: {
+          "大類": "有機（吸收型）/ 無機（散射/反射型）",
+          "關鍵": "光譜覆蓋 + 成膜均勻 + 光安定 + 法規可用性",
+          "開發重點": "溶解/分散、相容性、耐水、感官"
+        },
+        expl: [
+          "同一配方可含多種 UV 濾劑，以拼出更完整的 UVA+UVB 覆蓋並提升光安定。",
+          "各地對可用 UV 濾劑清單不同，出海產品需做市場差異化設計。"
+        ],
+        refs: [
+          { label: "EU Recommendation 2006/647/EC (claims)", url: "https://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri=OJ%3AL%3A2006%3A265%3A0039%3A0043%3Aen%3APDF" }
+        ],
+        kb: ["UV filter", "濾劑", "防曬"]
+      },
+
+      "SPF": {
+        title: "SPF（Sun Protection Factor）",
+        subtitle: "以紅斑反應為基礎的比例指標，反映對 UVB（曬傷/紅斑）的防護能力。",
+        kv: {
+          "測試常用塗抹量": "2 mg/cm²（標準測試條件）",
+          "測試方法": "ISO 24444（in vivo）",
+          "解讀提醒": "不是線性差距；用量不足會顯著降低實際保護"
+        },
+        expl: [
+          "SPF 是產品開發與上市宣稱的核心指標之一，但專業上應搭配 UVA 指標與光譜資料一起呈現。"
+        ],
+        refs: [
+          { label: "ISO 24444: in vivo SPF", url: "https://www.iso.org/standard/72250.html" }
+        ],
+        kb: ["SPF", "ISO 24444"]
+      },
+
+      "UVA-PF": {
+        title: "UVA-PF（UVA Protection Factor）",
+        subtitle: "用來描述產品在 UVA 範圍的防護能力，常可由 in vitro 光譜法估算。",
+        kv: {
+          "常見方法": "ISO 24443（in vitro）",
+          "常見搭配": "UVA/UVB 比例、Critical Wavelength",
+          "相關名詞": "PPD、PA 系統"
+        },
+        expl: [
+          "UVA-PF 有助於避免「SPF 很高但 UVA 不足」的溝通誤差。",
+        ],
+        refs: [
+          { label: "ISO 24443: UVA photoprotection in vitro", url: "https://www.iso.org/standard/75059.html" }
+        ],
+        kb: ["UVA-PF", "ISO 24443", "PPD", "PA"]
+      },
+
+      "PPD": {
+        title: "PPD（Persistent Pigment Darkening）",
+        subtitle: "以持續性色素暗沉反應評估 UVA 防護的概念/指標（常與 UVA-PF 概念相連）。",
+        kv: {
+          "關聯": "常被用於描述 UVA 防護",
+          "注意": "不同市場的標示方式不同（如 PA 分級）",
+          "建議呈現": "UVA 指標 + 光譜/臨界波長 + 相關測試報告"
+        },
+        expl: [],
+        refs: [
+          { label: "ISO 24443 (UVA in vitro)", url: "https://www.iso.org/standard/75059.html" }
+        ],
+        kb: ["PPD", "UVA", "PA"]
+      },
+
+      "PA": {
+        title: "PA（Protection Grade of UVA）",
+        subtitle: "常見於亞洲市場的 UVA 防護分級標示（例如 PA+++）。",
+        kv: {
+          "核心": "反映 UVA 防護的等級概念",
+          "注意": "不同市場/年代標示規則可能不同",
+          "專業呈現": "仍建議提供 UVA-PF/測試報告以支撐宣稱"
+        },
+        expl: [],
+        refs: []
+      },
+
+      "Critical Wavelength": {
+        title: "Critical Wavelength（臨界波長）",
+        subtitle: "用於描述防曬吸收光譜覆蓋程度的指標；廣譜判準常引用 ≥ 370 nm 的概念。",
+        kv: {
+          "用途": "支持 Broad Spectrum/廣譜覆蓋的判準之一",
+          "常見門檻概念": "≥ 370 nm（見 EU 建議文件等）",
+          "與誰一起看": "UVA/UVB 比例（如 UVA-PF ≥ SPF 的一定比例）"
+        },
+        expl: [
+          "臨界波長與光譜曲線能更直觀呈現 UVA 覆蓋，而不只靠單一數字。"
+        ],
+        refs: [
+          { label: "EU Recommendation 2006/647/EC", url: "https://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri=OJ%3AL%3A2006%3A265%3A0039%3A0043%3Aen%3APDF" }
+        ],
+        kb: ["critical wavelength", "廣譜", "UVA"]
+      },
+
+      "Photostability": {
+        title: "Photostability（光安定）",
+        subtitle: "UV 濾劑/配方在光照下維持結構與防護能力的程度；需以實測支持。",
+        kv: {
+          "為何重要": "光致降解可能降低 UVA/UVB 覆蓋，並影響安全/感官/顏色氣味",
+          "常見策略": "濾劑組合、抗氧化系統、包覆、配方結構優化",
+          "建議": "把光安定視為關鍵品質屬性（需有數據）"
+        },
+        expl: [],
+        refs: [
+          { label: "Sunscreen testing review (2022)", url: "https://www.sciencedirect.com/science/article/pii/S0165993622002072" }
+        ],
+        kb: ["photostability", "光安定", "UVA"]
+      },
+
+      "2mg/cm2": {
+        title: "2 mg/cm²（標準塗抹量）",
+        subtitle: "SPF 等多數防曬測試方法常用的標準塗抹量；日常用量不足會使實際防護下降。",
+        kv: {
+          "用途": "作為比較不同產品 SPF 的一致條件",
+          "實務差異": "多數人日常用量低於測試量",
+          "溝通重點": "足量 + 補擦"
+        },
+        expl: [
+          "因此專業溝通常強調「同一 SPF 值在不同用量下，實際防護會變弱」。"
+        ],
+        refs: [
+          { label: "ISO 24444 (SPF in vivo)", url: "https://www.iso.org/standard/72250.html" }
+        ],
+        kb: ["2 mg/cm2", "SPF", "用量"]
+      },
+
+      "ISO 24444": {
+        title: "ISO 24444",
+        subtitle: "防曬 SPF 的 in vivo（人體）測試方法標準。",
+        kv: {
+          "測什麼": "SPF（紅斑反應為終點）",
+          "類型": "In vivo（人體受試）",
+          "文件": "Cosmetics — Sun protection test methods — In vivo determination of SPF"
+        },
+        expl: [],
+        refs: [
+          { label: "ISO 24444: summary page", url: "https://www.iso.org/standard/72250.html" }
+        ],
+        kb: ["ISO 24444", "SPF"]
+      },
+
+      "ISO 24443": {
+        title: "ISO 24443",
+        subtitle: "防曬 UVA 光防護的 in vitro（體外）測試方法標準。",
+        kv: {
+          "測什麼": "UVA photoprotection / UVA-PF（光譜）",
+          "類型": "In vitro（體外）",
+          "文件": "Determination of sunscreen UVA photoprotection in vitro"
+        },
+        expl: [],
+        refs: [
+          { label: "ISO 24443: summary page", url: "https://www.iso.org/standard/75059.html" }
+        ],
+        kb: ["ISO 24443", "UVA-PF"]
+      },
+
+      "ISO 16217": {
+        title: "ISO 16217",
+        subtitle: "耐水浸泡程序：以水中浸泡後再測 SPF 來評估耐水性（in vivo）。",
+        kv: {
+          "用途": "規範水中浸泡程序與耐水評估",
+          "搭配": "通常與 ISO 24444 的 SPF 測試一起使用",
+          "類型": "In vivo（人體）"
+        },
+        expl: [],
+        refs: [
+          { label: "ISO 16217: summary page", url: "https://www.iso.org/standard/61437.html" }
+        ],
+        kb: ["ISO 16217", "water resistance"]
+      },
+
+      "ISO 18861": {
+        title: "ISO 18861",
+        subtitle: "耐水保留率百分比：用浸水前後 SPF 比較得到 retention percentage。",
+        kv: {
+          "用途": "計算耐水保留率百分比（retention）",
+          "概念": "比較 static SPF 與 wet SPF",
+          "搭配": "可與 ISO 16217/24444 的結果配套呈現"
+        },
+        expl: [],
+        refs: [
+          { label: "ISO 18861: summary page", url: "https://www.iso.org/standard/63659.html" }
+        ],
+        kb: ["ISO 18861", "water resistance"]
+      },
+
+      // UV filters (selected)
+      "Avobenzone": {
+        title: "Avobenzone（INCI: Butyl Methoxydibenzoylmethane）",
+        subtitle: "常見 UVA 濾劑代表；配方上需特別注意溶解性與光安定策略。",
+        kv: {
+          "功能": "UVA 濾劑（吸收型）",
+          "配方注意": "溶解度、析出風險、光安定（需搭配策略/測試）",
+          "相容性": "常與其他濾劑/抗氧化系統協同"
+        },
+        expl: [
+          "實務上常以濾劑組合提升整體覆蓋與光安定；具體配方需以光照前後 UVA/UVB 數據驗證。"
+        ],
+        refs: [
+          { label: "DermNet NZ overview", url: "https://dermnetnz.org/topics/topical-sunscreen-agents" }
+        ],
+        kb: ["Avobenzone", "Butyl Methoxydibenzoylmethane", "UVA"]
+      },
+
+      "Octocrylene": {
+        title: "Octocrylene（INCI: Octocrylene）",
+        subtitle: "常見 UVB/短波 UVA 濾劑，亦常用於提升配方穩定與溶解度（視系統而定）。",
+        kv: {
+          "功能": "UVB/部分 UVA 濾劑（吸收型）",
+          "配方角色": "可作為溶解/協同成分之一（需依實際系統）",
+          "注意": "刺激/敏感族群需留意並以測試/風險評估支持"
+        },
+        expl: [],
+        refs: [
+          { label: "DermNet NZ overview", url: "https://dermnetnz.org/topics/topical-sunscreen-agents" }
+        ],
+        kb: ["Octocrylene"]
+      },
+
+      "Ethylhexyl Triazone": {
+        title: "Ethylhexyl Triazone（又稱 Octyl Triazone）",
+        subtitle: "高效率 UVB 濾劑代表（不同市場可用性不同）。",
+        kv: {
+          "功能": "UVB 濾劑（吸收型，高效率）",
+          "配方注意": "油溶性與結晶/分散設計",
+          "提醒": "法規可用性需依目標市場確認"
+        },
+        expl: [],
+        refs: [
+          { label: "DermNet NZ overview", url: "https://dermnetnz.org/topics/topical-sunscreen-agents" }
+        ],
+        kb: ["Ethylhexyl Triazone", "Octyl Triazone"]
+      },
+
+      "Diethylamino Hydroxybenzoyl Hexyl Benzoate": {
+        title: "Diethylamino Hydroxybenzoyl Hexyl Benzoate（常見商品名 Uvinul A Plus）",
+        subtitle: "常見 UVA 濾劑之一（不同市場可用性不同）。",
+        kv: {
+          "功能": "UVA 濾劑（吸收型）",
+          "配方注意": "油相相容性、與其他濾劑組合",
+          "提醒": "宣稱需以 UVA 測試報告支持"
+        },
+        expl: [],
+        refs: [
+          { label: "ISO 24443 (UVA in vitro)", url: "https://www.iso.org/standard/75059.html" }
+        ],
+        kb: ["Diethylamino Hydroxybenzoyl Hexyl Benzoate", "Uvinul A Plus"]
+      },
+
+      "Bemotrizinol": {
+        title: "Bemotrizinol（常見商品名 Tinosorb S）",
+        subtitle: "廣譜（UVA+UVB）濾劑代表之一（不同市場可用性不同）。",
+        kv: {
+          "功能": "廣譜 UV 濾劑（吸收型/高分子型特性）",
+          "配方注意": "溶解/分散策略依供應型態而異",
+          "提醒": "法規與最大用量依市場確認"
+        },
+        expl: [],
+        refs: [
+          { label: "DermNet NZ overview", url: "https://dermnetnz.org/topics/topical-sunscreen-agents" }
+        ],
+        kb: ["Bemotrizinol", "Tinosorb S"]
+      },
+
+      "Bisoctrizole": {
+        title: "Bisoctrizole（常見商品名 Tinosorb M）",
+        subtitle: "常見廣譜濾劑之一；在部分市場屬於顆粒/分散型濾劑（不同市場可用性不同）。",
+        kv: {
+          "功能": "廣譜 UV 濾劑（多以分散型形式）",
+          "配方注意": "分散穩定、白泛與觸感管理",
+          "提醒": "法規與標示（含奈米標示）依市場確認"
+        },
+        expl: [],
+        refs: [
+          { label: "DermNet NZ overview", url: "https://dermnetnz.org/topics/topical-sunscreen-agents" }
+        ],
+        kb: ["Bisoctrizole", "Tinosorb M"]
+      },
+
+      "Zinc Oxide": {
+        title: "Zinc Oxide（ZnO）",
+        subtitle: "常見無機 UV 濾劑，涵蓋 UVA/UVB（視粒徑/處理而定）；分散與白泛管理是配方關鍵。",
+        kv: {
+          "功能": "無機 UV 濾劑（散射/反射/部分吸收）",
+          "配方注意": "粒徑、表面處理、分散、流變、膚感與白泛",
+          "提醒": "奈米/標示與可用性依市場確認"
+        },
+        expl: [],
+        refs: [
+          { label: "DermNet NZ overview", url: "https://dermnetnz.org/topics/topical-sunscreen-agents" }
+        ],
+        kb: ["Zinc Oxide", "ZnO"]
+      },
+
+      "Titanium Dioxide": {
+        title: "Titanium Dioxide（TiO₂）",
+        subtitle: "常見無機 UV 濾劑，較強的 UVB/短波 UVA 覆蓋；粒徑與分散影響白泛與效率。",
+        kv: {
+          "功能": "無機 UV 濾劑（散射/反射/部分吸收）",
+          "配方注意": "粒徑、表面處理、分散、白泛、膚感",
+          "提醒": "奈米/標示與可用性依市場確認"
+        },
+        expl: [],
+        refs: [
+          { label: "DermNet NZ overview", url: "https://dermnetnz.org/topics/topical-sunscreen-agents" }
+        ],
+        kb: ["Titanium Dioxide", "TiO2"]
+      },
+    };
+
+    // Build alias map
+    const alias = new Map();
+    for (const k of Object.keys(G)) alias.set(k.toLowerCase(), k);
+    const addAlias = (a, k) => alias.set(a.toLowerCase(), k);
+    addAlias("zno", "Zinc Oxide");
+    addAlias("tio2", "Titanium Dioxide");
+    addAlias("octyl triazone", "Ethylhexyl Triazone");
+    addAlias("uvinul a plus", "Diethylamino Hydroxybenzoyl Hexyl Benzoate");
+    addAlias("tinosorb s", "Bemotrizinol");
+    addAlias("tinosorb m", "Bisoctrizole");
+    addAlias("butyl methoxydibenzoylmethane", "Avobenzone");
+    addAlias("uva pf", "UVA-PF");
+    addAlias("critical wavelength", "Critical Wavelength");
+
+    // Modal helpers
+    const modalBackdrop = document.getElementById("glossaryModal");
+    const modalClose = document.getElementById("modalClose");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalSub = document.getElementById("modalSub");
+    const modalBody = document.getElementById("modalBody");
+
+    function esc(s){ return (s ?? "").toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+    function openModal(key){
+      const realKey = alias.get((key||"").toLowerCase()) || key;
+      const d = G[realKey];
+      if (!d){
+        modalTitle.textContent = key || "未命名";
+        modalSub.textContent = "找不到內建名詞卡片。你可以改用「在知識庫搜尋」查詢。";
+        modalBody.innerHTML = `
+          <div class="kv">
+            <div class="k">建議</div><div class="v">請檢查拼字或改用知識庫搜尋。</div>
+            <div class="k">在知識庫搜尋</div>
+            <div class="v"><a href="cosmetic.html?q=${encodeURIComponent(key||"")}" target="_blank" rel="noopener">cosmetic.html?q=${esc(key||"")}</a></div>
+          </div>
+        `;
+        modalBackdrop.style.display = "flex";
+        return;
+      }
+
+      modalTitle.textContent = d.title || realKey;
+      modalSub.textContent = d.subtitle || "";
+
+      // kv
+      const kv = d.kv || {};
+      const kvHtml = Object.keys(kv).length
+        ? `<div class="kv">${Object.entries(kv).map(([k,v]) => `<div class="k">${esc(k)}</div><div class="v">${esc(v)}</div>`).join("")}</div>`
+        : "";
+
+      const explHtml = (d.expl || []).length
+        ? `<h4>專業解說</h4><ul>${d.expl.map(t => `<li>${esc(t)}</li>`).join("")}</ul>`
+        : "";
+
+      const refsHtml = (d.refs || []).length
+        ? `<h4>延伸閱讀 / 標準</h4><ul class="refs">${d.refs.map(r => `<li><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.label)}</a></li>`).join("")}</ul>`
+        : "";
+
+      const kbQuery = (d.kb && d.kb[0]) ? d.kb[0] : realKey;
+      const kbHtml = `
+        <h4>在你的知識庫延伸查詢</h4>
+        <div class="kv">
+          <div class="k">搜尋連結</div>
+          <div class="v"><a href="cosmetic.html?q=${encodeURIComponent(kbQuery)}" target="_blank" rel="noopener">cosmetic.html?q=${esc(kbQuery)}</a></div>
+          <div class="k">提示</div>
+          <div class="v">可用中英文混合關鍵字（例如：INCI、機制、法規、敏感肌）。</div>
+        </div>
+      `;
+
+      modalBody.innerHTML = `${kvHtml}${explHtml}${refsHtml}${kbHtml}`;
+      modalBackdrop.style.display = "flex";
+      try { history.replaceState(null, "", `#term=${encodeURIComponent(realKey)}`); } catch(e){}
+    }
+
+    function closeModal(){
+      modalBackdrop.style.display = "none";
+    }
+
+    modalClose.addEventListener("click", closeModal);
+    modalBackdrop.addEventListener("click", (e) => {
+      if (e.target === modalBackdrop) closeModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeModal();
+    });
+
+    // Bind inline terms
+    function bindTerms(){
+      document.querySelectorAll("[data-term]").forEach(el => {
+        el.addEventListener("click", () => openModal(el.getAttribute("data-term")));
+      });
+    }
+    bindTerms();
+
+    // Build glossary pills
+    const pillKeys = Object.keys(G);
+    const pillWrap = document.getElementById("glossaryPills");
+    const quickWrap = document.getElementById("glossaryQuick");
+
+    function renderPills(container, keys){
+      container.innerHTML = keys.map(k => `<button class="pilltag" type="button" data-open="${esc(k)}"><i class="fa-solid fa-tag"></i> ${esc(k)}</button>`).join("");
+      container.querySelectorAll("[data-open]").forEach(btn => {
+        btn.addEventListener("click", () => openModal(btn.getAttribute("data-open")));
+      });
+    }
+    renderPills(pillWrap, pillKeys);
+    renderPills(quickWrap, pillKeys.slice(0, 14));
+
+    // Search in right panel
+    const elSearch = document.getElementById("glossarySearch");
+    elSearch?.addEventListener("input", () => {
+      const q = (elSearch.value || "").trim().toLowerCase();
+      if (!q){
+        renderPills(quickWrap, pillKeys.slice(0, 14));
+        return;
+      }
+      const matches = pillKeys.filter(k => {
+        const dk = G[k];
+        const blob = [
+          k,
+          dk.title || "",
+          dk.subtitle || "",
+          ...(dk.kb || []),
+          ...Object.values(dk.kv || {}),
+        ].join(" ").toLowerCase();
+        return blob.includes(q);
+      }).slice(0, 20);
+      renderPills(quickWrap, matches.length ? matches : pillKeys.slice(0, 14));
+    });
+
+    // Mobile FAB
+    const fabGlossary = document.getElementById("fabGlossary");
+    const fabTop = document.getElementById("fabTop");
+    fabGlossary?.addEventListener("click", () => openModal("SPF"));
+    fabTop?.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+    // TOC highlight + progress
+    const tocLinks = Array.from(document.querySelectorAll(".toc-link"));
+    const sections = tocLinks
+      .map(a => document.querySelector(a.getAttribute("href")))
+      .filter(Boolean);
+
+    const progressEl = document.getElementById("readProgress");
+
+    function onScroll(){
+      const doc = document.documentElement;
+      const max = doc.scrollHeight - doc.clientHeight;
+      const p = max > 0 ? Math.round((doc.scrollTop / max) * 100) : 0;
+      if (progressEl) progressEl.textContent = `${p}%`;
+
+      // active section
+      let current = sections[0];
+      const fromTop = window.scrollY + 120;
+      for (const s of sections){
+        if (s.offsetTop <= fromTop) current = s;
+      }
+      tocLinks.forEach(a => a.classList.toggle("active", a.getAttribute("href") === `#${current.id}`));
+    }
+
+    document.addEventListener("scroll", onScroll, { passive:true });
+    onScroll();
+
+    // Deep-link by #term=
+    try{
+      const hash = location.hash || "";
+      if (hash.startsWith("#term=")){
+        const t = decodeURIComponent(hash.slice(6));
+        setTimeout(() => openModal(t), 150);
+      }
+    }catch(e){}
+  </script>
+</body>
+</html>

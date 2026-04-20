@@ -1,0 +1,1820 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>化妝品智慧月刊</title>
+
+  <!-- Social preview (Open Graph / Twitter) -->
+  <link rel="canonical" href="https://cos-pif.web.app/kb-issue.html">
+  <meta name="description" content="CosPIF 化妝品智慧月刊：封面、目錄、主題與文章總覽。">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CosPIF 化妝品智慧月刊">
+  <meta property="og:title" content="CosPIF 化妝品知識月刊｜本期內容總覽">
+  <meta property="og:description" content="查看本期封面、目錄、主題與文章；支援分享與快速導覽。">
+  <meta property="og:url" content="https://cos-pif.web.app/kb-issue.html">
+  <meta property="og:image" content="https://cos-pif.web.app/og/cospif-monthly-share.jpg">
+  <meta property="og:image:alt" content="CosPIF 化妝品知識月刊">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="CosPIF 化妝品智慧月刊｜本期內容總覽">
+  <meta name="twitter:description" content="查看本期封面、目錄、主題與文章；支援分享與快速導覽。">
+  <meta name="twitter:image" content="https://cos-pif.web.app/og/cospif-monthly-share.jpg">
+
+  <!-- 若你目前在 cloudworkstations/localhost 測試，請填入正式公開網址（例如 https://<project>.web.app ）-->
+  <meta name="public-base-url" content="https://cos-pif.web.app">
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    .container{ max-width: 1750px; }
+    .page-header{ background:#fff; border:1px solid var(--line); border-radius:16px; padding: 1.05rem 1.15rem; margin: .9rem 0 1rem; }
+    .page-header h2{ margin:0; }
+    .sub{ color: var(--muted); margin-top:.35rem; line-height:1.45; }
+
+    .topbar{
+      display:flex; gap:.6rem; align-items:center; justify-content:space-between;
+      padding: .85rem 1rem;
+      border-bottom: 1px solid var(--line);
+      background:#fff;
+    }
+    .topbar .left{ display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
+    .topbar a{ text-decoration:none; color: var(--ink); font-weight:800; }
+    .topbar .right{ display:flex; gap:.5rem; align-items:center; flex-wrap:wrap;  position:relative; }
+
+    .badge{
+      display:inline-flex; align-items:center; gap:.35rem;
+      border:1px solid var(--line);
+      border-radius: 999px;
+      padding:.25rem .6rem;
+      font-size:.82rem;
+      background:#fff;
+      color: var(--muted);
+      margin-left:.2rem;
+    }
+    .tiny{ font-size:.86rem; color: var(--muted); }
+
+    .btnx{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius: 12px;
+      padding:.45rem .65rem;
+      cursor:pointer;
+      font-weight:900;
+      display:inline-flex; align-items:center; gap:.4rem;
+    }
+    .btnx:hover{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+
+    /* ===== Share menu ===== */
+    .shareWrap{ position:relative; }
+    .shareMenu{
+      position:absolute;
+      top: calc(100% + .5rem);
+      right: 0;
+      width: min(360px, calc(100vw - 2rem));
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.18);
+      padding:.7rem .7rem;
+      display:none;
+      z-index: 60;
+    }
+    .shareMenu.open{ display:block; }
+    .shareRow{ display:flex; gap:.45rem; align-items:center; flex-wrap:wrap; margin:.45rem 0; }
+    .shareLabel{ font-weight:900; color: var(--muted); font-size:.84rem; margin-right:.25rem; }
+    .shareTarget{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius: 999px;
+      padding:.25rem .55rem;
+      font-weight:950;
+      cursor:pointer;
+      font-size:.86rem;
+    }
+    .shareTarget:hover{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+    .shareTarget.active{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+    .shareTarget:disabled{ opacity:.45; cursor:not-allowed; }
+    .shareAction{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius: 12px;
+      padding:.45rem .65rem;
+      cursor:pointer;
+      font-weight:950;
+      display:inline-flex; align-items:center; gap:.4rem;
+    }
+    .shareAction:hover{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+    .shareIcon{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius: 12px;
+      padding:.5rem .65rem;
+      cursor:pointer;
+      font-weight:1000;
+      display:inline-flex; align-items:center; gap:.4rem;
+    }
+    .shareIcon:hover{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+    .shareHint{ color: var(--muted); font-size:.84rem; line-height:1.45; }
+
+
+    .issueSelect{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius: 12px;
+      padding:.42rem .6rem;
+      font-weight:900;
+      color: var(--ink);
+      max-width: 520px;
+    }
+    .issueSelect:focus{ outline:none; border-color:#bfdbfe; box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
+
+    /* ====== Cover layout ====== */
+    .coverLayout{
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 1rem;
+      align-items:start;
+    }
+    @media (max-width: 980px){ .coverLayout{ grid-template-columns: 1fr; } }
+
+    .cardish{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.05);
+      padding: 1.05rem 1.05rem;
+    }
+
+    .magCover{
+      border:1px solid var(--line);
+      border-radius: 18px;
+      overflow:hidden;
+      background:#0b1220;
+      position:relative;
+      aspect-ratio: 3 / 4;
+      box-shadow: 0 18px 45px rgba(0,0,0,.15);
+      min-height: 520px;
+    }
+    @media (max-width: 980px){ .magCover{ min-height: 460px; } }
+    .magCover::before{
+      content:"";
+      position:absolute; inset:0;
+      background: radial-gradient(1200px 520px at 20% 15%, rgba(255,255,255,.18), rgba(255,255,255,0) 55%),
+                  radial-gradient(900px 520px at 90% 90%, rgba(59,130,246,.26), rgba(59,130,246,0) 55%),
+                  linear-gradient(135deg, rgba(2,6,23,.92), rgba(30,41,59,.88));
+      z-index:0;
+    }
+    .magCover.hasImg::before{
+      background: linear-gradient(180deg, rgba(2,6,23,.25), rgba(2,6,23,.92));
+    }
+    .magCover .bg{
+      position:absolute; inset:0;
+      background-size: cover;
+      background-position: center;
+      filter: saturate(1.05) contrast(1.02);
+      transform: scale(1.04);
+      z-index:0;
+      display:none;
+    }
+    .magCover.hasImg .bg{ display:block; }
+    .magCover .inner{
+      position:absolute; inset:0;
+      padding: 1.05rem 1.05rem;
+      z-index:1;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      color:#fff;
+    }
+    .magBrand{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:.8rem;
+    }
+    .magBrand .brand{
+      font-weight: 1000;
+      letter-spacing: .6px;
+      font-size: 1.05rem;
+      text-transform: uppercase;
+      opacity:.95;
+    }
+    .magBrand .meta{
+      text-align:right;
+      font-size:.85rem;
+      opacity:.92;
+      line-height:1.45;
+      white-space:nowrap;
+    }
+    .magTitle{
+      margin-top:.35rem;
+      font-weight: 1000;
+      font-size: 1.85rem;
+      line-height:1.15;
+      text-shadow: 0 10px 26px rgba(0,0,0,.35);
+    }
+    .magSub{
+      margin-top:.45rem;
+      font-size: .98rem;
+      opacity:.95;
+      line-height:1.55;
+      max-width: 92%;
+      text-shadow: 0 10px 26px rgba(0,0,0,.35);
+      white-space:pre-wrap;
+    }
+
+    .magEditors{
+      margin-top:.55rem;
+      font-size:.86rem;
+      opacity:.92;
+      line-height:1.55;
+      max-width: 92%;
+      text-shadow: 0 10px 26px rgba(0,0,0,.35);
+      white-space: pre-wrap;
+    }
+
+    .coverLines{
+      margin-top: .65rem;
+      display:flex;
+      flex-direction:column;
+      gap:.5rem;
+    }
+    .coverLine{
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(2,6,23,.28);
+      border-radius: 14px;
+      padding: .55rem .65rem;
+      cursor:pointer;
+    }
+    .coverLine:hover{
+      background: rgba(59,130,246,.22);
+      border-color: rgba(191,219,254,.55);
+    }
+    .coverLine .t{
+      font-weight: 950;
+      font-size: 1.02rem;
+      line-height:1.35;
+    }
+    .coverLine .m{
+      margin-top:.15rem;
+      font-size:.85rem;
+      opacity:.9;
+      line-height:1.35;
+    }
+
+    /* right side: toc + topics */
+    .sectionTitle{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:.65rem; flex-wrap:wrap;
+      margin:.1rem 0 .55rem;
+    }
+    .sectionTitle h3{ margin:0; }
+    .toc{
+      margin: .2rem 0 0;
+      padding: 0;
+      list-style: none;
+      display:flex;
+      flex-direction:column;
+      gap: .4rem;
+    }
+    .toc a{
+      color: var(--ink);
+      text-decoration:none;
+      padding:.5rem .65rem;
+      border-radius: 12px;
+      border:1px solid transparent;
+      display:flex;
+      justify-content:space-between;
+      gap:.8rem;
+      align-items:center;
+    }
+    .toc a:hover{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+    .toc .count{
+      font-size:.82rem;
+      color: var(--muted);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:.12rem .45rem;
+      background:#fff;
+    }
+
+    .topicGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:.6rem;
+      margin-top:.75rem;
+    }
+    @media (max-width: 520px){ .topicGrid{ grid-template-columns: 1fr; } }
+    .topicTile{
+      border:1px solid var(--line);
+      border-radius: 16px;
+      padding:.75rem .8rem;
+      cursor:pointer;
+      background:#fff;
+    }
+    .topicTile:hover{ background:#eff6ff; border-color:#bfdbfe; }
+    .topicTile .t{ font-weight: 950; }
+    .topicTile .m{ margin-top:.2rem; color: var(--muted); font-size:.86rem; line-height:1.45; }
+
+    /* ====== Topic list ====== */
+    .topicLayout{
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 1rem;
+      align-items:start;
+    }
+    @media (max-width: 980px){ .topicLayout{ grid-template-columns: 1fr; } }
+
+    .articleCard{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding: 1rem 1rem;
+      box-shadow:0 1px 3px rgba(0,0,0,.05);
+      margin:.85rem 0;
+      background:#fff;
+    }
+    .articleCard .t{
+      font-weight:1000;
+      font-size:1.15rem;
+      display:flex; align-items:flex-start; justify-content:space-between; gap:.6rem; flex-wrap:wrap;
+    }
+    .articleCard .t a{ color: inherit; text-decoration:none; }
+    .articleCard .t a:hover{ color:#1d4ed8; text-decoration: underline; }
+    .articleCard .m{ color: var(--muted); margin-top:.25rem; line-height:1.55; }
+    .chip{
+      display:inline-flex; gap:.35rem; align-items:center;
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:.2rem .55rem;
+      font-size:.82rem;
+      color: var(--muted);
+      background:#fff;
+      white-space:nowrap;
+    }
+    .md p, .md li{ line-height:1.75; }
+    .md pre{
+      background:#0b1220; color:#e5e7eb;
+      padding:.9rem 1rem; border-radius: 12px;
+      border:1px solid #111827; overflow:auto;
+    }
+    .md code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace; }
+
+    /* ====== Article view (embedded) ====== */
+    .articleLayout{
+      display:grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 1rem;
+      align-items:start;
+    }
+    @media (max-width: 980px){ .articleLayout{ grid-template-columns: 1fr; } }
+
+    .article h1{ font-size: 1.65rem; margin: .25rem 0 .5rem; }
+    .article h2{ font-size: 1.28rem; margin: 1.1rem 0 .55rem; }
+    .article h3{ font-size: 1.1rem; margin: .95rem 0 .4rem; }
+    .article p, .article li{ line-height: 1.75; }
+    .article pre{
+      background:#0b1220; color:#e5e7eb;
+      padding: .9rem 1rem; border-radius: 12px;
+      border:1px solid #111827; overflow:auto;
+    }
+    .article code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace; }
+    .article blockquote{
+      border-left: 4px solid #93c5fd;
+      padding: .2rem .9rem;
+      background:#f8fafc;
+      border-radius: 10px;
+      margin: .8rem 0;
+      color: #334155;
+    }
+
+    .term-link{
+      display:inline;
+      cursor:pointer;
+      padding: .02rem .15rem;
+      border-bottom: 2px dotted #60a5fa;
+      border-radius: 6px;
+      background: rgba(59,130,246,.06);
+    }
+    .term-link:hover{ background: rgba(59,130,246,.12); }
+
+    /* Modal (term/ref) */
+    .modal-backdrop{
+      position:fixed; inset:0;
+      background: rgba(2,6,23,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 1rem;
+      z-index: 50;
+    }
+    .modal-backdrop.open{ display:flex; }
+    .modal{
+      width: min(900px, 100%);
+      background:#fff;
+      border-radius: 16px;
+      border:1px solid var(--line);
+      box-shadow: 0 20px 50px rgba(0,0,0,.25);
+      overflow:hidden;
+    }
+    .modal-head{
+      display:flex; align-items:center; justify-content:space-between;
+      padding: .9rem 1.05rem;
+      border-bottom: 1px solid var(--line);
+      background:#f9fafb;
+    }
+    .modal-head h3{ margin:0; font-size: 1.05rem; }
+    .modal-body{
+      padding: 1rem 1.05rem 1.1rem;
+      max-height: 70vh;
+      overflow:auto;
+    }
+    .kvgrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .8rem;
+      margin-top:.75rem;
+    }
+    @media (max-width: 880px){ .kvgrid{ grid-template-columns: 1fr; } }
+    .kv{
+      border:1px solid var(--line);
+      border-radius: 12px;
+      padding:.7rem .8rem;
+      background:#fff;
+    }
+    .k{ font-weight:900; font-size:.85rem; color: var(--muted); }
+    .v{ margin-top:.25rem; white-space:pre-wrap; line-height:1.6; }
+
+
+    /* Vote modal */
+    .vote-hint{font-size:12px;color:var(--muted);line-height:1.5}
+    .vote-box{border:1px solid var(--line); border-radius:12px; padding:.75rem .85rem; background:#fff}
+    .vote-opt{display:flex; align-items:flex-start; gap:.55rem; padding:.55rem .5rem; border-radius:10px; cursor:pointer}
+    .vote-opt:hover{ background:#f8fafc; }
+    .vote-opt input{ margin-top:.2rem; }
+    .vote-opt .name{ font-weight:800; }
+    .vote-opt .meta{ margin-left:auto; font-size:12px; color:var(--muted); }
+    .vote-actions{ display:flex; gap:.6rem; justify-content:flex-end; margin-top:.85rem; }
+    .vote-actions .primary{ background:#2563eb; color:#fff; border:none; }
+
+    /* hide/show views */
+    .view{ display:none; }
+    .view.open{ display:block; }
+  </style>
+</head>
+
+<body>
+  <header class="no-print">
+    <div class="topbar">
+      <div class="left">
+        <a href="index.html"><i class="fa-solid fa-house"></i> 首頁</a>
+        <span class="badge" id="issueBadge">issue: —</span>
+        <select id="issueSelect" class="issueSelect" title="選擇刊物">
+          <option value="">載入刊物清單…</option>
+        </select>
+        <span class="badge" id="viewBadge">封面</span>
+      </div>
+      <div class="right">
+        
+        <span class="shareWrap">
+          <button class="btnx" id="btnShare" title="分享"><i class="fa-solid fa-share-nodes"></i> 分享</button>
+          <div class="shareMenu" id="shareMenu" aria-hidden="true">
+            <div class="shareRow">
+              <span class="shareLabel">分享對象</span>
+              <button class="shareTarget active" data-target="current">本頁</button>
+              <button class="shareTarget" data-target="cover">封面</button>
+              <button class="shareTarget" data-target="topic" id="shareTargetTopic">主題</button>
+              <button class="shareTarget" data-target="article" id="shareTargetArticle">文章</button>
+            </div>
+            <div class="shareRow">
+              <button class="shareAction" data-act="copy"><i class="fa-regular fa-copy"></i> 複製連結</button>
+              <button class="shareAction" data-act="native"><i class="fa-solid fa-share-nodes"></i> 系統分享</button>
+            </div>
+            <div class="shareRow">
+              <button class="shareIcon" data-platform="line" title="LINE"><i class="fa-brands fa-line"></i></button>
+              <button class="shareIcon" data-platform="facebook" title="Facebook"><i class="fa-brands fa-facebook"></i></button>
+              <button class="shareIcon" data-platform="x" title="X"><i class="fa-brands fa-x-twitter"></i></button>
+              <button class="shareIcon" data-platform="linkedin" title="LinkedIn"><i class="fa-brands fa-linkedin"></i></button>
+            </div>
+            <div class="shareHint" id="shareHint">可分享整期（封面）、某個主題或單篇文章。</div>
+          </div>
+                </span>
+        <a class="btnx" id="btnVoteNext" href="topic-poll.html" title="票選下期主題"><i class="fa-solid fa-check-to-slot"></i> 票選下期主題</a>
+        <a class="btnx" id="btnReview" href="kb-review.html" title="審稿入口" style="display:none"><i class="fa-solid fa-pen-to-square"></i> 審稿</a>
+
+<button class="btnx" id="btnCover" title="回封面"><i class="fa-solid fa-newspaper"></i> 封面</button>
+        <button class="btnx" id="btnBack" title="上一層"><i class="fa-solid fa-arrow-left"></i> 返回</button>
+        <span class="tiny" id="metaLine"></span>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="page-header">
+      <h2 id="pageTitle">化妝品智慧月刊</h2>
+      <div class="sub" id="pageSub">讀取中…</div>
+    </div>
+
+    <!-- COVER VIEW -->
+    <section id="coverView" class="view open">
+      <div class="coverLayout">
+        <div class="cardish">
+          <div id="coverCard" class="magCover">
+            <div class="bg" id="coverBg"></div>
+            <div class="inner">
+              <div>
+                <div class="magBrand">
+                  <div class="brand"><i class="fa-solid fa-flask"></i> COSPIF KB</div>
+                  <div class="meta" id="coverMeta">—</div>
+                </div>
+                <div class="magTitle" id="coverTitle">—</div>
+                <div class="magSub" id="coverSub">—</div>
+                <div class="magEditors" id="coverEditors"></div>
+              </div>
+              <div class="coverLines" id="coverLines"></div>
+            </div>
+          </div>
+
+          <div class="tiny" style="margin-top:.7rem; line-height:1.6;">
+            <i class="fa-solid fa-circle-info"></i>
+            封面可用 <code>kb_issues.coverImageUrl</code> 指定背景圖；未提供時會使用預設漸層。
+          </div>
+        </div>
+
+        <div class="cardish">
+          <div class="sectionTitle">
+            <h3 style="margin:0;"><i class="fa-solid fa-list"></i> 本期目錄</h3>
+            <span class="tiny">點標題可直接閱讀（含名詞卡）</span>
+          </div>
+          <ul class="toc" id="tocCover"></ul>
+
+          <hr style="border:none; border-top:1px solid #eef2f7; margin: 1rem 0;">
+
+          <div class="sectionTitle">
+            <h3 style="margin:0;"><i class="fa-solid fa-tags"></i> 主題</h3>
+            <span class="tiny">先選主題，再選文章</span>
+          </div>
+          <div class="topicGrid" id="topicGrid"></div>
+
+          <div class="tiny" style="margin-top:1rem;">
+            你也可以使用連結：<code>kb-issue.html?issue=xxx</code>（封面）／<code>?issue=xxx&topic=yyy</code>（主題）／<code>?issue=xxx&slug=zzz</code>（文章）。
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TOPIC VIEW -->
+    <section id="topicView" class="view">
+      <div class="topicLayout">
+        <main class="cardish">
+          <div class="sectionTitle">
+            <h3 style="margin:0;"><i class="fa-solid fa-folder-open"></i> <span id="topicTitle">主題</span></h3>
+            <span class="tiny" id="topicHint"></span>
+          </div>
+          <div id="topicItems"></div>
+        </main>
+        <aside class="cardish">
+          <h3 style="margin-top:0;"><i class="fa-solid fa-list"></i> 目錄</h3>
+          <ul class="toc" id="tocTopic"></ul>
+          <div class="tiny" style="margin-top:1rem;">
+            <i class="fa-solid fa-arrow-left"></i> 右上角「封面」可回到封面。
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ARTICLE VIEW -->
+    <section id="articleView" class="view">
+      <div class="articleLayout">
+        <main class="cardish article">
+          <div id="articleTop"></div>
+          <div id="articleBody"></div>
+
+          <section id="refBlock" style="display:none; margin-top: 1.25rem;">
+            <h2>參考文獻</h2>
+            <ol id="refList" style="padding-left:1.2rem;"></ol>
+            <div class="tiny" style="margin-top:.5rem;">※ 文獻資料來自 <code>kb_refs</code>，文章引用欄位為 <code>refIds</code>。</div>
+          </section>
+
+          <div id="articleEmpty" style="display:none; margin-top:.8rem;" class="tiny"></div>
+        </main>
+
+        <aside class="cardish">
+          <h3 style="margin-top:0;"><i class="fa-solid fa-list"></i> 章節索引</h3>
+          <ul class="toc" id="tocArticle"></ul>
+
+          <hr style="border:none; border-top:1px solid #eef2f7; margin: 1rem 0;">
+
+          <h3 style="margin:0;"><i class="fa-solid fa-book-open"></i> 名詞卡提示</h3>
+          <div class="tiny" style="margin-top:.35rem; line-height:1.6;">
+            文章內出現的 <span class="term-link">專有名詞</span>（<code>[[...]]</code> 標記）可點擊，會彈出名詞卡（<code>kb_terms</code>）。
+          </div>
+
+          <hr style="border:none; border-top:1px solid #eef2f7; margin: 1rem 0;">
+
+          <button class="btnx" id="btnOpenStandalone" style="width:100%; justify-content:center;">
+            <i class="fa-solid fa-up-right-from-square"></i> 以文章頁單獨開啟（kb-article）
+          </button>
+        </aside>
+      </div>
+    </section>
+  </div>
+
+  <!-- TERM MODAL -->
+  <div class="modal-backdrop" id="termModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <h3 id="modalTitle">名詞卡</h3>
+        <button class="btnx" id="modalClose"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div id="modalMeta" class="tiny"></div>
+        <div class="kvgrid" id="modalKv"></div>
+
+        <div id="modalRefsWrap" style="margin-top:1rem; display:none;">
+          <h3 style="margin: .2rem 0 .35rem; font-size: 1rem;">參考文獻</h3>
+          <ol id="modalRefs" style="padding-left: 1.2rem; margin: .35rem 0 0;"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REF MODAL -->
+  <div class="modal-backdrop" id="refModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="refModalTitle">
+      <div class="modal-head">
+        <h3 id="refModalTitle">參考文獻</h3>
+        <button class="btnx" id="refModalClose"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div id="refModalMeta" class="tiny"></div>
+        <div class="kvgrid" id="refModalKv"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+  console.log("kb-issue build 2025-12-30-published-only-1");
+import {doc, getDoc, getDocs, collection, query, where, limit, setDoc, serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { db as dbRaw, auth } from "./firebase-config.js";
+
+    // firebase-config.js 可能匯出 compat Firestore（有 _delegate）或 modular Firestore；這裡統一成 modular Firestore 供 v10 模組化 API 使用
+    const db = (dbRaw && dbRaw._delegate) ? dbRaw._delegate : dbRaw;
+    if (!db) { throw new Error("firebase-config.js 未正確匯出 Firestore db"); }
+
+    const $ = (s) => document.querySelector(s);
+
+    const COL_ISSUES = "kb_issues";
+    const COL_ARTICLES = "kb_articles";
+    const COL_TERMS = "kb_terms";
+    const COL_REFS = "kb_refs";
+
+    // ===== 投票：下期主題票選 =====
+    const COL_POLLS = "kb_polls";
+    const VOTE_HASH = "#vote";
+
+    const voteModal = $("#voteModal");
+    const voteBox = $("#voteBox");
+    const voteHint = $("#voteHint");
+    const voteDesc = $("#voteDesc");
+    const voteOptions = $("#voteOptions");
+    const voteMsg = $("#voteMsg");
+    const btnVoteNext = $("#btnVoteNext");
+
+
+    const btnReview = $("#btnReview");
+
+    function extractRolesFromClaims(claims){
+      if (!claims) return {};
+      const nested = (claims.roles && typeof claims.roles === "object") ? claims.roles : null;
+      if (nested) return nested;
+      const keys = ["admin","systemAdmin","secretary","kbEditor","editor","reviewer"];
+      const r = {};
+      keys.forEach(k => { if (claims[k]) r[k] = true; });
+      return r;
+    }
+
+    async function refreshReviewButton(u){
+      if (!btnReview) return;
+      if (!u){
+        btnReview.style.display = "none";
+        return;
+      }
+      try{
+        const token = await u.getIdTokenResult(true);
+        const claims = (token && token.claims) || {};
+        const roles = extractRolesFromClaims(claims);
+        const ok = !!(roles.reviewer || roles.kbEditor || roles.editor || roles.secretary || roles.admin || roles.systemAdmin);
+        btnReview.style.display = ok ? "" : "none";
+      }catch(e){
+        btnReview.style.display = "none";
+      }
+    }
+
+    onAuthStateChanged(auth, async (u) => {
+      await refreshReviewButton(u);
+    });
+
+
+
+    function getVoterId(){
+      const key = "cospif_kb_vote_id";
+      let id = localStorage.getItem(key);
+      if (!id){
+        id = "v_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        localStorage.setItem(key, id);
+      }
+      return id;
+    }
+
+    async function loadActivePoll(){
+      const q = query(collection(db, COL_POLLS), where("active", "==", true), limit(1));
+      const snaps = await getDocs(q);
+      if (snaps.empty) return null;
+      const d = snaps.docs[0];
+      return { id: d.id, ...d.data() };
+    }
+
+    async function loadAllVotes(pollId){
+      try{
+        const snaps = await getDocs(collection(db, COL_POLLS, pollId, "votes"));
+        const map = new Map();
+        snaps.forEach(s => {
+          const v = s.data() || {};
+          const opt = String(v.option || "").trim();
+          if (!opt) return;
+          map.set(opt, (map.get(opt) || 0) + 1);
+        });
+        return map;
+      }catch(e){
+        return new Map();
+      }
+    }
+
+    async function loadMyVote(pollId, voterId){
+      try{
+        const snap = await getDoc(doc(db, COL_POLLS, pollId, "votes", voterId));
+        return snap.exists() ? (snap.data() || {}) : null;
+      }catch(e){
+        return null;
+      }
+    }
+
+    function openModal(el){ el.classList.add("open"); }
+    function closeModal(el){ el.classList.remove("open"); }
+
+    async function openVoteModal(){
+      if (!voteModal) return;
+      voteMsg.textContent = "";
+      voteHint.textContent = "載入票選中…";
+      voteBox.style.display = "none";
+      openModal(voteModal);
+
+      const poll = await loadActivePoll();
+      if (!poll){
+        voteHint.innerHTML = `目前尚未設定「下期主題票選」。<br>管理員請在 Firestore 建立 <code>${COL_POLLS}</code> 集合，新增一筆文件：<code>{ active:true, title, desc, options:[...] }</code>`;
+        return;
+      }
+
+      const title = (poll.title || "票選下期主題").toString();
+      $("#voteModalTitle").textContent = title;
+
+      const desc = (poll.desc || poll.description || "").toString().trim();
+      voteDesc.textContent = desc ? desc : "請選擇你希望下期優先推出的主題。";
+
+      const options = Array.isArray(poll.options) ? poll.options.map(x=>String(x||"").trim()).filter(Boolean) : [];
+      if (!options.length){
+        voteHint.innerHTML = `此票選尚未設定選項（<code>options</code>）。`;
+        return;
+      }
+
+      const voterId = getVoterId();
+      const [counts, myVote] = await Promise.all([loadAllVotes(poll.id), loadMyVote(poll.id, voterId)]);
+      const myOpt = myVote && myVote.option ? String(myVote.option).trim() : "";
+
+      voteOptions.innerHTML = options.map((opt, i) => {
+        const safe = esc(opt);
+        const n = counts.get(opt) || 0;
+        const checked = (myOpt && myOpt === opt) ? "checked" : "";
+        return `
+          <label class="vote-opt">
+            <input type="radio" name="voteOpt" value="${safe}" ${checked} />
+            <div>
+              <div class="name">${safe}</div>
+            </div>
+            <div class="meta">${n} 票</div>
+          </label>
+        `;
+      }).join("");
+
+      // 點整列即可選取
+      voteOptions.querySelectorAll(".vote-opt").forEach(row => {
+        row.addEventListener("click", () => {
+          const r = row.querySelector("input[type=radio]");
+          if (r) r.checked = true;
+        });
+      });
+
+      voteHint.textContent = "";
+      voteBox.style.display = "block";
+
+      // 綁定送出（重覆開啟不重綁）
+      const btn = $("#voteSubmit");
+      if (btn && !btn.__bound){
+        btn.__bound = true;
+        btn.addEventListener("click", async () => {
+          try{
+            voteMsg.textContent = "";
+            const sel = voteOptions.querySelector("input[name=voteOpt]:checked");
+            const val = sel ? String(sel.value || "").trim() : "";
+            if (!val){ voteMsg.textContent = "請先選擇一個主題。"; return; }
+
+            await setDoc(doc(db, COL_POLLS, poll.id, "votes", voterId), {
+              option: val,
+              updatedAt: serverTimestamp(),
+            }, { merge: true });
+
+            voteMsg.textContent = "✅ 已送出票選！謝謝你的意見。";
+
+            // refresh counts
+            const fresh = await loadAllVotes(poll.id);
+            voteOptions.querySelectorAll(".vote-opt").forEach(row => {
+              const r = row.querySelector("input[type=radio]");
+              const meta = row.querySelector(".meta");
+              const opt = r ? String(r.value || "") : "";
+              if (meta) meta.textContent = `${fresh.get(opt) || 0} 票`;
+            });
+          }catch(e){
+            voteMsg.textContent = "送出失敗：" + (e && e.message ? e.message : e);
+          }
+        });
+      }
+    }
+
+    // button + close
+    if (btnVoteNext && btnVoteNext.tagName === "BUTTON"){
+      btnVoteNext.addEventListener("click", openVoteModal);
+    }
+    const voteClose = $("#voteModalClose");
+    if (voteClose){ voteClose.addEventListener("click", () => closeModal(voteModal)); }
+    if (voteModal){
+      voteModal.addEventListener("click", (e) => { if (e.target === voteModal) closeModal(voteModal); });
+    }
+
+
+
+    const params = new URLSearchParams(location.search);
+    const issueId = (params.get("issue") || "").trim();
+    const initialTopic = (params.get("topic") || "").trim();
+    const initialSlug = (params.get("slug") || "").trim();
+
+
+    // ===== Share helpers
+    const shareBtn = $("#btnShare");
+    const shareMenu = $("#shareMenu");
+    const shareTargetTopic = $("#shareTargetTopic");
+    const shareTargetArticle = $("#shareTargetArticle");
+    let shareTarget = "current";
+
+    // 若在開發環境（cloudworkstations/localhost）分享，社群抓取會顯示 Not authorized。
+    // 請在 <meta name="public-base-url" content="https://你的正式網域"> 設定公開網域（Firebase Hosting / 自訂網域）。
+    const META_PUBLIC_BASE = (document.querySelector('meta[name="public-base-url"]')?.getAttribute("content") || "").trim();
+    const SHARE_BASE = META_PUBLIC_BASE || location.origin;
+
+    function currentState(){
+      return {
+        issue: (new URLSearchParams(location.search).get("issue") || "").trim(),
+        topic: (new URLSearchParams(location.search).get("topic") || "").trim(),
+        slug:  (new URLSearchParams(location.search).get("slug") || "").trim(),
+      };
+    }
+
+    function buildShareUrl(target){
+      const st = currentState();
+      const u = new URL(location.pathname, SHARE_BASE);
+      // 保留 hash（若未來要用）
+      u.hash = location.hash;
+      u.searchParams.set("issue", st.issue || issueId || "");
+      u.searchParams.delete("topic");
+      u.searchParams.delete("slug");
+
+      const t = String(target || "current");
+      if (t === "current"){
+        if (st.topic) u.searchParams.set("topic", st.topic);
+        if (st.slug) u.searchParams.set("slug", st.slug);
+      } else if (t === "cover"){
+        // only issue
+      } else if (t === "topic"){
+        if (st.topic) u.searchParams.set("topic", st.topic);
+      } else if (t === "article"){
+        if (st.slug) u.searchParams.set("slug", st.slug);
+      }
+      return u.toString();
+    }
+
+    function buildShareTitle(target){
+      const st = currentState();
+      const issueTitle = (issueData?.title || $("#pageTitle")?.textContent || "化妝品知識刊物").trim();
+      if (target === "article" && st.slug) return `${issueTitle}｜文章：${st.slug}`;
+      if (target === "topic" && st.topic) return `${issueTitle}｜主題：${st.topic}`;
+      if (target === "cover") return `${issueTitle}｜封面`;
+      // current
+      if (st.slug) return `${issueTitle}｜文章：${st.slug}`;
+      if (st.topic) return `${issueTitle}｜主題：${st.topic}`;
+      return `${issueTitle}｜封面`;
+    }
+
+    function setShareTarget(next){
+      shareTarget = next;
+      shareMenu?.querySelectorAll(".shareTarget")?.forEach(btn => {
+        btn.classList.toggle("active", btn.getAttribute("data-target") === next);
+      });
+    }
+
+    function refreshShareTargets(){
+      const st = currentState();
+      if (shareTargetTopic) shareTargetTopic.disabled = !st.topic;
+      if (shareTargetArticle) shareTargetArticle.disabled = !st.slug;
+      // If current target becomes unavailable, fallback
+      if (shareTarget === "topic" && !st.topic) setShareTarget("cover");
+      if (shareTarget === "article" && !st.slug) setShareTarget(st.topic ? "topic" : "cover");
+    }
+
+    async function copyToClipboard(text){
+      try{
+        await navigator.clipboard.writeText(text);
+        $("#shareHint").textContent = "✅ 已複製連結，可貼到社群平台或群組。";
+      }catch(e){
+        // fallback
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+        $("#shareHint").textContent = "✅ 已複製連結（fallback）。";
+      }
+    }
+
+    function openPlatformShare(platform, url, title){
+      const u = encodeURIComponent(url);
+      const t = encodeURIComponent(title || "");
+      let shareUrl = "";
+      if (platform === "line"){
+        shareUrl = `https://social-plugins.line.me/lineit/share?url=${u}`;
+      } else if (platform === "facebook"){
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${u}`;
+      } else if (platform === "x"){
+        shareUrl = `https://twitter.com/intent/tweet?url=${u}&text=${t}`;
+      } else if (platform === "linkedin"){
+        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${u}`;
+      }
+      if (shareUrl) window.open(shareUrl, "_blank", "noopener,noreferrer");
+    }
+
+    async function nativeShare(url, title){
+      if (navigator.share){
+        try{
+          await navigator.share({ title: title || document.title, text: title || "", url });
+        }catch(e){
+          // user cancelled or not supported
+        }
+      } else {
+        await copyToClipboard(url);
+      }
+    }
+
+    function toggleShareMenu(force){
+      if (!shareMenu) return;
+      const open = (typeof force === "boolean") ? force : !shareMenu.classList.contains("open");
+      shareMenu.classList.toggle("open", open);
+      shareMenu.setAttribute("aria-hidden", open ? "false" : "true");
+      if (open) {
+        refreshShareTargets();
+        const host = location.hostname || "";
+        if (!META_PUBLIC_BASE && (host.includes("cloudworkstations") || host === "localhost" || host.startsWith("127."))){
+          const hint = $("#shareHint");
+          if (hint) hint.textContent = "⚠️ 你目前在測試網域（需登入/不可公開抓取），Facebook/LINE 預覽會顯示 Not authorized。請把 <meta name=\"public-base-url\"> 設為你的正式公開網址後再分享。";
+        }
+      }
+    }
+
+    if (shareBtn){
+      shareBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        toggleShareMenu();
+      });
+    }
+
+    // close on outside click
+    document.addEventListener("click", (e) => {
+      if (!shareMenu || !shareBtn) return;
+      const wrap = shareBtn.closest(".shareWrap");
+      if (wrap && wrap.contains(e.target)) return;
+      toggleShareMenu(false);
+    });
+
+    // target buttons
+    shareMenu?.querySelectorAll(".shareTarget")?.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const t = btn.getAttribute("data-target");
+        if (!t || btn.disabled) return;
+        setShareTarget(t);
+        $("#shareHint").textContent = "可分享整期（封面）、某個主題或單篇文章。";
+      });
+    });
+
+    // actions
+    shareMenu?.querySelectorAll(".shareAction")?.forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const act = btn.getAttribute("data-act");
+        const url = buildShareUrl(shareTarget);
+        const title = buildShareTitle(shareTarget);
+        if (act === "copy") await copyToClipboard(url);
+        if (act === "native") await nativeShare(url, title);
+      });
+    });
+
+    // platform icons
+    shareMenu?.querySelectorAll(".shareIcon")?.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const p = btn.getAttribute("data-platform");
+        const url = buildShareUrl(shareTarget);
+        const title = buildShareTitle(shareTarget);
+        openPlatformShare(p, url, title);
+      });
+    });
+
+    // ===== small utils
+    function esc(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+    }
+    function norm(s){ return String(s || "").trim(); }
+
+    function setView(name){
+      ["coverView","topicView","articleView"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle("open", id === name);
+      });
+      const label = name === "coverView" ? "封面" : (name === "topicView" ? "主題" : "文章");
+      $("#viewBadge").textContent = label;
+    }
+
+    function setUrl(next){
+      const u = new URL(location.href);
+      // keep issue
+      u.searchParams.set("issue", issueId || next.issue || "");
+      // reset
+      u.searchParams.delete("topic");
+      u.searchParams.delete("slug");
+      if (next.topic) u.searchParams.set("topic", next.topic);
+      if (next.slug) u.searchParams.set("slug", next.slug);
+      history.replaceState({}, "", u.toString());
+    }
+
+    function buildStandaloneArticleUrl(slug){
+      const url = new URL(location.href);
+      const base = url.toString().replace(/kb-issue\.html(\?.*)?$/i, "kb-article.html");
+      const u = new URL(base);
+      u.searchParams.set("slug", slug);
+      return u.toString();
+    }
+
+    // ===== Markdown + term markup
+    function escapeHtml(str){ return esc(str); }
+
+    // Support: [[t_xxx|label]] or [[label]] (label used as search key)
+    function expandTermMarkup(md){
+      if (!md) return "";
+      let out = String(md);
+      out = out.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, (_m, key, label) => {
+        return `<span class="term-link" data-term="${escapeHtml(key)}">${escapeHtml(label)}</span>`;
+      });
+      out = out.replace(/\[\[([^\]]+)\]\]/g, (_m, label) => {
+        return `<span class="term-link" data-term="${escapeHtml(label)}">${escapeHtml(label)}</span>`;
+      });
+      return out;
+    }
+
+    function mdToHtml(md){
+      const prepared = expandTermMarkup(md || "");
+      marked.setOptions({ gfm: true, breaks: true });
+      return marked.parse(prepared);
+    }
+
+    function ensureSectionId(id, h2){
+      const base = (id || h2 || "section").toString().trim().toLowerCase()
+        .replace(/[^\p{L}\p{N}]+/gu, "-")
+        .replace(/^-+|-+$/g, "");
+      return base || ("section-" + Math.random().toString(16).slice(2));
+    }
+
+    function wireTermLinks(scope=document){
+      scope.querySelectorAll(".term-link").forEach(el => {
+        el.addEventListener("click", async () => {
+          const key = (el.getAttribute("data-term") || "").trim();
+          if (!key) return;
+          await openTermByKey(key);
+        });
+      });
+    }
+
+    // ===== Term modal (copied from kb-article style)
+    const termModal = $("#termModal");
+    $("#modalClose").addEventListener("click", () => termModal.classList.remove("open"));
+    termModal.addEventListener("click", (e) => { if (e.target === termModal) termModal.classList.remove("open"); });
+
+    function normalizeTermKey(s){
+      if (!s) return "";
+      return String(s)
+        .replace(/\u3000/g, " ")
+        .replace(/[（]/g, "(")
+        .replace(/[）]/g, ")")
+        .replace(/\s+/g, " ")
+        .replace(/\(\s+/g, "(")
+        .replace(/\s+\)/g, ")")
+        .trim();
+    }
+    function expandKeyVariants(raw){
+      const base = normalizeTermKey(raw);
+      const out = [];
+      const push = (v) => {
+        v = normalizeTermKey(v);
+        if (v && !out.includes(v)) out.push(v);
+      };
+      push(base);
+
+      const m = base.match(/^(.+?)\s*\(\s*([^)]+?)\s*\)\s*$/);
+      if (m){ push(m[1]); push(m[2]); }
+
+      const m2 = base.match(/^(.*?)[(]\s*([^()]+?)\s*[)](.*)$/);
+      if (m2){
+        push((m2[1] + " " + m2[3]).trim());
+        push(m2[1].trim());
+        push(m2[3].trim());
+        push(m2[2].trim());
+      }
+
+      if (base.includes("／") || base.includes("/") || base.includes("、") || base.includes(",")){
+        base.split(/[／\/,、]+/).map(s => s.trim()).filter(Boolean).forEach(push);
+      }
+
+      return out.filter(Boolean).slice(0, 12);
+    }
+
+    async function openTermDoc(termId){
+      const snap = await getDoc(doc(db, COL_TERMS, termId));
+      if (!snap.exists()) throw new Error("找不到名詞卡（kb_terms）");
+      const t = { id: snap.id, ...snap.data() };
+      renderTermModal(t);
+      termModal.classList.add("open");
+    }
+
+    async function openTermByKey(key){
+      const variants = expandKeyVariants(key);
+      if (!variants.length) return;
+
+      // If any variant looks like docId, open directly
+      for (const k of variants){
+        if (/^[a-zA-Z0-9_:-]{4,}$/.test(k) && k.startsWith("t_")){
+          await openTermDoc(k);
+          return;
+        }
+      }
+
+      // Otherwise search exact match across fields
+      for (const k of variants){
+        const candidates = new Map();
+        const col = collection(db, COL_TERMS);
+
+        const qlist = [
+          query(col, where("nameZh", "==", k), limit(8)),
+          query(col, where("nameEn", "==", k), limit(8)),
+          query(col, where("inci", "==", k), limit(8)),
+          query(col, where("aliases", "array-contains", k), limit(8)),
+          query(col, where("keywords", "array-contains", k), limit(8)),
+        ];
+
+        for (const qx of qlist){
+          try{
+            const snaps = await getDocs(qx);
+            snaps.docs.forEach(s => candidates.set(s.id, { id: s.id, ...s.data() }));
+          }catch(e){ /* ignore */ }
+        }
+
+        const list = Array.from(candidates.values()).slice(0, 12);
+        if (list.length){
+          // If only one, open it. Otherwise show first (simple behavior).
+          renderTermModal(list[0]);
+          termModal.classList.add("open");
+          return;
+        }
+      }
+
+      // no hit: show a basic message
+      renderTermModal({ id: "（未找到）", nameZh: key, notes: "kb_terms 中沒有找到完全符合的名詞。可先匯入名詞卡或補 aliases/keywords。" });
+      termModal.classList.add("open");
+    }
+
+    async function loadTermRefs(refIds){
+      const docs = await Promise.all(refIds.map(async (id) => {
+        try{
+          const snap = await getDoc(doc(db, COL_REFS, id));
+          return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+        }catch(e){ return null; }
+      }));
+      return docs.filter(Boolean);
+    }
+
+    function renderTermModal(t){
+      const title = (t.nameZh || t.nameEn || t.inci || t.id || "名詞卡").toString();
+      $("#modalTitle").textContent = title;
+
+      const metaBits = [];
+      if (t.type) metaBits.push(`type: ${t.type}`);
+      if (t.topic) metaBits.push(`topic: ${t.topic}`);
+      if (t.category) metaBits.push(`category: ${t.category}`);
+      $("#modalMeta").textContent = metaBits.join(" · ");
+
+      const kv = $("#modalKv");
+      const items = [
+        ["nameZh", t.nameZh],
+        ["nameEn", t.nameEn],
+        ["inci", t.inci],
+        ["type", t.type],
+        ["topic", t.topic],
+        ["category", t.category],
+        ["benefits", t.benefits],
+        ["mechanism", t.mechanism],
+        ["notes", t.notes],
+        ["usage", t.usage],
+        ["safety", t.safety],
+        ["source", t.source],
+        ["keywords", Array.isArray(t.keywords) ? t.keywords.join(", ") : (t.keywords || "")],
+        ["aliases", Array.isArray(t.aliases) ? t.aliases.join(", ") : (t.aliases || "")],
+      ].filter(([_, v]) => (v !== undefined && v !== null && String(v).trim() !== ""));
+
+      kv.innerHTML = items.map(([k, v]) => `
+        <div class="kv">
+          <div class="k">${esc(k)}</div>
+          <div class="v">${esc(String(v))}</div>
+        </div>
+      `).join("");
+
+      const refIds = Array.isArray(t.refIds) ? t.refIds.filter(Boolean) : [];
+      if (!refIds.length){
+        $("#modalRefsWrap").style.display = "none";
+        return;
+      }
+
+      $("#modalRefsWrap").style.display = "block";
+      $("#modalRefs").innerHTML = `<li class="tiny">讀取中…</li>`;
+      loadTermRefs(refIds).then(list => {
+        if (!list.length){
+          $("#modalRefs").innerHTML = `<li class="tiny">（找不到文獻）</li>`;
+          return;
+        }
+        $("#modalRefs").innerHTML = list.map(r => {
+          const text = r.citationText || r.title || r.id;
+          const url = r.url || "";
+          const doi = r.doi || "";
+          const extra = [url ? "Link" : "", doi ? ("DOI:" + doi) : ""].filter(Boolean).join(" · ");
+          return `<li>${esc(text)}${extra ? ` <span class="tiny">(${esc(extra)})</span>` : ""}</li>`;
+        }).join("");
+      }).catch(() => {
+        $("#modalRefs").innerHTML = `<li class="tiny">（文獻讀取失敗或無權限）</li>`;
+      });
+    }
+
+    // ===== Ref modal for article refs
+    const refModal = $("#refModal");
+    $("#refModalClose").addEventListener("click", () => refModal.classList.remove("open"));
+    refModal.addEventListener("click", (e) => { if (e.target === refModal) refModal.classList.remove("open"); });
+
+    function renderRefModal(r){
+      const title = (r.title || r.citationText || r.id || "參考文獻").toString();
+      $("#refModalTitle").textContent = title;
+
+      const metaBits = [];
+      if (r.type) metaBits.push(`type: ${r.type}`);
+      if (r.org) metaBits.push(`org: ${r.org}`);
+      if (r.year) metaBits.push(`year: ${r.year}`);
+      if (Array.isArray(r.tags) && r.tags.length) metaBits.push(`tags: ${r.tags.join(", ")}`);
+      $("#refModalMeta").textContent = metaBits.join(" · ");
+
+      const kv = $("#refModalKv");
+      const items = [
+        ["citationText", r.citationText],
+        ["title", r.title],
+        ["org", r.org],
+        ["year", r.year],
+        ["doi", r.doi],
+        ["url", r.url],
+        ["tags", Array.isArray(r.tags) ? r.tags.join(", ") : (r.tags || "")],
+        ["notes", r.notes],
+      ].filter(([_, v]) => (v !== undefined && v !== null && String(v).trim() !== ""));
+
+      kv.innerHTML = items.map(([k, v]) => {
+        if (k === "url" && String(v).trim()){
+          const u = String(v).trim();
+          return `
+            <div class="kv">
+              <div class="k">${esc(k)}</div>
+              <div class="v"><a href="${esc(u)}" target="_blank" rel="noopener">${esc(u)}</a></div>
+            </div>
+          `;
+        }
+        return `
+          <div class="kv">
+            <div class="k">${esc(k)}</div>
+            <div class="v">${esc(String(v))}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function openRefById(refId){
+      const id = (refId || "").trim();
+      if (!id) return;
+      const snap = await getDoc(doc(db, COL_REFS, id));
+      if (!snap.exists()) throw new Error("找不到文獻（kb_refs）");
+      const r = { id: snap.id, ...snap.data() };
+      renderRefModal(r);
+      refModal.classList.add("open");
+    }
+
+    async function loadRefs(refIds){
+      const ids = (Array.isArray(refIds) ? refIds : []).filter(Boolean);
+      if (!ids.length){
+        $("#refBlock").style.display = "none";
+        return;
+      }
+
+      const docs = await Promise.all(ids.map(async (id) => {
+        try{
+          const snap = await getDoc(doc(db, COL_REFS, id));
+          return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+        }catch(e){ return null; }
+      }));
+      const list = docs.filter(Boolean);
+      if (!list.length){
+        $("#refBlock").style.display = "none";
+        return;
+      }
+
+      $("#refList").innerHTML = list.map(r => {
+        const text = r.citationText || r.title || r.id;
+        const url = r.url || "";
+        const doi = r.doi || "";
+        const extra = [
+          url ? `<a href="${esc(url)}" target="_blank" rel="noopener">Link</a>` : "",
+          doi ? `<span class="tiny">DOI: ${esc(doi)}</span>` : ""
+        ].filter(Boolean).join(" · ");
+
+        return `<li style="margin:.4rem 0;">
+          <div class="ref-item" data-refid="${esc(r.id)}" style="cursor:pointer; padding:.25rem .35rem; border-radius:10px; margin-left:-.35rem; margin-right:-.35rem;">
+            ${esc(text)}
+          </div>
+          ${extra ? `<div class="tiny" style="margin-top:.15rem;">${extra}</div>` : ""}
+        </li>`;
+      }).join("");
+
+      $("#refBlock").style.display = "block";
+      $("#refList").querySelectorAll(".ref-item").forEach(el => {
+        el.addEventListener("click", async () => {
+          const id = (el.getAttribute("data-refid") || "").trim();
+          if (!id) return;
+          await openRefById(id);
+        });
+      });
+    }
+
+    // ===== State
+    let issueData = null;
+
+    function freqLabel(freq){
+      const f = String(freq || "").toLowerCase();
+      if (f === "monthly") return "月刊";
+      if (f === "weekly") return "週刊";
+      if (f === "special") return "特刊";
+      return f || "刊物";
+    }
+
+    function groupByTopic(items){
+      const map = new Map();
+      items.forEach(it => {
+        const topic = norm(it.topic || "未分類") || "未分類";
+        if (!map.has(topic)) map.set(topic, []);
+        map.get(topic).push(it);
+      });
+      return Array.from(map.entries()).map(([topic, arr]) => ({ topic, items: arr }));
+    }
+
+    function sortItemsForCover(items){
+      const list = items.slice();
+      list.sort((a,b) => (b.featured === true) - (a.featured === true));
+      return list;
+    }
+
+    // ===== Rendering: cover / topic / article
+    function renderCover(){
+      if (!issueData) return;
+
+      const issueKey = issueData.issueId || issueData.id || "";
+      $("#issueBadge").textContent = `issue: ${esc(issueKey)}`;
+      $("#pageTitle").textContent = issueData.title || "化妝品知識刊物";
+      $("#pageSub").textContent = issueData.coverSummary || issueData.editorNoteMd ? "（點封面標題或右側主題開始閱讀）" : "";
+
+      const meta = [
+        issueData.publishDate ? issueData.publishDate : "",
+        issueData.frequency ? freqLabel(issueData.frequency) : "",
+        issueData.status ? ("status:" + issueData.status) : ""
+      ].filter(Boolean).join(" · ");
+      $("#metaLine").textContent = meta;
+      $("#coverMeta").textContent = meta || "—";
+
+      $("#coverTitle").textContent = issueData.title || issueKey || "化妝品知識刊物";
+      $("#coverSub").textContent = issueData.coverSummary || "本期焦點：點選右側主題或封面標題開始閱讀。";
+
+
+      // 編輯資訊（可從 kb_issues 欄位覆寫：editorInChief / deputyEditor）
+      const eic = (issueData.editorInChief || "").trim() || "嘉南藥理大學 林清宮";
+      const dep = (issueData.deputyEditor || issueData.deputyChiefEditor || "").trim() || "林瑞霖";
+      const editorLine = `雜誌總編輯：${eic}
+副總編輯：${dep}`;
+      const edEl = $("#coverEditors");
+      if (edEl){
+        edEl.textContent = editorLine;
+        edEl.style.display = (eic || dep) ? "block" : "none";
+      }
+
+      const coverUrl = norm(issueData.coverImageUrl || issueData.coverImage || "");
+      const coverCard = $("#coverCard");
+      const coverBg = $("#coverBg");
+      if (coverUrl){
+        coverCard.classList.add("hasImg");
+        coverBg.style.backgroundImage = `url('${coverUrl.replaceAll("'", "%27")}')`;
+      } else {
+        coverCard.classList.remove("hasImg");
+        coverBg.style.backgroundImage = "";
+      }
+
+      const items = Array.isArray(issueData.items) ? issueData.items : [];
+      const sorted = sortItemsForCover(items);
+
+      // cover lines = featured first
+      const coverLines = $("#coverLines");
+      coverLines.innerHTML = "";
+      const pick = sorted.slice(0, 4);
+      pick.forEach(it => {
+        const div = document.createElement("div");
+        div.className = "coverLine";
+        const t = it.title || it.slug || "";
+        const m = [it.topic ? it.topic : "", it.slug ? ("slug:" + it.slug) : ""].filter(Boolean).join(" · ");
+        div.innerHTML = `<div class="t">${esc(t)}</div><div class="m">${esc(m)}</div>`;
+        div.addEventListener("click", () => openArticle(it.slug));
+        coverLines.appendChild(div);
+      });
+
+      // toc list
+      const toc = $("#tocCover");
+      toc.innerHTML = "";
+      sorted.forEach(it => {
+        const slug = norm(it.slug || "");
+        if (!slug) return;
+        const a = document.createElement("a");
+        a.href = "#";
+        a.innerHTML = `<span>${esc(it.title || slug)}</span><span class="count">${esc(it.topic || "—")}</span>`;
+        a.addEventListener("click", (e) => { e.preventDefault(); openArticle(slug); });
+        const li = document.createElement("li");
+        li.appendChild(a);
+        toc.appendChild(li);
+      });
+
+      // topics grid
+      const groups = groupByTopic(items).sort((a,b) => b.items.length - a.items.length);
+      const grid = $("#topicGrid");
+      grid.innerHTML = "";
+      groups.forEach(g => {
+        const div = document.createElement("div");
+        div.className = "topicTile";
+        const top3 = g.items.slice(0, 3).map(x => x.title || x.slug).filter(Boolean).join("／");
+        div.innerHTML = `<div class="t">${esc(g.topic)}</div><div class="m">${esc(g.items.length)} 篇 · ${esc(top3)}</div>`;
+        div.addEventListener("click", () => openTopic(g.topic));
+        grid.appendChild(div);
+      });
+
+      setView("coverView");
+      $("#btnBack").style.display = "none";
+      setUrl({ issue: issueId });
+    }
+
+    function renderTopic(topic){
+      if (!issueData) return;
+      const items = Array.isArray(issueData.items) ? issueData.items : [];
+      const t = norm(topic) || "未分類";
+      const list = items.filter(it => norm(it.topic || "未分類") === t);
+
+      $("#topicTitle").textContent = t;
+      $("#topicHint").textContent = `${list.length} 篇文章 · 點標題可閱讀全文`;
+      $("#tocTopic").innerHTML = "";
+      $("#topicItems").innerHTML = "";
+
+      list.forEach((it, idx) => {
+        const slug = norm(it.slug || "");
+        const title = it.title || slug;
+        const card = document.createElement("div");
+        card.className = "articleCard";
+        card.id = "topic-item-" + idx;
+
+        const note = it.noteMd ? `<div class="md" style="margin-top:.55rem;">${mdToHtml(it.noteMd)}</div>` : "";
+        card.innerHTML = `
+          <div class="t">
+            <a href="#" class="readLink">${esc(title)}</a>
+            <span style="display:flex; gap:.45rem; align-items:center; flex-wrap:wrap;">
+              ${it.featured ? `<span class="chip"><i class="fa-solid fa-star"></i> featured</span>` : ""}
+              <button class="btnx openStandalone"><i class="fa-solid fa-up-right-from-square"></i></button>
+            </span>
+          </div>
+          <div class="m">${esc([slug ? ("slug:" + slug) : "", it.summary ? "" : ""].filter(Boolean).join(" · "))}</div>
+          ${it.summary ? `<div class="m" style="margin-top:.45rem;">${esc(it.summary)}</div>` : ""}
+          ${note}
+        `;
+
+        card.querySelector(".readLink").addEventListener("click", (e) => {
+          e.preventDefault(); openArticle(slug);
+        });
+        card.querySelector(".openStandalone").addEventListener("click", (e) => {
+          e.preventDefault();
+          window.open(buildStandaloneArticleUrl(slug), "_blank");
+        });
+
+        $("#topicItems").appendChild(card);
+
+        const a = document.createElement("a");
+        a.href = "#topic-item-" + idx;
+        a.innerHTML = `<span>${esc(title)}</span><span class="count">閱讀</span>`;
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          document.getElementById("topic-item-" + idx)?.scrollIntoView({ behavior:"smooth", block:"start" });
+        });
+        const li = document.createElement("li");
+        li.appendChild(a);
+        $("#tocTopic").appendChild(li);
+      });
+
+      wireTermLinks($("#topicItems"));
+
+      setView("topicView");
+      $("#btnBack").style.display = "inline-flex";
+      $("#btnBack").onclick = () => { openCover(); };
+      setUrl({ issue: issueId, topic: t });
+    }
+
+    async function renderArticle(slug){
+      if (!issueData) return;
+      const s = norm(slug);
+      $("#btnBack").style.display = "inline-flex";
+      $("#btnBack").onclick = () => {
+        const t = norm(params.get("topic") || "");
+        if (t) openTopic(t);
+        else openCover();
+      };
+
+      // link to standalone
+      $("#btnOpenStandalone").onclick = () => window.open(buildStandaloneArticleUrl(s), "_blank");
+
+      // header
+      $("#articleEmpty").style.display = "none";
+      $("#articleTop").innerHTML = "";
+      $("#articleBody").innerHTML = "";
+      $("#tocArticle").innerHTML = "";
+      $("#refBlock").style.display = "none";
+
+      try{
+        const snap = await getDoc(doc(db, COL_ARTICLES, s));
+        if (!snap.exists()){
+          $("#articleTop").innerHTML = `<h1>${esc(s)}</h1>`;
+          $("#articleEmpty").style.display = "block";
+          $("#articleEmpty").innerHTML = `找不到文章（kb_articles：<code>${esc(s)}</code>）。你仍可嘗試單獨開啟：<a href="${esc(buildStandaloneArticleUrl(s))}" target="_blank" rel="noopener">kb-article</a>`;
+          setView("articleView");
+          $("#viewBadge").textContent = "文章";
+          setUrl({ issue: issueId, slug: s });
+          return;
+        }
+
+        const a = { id: snap.id, ...snap.data(), slug: snap.data()?.slug || snap.id };
+
+        $("#pageTitle").textContent = issueData.title || "化妝品知識刊物";
+        $("#pageSub").textContent = `閱讀：${a.title || a.slug}`;
+
+        $("#articleTop").innerHTML = `
+          <h1 style="margin-top:.1rem;">${esc(a.title || "")}</h1>
+          <div class="tiny" style="margin-top:.25rem;">
+            ${a.topic ? `<span class="chip"><i class="fa-solid fa-folder-open"></i> ${esc(a.topic)}</span>` : ""}
+            ${a.status ? `<span class="chip"><i class="fa-solid fa-toggle-on"></i> ${esc(a.status)}</span>` : ""}
+            <span class="chip"><i class="fa-solid fa-newspaper"></i> ${esc(issueData.issueId || issueData.id || "")}</span>
+          </div>
+          ${a.summary ? `<div class="sub" style="margin-top:.55rem;">${esc(a.summary)}</div>` : ""}
+        `;
+
+        const rawSections = Array.isArray(a.sections) ? a.sections : [];
+        const sections = rawSections.filter(sx => {
+          const h2 = String(sx?.h2 || "");
+          const id = String(sx?.id || "");
+          const audience = String(sx?.audience || "").toLowerCase();
+          if (sx?.hidden === true || sx?.internal === true) return false;
+          if (audience === "internal" || audience === "admin") return false;
+          if (id.startsWith("_")) return false;
+          if (/讀者導覽/.test(h2)) return false;
+          return true;
+        });
+
+        // TOC
+        sections.forEach(sx => {
+          const sid = ensureSectionId(sx.id, sx.h2);
+          const ael = document.createElement("a");
+          ael.href = `#${sid}`;
+          ael.innerHTML = `<span>${esc(sx.h2 || "未命名章節")}</span><span class="count">#</span>`;
+          const li = document.createElement("li");
+          li.appendChild(ael);
+          $("#tocArticle").appendChild(li);
+        });
+
+        // body
+        $("#articleBody").innerHTML = sections.map((sx) => {
+          const sid = ensureSectionId(sx.id, sx.h2);
+          return `
+            <section id="${esc(sid)}">
+              <h2>${esc(sx.h2 || "")}</h2>
+              <div class="md">${mdToHtml(sx.bodyMd || "")}</div>
+            </section>
+          `;
+        }).join("");
+
+        wireTermLinks($("#articleBody"));
+
+        await loadRefs(a.refIds);
+
+        setView("articleView");
+        setUrl({ issue: issueId, slug: s });
+      }catch(e){
+        console.error(e);
+        $("#articleTop").innerHTML = `<h1>讀取失敗</h1>`;
+        $("#articleEmpty").style.display = "block";
+        $("#articleEmpty").textContent = e?.message || String(e);
+        setView("articleView");
+        setUrl({ issue: issueId, slug: s });
+      }
+    }
+
+    // ===== navigation helpers
+    function openCover(){
+      const u = new URL(location.href);
+      u.searchParams.delete("topic");
+      u.searchParams.delete("slug");
+      history.replaceState({}, "", u.toString());
+      params.delete("topic");
+      params.delete("slug");
+      renderCover();
+      try{ refreshShareTargets(); }catch(e){}
+
+    }
+    function openTopic(topic){
+      const t = norm(topic);
+      const u = new URL(location.href);
+      u.searchParams.delete("slug");
+      u.searchParams.set("topic", t);
+      history.replaceState({}, "", u.toString());
+      params.set("topic", t);
+      params.delete("slug");
+      renderTopic(t);
+      try{ refreshShareTargets(); }catch(e){}
+
+    }
+    function openArticle(slug){
+      const s = norm(slug);
+      const u = new URL(location.href);
+      u.searchParams.set("slug", s);
+      // keep topic if exists (nice back)
+      history.replaceState({}, "", u.toString());
+      params.set("slug", s);
+      renderArticle(s);
+      try{ refreshShareTargets(); }catch(e){}
+
+    }
+
+    // ===== Issue list selector
+    async function loadIssueList(){
+      const sel = $("#issueSelect");
+      sel.innerHTML = `<option value="">選擇刊物…</option>`;
+      try{
+        const snaps = await getDocs(query(collection(db, COL_ISSUES), where("status","==","published"), limit(100)));
+        const list = snaps.docs.map(d => ({ id: d.id, ...d.data(), issueId: d.data()?.issueId || d.id }))
+          .filter(x => x.issueId);
+
+        list.sort((a,b) => (String(b.publishDate||"").localeCompare(String(a.publishDate||""))));
+
+
+
+        if (!list.length){
+          sel.innerHTML = `<option value="">（目前尚無已發布刊物）</option>`;
+          return;
+        }
+
+        // 若未指定 issue 參數：自動導向最新一期（published 優先）
+        if (!issueId && list.length){
+          const latest = String(list[0].issueId || list[0].id || "").trim();
+          if (latest){
+            const url = new URL(location.href);
+            url.searchParams.set("issue", latest);
+            url.searchParams.delete("topic");
+            url.searchParams.delete("slug");
+            // 使用 replace 避免留下空白期數的歷史紀錄
+            location.replace(url.toString());
+            return;
+          }
+        }
+
+        for (const x of list){
+          const val = x.issueId.toString();
+          const label = `${x.publishDate ? x.publishDate + "｜" : ""}${x.title || val}`;
+          const opt = document.createElement("option");
+          opt.value = val;
+          opt.textContent = label;
+          if (val === issueId) opt.selected = true;
+          sel.appendChild(opt);
+        }
+
+        sel.addEventListener("change", () => {
+          const v = norm(sel.value);
+          if (!v) return;
+          const url = new URL(location.href);
+          url.searchParams.set("issue", v);
+          url.searchParams.delete("topic");
+          url.searchParams.delete("slug");
+          location.href = url.toString();
+        });
+      }catch(e){
+        console.warn(e);
+        sel.innerHTML = `<option value="">（無法載入刊物清單）</option>`;
+      }
+    }
+
+    // ===== Load issue
+    async function loadIssue(){
+      if (!issueId){
+        $("#pageTitle").textContent = "化妝品智慧月刊";
+        $("#pageSub").textContent = "未指定期數，將自動載入最新一期…";
+        $("#btnBack").style.display = "none";
+        return;
+      }
+      try{
+        $("#pageSub").textContent = "讀取刊物中…";
+        const snap = await getDoc(doc(db, COL_ISSUES, issueId));
+        if (!snap.exists()){
+          $("#pageTitle").textContent = "找不到刊物";
+          $("#pageSub").textContent = "（kb_issues 無此 issueId，或無權限讀取）";
+          return;
+        }
+        issueData = { id: snap.id, ...snap.data(), issueId: snap.data()?.issueId || snap.id };
+
+        // initial view
+        if (initialSlug){
+          openArticle(initialSlug);
+        }else if (initialTopic){
+          openTopic(initialTopic);
+        }else{
+          renderCover();
+        }
+      }catch(e){
+        console.error(e);
+        $("#pageTitle").textContent = "讀取失敗";
+        $("#pageSub").textContent = e?.message || String(e);
+      }
+    }
+
+    // ===== buttons
+    $("#btnCover").addEventListener("click", () => openCover());
+
+    // start
+    loadIssueList();
+    loadIssue();
+    // 若從 index-c-company 直接帶 #vote 進來，載入後自動打開票選視窗
+    if (location.hash === VOTE_HASH && btnVoteNext){
+      setTimeout(() => { try{ btnVoteNext.click(); }catch(e){} }, 250);
+    }
+
+  </script>
+</body>
+</html>

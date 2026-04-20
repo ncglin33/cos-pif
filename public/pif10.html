@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PIF 10｜成分毒理特性 (AI 智慧版)</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="style.css">
+
+<style>
+  html { scroll-behavior: smooth; }
+  body { background-color: #f0f2f5; }
+  .container { padding: 1rem; }
+
+  #ai-editor-panel {
+    background: #fff; border-radius: 8px; margin-bottom: 2rem; 
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out, padding 0.5s ease-out; padding: 0;
+  }
+  #ai-editor-panel.open { padding: 1.5rem; max-height: 1000px; }
+  #ai-editor-header { font-size: 1.5rem; font-weight: 600; color: #111827; margin-bottom: 1rem; }
+  #ai-editor-body { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.25rem; }
+  #ai-editor-footer { padding-top: 1.5rem; text-align: right; }
+
+  #cards-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }
+  .ingredient-card { background: #fff; border: 2px solid transparent; border-radius: 8px; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1); display: flex; flex-direction: column; transition: all 0.3s ease; }
+  .ingredient-card.editing { border-color: var(--brand); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+
+  .card-header h3 { font-size: 1.2rem; }
+  .card-header p { font-size: 0.9rem; }
+  .card-body { padding: 1rem; flex-grow: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 1rem; }
+  .data-point .label { font-weight: 500; }
+  .value.no-data { font-style: italic; }
+  .ai-error { color: #ef4444; font-weight: 500; grid-column: 1 / -1; }
+  
+  /* 成分毒理特性總表（第 1 頁摘要用） */
+  #tox-summary-section{
+    background:#fff;
+    border-radius:8px;
+    padding:12px 16px;
+    margin:0 0 12px 0;
+    box-shadow:0 1px 3px 0 rgba(0,0,0,.05);
+    page-break-inside:auto !important;
+  }
+  .summary-title{
+    font-size:1.05rem;
+    font-weight:600;
+    margin:0 0 6px 0;
+  }
+  .summary-note{
+    margin-top:6px;
+    font-size:0.8rem;
+    color:#6b7280;
+  }
+  #tox-summary-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:0.78rem;
+    page-break-inside:auto !important;
+  }
+  #tox-summary-table th,
+  #tox-summary-table td{
+    border:1px solid #e5e7eb;
+    padding:4px 6px;
+    text-align:left;
+    vertical-align:top;
+  }
+  #tox-summary-table th{
+    background:#f9fafb;
+    font-weight:600;
+  }
+
+  #upload-status-pdf { 
+      display: none; 
+      padding: 0.75rem 1.25rem; 
+      margin-top: 1rem; 
+      border-radius: 8px; 
+      font-weight: 500; 
+      text-align: center; 
+  }
+  .status-info { background-color: #e0e7ff; color: #3730a3; }
+  .status-success { background-color: #dcfce7; color: #166534; }
+  .status-error { background-color: #fee2e2; color: #991b1b; }
+  #upload-status-pdf i { margin-right: 0.5rem; }
+
+  /* 🔹 統一列印表頭（沿用 PIF06 格式） */
+  .print-only{display:none;}
+
+  @media print {
+
+    @page {
+      size: A4 portrait;
+      margin: 10mm;
+    }
+
+    body {
+      background: #fff !important;
+    }
+
+    pif-nav,
+    top-bar,
+    status-bar,
+    .toolbar,
+    .noprint,
+    #btnUploadPdf,
+    #pdfUploader,
+    #upload-status-pdf,
+    #ai-editor-panel {
+      display: none !important;
+    }
+
+    .ingredient-card .card-footer,
+    .btn-ai-edit {
+      display: none !important;
+    }
+
+    .print-only{display:block !important;}
+
+    .container {
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    header {
+      margin: 0 0 4mm 0 !important;
+      padding: 0 !important;
+    }
+
+    #tox-summary-section{
+      box-shadow:none !important;
+      border:1px solid #e5e7eb;
+      margin-top:4mm !important;
+      margin-bottom:4mm !important;
+    }
+
+    #tox-summary-table{
+      font-size:9px;
+    }
+
+    #cards-container {
+      grid-template-columns: 1fr 1fr !important;
+      gap: 6mm !important;
+    }
+
+    .ingredient-card {
+      box-shadow: none !important;
+      border-color: #e5e7eb !important;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .card-body {
+      gap: 2.5mm 4mm !important;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<pif-nav class="noprint"></pif-nav>
+<top-bar class="noprint"></top-bar>
+
+<!-- 列印專用統一表頭：PIFID / 公司 / 產品 / 章節名稱 -->
+<div id="print-header" class="print-only" style="border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;margin:0 0 8px 0;">
+  <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;">
+    <div><strong>PIFID：</strong><span id="printPifId"></span></div>
+    <div><strong>公司：</strong><span id="printCompanyName"></span></div>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;margin-top:4px;">
+    <div><strong>產品名稱：</strong><span id="printProductName"></span></div>
+    <div><strong>章節名稱：</strong><span id="printChapterName">10 成分毒理特性 (AI 智慧版)</span></div>
+  </div>
+</div>
+
+<div class="container">
+    <status-bar class="noprint"></status-bar>
+
+    <header class="noprint">
+        <h2>各成分之毒理特性 (AI 智慧版)</h2>
+        <p class="subtitle">此工作台將自動比對您的配方，並允許使用 AI 輔助填寫各成分的毒理特性。</p>
+
+        <div class="toolbar noprint" style="margin: 1rem 0;">
+          <button id="btnUploadPdf"><i class="fa-solid fa-file-arrow-up"></i> 上傳本頁 PDF</button>
+          <input type="file" id="pdfUploader" accept="application/pdf" style="display:none;">
+          <button onclick="window.print()" class="btn"><i class="fa-solid fa-print"></i> 列印</button>
+        </div>
+
+        <div id="upload-status-pdf" class="noprint"></div>
+    </header>
+    
+    <div id="ai-editor-panel" class="noprint">
+        <h3 id="ai-editor-header"></h3>
+        <div id="ai-editor-body"></div>
+        <div id="ai-editor-footer">
+            <button id="ai-editor-cancel" class="btn">取消</button>
+            <button id="ai-editor-save" class="btn primary">儲存變更</button>
+        </div>
+    </div>
+
+    <!-- 成分毒理特性總表：列印第 1 頁優先顯示（已移除「其他毒理」欄位） -->
+    <section id="tox-summary-section">
+      <h3 class="summary-title">成分毒理特性總表</h3>
+      <table id="tox-summary-table">
+        <thead>
+          <tr>
+            <th>成分 (INCI)</th>
+            <th>CAS 號</th>
+            <th>急性經口毒性</th>
+            <th>皮膚刺激</th>
+            <th>眼刺激</th>
+            <th>皮膚過敏</th>
+          </tr>
+        </thead>
+        <tbody id="tox-summary-body">
+          <!-- JS 產生 -->
+        </tbody>
+      </table>
+      <p class="summary-note">* 詳細說明請見後續各成分卡片。</p>
+    </section>
+
+    <div id="report-container">
+        <div id="cards-container"></div>
+    </div>
+</div>
+
+<script type="module">
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js";
+  import { ref, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+  import { db, auth, storage, functions } from "./firebase-config.js";
+  import "./components.js";
+
+  const $ = sel => document.querySelector(sel);
+  const showStatus = (message, type, duration) => 
+    customElements.whenDefined('status-bar')
+      .then(() => document.querySelector('status-bar').show(message, type, duration));
+  
+  const DATA_COLLECTION = "rms";
+  let pageContext = {};
+  let recipeCache = [];
+  let propertiesCache = new Map();
+  let currentEditingInci = null;
+
+  const ALL_FIELDS = { 
+    acute_oral_toxicity: '急性經口毒性 (LD50)',
+    acute_dermal_toxicity: '急性經皮毒性 (LD50)',
+    acute_inhalation_toxicity: '急性吸入毒性 (LC50)',
+    skin_irritation: '皮膚刺激/腐蝕性',
+    eye_irritation: '眼睛刺激/損傷性',
+    skin_sensitization: '皮膚過敏性',
+    mutagenicity: '基因突變性',
+    carcinogenicity: '致癌性',
+    reproductive_toxicity: '生殖毒性',
+    noael: '未觀察到有害作用的劑量水平 (NOAEL)',
+  };
+  const AI_NO_DATA = "AI 輔助無資料";
+
+  async function main() {
+      onAuthStateChanged(auth, user => {
+          if (user) initPage(user); 
+          else {
+            const here = window.location.pathname.split('/').pop() + window.location.search + window.location.hash;
+            window.location.href = `login.html?redirect=${encodeURIComponent(here)}`;
+          }
+      });
+  }
+
+  function initPage(user) {
+    pageContext = setupPageContext();
+    setupPrintHeader(pageContext);
+    document.body.addEventListener('logout-request', () => auth.signOut());
+    setupUI(user, pageContext);
+    initializeWorkspace();
+  }
+
+  function safeDecode(v){
+    if (!v) return "";
+    try { return decodeURIComponent(v); } catch (e) {
+      try { return decodeURIComponent(v.replace(/%(?![0-9A-Fa-f]{2})/g, "%25")); } catch (_) { return v; }
+    }
+  }
+
+  function setupPageContext() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return {
+      pifId: urlParams.get("id"),
+      companyName: safeDecode(urlParams.get("companyName") || ""),
+      productName: safeDecode(urlParams.get("productName") || "")
+    };
+  }
+
+  function setupPrintHeader(context){
+    document.getElementById('printPifId').textContent = context.pifId || '';
+    document.getElementById('printCompanyName').textContent = context.companyName || '';
+    document.getElementById('printProductName').textContent = context.productName || '';
+  }
+
+  function setupUI(user, context) {
+      const topBar = document.querySelector('top-bar');
+      customElements.whenDefined('top-bar').then(() => {
+          topBar.setInfo(context.pifId, context.companyName, context.productName, "PIF 10 成分毒理特性");
+          topBar.setUser(user);
+      });
+
+      $('#ai-editor-cancel').addEventListener('click', closeAiEditor);
+      $('#cards-container').addEventListener('click', e => {
+          const button = e.target.closest('.btn-ai-edit');
+          if (button) openAiEditor({ inci: button.dataset.inci, cas: button.dataset.cas });
+      });
+
+      $('#btnUploadPdf').addEventListener('click', () => $('#pdfUploader').click());
+      $('#pdfUploader').addEventListener('change', handlePdfUpload);
+  }
+
+  async function initializeWorkspace() {
+    showStatus('載入中...', 'loading');
+    await loadPropertiesData();
+    const pifDocSnap = await getDoc(doc(db, "pifs", pageContext.pifId));
+    if (!pifDocSnap.exists() || !pifDocSnap.data().pif03?.recipe?.length) {
+        showStatus('<h3><i class="fa-solid fa-box-open"></i> 缺少 PIF 03 配方</h3><p>請先前往 PIF 03 填寫產品配方，才能在此處編輯各成分的毒理特性。</p>', 'error', -1);
+        $('#report-container').innerHTML = '';
+        return;
+    }
+    recipeCache = pifDocSnap.data().pif03.recipe;
+    renderIngredientCards(recipeCache);
+    showStatus('配方載入完成！', 'success');
+  }
+
+  async function loadPropertiesData() {
+    const querySnapshot = await getDocs(collection(db, DATA_COLLECTION));
+    querySnapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        if (data.inciName) propertiesCache.set(data.inciName.trim().toLowerCase(), {id: docSnap.id, ...data});
+    });
+  }
+
+  function renderIngredientCards(recipe) {
+    $('#cards-container').innerHTML = recipe.map(ing => generateCard(ing)).join('');
+    renderSummaryTable(recipe);
+  }
+
+  // 🔹 總表內容（6 欄，已移除「其他毒理」）
+  function renderSummaryTable(recipe) {
+    const tbody = document.getElementById('tox-summary-body');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    recipe.forEach(ing => {
+      const inci = ing.inci || '[未命名]';
+      const cas = ing.cas || 'N/A';
+      const key = inci.trim().toLowerCase();
+      const propData = propertiesCache.get(key) || {};
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${inci}</td>
+        <td>${cas}</td>
+        <td>${propData.acute_oral_toxicity || '-'}</td>
+        <td>${propData.skin_irritation || '-'}</td>
+        <td>${propData.eye_irritation || '-'}</td>
+        <td>${propData.skin_sensitization || '-'}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function generateCard(ing) {
+    const inci = ing.inci || '[未命名]';
+    const cas = ing.cas || 'N/A';
+    const propData = propertiesCache.get(inci.trim().toLowerCase()) || null;
+
+    return `
+    <div class="ingredient-card" data-inci-name="${inci}">
+      <div class="card-header"><h3>${inci}</h3><p>CAS: ${cas}</p></div>
+      <div class="card-body">
+        ${Object.entries(ALL_FIELDS).map(([key, name]) => {
+            const value = propData?.[key] || '-';
+            return `<div class="data-point"><span class="label">${name}</span><span class="value ${!propData || !value || value === '-' ? 'no-data' : ''}">${value}</span></div>`;
+        }).join('')}
+      </div>
+      <div class="card-footer">
+        <button class="btn btn-ai-edit" data-inci="${inci}" data-cas="${cas}">
+          <i class="fa-solid fa-magic-sparkles"></i> AI 編輯
+        </button>
+      </div>
+    </div>`;
+  }
+  
+  async function openAiEditor(ingredient) {
+    currentEditingInci = ingredient.inci;
+    document.querySelectorAll('.ingredient-card.editing').forEach(c => c.classList.remove('editing'));
+    const card = document.querySelector(`div[data-inci-name="${ingredient.inci}"]`);
+    if (card) {
+        card.classList.add('editing');
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    const editorPanel = $('#ai-editor-panel');
+    editorPanel.classList.add('open');
+    if(window.scrollY > editorPanel.offsetTop) {
+        window.scrollTo(0, editorPanel.offsetTop - 20);
+    }
+
+    $('#ai-editor-header').textContent = `AI 智慧編輯: ${ingredient.inci}`;
+    const editorBody = $('#ai-editor-body');
+    editorBody.innerHTML = '<div id="ai-editor-loader"><i class="fa-solid fa-spinner fa-spin"></i> AI 正在查詢毒理資料...</div>';
+
+    const existingData = propertiesCache.get(ingredient.inci.trim().toLowerCase()) || {};
+    const suggestions = await getAiSuggestions(ingredient);
+    
+    if (suggestions.error) {
+        editorBody.innerHTML = `<p class="ai-error"><i class="fa-solid fa-circle-exclamation"></i> AI 查詢失敗: ${suggestions.error}</p>`;
+        return;
+    }
+
+    let formHtml = Object.entries(ALL_FIELDS).map(([key, name]) => {
+        const value = existingData[key] || suggestions[key] || AI_NO_DATA;
+        return `<div class="form-group"><label>${name}</label><input id="ai-field-${key}" value="${value}"></div>`;
+    }).join('');
+    editorBody.innerHTML = formHtml;
+
+    const saveButton = $('#ai-editor-save');
+    const newSaveButton = saveButton.cloneNode(true);
+    saveButton.parentNode.replaceChild(newSaveButton, saveButton);
+    newSaveButton.addEventListener('click', () => handleSaveAiData(ingredient));
+  }
+  
+  function closeAiEditor() {
+    $('#ai-editor-panel').classList.remove('open');
+    document.querySelectorAll('.ingredient-card.editing').forEach(c => c.classList.remove('editing'));
+    currentEditingInci = null;
+  }
+
+  async function handleSaveAiData(ingredient) {
+      const saveButton = $('#ai-editor-save');
+      saveButton.disabled = true; 
+      saveButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 儲存中...';
+
+      const newData = { inciName: ingredient.inci, cas: ingredient.cas };
+      Object.keys(ALL_FIELDS).forEach(key => newData[key] = document.querySelector(`#ai-field-${key}`).value.trim());
+
+      try {
+          const docId = ingredient.inci.trim().toLowerCase().replace(/[\s/]/g, '_');
+          await setDoc(doc(db, DATA_COLLECTION, docId), newData, { merge: true });
+          propertiesCache.set(ingredient.inci.trim().toLowerCase(), { id: docId, ...newData });
+          
+          const card = document.querySelector(`div[data-inci-name="${ingredient.inci}"]`);
+          const originalRecipeItem = recipeCache.find(r => r.inci === ingredient.inci);
+          if (card && originalRecipeItem) card.outerHTML = generateCard(originalRecipeItem);
+          
+          closeAiEditor();
+          showStatus(`成功更新了 ${ingredient.inci} 的資料！`, 'success');
+      } catch (error) {
+          showStatus(`儲存失敗: ${error.message}`, 'error');
+      } finally {
+          saveButton.disabled = false; 
+          saveButton.innerHTML = '儲存變更';
+      }
+  }
+
+  async function getAiSuggestions(ingredient) {
+      // 先用 firebase-config.js 統一的 functions region
+      const callIn = async (fns) => {
+        const fn = httpsCallable(fns, "generateToxicologySummary");
+        const result = await fn({ inci: ingredient.inci });
+        if (result?.data?.success) return result.data.data;
+        return { error: result?.data?.error || "AI returned an unspecified error." };
+      };
+      try {
+        return await callIn(functions);
+      } catch (error) {
+        // 若函式不在該 region，嘗試 fallback 到 us-central1（舊部署常見）
+        const code = error?.code || "";
+        const msg = (error?.message || "").toLowerCase();
+        const maybeNotFound = code.includes("not-found") || msg.includes("not found") || msg.includes("404");
+        if (maybeNotFound) {
+          try {
+            const f2 = getFunctions(auth.app, "us-central1");
+            return await callIn(f2);
+          } catch (e2) {
+            console.error("Error calling generateToxicologySummary (fallback us-central1):", e2);
+            return { error: e2.message || "Failed to connect to the AI service." };
+          }
+        }
+        console.error("Error calling generateToxicologySummary function:", error);
+        return { error: error.message || "Failed to connect to the AI service." };
+      }
+    }
+
+  function handlePdfUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+        showStatus("請僅上傳 PDF 檔案。", "warning");
+        return;
+    }
+    uploadMainPdf(file, `pifs/${pageContext.pifId}/10.pdf`);
+  }
+
+  function uploadMainPdf(file, storagePath) {
+      const uploadTask = uploadBytesResumable(ref(storage, storagePath), file);
+      const button = document.querySelector('#btnUploadPdf');
+      button.disabled = true;
+
+      uploadTask.on('state_changed', 
+          (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              setUploadStatusPdf(`<i class="fa-solid fa-upload"></i> 正在上傳 PDF... ${Math.round(progress)}%`, 'status-info');
+          }, 
+          (error) => {
+              console.error("Main PDF Upload failed:", error);
+              setUploadStatusPdf(`<i class="fa-solid fa-triangle-exclamation"></i> PDF 上傳失敗: ${error.code}`, 'status-error');
+              button.disabled = false;
+          }, 
+          () => {
+              setUploadStatusPdf('<i class="fa-solid fa-check-circle"></i> PDF 已成功上傳！儀表板狀態將會更新。', 'status-success');
+              button.disabled = false;
+              document.querySelector('#pdfUploader').value = '';
+              setTimeout(() => setUploadStatusPdf('', 'none'), 5000);
+          }
+      );
+  }
+
+  function setUploadStatusPdf(msg, styleClass) {
+      const statusEl = document.querySelector('#upload-status-pdf');
+      if (!msg || styleClass === 'none') {
+          statusEl.style.display = 'none';
+      } else {
+          statusEl.innerHTML = msg;
+          statusEl.className = `noprint ${styleClass}`;
+          statusEl.style.display = 'block';
+      }
+  }
+
+  main();
+</script>
+</body>
+</html>

@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KB 後台｜文章編輯</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    .container{ max-width: 1700px; }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.85rem 1rem; background:#fff;
+      border:1px solid var(--line); border-radius:16px;
+      margin:.9rem 0 1rem;
+    }
+    .topbar .left{ display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
+    .topbar a{ text-decoration:none; color:var(--ink); font-weight:800; }
+    .badge{
+      display:inline-flex; align-items:center; gap:.35rem;
+      border:1px solid var(--line); border-radius:999px;
+      padding:.25rem .6rem; font-size:.82rem; background:#fff; color:var(--muted);
+    }
+    .layout{
+      display:grid; grid-template-columns: 420px 1fr; gap: 1rem; align-items:start;
+    }
+    @media (max-width: 1100px){ .layout{ grid-template-columns: 1fr; } }
+
+    .card{
+      background:#fff; border:1px solid var(--line);
+      border-radius:16px; box-shadow:0 1px 3px rgba(0,0,0,.05);
+      padding: 1rem 1rem;
+    }
+
+    .row{ display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+    .row > *{ flex: none; }
+    .grow{ flex: 1 1 auto; }
+
+    .input, select, textarea{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:.5rem .6rem;
+      font-size:.95rem;
+      outline:none;
+      background:#fff;
+    }
+    textarea{ min-height: 120px; resize: vertical; }
+    .input:focus, select:focus, textarea:focus{
+      border-color:#bfdbfe; box-shadow:0 0 0 3px rgba(59,130,246,.15);
+    }
+
+    .btnx{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius: 12px;
+      padding:.48rem .7rem;
+      cursor:pointer;
+      font-weight:800;
+      display:inline-flex; align-items:center; gap:.4rem;
+    }
+    .btnx:hover{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+    .btn-danger{ border-color:#fecaca; }
+    .btn-danger:hover{ background:#fff1f2; border-color:#fca5a5; color:#b91c1c; }
+
+    .muted{ color:var(--muted); }
+    .small{ font-size:.86rem; }
+
+    .list{
+      display:flex; flex-direction:column; gap:.45rem; margin-top:.6rem;
+    }
+    .item{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:.55rem .65rem;
+      cursor:pointer;
+      background:#fff;
+    }
+    .item:hover{ background:#eff6ff; border-color:#bfdbfe; }
+    .item .t{ font-weight:900; }
+    .item .m{ color:var(--muted); font-size:.85rem; margin-top:.15rem; }
+
+    .sectionCard{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:.8rem .85rem;
+      margin:.75rem 0;
+      background:#fff;
+    }
+    .sectionHead{
+      display:flex; justify-content:space-between; gap:.5rem; align-items:center; flex-wrap:wrap;
+      margin-bottom:.5rem;
+    }
+    .sectionHead .left{ display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+    .chip{
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:.22rem .55rem;
+      font-size:.82rem;
+      color:var(--muted);
+      background:#fff;
+    }
+
+    .split{
+      display:grid; grid-template-columns: 1fr 1fr; gap: .8rem;
+    }
+    @media (max-width: 980px){ .split{ grid-template-columns: 1fr; } }
+
+    .preview{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:.8rem .9rem;
+      background:#fff;
+      overflow:auto;
+      max-height: 70vh;
+    }
+    .preview h1{ font-size: 1.6rem; margin:.2rem 0 .45rem; }
+    .preview h2{ font-size: 1.2rem; margin:1rem 0 .45rem; }
+    .preview p, .preview li{ line-height:1.75; }
+
+    .hr{ border:none; border-top:1px solid #eef2f7; margin: .9rem 0; }
+    .warn{
+      padding:.6rem .7rem;
+      border:1px solid #fde68a;
+      background:#fffbeb;
+      border-radius:12px;
+      color:#92400e;
+    }
+    .ok{
+      padding:.6rem .7rem;
+      border:1px solid #bbf7d0;
+      background:#f0fdf4;
+      border-radius:12px;
+      color:#166534;
+    }
+    .disabled{ opacity:.55; pointer-events:none; }
+  
+    /* refIds quick search */
+    .ref-search{
+      margin-top:.55rem;
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:.65rem .7rem;
+      background:#fff;
+    }
+    .ref-search .hint{ color:var(--muted); font-size:.86rem; margin-top:.35rem; }
+    .ref-results{ margin-top:.55rem; display:flex; flex-direction:column; gap:.45rem; }
+    .ref-result{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:.55rem .65rem;
+      background:#fff;
+      display:flex;
+      gap:.65rem;
+      justify-content:space-between;
+      align-items:flex-start;
+    }
+    .ref-result:hover{ background:#eff6ff; border-color:#bfdbfe; }
+    .ref-result .left{ min-width:0; }
+    .ref-result .id{ font-weight:900; }
+    .ref-result .meta{ color:var(--muted); font-size:.85rem; margin-top:.15rem; line-height:1.35; }
+    .ref-result .actions{ display:flex; gap:.4rem; flex-wrap:wrap; justify-content:flex-end; }
+    .kbd{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:.85rem; }
+
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="left">
+        <a href="index.html"><i class="fa-solid fa-house"></i> 首頁</a>
+        <span class="badge" id="authBadge">未登入</span>
+        <span class="badge" id="roleBadge">role: —</span>
+      </div>
+      <div class="row">
+        <span class="muted small" id="userInfo"></span>
+        <button class="btnx" id="btnSignOut"><i class="fa-solid fa-right-from-bracket"></i> 登出</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- LEFT: list + actions -->
+      <aside class="card">
+        <h2 style="margin:.1rem 0 .4rem;">KB 後台</h2>
+        <div class="muted small">
+          管理 <code>kb_articles</code>：標題/摘要/狀態/章節(Markdown)/refIds。
+          （前台閱讀頁就是用這個集合渲染）
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row">
+          <input class="input grow" id="q" placeholder="搜尋：title / slug / topic…" />
+          <button class="btnx" id="btnReload"><i class="fa-solid fa-rotate"></i></button>
+        </div>
+
+        <div class="row" style="margin-top:.55rem;">
+          <input class="input grow" id="newSlug" placeholder="新文章 slug（也會當 docId）例如：sunscreen" />
+          <button class="btnx" id="btnNew"><i class="fa-solid fa-plus"></i> 新增</button>
+        </div>
+
+        <div class="list" id="list"></div>
+
+        <div id="msg" style="margin-top:.7rem;"></div>
+      </aside>
+
+      <!-- RIGHT: editor + preview -->
+      <main class="card" id="editorWrap">
+        <div class="row" style="justify-content:space-between;">
+          <h2 style="margin:.1rem 0;">文章編輯</h2>
+          <div class="row">
+            <button class="btnx" id="btnOpenFront"><i class="fa-solid fa-up-right-from-square"></i> 開前台</button>
+            <button class="btnx" id="btnSave"><i class="fa-solid fa-floppy-disk"></i> 儲存</button>
+          </div>
+        </div>
+
+        <div class="muted small" id="currentIdLine" style="margin-top:.3rem;">docId: —</div>
+
+        <div class="hr"></div>
+
+        <div class="split">
+          <div>
+            <label class="muted small">slug（docId）</label>
+            <input class="input" id="slug" placeholder="例如：sunscreen" />
+          </div>
+          <div>
+            <label class="muted small">status</label>
+            <select id="status">
+              <option value="">（空）</option>
+              <option value="draft">draft</option>
+              <option value="published">published</option>
+              <option value="archived">archived</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="split" style="margin-top:.65rem;">
+          <div>
+            <label class="muted small">title</label>
+            <input class="input" id="title" placeholder="文章標題" />
+          </div>
+          <div>
+            <label class="muted small">topic</label>
+            <input class="input" id="topic" placeholder="例如：防曬 / 美白 / 防腐…" />
+          </div>
+        </div>
+
+        <div style="margin-top:.65rem;">
+          <label class="muted small">summary</label>
+          <textarea id="summary" placeholder="文章摘要（前台 header 會顯示）"></textarea>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row" style="justify-content:space-between;">
+          <h3 style="margin:.2rem 0;">章節 sections</h3>
+          <button class="btnx" id="btnAddSection"><i class="fa-solid fa-plus"></i> 新增章節</button>
+        </div>
+
+        <div id="sections"></div>
+
+        <div class="hr"></div>
+
+        <h3 style="margin:.2rem 0;">refIds（參考文獻 id 清單）</h3>
+        <div class="row" style="margin-top:.45rem;">
+          <input class="input grow" id="refIdInput" placeholder="輸入 refId，例如：r_iso_24444_2019" />
+          <button class="btnx" id="btnAddRef"><i class="fa-solid fa-plus"></i> 加入</button>
+        </div>
+        <div class="muted small" style="margin-top:.35rem;">
+          前台會用 <code>kb_refs</code> 依 refIds 取出並顯示參考文獻。
+        </div>
+        
+        <div class="ref-search">
+          <div class="row">
+            <input class="input grow" id="refSearchInput" placeholder="快速搜尋 kb_refs：可輸入 docId / title / authors / year / 關鍵字…" />
+            <button class="btnx" id="btnRefSearch"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
+            <button class="btnx" id="btnRefClear"><i class="fa-solid fa-broom"></i> 清除</button>
+          </div>
+          <div class="hint">
+            提示：點「加入」會把該筆 ref 的 <span class="kbd">docId</span> 加入本文章 refIds；已存在就不重複加入。
+          </div>
+          <div class="ref-results" id="refSearchResults"></div>
+        </div>
+
+<div id="refIdsBox" class="list" style="margin-top:.55rem;"></div>
+
+        <div class="hr"></div>
+
+        <div class="row" style="justify-content:space-between;">
+          <h3 style="margin:.2rem 0;">即時預覽</h3>
+          <span class="chip">Markdown 由 marked 渲染</span>
+        </div>
+        <div class="preview" id="preview"></div>
+
+        <div class="hr"></div>
+
+        <div class="row">
+          <button class="btnx btn-danger" id="btnDelete"><i class="fa-solid fa-trash"></i> 刪除文章</button>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module">
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import {
+      collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { db, auth } from "./firebase-config.js";
+
+    const COL = "kb_articles";
+
+    const REFS_COL = "kb_refs";
+    let refsIndex = null; // [{id, ...data}]
+
+    function pickRefText(r){
+      // 用於顯示/搜尋：盡量涵蓋常見欄位，但不假設一定存在
+      const title = r.title || r.name || r.articleTitle || r.sourceTitle || r.citation || r.apa || "";
+      const authors = r.authors || r.author || r.creator || "";
+      const year = r.year || r.publishedYear || r.date || "";
+      const journal = r.journal || r.publisher || r.source || "";
+      const keywords = Array.isArray(r.keywords) ? r.keywords.join(" ") : (r.keywords || "");
+      return { title, authors, year, journal, keywords };
+    }
+
+    async function ensureRefsIndex(){
+      if (refsIndex) return refsIndex;
+      $("#refSearchResults").innerHTML = `<div class="muted small">讀取 kb_refs 中…</div>`;
+      const snaps = await getDocs(collection(db, REFS_COL));
+      refsIndex = snaps.docs.map(d => ({ id: d.id, ...d.data() }));
+      return refsIndex;
+    }
+
+    function scoreRef(r, q){
+      if (!q) return 0;
+      const { title, authors, year, journal, keywords } = pickRefText(r);
+      const id = String(r.id || "").toLowerCase();
+      const text = `${id} ${title} ${authors} ${year} ${journal} ${keywords}`.toLowerCase();
+      // 簡單加權：docId 前綴最高，其次 title 包含，再其次全文包含
+      let s = 0;
+      if (id.startsWith(q)) s += 100;
+      if (id.includes(q)) s += 40;
+      if (String(title).toLowerCase().includes(q)) s += 30;
+      if (text.includes(q)) s += 10;
+      return s;
+    }
+
+    function renderRefSearchResults(list, q){
+      const box = $("#refSearchResults");
+      if (!q){
+        box.innerHTML = `<div class="muted small">輸入關鍵字後按 Enter 或點「搜尋」。</div>`;
+        return;
+      }
+      if (!list.length){
+        box.innerHTML = `<div class="muted small">找不到符合：<span class="kbd">${esc(q)}</span></div>`;
+        return;
+      }
+
+      box.innerHTML = "";
+      list.forEach(r => {
+        const { title, authors, year, journal } = pickRefText(r);
+        const metaBits = [
+          title ? title : "",
+          authors ? authors : "",
+          year ? year : "",
+          journal ? journal : ""
+        ].filter(Boolean);
+
+        const div = document.createElement("div");
+        div.className = "ref-result";
+        div.innerHTML = `
+          <div class="left">
+            <div class="id">${esc(r.id)}</div>
+            <div class="meta">${esc(metaBits.join(" · "))}</div>
+          </div>
+          <div class="actions">
+            <button class="btnx btn-add"><i class="fa-solid fa-plus"></i> 加入</button>
+            <button class="btnx btn-fill"><i class="fa-solid fa-pen-to-square"></i> 帶入</button>
+            <button class="btnx btn-copy"><i class="fa-regular fa-copy"></i> 複製ID</button>
+          </div>
+        `;
+
+        div.querySelector(".btn-add").addEventListener("click", () => {
+          addRefIdById(r.id);
+        });
+
+        // 「帶入」：把 ID 放到手動輸入框，方便你再按加入或修改
+        div.querySelector(".btn-fill").addEventListener("click", () => {
+          $("#refIdInput").value = r.id;
+          $("#refIdInput").focus();
+        });
+
+        div.querySelector(".btn-copy").addEventListener("click", async () => {
+          try{
+            await navigator.clipboard.writeText(r.id);
+            msg(`已複製 refId：<span class="kbd">${esc(r.id)}</span>`);
+          }catch(e){
+            $("#refIdInput").value = r.id;
+            msg("瀏覽器不允許剪貼簿，已將 refId 帶入輸入框。", "warn");
+          }
+        });
+
+        box.appendChild(div);
+      });
+    }
+
+    async function runRefSearch(){
+      const qraw = ($("#refSearchInput").value || "").trim();
+      const q = qraw.toLowerCase();
+      if (!q) return renderRefSearchResults([], "");
+
+      try{
+        const idx = await ensureRefsIndex();
+        const ranked = idx
+          .map(r => ({ r, s: scoreRef(r, q) }))
+          .filter(x => x.s > 0)
+          .sort((a,b) => b.s - a.s)
+          .slice(0, 20)
+          .map(x => x.r);
+
+        renderRefSearchResults(ranked, qraw);
+      }catch(e){
+        console.error(e);
+        $("#refSearchResults").innerHTML = `<div class="warn">kb_refs 搜尋失敗：${esc(e.message || e)}</div>`;
+      }
+    }
+
+    function addRefIdById(id){
+      const rid = (id || "").trim();
+      if (!rid) return;
+      currentData = currentData || {};
+      currentData.refIds = Array.isArray(currentData.refIds) ? currentData.refIds : [];
+      if (!currentData.refIds.includes(rid)) currentData.refIds.push(rid);
+      renderRefIds();
+      refreshPreview();
+      msg(`已加入 refId：<span class="kbd">${esc(rid)}</span>`);
+    }
+
+
+    const $ = (s) => document.querySelector(s);
+
+    let allArticles = [];
+    let currentId = "";        // current docId
+    let currentData = null;    // current article data
+    let canEdit = false;
+
+    // ---- helpers
+    function esc(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+    }
+    function msg(html, kind="ok"){
+      $("#msg").innerHTML = `<div class="${kind === "ok" ? "ok" : (kind==="warn"?"warn":"warn")}">${html}</div>`;
+      setTimeout(() => { if ($("#msg").innerHTML) $("#msg").innerHTML = ""; }, 3500);
+    }
+    function normalizeSlug(s){
+      return String(s || "").trim();
+    }
+    function clone(obj){ return JSON.parse(JSON.stringify(obj || {})); }
+
+    // ---- auth + role check (修正版：同時支援 claims.admin 與 claims.roles.admin)
+    async function evaluateRoles(user){
+      // 同時支援兩種 custom claims 寫法：
+      // 1) token.claims.roles.{admin/systemAdmin/editor/secretary}
+      // 2) token.claims.{admin/systemAdmin/editor/secretary}（平面 claims）
+      canEdit = false;
+
+      if (!user){
+        $("#authBadge").textContent = "未登入";
+        $("#roleBadge").textContent = "role: —";
+        $("#userInfo").textContent = "";
+        $("#editorWrap").classList.add("disabled");
+        return;
+      }
+
+      $("#authBadge").textContent = "已登入";
+      $("#userInfo").textContent = user.email || "";
+
+      // force refresh 一次，避免「剛被設定 custom claims」但前端還拿到舊 token
+      if (typeof window.__kbForcedRefresh === "undefined") window.__kbForcedRefresh = false;
+
+      try{
+        const token = await user.getIdTokenResult(!window.__kbForcedRefresh);
+        window.__kbForcedRefresh = true;
+
+        const claims = token?.claims || {};
+        const rolesObj = (claims.roles && typeof claims.roles === "object") ? claims.roles : {};
+
+        // 合併「平面 claims」+「roles 物件」兩種來源
+        const roles = {
+          admin: !!claims.admin,
+          systemAdmin: !!claims.systemAdmin,
+          secretary: !!claims.secretary,
+          editor: !!claims.editor,
+          reviewer: !!claims.reviewer,
+          client: !!claims.client,
+          ...rolesObj
+        };
+
+        const ok = !!(roles.admin || roles.systemAdmin || roles.editor || roles.secretary);
+        canEdit = ok;
+
+        const roleKeys = ["admin","systemAdmin","secretary","editor","reviewer","client"];
+        const roleList = roleKeys.filter(k => !!roles[k]).join(", ");
+        $("#roleBadge").textContent = `role: ${roleList || "（none）"}`;
+
+        if (!ok){
+          $("#editorWrap").classList.add("disabled");
+          msg("你已登入，但缺少 admin/systemAdmin/editor/secretary 權限（已鎖定編輯）。若你剛被指派權限，請登出再登入或重新整理一次。", "warn");
+        } else {
+          $("#editorWrap").classList.remove("disabled");
+        }
+      }catch(e){
+        console.error(e);
+        $("#roleBadge").textContent = "role: （讀取失敗）";
+        $("#editorWrap").classList.add("disabled");
+        msg("無法讀取使用者權限（請確認自訂 claims 與 Firestore Rules）。", "warn");
+      }
+    }
+
+    // ---- list
+    async function loadList(){
+      $("#list").innerHTML = `<div class="muted small">讀取中…</div>`;
+      const snaps = await getDocs(collection(db, COL));
+      allArticles = snaps.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      allArticles.sort((a,b) => {
+        const la = `${a.topic || ""} ${a.title || a.slug || a.id || ""}`.trim();
+        const lb = `${b.topic || ""} ${b.title || b.slug || b.id || ""}`.trim();
+        return la.localeCompare(lb, "zh-Hant");
+      });
+
+      renderList();
+    }
+
+    function renderList(){
+      const q = ($("#q").value || "").trim().toLowerCase();
+      const filtered = !q ? allArticles : allArticles.filter(a => {
+        const text = `${a.id} ${a.slug||""} ${a.title||""} ${a.topic||""} ${a.status||""}`.toLowerCase();
+        return text.includes(q);
+      });
+
+      const box = $("#list");
+      if (!filtered.length){
+        box.innerHTML = `<div class="muted small">沒有符合的文章</div>`;
+        return;
+      }
+
+      box.innerHTML = "";
+      filtered.forEach(a => {
+        const div = document.createElement("div");
+        div.className = "item";
+        const t = a.title || a.slug || a.id;
+        const m = [
+          a.topic ? `topic:${a.topic}` : "",
+          a.status ? `status:${a.status}` : "",
+          `slug/docId:${a.slug || a.id}`
+        ].filter(Boolean).join(" · ");
+        div.innerHTML = `<div class="t">${esc(t)}</div><div class="m">${esc(m)}</div>`;
+        div.addEventListener("click", () => openArticle(a.slug || a.id));
+        box.appendChild(div);
+      });
+    }
+
+    // ---- editor model
+    function getEditorData(){
+      const data = clone(currentData || {});
+      data.slug = normalizeSlug($("#slug").value);
+      data.title = ($("#title").value || "").trim();
+      data.topic = ($("#topic").value || "").trim();
+      data.summary = ($("#summary").value || "").trim();
+      data.status = ($("#status").value || "").trim();
+
+      // sections
+      const secs = [];
+      document.querySelectorAll("[data-sec]").forEach(secEl => {
+        const h2 = (secEl.querySelector(".sec-h2")?.value || "").trim();
+        const id = (secEl.querySelector(".sec-id")?.value || "").trim();
+        const audience = (secEl.querySelector(".sec-aud")?.value || "").trim();
+        const hidden = !!secEl.querySelector(".sec-hidden")?.checked;
+        const internal = !!secEl.querySelector(".sec-internal")?.checked;
+        const bodyMd = (secEl.querySelector(".sec-md")?.value || "");
+        secs.push({ h2, id, audience, hidden, internal, bodyMd });
+      });
+      data.sections = secs;
+
+      // refIds
+      data.refIds = Array.isArray(currentData?.refIds) ? clone(currentData.refIds) : [];
+      return data;
+    }
+
+    function setEditorData(article){
+      currentData = clone(article || {});
+      $("#slug").value = currentData.slug || currentId || "";
+      $("#title").value = currentData.title || "";
+      $("#topic").value = currentData.topic || "";
+      $("#summary").value = currentData.summary || "";
+      $("#status").value = currentData.status || "";
+
+      renderSections(Array.isArray(currentData.sections) ? currentData.sections : []);
+
+      currentData.refIds = Array.isArray(currentData.refIds) ? currentData.refIds : [];
+      renderRefIds();
+
+      // ref search panel hint
+      if ($("#refSearchResults")) {
+        $("#refSearchResults").innerHTML = `<div class="muted small">輸入關鍵字後按 Enter 或點「搜尋」。</div>`;
+      }
+
+      refreshPreview();
+    }
+
+    function renderSections(secs){
+      const box = $("#sections");
+      box.innerHTML = "";
+
+      secs.forEach((s, i) => {
+        const div = document.createElement("div");
+        div.className = "sectionCard";
+        div.setAttribute("data-sec", String(i));
+        div.innerHTML = `
+          <div class="sectionHead">
+            <div class="left">
+              <span class="chip">#${i+1}</span>
+              <span class="muted small">h2</span>
+              <input class="input sec-h2" style="max-width:520px;" value="${esc(s.h2 || "")}" placeholder="章節標題（h2）">
+            </div>
+            <div class="row">
+              <button class="btnx sec-up" title="上移"><i class="fa-solid fa-arrow-up"></i></button>
+              <button class="btnx sec-down" title="下移"><i class="fa-solid fa-arrow-down"></i></button>
+              <button class="btnx btn-danger sec-del" title="刪除"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </div>
+
+          <div class="split">
+            <div>
+              <label class="muted small">id（可空，前台會自動產生）</label>
+              <input class="input sec-id" value="${esc(s.id || "")}" placeholder="例如：iso-24444">
+            </div>
+            <div>
+              <label class="muted small">audience（可空 / internal / admin）</label>
+              <input class="input sec-aud" value="${esc(s.audience || "")}" placeholder="例如：internal">
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:.55rem;">
+            <label class="row small muted"><input type="checkbox" class="sec-hidden" ${s.hidden ? "checked": ""}> hidden</label>
+            <label class="row small muted"><input type="checkbox" class="sec-internal" ${s.internal ? "checked": ""}> internal</label>
+            <span class="chip">支援名詞標記：[[t_xxx|label]] 或 [[label]]</span>
+          </div>
+
+          <div style="margin-top:.55rem;">
+            <label class="muted small">bodyMd（Markdown）</label>
+            <textarea class="sec-md" placeholder="在此輸入 Markdown…">${esc(s.bodyMd || "")}</textarea>
+          </div>
+        `;
+
+        div.querySelectorAll("input, textarea").forEach(el => {
+          el.addEventListener("input", () => {
+            currentData = getEditorData();
+            refreshPreview();
+          });
+        });
+
+        div.querySelector(".sec-up").addEventListener("click", () => moveSection(i, -1));
+        div.querySelector(".sec-down").addEventListener("click", () => moveSection(i, +1));
+        div.querySelector(".sec-del").addEventListener("click", () => deleteSection(i));
+
+        box.appendChild(div);
+      });
+    }
+
+    function moveSection(i, delta){
+      const data = getEditorData();
+      const secs = Array.isArray(data.sections) ? data.sections : [];
+      const j = i + delta;
+      if (j < 0 || j >= secs.length) return;
+      const tmp = secs[i];
+      secs[i] = secs[j];
+      secs[j] = tmp;
+      currentData.sections = secs;
+      renderSections(secs);
+      refreshPreview();
+    }
+
+    function deleteSection(i){
+      if (!confirm("確定刪除此章節？")) return;
+      const data = getEditorData();
+      const secs = Array.isArray(data.sections) ? data.sections : [];
+      secs.splice(i, 1);
+      currentData.sections = secs;
+      renderSections(secs);
+      refreshPreview();
+    }
+
+    function addSection(){
+      const data = getEditorData();
+      const secs = Array.isArray(data.sections) ? data.sections : [];
+      secs.push({
+        h2: "新章節",
+        id: "",
+        audience: "",
+        hidden: false,
+        internal: false,
+        bodyMd: "請在此輸入內容…"
+      });
+      currentData.sections = secs;
+      renderSections(secs);
+      refreshPreview();
+    }
+
+    // ---- refs
+    function renderRefIds(){
+      const box = $("#refIdsBox");
+      box.innerHTML = "";
+      const ids = Array.isArray(currentData?.refIds) ? currentData.refIds : [];
+      if (!ids.length){
+        box.innerHTML = `<div class="muted small">（尚無 refIds）</div>`;
+        return;
+      }
+      ids.forEach((id, idx) => {
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `
+          <div class="row" style="justify-content:space-between;">
+            <div class="t">${esc(id)}</div>
+            <button class="btnx btn-danger" title="移除"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        `;
+        div.querySelector("button").addEventListener("click", () => {
+          currentData.refIds.splice(idx, 1);
+          renderRefIds();
+          refreshPreview();
+        });
+        box.appendChild(div);
+      });
+    }
+
+    function addRefId(){
+      addRefIdById($("#refIdInput").value);
+      $("#refIdInput").value = "";
+    }
+
+// ---- preview
+    function mdToHtml(md){
+      marked.setOptions({ gfm: true, breaks: true });
+      return marked.parse(md || "");
+    }
+
+    function refreshPreview(){
+      const a = getEditorData();
+      const secs = Array.isArray(a.sections) ? a.sections : [];
+      const html = `
+        <h1>${esc(a.title || "")}</h1>
+        <div class="muted small">${esc([a.topic ? ("topic:"+a.topic) : "", a.status ? ("status:"+a.status) : ""].filter(Boolean).join(" · "))}</div>
+        ${a.summary ? `<p class="muted">${esc(a.summary)}</p>` : ""}
+        <hr class="hr">
+        ${secs.map(s => `
+          <section>
+            <h2>${esc(s.h2 || "")}</h2>
+            <div>${mdToHtml(s.bodyMd || "")}</div>
+          </section>
+        `).join("")}
+        <hr class="hr">
+        <div class="muted small">refIds：${esc((a.refIds || []).join(", "))}</div>
+      `;
+      $("#preview").innerHTML = html;
+    }
+
+    // ---- CRUD
+    async function openArticle(id){
+      const docId = normalizeSlug(id);
+      if (!docId) return;
+      currentId = docId;
+      $("#currentIdLine").textContent = `docId: ${currentId}`;
+      try{
+        const snap = await getDoc(doc(db, COL, docId));
+        if (!snap.exists()){
+          msg(`找不到文章：${esc(docId)}（可能無權限或不存在）`, "warn");
+          return;
+        }
+        const data = { id: snap.id, ...snap.data() };
+        setEditorData(data);
+      }catch(e){
+        console.error(e);
+        msg(`載入失敗：${esc(e.message || e)}`, "warn");
+      }
+    }
+
+    async function createNew(){
+      const slug = normalizeSlug($("#newSlug").value);
+      if (!slug) return msg("請輸入新文章 slug", "warn");
+      if (!canEdit) return msg("你沒有編輯權限", "warn");
+
+      const snap = await getDoc(doc(db, COL, slug));
+      if (snap.exists()){
+        msg("此 slug 已存在，已直接開啟。", "warn");
+        $("#newSlug").value = "";
+        return openArticle(slug);
+      }
+
+      const base = {
+        slug,
+        title: slug,
+        topic: "",
+        summary: "",
+        status: "draft",
+        sections: [
+          { h2: "概述", id: "overview", audience: "", hidden: false, internal: false, bodyMd: "請在此輸入內容…" }
+        ],
+        refIds: [],
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+
+      try{
+        await setDoc(doc(db, COL, slug), base);
+        $("#newSlug").value = "";
+        msg("已建立新文章（draft）");
+        await loadList();
+        await openArticle(slug);
+      }catch(e){
+        console.error(e);
+        msg(`建立失敗：${esc(e.message || e)}`, "warn");
+      }
+    }
+
+    async function saveCurrent(){
+      if (!canEdit) return msg("你沒有編輯權限", "warn");
+
+      const a = getEditorData();
+      const newSlug = normalizeSlug(a.slug || currentId);
+      if (!newSlug) return msg("slug 不可為空", "warn");
+
+      const renaming = (currentId && newSlug !== currentId);
+
+      try{
+        a.updatedAt = serverTimestamp();
+        if (!currentId){
+          a.createdAt = serverTimestamp();
+          await setDoc(doc(db, COL, newSlug), a, { merge: true });
+          currentId = newSlug;
+        } else if (renaming){
+          const oldId = currentId;
+          a.createdAt = currentData?.createdAt || serverTimestamp();
+          await setDoc(doc(db, COL, newSlug), a, { merge: true });
+          await deleteDoc(doc(db, COL, oldId));
+          currentId = newSlug;
+        } else {
+          await updateDoc(doc(db, COL, currentId), a);
+        }
+
+        $("#currentIdLine").textContent = `docId: ${currentId}`;
+        msg("已儲存");
+        await loadList();
+        await openArticle(currentId);
+      }catch(e){
+        console.error(e);
+        msg(`儲存失敗：${esc(e.message || e)}`, "warn");
+      }
+    }
+
+    async function deleteCurrent(){
+      if (!canEdit) return msg("你沒有編輯權限", "warn");
+      if (!currentId) return msg("尚未選取文章", "warn");
+      if (!confirm(`確定刪除文章：${currentId} ？此動作不可復原。`)) return;
+
+      try{
+        await deleteDoc(doc(db, COL, currentId));
+        msg("已刪除");
+        currentId = "";
+        currentData = null;
+        $("#currentIdLine").textContent = "docId: —";
+        setEditorData({ slug:"", title:"", topic:"", summary:"", status:"", sections:[], refIds:[] });
+        await loadList();
+      }catch(e){
+        console.error(e);
+        msg(`刪除失敗：${esc(e.message || e)}`, "warn");
+      }
+    }
+
+    // ---- open front page
+    function openFront(){
+      const slug = normalizeSlug($("#slug").value || currentId);
+      if (!slug) return msg("請先選取或輸入 slug", "warn");
+      const url = new URL(location.href);
+      const base = url.toString().replace(/kb-edit\.html(\?.*)?$/i, "kb-article.html");
+      const front = new URL(base);
+      front.searchParams.set("slug", slug);
+      window.open(front.toString(), "_blank");
+    }
+
+    // ---- wiring
+    $("#btnSignOut").addEventListener("click", () => signOut(auth));
+    $("#btnReload").addEventListener("click", loadList);
+    $("#q").addEventListener("input", renderList);
+
+    $("#btnNew").addEventListener("click", createNew);
+    $("#btnSave").addEventListener("click", saveCurrent);
+    $("#btnDelete").addEventListener("click", deleteCurrent);
+
+    $("#btnAddSection").addEventListener("click", addSection);
+
+    $("#btnAddRef").addEventListener("click", addRefId);
+    // refIds quick search
+    let __refSearchTimer = null;
+    $("#btnRefSearch").addEventListener("click", runRefSearch);
+    $("#btnRefClear").addEventListener("click", () => {
+      $("#refSearchInput").value = "";
+      $("#refSearchResults").innerHTML = `<div class="muted small">已清除。輸入關鍵字後按 Enter 或點「搜尋」。</div>`;
+    });
+    $("#refSearchInput").addEventListener("keydown", (e) => { if (e.key === "Enter") runRefSearch(); });
+    $("#refSearchInput").addEventListener("input", () => {
+      clearTimeout(__refSearchTimer);
+      __refSearchTimer = setTimeout(runRefSearch, 180);
+    });
+
+    $("#refIdInput").addEventListener("keydown", (e) => { if (e.key === "Enter") addRefId(); });
+
+    ["slug","title","topic","summary","status"].forEach(id => {
+      $("#"+id).addEventListener("input", () => { currentData = getEditorData(); refreshPreview(); });
+      $("#"+id).addEventListener("change", () => { currentData = getEditorData(); refreshPreview(); });
+    });
+
+    $("#btnOpenFront").addEventListener("click", openFront);
+
+    // ---- init
+    onAuthStateChanged(auth, async (user) => {
+      await evaluateRoles(user);
+      try{ await loadList(); }catch(e){
+        console.error(e);
+        msg("文章清單載入失敗（可能 Firestore rules 不允許讀取 kb_articles）。", "warn");
+      }
+    });
+  </script>
+</body>
+</html>

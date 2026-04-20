@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>功效評估價格 - CosPIF 智慧科技整合系統</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .pricing-container {
+            min-height: calc(100vh - 140px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+        .pricing-card {
+            max-width: 960px;
+            width: 100%;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.15);
+            padding: 2rem 2.5rem;
+        }
+        .pricing-title {
+            font-size: 1.6rem;
+            margin-bottom: .5rem;
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+        }
+        .pricing-subtitle {
+            color: #6b7280;
+            font-size: .95rem;
+            margin-bottom: 1.5rem;
+        }
+        .price-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
+            gap: 1.75rem;
+        }
+        @media (max-width: 768px) {
+            .pricing-card {
+                padding: 1.5rem 1.25rem;
+            }
+            .price-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .price-panel {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            background: #f9fafb;
+            text-align: left;
+        }
+        .price-panel h3 {
+            font-size: 1.05rem;
+            margin-bottom: .75rem;
+        }
+        .form-row {
+            margin-bottom: 1rem;
+        }
+        .form-row label {
+            display: block;
+            font-size: .9rem;
+            margin-bottom: .35rem;
+            color: #374151;
+        }
+        .form-row input[type="number"],
+        .form-row input[type="text"],
+        .form-row input[type="tel"],
+        .form-row input[type="email"] {
+            width: 100%;
+            padding: .5rem .6rem;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            font-size: .95rem;
+            background: #fff;
+        }
+        .form-row textarea {
+            width: 100%;
+            padding: .55rem .6rem;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            font-size: .95rem;
+            background: #fff;
+            min-height: 72px;
+            resize: vertical;
+        }
+
+        .service-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .9rem;
+        }
+        .service-table tr + tr {
+            border-top: 1px dashed #e5e7eb;
+        }
+        .service-table td {
+            padding: .45rem .25rem;
+            vertical-align: top;
+        }
+        .service-check {
+            width: 28px;
+        }
+        .service-desc {
+            text-align: left;
+        }
+        .service-title {
+            font-size: .9rem;
+            margin-bottom: .1rem;
+        }
+        .service-note {
+            font-size: .8rem;
+            color: #6b7280;
+        }
+
+        .price-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .9rem;
+        }
+        .price-table th,
+        .price-table td {
+            padding: .45rem 0;
+            border-bottom: 1px dashed #e5e7eb;
+        }
+        .price-table th {
+            text-align: left;
+            color: #6b7280;
+            font-weight: 500;
+        }
+        .price-table td:last-child {
+            text-align: right;
+        }
+        .text-muted {
+            color: #9ca3af;
+        }
+        .total-row td {
+            border-top: 1px solid #d1d5db;
+            border-bottom: none;
+            padding-top: .7rem;
+        }
+        .grand-total {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #111827;
+        }
+        .per-product {
+            font-size: .9rem;
+            color: #4b5563;
+        }
+        .note {
+            margin-top: .75rem;
+            font-size: .8rem;
+            color: #6b7280;
+        }
+
+        .btn-submit {
+            margin-top: 1rem;
+            margin-right: .5rem;
+            padding: .6rem 1.3rem;
+            border-radius: 999px;
+            border: none;
+            background: #ec4899;
+            color: #fff;
+            font-size: .9rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+        }
+        .btn-submit:hover {
+            background: #db2777;
+        }
+        .btn-submit:disabled {
+            background: #f9a8d4;
+            cursor: not-allowed;
+        }
+
+        .btn-print {
+            margin-top: 1rem;
+            padding: .5rem 1rem;
+            border-radius: 999px;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            font-size: .85rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+        }
+        .btn-print:hover {
+            background: #f3f4f6;
+        }
+
+        /* Status Display */
+        #status-display-view {
+            padding: 1rem;
+        }
+        .status-badge {
+            padding: .3rem .8rem;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: .9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+        }
+        .status-badge.pending {
+            background: #feefc3;
+            color: #7a5f02;
+        }
+        .status-badge.approved {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .status-badge.rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        #status-details th {
+            width: 130px;
+        }
+
+        @media print {
+            header, footer, .btn-print, .btn-submit, #submission-status, .status-badge {
+                display: none !important;
+            }
+            .pricing-container {
+                padding: 0;
+            }
+            .pricing-card {
+                box-shadow: none;
+                border-radius: 0;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container">
+        <nav>
+            <a href="index.html" class="logo"><i class="fa-solid fa-shield-halved"></i> CosPIF</a>
+            <ul class="nav-links">
+                <li><a href="index.html#features">核心功能</a></li>
+                <li><a href="index.html#about">關於我們</a></li>
+                <li><a href="price-eva.html">功效評估價格</a></li>
+            </ul>
+            <a href="login.html" class="btn-login">登入系統</a>
+        </nav>
+    </div>
+</header>
+
+<main>
+    <div class="pricing-container">
+        <div id="calculator-view" class="pricing-card">
+            <h2 class="pricing-title"><i class="fa-solid fa-sun"></i> 功效評估價格</h2>
+            <p class="pricing-subtitle">
+                以每一「產品」為單位，試算防曬與一般評估專案之概估費用。
+                金額為新台幣，供預估與專案溝通參考。
+            </p>
+            <div class="price-grid">
+                <!-- Left Panel: Inputs -->
+                <div class="price-panel">
+                    <h3><i class="fa-solid fa-sliders"></i> 試算條件</h3>
+
+                    <div class="form-row">
+                        <label for="vendor-name">廠商名稱</label>
+                        <input type="text" id="vendor-name" placeholder="例：嘉南藥理大學 / XXX有限公司">
+                    </div>
+                    
+                    <div class="form-row">
+                        <label for="company-tax-id">公司統編</label>
+                        <input type="text" id="company-tax-id" placeholder="例：12345678">
+                        <div style="margin-top:.35rem;display:flex;align-items:center;gap:.45rem;">
+                            <input type="checkbox" id="no-tax-id-toggle">
+                            <span style="font-size:.85rem;color:#6b7280;">尚無統編，改用「手機號碼」歸戶</span>
+                        </div>
+                    </div>
+
+
+                    <div class="form-row">
+                        <label for="contact-name">聯絡人姓名</label>
+                        <input type="text" id="contact-name" placeholder="例：王小明">
+                    </div>
+                    <div class="form-row">
+                        <label for="contact-phone">電話</label>
+                        <input type="tel" id="contact-phone" placeholder="例：09xx-xxx-xxx">
+                    </div>
+
+                    <!-- ✅ 新增：聯絡 Email -->
+                    <div class="form-row">
+                        <label for="contact-email">聯絡 Email</label>
+                        <input type="email" id="contact-email" placeholder="例：contact@example.com">
+                    </div>
+
+                    <div class="form-row">
+                        <label for="vendor-note">備註</label>
+                        <textarea id="vendor-note" placeholder="可填寫希望的試驗設計、時程、特殊需求等"></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <label for="product-count">產品數量（受測品項數）</label>
+                        <input type="number" id="product-count" min="0" value="1">
+                    </div>
+
+                    <div class="form-row">
+                        <label>每一產品需要的評估項目</label>
+                        <table class="service-table">
+                            <tbody>
+                                <tr>
+                                    <td class="service-check"><input type="checkbox" id="include-spf-lab" checked></td>
+                                    <td class="service-desc">
+                                        <div class="service-title">體外防曬 SPF 與星號</div>
+                                        <div class="service-note">每產品 8,000 元</div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="service-check"><input type="checkbox" id="include-spf-human"></td>
+                                    <td class="service-desc">
+                                        <div class="service-title">人體防曬評估 SPF</div>
+                                        <div class="service-note">每產品 議價</div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="service-check"><input type="checkbox" id="include-pa-human"></td>
+                                    <td class="service-desc">
+                                        <div class="service-title">人體 PA 防曬評估</div>
+                                        <div class="service-note">每產品 議價</div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="service-check"><input type="checkbox" id="include-moist"></td>
+                                    <td class="service-desc">
+                                        <div class="service-title">有效性評估</div>
+                                        <div class="service-note">每產品 議價</div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="service-check"><input type="checkbox" id="include-white"></td>
+                                    <td class="service-desc">
+                                        <div class="service-title">安全性評估</div>
+                                        <div class="service-note">每產品 議價</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Right Panel: Results -->
+                <div class="price-panel">
+                    <h3><i class="fa-solid fa-file-invoice-dollar"></i> 試算結果</h3>
+                    <table class="price-table">
+                        <tbody>
+                            <tr><th>體外防曬 SPF</th><td id="spf-lab-line">—</td></tr>
+                            <tr><th>人體防曬 SPF</th><td id="spf-human-line" class="text-muted">—</td></tr>
+                            <tr><th>人體 PA 防曬</th><td id="pa-human-line" class="text-muted">—</td></tr>
+                            <tr><th>有效性評估</th><td id="moist-line" class="text-muted">—</td></tr>
+                            <tr><th>安全性評估</th><td id="white-line" class="text-muted">—</td></tr>
+                            <tr class="total-row">
+                                <td>
+                                    <div class="per-product">
+                                        每產品合計（不含議價項目）：
+                                        <span id="per-product-total">0</span> 元
+                                    </div>
+                                </td>
+                                <td class="grand-total">
+                                    總金額（不含議價項目）：
+                                    <span id="grand-total">0</span> 元
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="note">
+                        ※ 本試算為概估，未含稅及特殊追加項目。<br>
+                        ※ 「人體防曬 SPF／人體 PA 防曬／有效性評估／安全性評估」為議價項目，實際費用將視受試者數、指標設計、追蹤週期等另行報價。
+                    </p>
+                    <button class="btn-submit" onclick="submitForReview()">
+                        <i class="fa-solid fa-paper-plane"></i> 送出後台審核
+                    </button>
+                    <button class="btn-print" onclick="window.print()">
+                        <i class="fa-solid fa-print"></i> 列印／匯出 PDF
+                    </button>
+                    <p id="submission-status" class="note" style="display:none;"></p>
+                </div>
+            </div>
+        </div>
+
+        <div id="status-view" class="pricing-card" style="display: none;">
+            <h2 class="pricing-title"><i class="fa-solid fa-file-circle-check"></i> 試算申請狀態</h2>
+            <p id="status-loading" class="pricing-subtitle">正在載入您的申請資料，請稍候...</p>
+            <div id="status-display-view" style="display: none;">
+                <table class="price-table" id="status-details">
+                    <tbody>
+                        <tr><th>申請編號</th><td id="status-id">-</td></tr>
+                        <tr><th>申請日期</th><td id="status-date">-</td></tr>
+                        <tr><th>目前狀態</th><td id="status-badge-cell">-</td></tr>
+                        <tr><th>申請人</th><td id="status-email">-</td></tr>
+
+                        <tr><th>廠商名稱</th><td id="status-vendor">-</td></tr>
+                        <tr><th>公司統編</th><td id="status-company-tax-id">-</td></tr>
+                        <tr><th>聯絡人</th><td id="status-contact">-</td></tr>
+                        <tr><th>電話</th><td id="status-phone">-</td></tr>
+
+                        <!-- ✅ 新增：狀態頁顯示聯絡 Email -->
+                        <tr><th>聯絡 Email</th><td id="status-contact-email">-</td></tr>
+
+                        <tr><th>備註</th><td id="status-note">-</td></tr>
+
+                        <tr><th>總金額</th><td id="status-total">-</td></tr>
+                        <tr><th>申請項目</th><td id="status-items">-</td></tr>
+                    </tbody>
+                </table>
+                <p class="note">
+                    ※ 您可以將此頁面加入書籤，以便隨時追蹤審核進度。
+                    如有疑問，請以申請編號聯繫我們的專案經理。
+                </p>
+                <a href="price-eva.html" class="btn-submit" style="background-color: #3b82f6;">
+                    <i class="fa-solid fa-plus"></i> 建立新的試算
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2025 CosPIF 化妝品智慧科技系統. All Rights Reserved.</p>
+    </div>
+</footer>
+
+<script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { collection, addDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    // DOM Elements
+    const calculatorView = document.getElementById('calculator-view');
+    const statusView = document.getElementById('status-view');
+
+    const vendorNameInput = document.getElementById('vendor-name');
+    const companyTaxIdInput = document.getElementById('company-tax-id');
+    const noTaxIdToggle = document.getElementById('no-tax-id-toggle');
+const contactNameInput = document.getElementById('contact-name');
+    const contactPhoneInput = document.getElementById('contact-phone');
+
+    // ✅ 新增：聯絡 Email DOM
+    const contactEmailInput = document.getElementById('contact-email');
+
+    const vendorNoteInput = document.getElementById('vendor-note');
+
+    const productCountInput = document.getElementById('product-count');
+    const includeInputs = {
+        SpfLab: document.getElementById('include-spf-lab'),
+        SpfHuman: document.getElementById('include-spf-human'),
+        PaHuman: document.getElementById('include-pa-human'),
+        Moist: document.getElementById('include-moist'),
+        White: document.getElementById('include-white'),
+    };
+    const lineItems = {
+        spfLab: document.getElementById('spf-lab-line'),
+        spfHuman: document.getElementById('spf-human-line'),
+        paHuman: document.getElementById('pa-human-line'),
+        moist: document.getElementById('moist-line'),
+        white: document.getElementById('white-line'),
+    };
+    const perProdEl = document.getElementById('per-product-total');
+    const grandTotalEl = document.getElementById('grand-total');
+    const submissionStatusEl = document.getElementById('submission-status');
+    const submitBtn = calculatorView.querySelector('.btn-submit');
+
+    // 固定費用項目
+    const UNIT_COSTS = {
+        SpfLab: 8000,
+        SpfHuman: null,
+        PaHuman: null,
+        // Moist / White 改為議價：以 null 表示
+        Moist: null,
+        White: null,
+    };
+
+    let lastPerProduct = 0;
+    let lastGrandTotal = 0;
+    let currentUser = null;
+
+    onAuthStateChanged(auth, (user) => {
+        currentUser = user || null;
+    });
+
+    function formatCurrency(n) {
+        return n.toLocaleString('zh-TW', { maximumFractionDigits: 0 });
+    }
+
+    function isValidEmail(email) {
+        // 簡單但實用的 Email 檢核
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function isValidCompanyTaxId(taxId) {
+        // 台灣統編通常為 8 碼數字（簡易格式檢核）
+        return /^\d{8}$/.test((taxId || '').trim());
+    }
+
+    function isValidTWMobile(mobile) {
+        return /^09\d{8}$/.test((mobile || '').trim());
+    }
+
+
+
+    function updateQuote() {
+        const count = Math.max(0, parseInt(productCountInput.value, 10) || 0);
+        let perProduct = 0;
+
+        const updateLine = (key, name, cost) => {
+            const lineEl = lineItems[key];
+            const isIncluded = includeInputs[name].checked;
+
+            if (!isIncluded || count <= 0) {
+                lineEl.textContent = '—';
+                lineEl.classList.add('text-muted');
+                return;
+            }
+
+            // 議價項目
+            if (cost === null) {
+                lineEl.textContent = '議價';
+                lineEl.classList.remove('text-muted');
+                return;
+            }
+
+            // 固定價格項目
+            const subtotal = count * cost;
+            lineEl.textContent = `${count} × ${formatCurrency(cost)} = ${formatCurrency(subtotal)} 元`;
+            lineEl.classList.remove('text-muted');
+            perProduct += cost;
+        };
+
+        updateLine('spfLab', 'SpfLab', UNIT_COSTS.SpfLab);
+        updateLine('spfHuman', 'SpfHuman', UNIT_COSTS.SpfHuman);
+        updateLine('paHuman', 'PaHuman', UNIT_COSTS.PaHuman);
+        updateLine('moist', 'Moist', UNIT_COSTS.Moist);
+        updateLine('white', 'White', UNIT_COSTS.White);
+
+        perProdEl.textContent = formatCurrency(perProduct);
+        const grandTotal = perProduct * count;
+        grandTotalEl.textContent = formatCurrency(grandTotal);
+
+        lastPerProduct = perProduct;
+        lastGrandTotal = grandTotal;
+    }
+
+    async function submitForReviewInner() {
+        const count = Math.max(0, parseInt(productCountInput.value, 10) || 0);
+        if (count <= 0) {
+            alert('請先輸入「產品數量」，至少 1 件。');
+            return;
+        }
+        if (!currentUser) {
+            alert('請先登入後再提交試算結果。');
+            window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.href);
+            return;
+        }
+
+        
+        // ✅ 公司歸戶代碼：公司統編 or 手機號碼
+        const noTaxId = !!noTaxIdToggle?.checked;
+        const companyTaxId = (companyTaxIdInput?.value || '').trim();
+        const contactPhone = (contactPhoneInput?.value || '').trim();
+
+        let companyKey = '';
+
+        if (noTaxId) {
+            if (!contactPhone) {
+                alert('您已勾選「尚無統編」，請在「電話」欄位填寫手機號碼以便歸戶。');
+                contactPhoneInput?.focus();
+                return;
+            }
+            if (!isValidTWMobile(contactPhone)) {
+                alert('請在「電話」欄位輸入有效的手機號碼（09 開頭 10 碼）。');
+                contactPhoneInput?.focus();
+                return;
+            }
+            companyKey = contactPhone;
+        } else {
+            if (!companyTaxId) {
+                alert('請填寫「公司統編」，或勾選「尚無統編，改用手機號碼歸戶」。');
+                companyTaxIdInput?.focus();
+                return;
+            }
+            if (!isValidCompanyTaxId(companyTaxId)) {
+                alert('「公司統編」格式似乎不正確，請輸入 8 碼數字。');
+                companyTaxIdInput?.focus();
+                return;
+            }
+            companyKey = companyTaxId;
+        }
+
+        // 快取公司歸戶代碼（統編或手機），方便公司儀表板與其他申請頁自動帶入
+        try {
+            if (companyKey) localStorage.setItem('cospif_companyKey', companyKey);
+        } catch (e) {}
+
+        // ✅ 新增：聯絡 Email 必填驗證
+        const contactEmail = (contactEmailInput?.value || '').trim();
+        if (!contactEmail) {
+            alert('請填寫「聯絡 Email」。');
+            contactEmailInput?.focus();
+            return;
+        }
+        if (!isValidEmail(contactEmail)) {
+            alert('「聯絡 Email」格式似乎不正確，請確認後再送出。');
+            contactEmailInput?.focus();
+            return;
+        }
+
+        submissionStatusEl.style.display = 'block';
+        submissionStatusEl.style.color = '';
+        submissionStatusEl.textContent = '正在送出試算結果...';
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 送出中...';
+
+        try {
+            const submissionData = {
+                // 聯絡資訊
+                vendorName: (vendorNameInput.value || '').trim(),
+
+                // ✅ 公司歸戶資訊（公司統編 / 手機號碼）
+                companyTaxId: noTaxId ? null : (companyTaxId || null),
+                companyMobileKey: noTaxId ? (contactPhone || null) : null,
+                companyKeyType: noTaxId ? 'mobile' : 'taxId',
+                companyKey: companyKey || null,
+                contactName: (contactNameInput.value || '').trim(),
+                contactPhone: (contactPhoneInput.value || '').trim(),
+
+                // ✅ 新增：聯絡 Email 寫入 Firestore
+                contactEmail: contactEmail,
+
+                note: (vendorNoteInput.value || '').trim(),
+
+                productCount: count,
+                perProduct: lastPerProduct,         // 不含議價
+                grandTotal: lastGrandTotal,         // 不含議價
+
+                includeSpfLab: includeInputs.SpfLab.checked,
+                includeSpfHuman: includeInputs.SpfHuman.checked,
+                includePaHuman: includeInputs.PaHuman.checked,
+                includeMoist: includeInputs.Moist.checked,   // 現在代表「有效性評估」
+                includeWhite: includeInputs.White.checked,   // 現在代表「安全性評估」
+
+                url: window.location.href.split('?')[0],
+                status: 'pending',
+                submittedBy: currentUser.uid,
+                submittedEmail: currentUser.email || null,
+                submittedAt: serverTimestamp()
+            };
+
+            const docRef = await addDoc(collection(db, 'eva_submissions'), submissionData);
+
+            window.location.href = `${window.location.pathname}?id=${docRef.id}`;
+
+        } catch (error) {
+            console.error('提交試算結果失敗：', error);
+            submissionStatusEl.style.color = 'red';
+            submissionStatusEl.textContent = '提交失敗：' + (error.message || '未知錯誤。');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> 送出後台審核';
+        }
+    }
+
+    async function displaySubmissionStatus(submissionId) {
+        calculatorView.style.display = 'none';
+        statusView.style.display = 'block';
+
+        const loadingEl = document.getElementById('status-loading');
+        const displayEl = document.getElementById('status-display-view');
+
+        try {
+            const docRef = doc(db, "eva_submissions", submissionId);
+            const docSnap = await getDoc(docRef);
+
+            if (!docSnap.exists()) {
+                loadingEl.textContent = "找不到此申請編號的資料，請確認連結是否正確。";
+                return;
+            }
+
+            const data = docSnap.data();
+
+            document.getElementById('status-id').textContent = docSnap.id;
+            document.getElementById('status-date').textContent =
+                data.submittedAt?.toDate().toLocaleString('zh-TW') || 'N/A';
+            document.getElementById('status-email').textContent = data.submittedEmail || 'N/A';
+
+            // 聯絡資訊顯示
+            document.getElementById('status-vendor').textContent = data.vendorName || '—';
+            const companyCell = document.getElementById('status-company-tax-id');
+            if (companyCell) {
+                const ct = data.companyTaxId || '';
+                const ck = data.companyKey || '';
+                companyCell.textContent = ct ? ct : (ck ? `手機：${ck}` : '—');
+            }
+            document.getElementById('status-contact').textContent = data.contactName || '—';
+            document.getElementById('status-phone').textContent = data.contactPhone || '—';
+
+            // ✅ 新增：狀態頁顯示 contactEmail
+            document.getElementById('status-contact-email').textContent = data.contactEmail || '—';
+
+            document.getElementById('status-note').textContent = data.note || '—';
+
+            document.getElementById('status-total').textContent =
+                `${formatCurrency(data.grandTotal || 0)} 元（不含議價項目）`;
+
+            // Status badge
+            const statusBadge = document.createElement('span');
+            statusBadge.className = `status-badge ${data.status || 'pending'}`;
+            const statusText = {
+                pending: '<i class="fa-solid fa-clock"></i> 審核中',
+                approved: '<i class="fa-solid fa-check-circle"></i> 已核准',
+                rejected: '<i class="fa-solid fa-times-circle"></i> 已駁回'
+            };
+            statusBadge.innerHTML = statusText[data.status] || data.status;
+            const badgeCell = document.getElementById('status-badge-cell');
+            badgeCell.innerHTML = '';
+            badgeCell.appendChild(statusBadge);
+
+            // Items list
+            const items = [];
+            if (data.includeSpfLab) items.push('體外防曬 SPF');
+            if (data.includeSpfHuman) items.push('人體防曬 SPF（議價）');
+            if (data.includePaHuman) items.push('人體 PA 防曬（議價）');
+            if (data.includeMoist) items.push('有效性評估（議價）');
+            if (data.includeWhite) items.push('安全性評估（議價）');
+            document.getElementById('status-items').textContent = items.join('、') || '無';
+
+            loadingEl.style.display = 'none';
+            displayEl.style.display = 'block';
+
+        } catch (error) {
+            console.error("Error loading submission status:", error);
+            loadingEl.textContent = `載入狀態時發生錯誤：${error.message}`;
+        }
+    }
+
+    // --- Main Logic --- //
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const submissionId = urlParams.get('id');
+
+        if (submissionId) {
+            displaySubmissionStatus(submissionId);
+        } else {
+            calculatorView.style.display = 'block';
+            statusView.style.display = 'none';
+
+            productCountInput.addEventListener('input', updateQuote);
+            Object.values(includeInputs).forEach(input =>
+                input.addEventListener('change', updateQuote)
+            );
+            // ✅ 無統編模式：改用手機號碼作為公司歸戶代碼
+            if (noTaxIdToggle && companyTaxIdInput) {
+                const syncNoTaxUI = () => {
+                    const on = !!noTaxIdToggle.checked;
+                    companyTaxIdInput.disabled = on;
+                    if (on) companyTaxIdInput.value = '';
+                };
+                noTaxIdToggle.addEventListener('change', syncNoTaxUI);
+                syncNoTaxUI();
+            }
+
+
+            
+                        // ✅ 若先前已設定公司歸戶代碼，可自動帶入（統編或手機）
+            try {
+                const cachedKey = (localStorage.getItem('cospif_companyKey') || '').trim();
+
+                if (cachedKey) {
+                    if (/^\d{8}$/.test(cachedKey)) {
+                        if (companyTaxIdInput && !companyTaxIdInput.value) {
+                            companyTaxIdInput.value = cachedKey;
+                        }
+                        if (noTaxIdToggle) noTaxIdToggle.checked = false;
+                    } else if (/^09\d{8}$/.test(cachedKey)) {
+                        if (contactPhoneInput && !contactPhoneInput.value) {
+                            contactPhoneInput.value = cachedKey;
+                        }
+                        if (noTaxIdToggle) noTaxIdToggle.checked = true;
+                    }
+                }
+            } catch (e) {}
+
+            updateQuote();
+        }
+    });
+
+    window.submitForReview = submitForReviewInner;
+</script>
+</body>
+</html>

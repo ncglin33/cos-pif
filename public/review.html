@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>廠商申請審核</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo"><i class="fa-solid fa-shield-halved"></i> CosPIF</a>
+                <ul id="nav-links" class="nav-links">
+                    <li><a href="pif-i.html">我的專案</a></li>
+                    <!-- Admin links will be injected here -->
+                </ul>
+                <div class="nav-actions" style="display: flex; align-items: center;">
+                    <span id="user-info" style="margin-right: 1.5rem; color: var(--text-muted);"></span>
+                    <button id="btnSignOut" class="btn-login btn-danger">登出</button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h1><i class="fa-solid fa-hourglass-half"></i> 廠商申請審核</h1>
+            <p class="text-muted">此處僅會顯示狀態為「待審核」的廠商申請。</p>
+        </div>
+
+        <div id="admin-only-content" style="display: none;">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>統一編號</th>
+                                    <th>廠商名稱</th>
+                                    <th>地址</th>
+                                    <th>電話</th>
+                                    <th>申請人 Email</th>
+                                    <th style="width: 200px;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reviewTbody"></tbody>
+                        </table>
+                    </div>
+                    <div id="reviewStatus" class="status-bar">正在載入待審核項目...</div>
+                </div>
+            </div>
+        </div>
+         <div id="permission-denied" class="card" style="display: none; text-align: center; padding: 3rem;">
+            <div class="card-body">
+                <h2 style="color: var(--danger-color);"><i class="fa-solid fa-exclamation-triangle"></i> 權限不足</h2>
+                <p>只有管理員才能存取此頁面。</p>
+                <a href="pif-i.html" class="btn-submit">返回我的專案</a>
+            </div>
+        </div>
+    </div>
+
+<script type="module">
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { collection, query, where, getDocs, doc, setDoc, updateDoc, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { auth, db } from './firebase-config.js';
+
+    const $ = sel => document.querySelector(sel);
+
+    let currentUser = null;
+    let isAdmin = false;
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentUser = user;
+            $('#user-info').textContent = `歡迎, ${user.displayName || user.email}`;
+            $('#btnSignOut').addEventListener('click', () => auth.signOut().then(() => window.location.href = 'login.html'));
+            
+            try {
+                const idTokenResult = await user.getIdTokenResult();
+                isAdmin = idTokenResult.claims.admin === true;
+                renderNavLinks();
+                if (isAdmin) {
+                    $('#admin-only-content').style.display = 'block';
+                    await loadSubmissions();
+                } else {
+                    $('#permission-denied').style.display = 'block';
+                }
+            } catch (error) {
+                console.error("Permission check failed:", error);
+                $('#reviewStatus').textContent = '無法驗證您的權限。';
+                $('#permission-denied').style.display = 'block';
+            }
+        } else {
+            window.location.href = 'login.html';
+        }
+    });
+
+    function renderNavLinks() {
+        if(isAdmin) {
+            const adminLinks = `
+                <li><a href="vendors.html">廠商資料庫</a></li>
+                <li><a href="review.html" class="active">審核申請</a></li>
+            `;
+            $('#nav-links').insertAdjacentHTML('beforeend', adminLinks);
+        }
+    }
+
+    async function loadSubmissions() {
+        const statusEl = $('#reviewStatus');
+        const tbody = $('#reviewTbody');
+        statusEl.textContent = '正在載入待審核項目...';
+        tbody.innerHTML = '';
+
+        try {
+            const q = query(collection(db, "vendor_submissions"), where("status", "==", "pending"));
+            const querySnapshot = await getDocs(q);
+            const submissions = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            if (submissions.length === 0) {
+                statusEl.textContent = '目前沒有待審核的項目。';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">太棒了，沒有待處理的申請！</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = '';
+            for (const sub of submissions) {
+                const tr = tbody.insertRow();
+                tr.setAttribute('data-id', sub.id);
+                tr.innerHTML = `
+                    <td>${sub.taxId}</td>
+                    <td>${sub.companyName}</td>
+                    <td>${sub.address || '-'}</td>
+                    <td>${sub.phone || '-'}</td>
+                    <td><span class="text-muted text-sm">${sub.submittedBy}</span></td>
+                    <td>
+                        <button class="btn-success btn-sm approve-btn"><i class="fa-solid fa-check"></i> 核准</button>
+                        <button class="btn-danger btn-sm reject-btn"><i class="fa-solid fa-times"></i> 駁回</button>
+                    </td>
+                `;
+            }
+
+            tbody.querySelectorAll('.approve-btn').forEach(btn => btn.addEventListener('click', handleReview));
+            tbody.querySelectorAll('.reject-btn').forEach(btn => btn.addEventListener('click', handleReview));
+
+            statusEl.textContent = `共 ${submissions.length} 筆待審核項目。`;
+
+        } catch (error) {
+            console.error("Error loading submissions:", error);
+            statusEl.textContent = `載入審核項目失敗: ${error.message}`;
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--danger-color);">${error.message}</td></tr>`;
+        }
+    }
+
+    async function handleReview(e) {
+        const btn = e.currentTarget;
+        const isApproved = btn.classList.contains('approve-btn');
+        const row = btn.closest('tr');
+        const id = row.dataset.id;
+        const actionText = isApproved ? '核准' : '駁回';
+
+        if (!confirm(`確定要 ${actionText} 統一編號為 ${id} 的廠商申請嗎？`)) return;
+        
+        btn.parentElement.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 處理中...`;
+
+        try {
+            const submissionRef = doc(db, 'vendor_submissions', id);
+
+            if (isApproved) {
+                const submissionDoc = await getDoc(submissionRef);
+                if (!submissionDoc.exists()) throw new Error('找不到該筆申請資料');
+                const data = submissionDoc.data();
+
+                await setDoc(doc(db, "vendors", data.taxId), {
+                    companyName: data.companyName,
+                    address: data.address,
+                    phone: data.phone,
+                });
+            }
+
+            await updateDoc(submissionRef, {
+                status: isApproved ? 'approved' : 'rejected',
+                reviewedBy: currentUser.uid,
+                reviewedAt: serverTimestamp()
+            });
+
+            alert(`申請已成功 ${actionText}！`);
+            row.style.opacity = '0.5';
+            row.remove();
+            await loadSubmissions();
+
+        } catch (error) {
+            console.error(`${actionText} failed:`, error);
+            alert(`${actionText} 失敗: ${error.message}`);
+            btn.parentElement.innerHTML = `處理失敗`;
+        }
+    }
+
+</script>
+</body>
+</html>

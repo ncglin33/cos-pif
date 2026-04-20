@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理後台 - 主頁</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .container { max-width: 900px; }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .feature-card {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: .75rem;
+            padding: 1.5rem;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            border-color: var(--brand-subtle);
+        }
+        .feature-card i {
+            font-size: 2rem;
+            color: var(--brand);
+            margin-bottom: 1rem;
+            display: block;
+        }
+        .feature-card h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.25rem;
+        }
+        .feature-card p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="no-print">
+        <div class="wrap">
+            <h1><a href="dashboard.html" style="color: inherit; text-decoration: none;">管理後台</a></h1>
+            <div class="controls header-right">
+                <div id="user-info" style="display: inline-block; margin-left: 1rem;"></div>
+                <button id="btnSignOut" class="btn btn-danger">登出</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <header>
+            <h2>功能選單</h2>
+            <p class="subtitle">請選擇您要執行的管理作業。</p>
+        </header>
+
+        <div class="dashboard-grid">
+            <a href="pif-list.html" class="feature-card">
+                <i class="fa-solid fa-file-invoice"></i>
+                <h3>PIF 專案列表</h3>
+                <p>管理、編輯或查閱所有的產品資訊檔案 (PIF) 專案。</p>
+            </a>
+            <a href="admin-toxic-import.html" class="feature-card">
+                <i class="fa-solid fa-file-csv"></i>
+                <h3>批次匯入毒理資料</h3>
+                <p>透過 CSV 檔案，快速新增或更新成分的毒理學數據。</p>
+            </a>
+            <a href="#" class="feature-card" onclick="alert('此功能建置中'); return false;">
+                <i class="fa-solid fa-users-gear"></i>
+                <h3>使用者管理</h3>
+                <p>管理系統使用者帳號、權限及有效期限 (建置中)。</p>
+            </a>
+        </div>
+    </div>
+
+    <script type="module">
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { auth } from './firebase-config.js';
+
+        const $ = sel => document.querySelector(sel);
+
+        function startApp() {
+            onAuthStateChanged(auth, user => {
+                if (user) {
+                    setupUI(user);
+                    document.body.style.display = 'block';
+                } else {
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+
+        function setupUI(user) {
+            $('#user-info').textContent = user.email;
+            $('#btnSignOut').addEventListener('click', () => {
+                signOut(auth).then(() => {
+                    window.location.href = 'login.html';
+                });
+            });
+        }
+
+        startApp();
+        document.body.style.display = 'none'; 
+    </script>
+</body>
+</html>

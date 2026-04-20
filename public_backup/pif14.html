@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PIF 14｜功能評估佐證資料</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<style>
+  .container { max-width: 1400px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 1rem; }
+  .card h3 { margin: 0; padding: 1rem 1.1rem; border-bottom: 1px solid var(--line); font-size: 1.05rem; }
+  .card .body { padding: 1rem 1.1rem; }
+  .card .footer { padding: .5rem 1.1rem; border-top: 1px solid var(--line); background: var(--bg); font-size: .85rem; color: var(--muted);}
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
+  .grid-top { display: grid; grid-template-columns: 1.2fr .8fr; gap: 1rem; }
+  label { display: block; font-size: .9rem; color: var(--muted); margin-bottom: 4px; }
+  .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border: 1px solid var(--line); padding: .5rem .6rem; font-size: .92rem; vertical-align: top; }
+  th { background: #f8fafc; text-align: left; }
+  td input, td select, td textarea { width: 100%; border: 1px solid var(--line); border-radius: .4rem; padding: .4rem .5rem; background: transparent; }
+  td textarea { min-height: 3rem; }
+  .pass { background-color: #f0fdf4 !important; color: #15803d; }
+  .warnbg { background-color: #fefce8 !important; color: #a16207; }
+  .fail { background-color: #fef2f2 !important; color: #b91c1c; }
+  .center { text-align: center; }
+
+  @media print {
+    body { font-size: 9px; }
+    .noprint { display: none !important; }
+    .container { max-width: 100%; padding: 0; }
+    .grid-top { grid-template-columns: 1fr 1fr; }
+    .card { border: 1px solid #ccc; padding: 0; break-inside: avoid; }
+    input, textarea, select { border: none !important; background: transparent !important; }
+    th, td { white-space: normal; }
+  }
+</style>
+</head>
+<body>
+
+<pif-nav></pif-nav>
+<top-bar></top-bar>
+
+<div class="container">
+  <status-bar></status-bar>
+
+  <div class="toolbar noprint">
+    <button id="btnSave" class="primary"><i class="fa-solid fa-cloud-arrow-up"></i> 儲存變更</button>
+    <button id="addClaim"><i class="fa-solid fa-bullhorn"></i> 新增宣稱</button>
+    <button id="addStudy"><i class="fa-solid fa-book"></i> 新增研究</button>
+    <div style="flex-grow:1"></div>
+    <button id="genAIConclusion"><i class="fa-solid fa-wand-magic-sparkles"></i> AI 總結</button>
+    <button id="btnPrint"><i class="fa-solid fa-print"></i> 列印</button>
+  </div>
+
+  <div class="grid-top">
+      <div class="card"><div class="body meta">
+          <div><label>產品名稱</label><input id="productName" type="text" readonly></div>
+          <div><label>報告日期</label><input id="rptDate" type="date"></div>
+      </div></div>
+      <div class="card"><div class="body meta">
+          <div><label>批號</label><input id="batchNo" type="text"></div>
+          <div><label>樣品編號</label><input id="sampleNo" type="text"></div>
+      </div></div>
+  </div>
+
+  <div class="card">
+    <h3>功能宣稱 (對應表)</h3>
+    <div class="body" id="claimsHost" style="padding:0;"></div>
+    <div class="footer">佐證程度指引：<b>充分</b> (含顯著結果的研究)、<b>部分</b> (僅含趨勢結果)、<b>不足</b> (僅含不顯著或未連結研究)。</div>
+  </div>
+
+  <div class="card">
+    <h3>研究/測試摘要列表</h3>
+    <div class="body" id="studiesHost" style="padding:0;"></div>
+  </div>
+
+  <div class="card">
+    <h3>整體摘要與結論</h3>
+    <div class="body">
+      <textarea id="summary" rows="5" placeholder="點選「AI 總結」以自動生成，或手動輸入。"></textarea>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { auth, db } from "./firebase-config.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import "./components.js";
+
+const byId = id => document.getElementById(id);
+const showStatus = (message, type, duration) => customElements.whenDefined('status-bar').then(() => document.querySelector('status-bar').show(message, type, duration));
+
+let pifId, user, pifDocRef, companyName, pifProductName;
+
+const state = {
+  product: { name: "", batch: "", sample: "", rpt: new Date().toISOString().slice(0, 10) },
+  claims: [],
+  studies: [],
+  summary: "",
+  nextStudyIndex: 1
+};
+
+async function initPage() {
+    const params = new URLSearchParams(window.location.search);
+    pifId = params.get("id");
+    companyName = params.get("companyName");
+    pifProductName = params.get("productName");
+
+    onAuthStateChanged(auth, u => {
+        user = u;
+        if (user) {
+            pifDocRef = doc(db, 'pifs', pifId);
+            setupPage();
+            loadData();
+        } else {
+            window.location.href = 'login.html';
+        }
+    });
+}
+
+function setupPage() {
+    if (!pifId) {
+        showStatus("錯誤：URL 中缺少 PIF ID。", "error", -1);
+        document.querySelector('.container').innerHTML = '<p style="text-align:center; padding: 2rem;">無效的連結。</p>';
+        return;
+    }
+    customElements.whenDefined('top-bar').then(() => {
+        const topBar = document.querySelector('top-bar');
+        topBar.setInfo(pifId, companyName, pifProductName, "PIF 14 功能評估佐證資料");
+        topBar.setUser(user);
+    });
+    document.body.addEventListener('logout-request', () => auth.signOut());
+    bindEvents();
+}
+
+async function loadData() {
+    showStatus("正在載入資料...", "loading", 0);
+    try {
+        const docSnap = await getDoc(pifDocRef);
+        if (docSnap.exists() && docSnap.data().pif14) {
+            const data = docSnap.data().pif14;
+            Object.assign(state.product, data.product || {});
+            state.claims = data.claims || [];
+            state.studies = data.studies || [];
+            state.summary = data.summary || "";
+            state.nextStudyIndex = data.nextStudyIndex || (state.studies.length > 0 ? Math.max(...state.studies.map(s => parseInt((s.id || 'S0').substring(1)))) + 1 : 1);
+        }
+        if (state.claims.length === 0 && state.studies.length === 0) seedSampleData();
+        render();
+        showStatus("資料載入完成！", "success");
+    } catch (error) {
+        console.error("Load error:", error);
+        showStatus(`載入失敗: ${error.message}`, "error", -1);
+        if (state.claims.length === 0 && state.studies.length === 0) seedSampleData();
+        render();
+    }
+}
+
+async function saveData() {
+    showStatus("正在儲存變更...", "loading", 0);
+    byId('btnSave').disabled = true;
+    try {
+        syncStateFromUI();
+        await setDoc(pifDocRef, { 
+            pif14: { ...state },
+            lastModified: serverTimestamp()
+        }, { merge: true });
+        showStatus("所有變更已成功儲存！", "success");
+    } catch (error) {
+        console.error("Save error:", error);
+        showStatus(`儲存失敗: ${error.message}`, "error", -1);
+    } finally {
+        byId('btnSave').disabled = false;
+    }
+}
+
+function syncStateFromUI() {
+    state.product.rpt = byId('rptDate').value;
+    state.product.batch = byId('batchNo').value;
+    state.product.sample = byId('sampleNo').value;
+    state.summary = byId('summary').value;
+}
+
+function render() {
+    byId('productName').value = pifProductName;
+    byId('rptDate').value = state.product.rpt;
+    byId('batchNo').value = state.product.batch;
+    byId('sampleNo').value = state.product.sample;
+    byId('summary').value = state.summary;
+    renderClaims();
+    renderStudies();
+}
+
+function renderClaims() {
+    const host = byId('claimsHost');
+    host.innerHTML = `<div style="overflow-x:auto"><table class="table">
+        <thead><tr><th>宣稱內容</th><th>證據類型</th><th>所依據研究 (代碼)</th><th>核心指標</th><th>佐證程度</th><th class="noprint">操作</th></tr></thead>
+        <tbody>${state.claims.map((c, i) => {
+            const assess = computeClaimAssessment(c);
+            return `<tr id="claim-row-${i}">
+                <td><textarea oninput="onClaimChange(${i}, 'text', this.value)">${c.text || ''}</textarea></td>
+                <td><select onchange="onClaimChange(${i}, 'type', this.value)">${['', '臨床/人體', '儀器測試', '消費者測試', '體外/體內外', '文獻/原料供應商', '其他'].map(t => `<option value="${t}" ${c.type === t ? 'selected' : ''}>${t || '—'}</option>`).join('')}</select></td>
+                <td><input value="${c.studyIds || ''}" oninput="onClaimChange(${i}, 'studyIds', this.value)"></td>
+                <td><textarea oninput="onClaimChange(${i}, 'endpoints', this.value)">${c.endpoints || ''}</textarea></td>
+                <td id="c-assess-${i}" class="center ${assess.cls}">${assess.text}</td>
+                <td class="center noprint"><button onclick="removeClaim(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
+            </tr>`;
+        }).join('')}</tbody>
+    </table></div>`;
+}
+
+function renderStudies() {
+    const host = byId('studiesHost');
+    host.innerHTML = `<div style="overflow-x:auto"><table class="table">
+        <thead><tr><th>代碼</th><th>研究名稱</th><th>類型</th><th>n</th><th>受試者</th><th>期間</th><th>方法</th><th>結果</th><th>判定</th><th class="noprint">操作</th></tr></thead>
+        <tbody>${state.studies.map((s, i) => `
+            <tr id="study-row-${i}">
+                <td><input value="${s.id || ''}" oninput="onStudyChange(${i}, 'id', this.value)"></td>
+                <td><textarea oninput="onStudyChange(${i}, 'title', this.value)">${s.title || ''}</textarea></td>
+                <td><select onchange="onStudyChange(${i}, 'type', this.value)">${['', '臨床/人體', '儀器測試', '消費者測試', '體外/體內外', '文獻/供應商', '其他'].map(t => `<option value="${t}" ${s.type === t ? 'selected' : ''}>${t || '—'}</option>`).join('')}</select></td>
+                <td><input value="${s.n || ''}" oninput="onStudyChange(${i}, 'n', this.value)"></td>
+                <td><textarea oninput="onStudyChange(${i}, 'subjects', this.value)">${s.subjects || ''}</textarea></td>
+                <td><input value="${s.duration || ''}" oninput="onStudyChange(${i}, 'duration', this.value)"></td>
+                <td><textarea oninput="onStudyChange(${i}, 'method', this.value)">${s.method || ''}</textarea></td>
+                <td><textarea oninput="onStudyChange(${i}, 'results', this.value)">${s.results || ''}</textarea></td>
+                <td><select onchange="onStudyChange(${i}, 'judge', this.value)">${['', '顯著', '趨勢', '不顯著'].map(j => `<option value="${j}" ${s.judge === j ? 'selected' : ''}>${j || '未定'}</option>`).join('')}</select></td>
+                <td class="center noprint"><button onclick="removeStudy(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
+            </tr>`).join('')}</tbody>
+    </table></div>`;
+    // Re-bind textareas to auto-resize
+    document.querySelectorAll('textarea').forEach(el => {
+        el.style.height = 'auto';
+        el.style.height = (el.scrollHeight) + 'px';
+        el.addEventListener('input', e => {
+            e.target.style.height = 'auto';
+            e.target.style.height = (e.target.scrollHeight) + 'px';
+        }, false);
+    });
+}
+
+window.onClaimChange = (i, key, value) => { state.claims[i][key] = value; if (key === 'studyIds') updateClaimAssessmentCell(i); };
+window.onStudyChange = (i, key, value) => { 
+    state.studies[i][key] = value; 
+    if (key === 'id' || key === 'judge') recomputeAllClaimAssessments(); 
+    if (key === 'judge') {
+        const row = byId(`study-row-${i}`);
+        const judgeCell = row.cells[8];
+        judgeCell.classList.remove('pass', 'warnbg', 'fail');
+        if(value === '顯著') judgeCell.classList.add('pass');
+        else if(value === '趨勢') judgeCell.classList.add('warnbg');
+    }
+};
+
+window.addClaim = () => { state.claims.push({ text: "", type: "", studyIds: "", endpoints: "" }); renderClaims(); };
+window.removeClaim = (i) => { if(confirm('確定要刪除此宣稱嗎?')) { state.claims.splice(i, 1); renderClaims(); recomputeAllClaimAssessments(); } };
+window.addStudy = () => { const id = "S" + state.nextStudyIndex++; state.studies.push({ id, title: "", type: "", n: "", subjects: "", duration: "", method: "", results: "", judge: "" }); renderStudies(); };
+window.removeStudy = (i) => { if(confirm('確定要刪除此研究嗎?')) { state.studies.splice(i, 1); renderStudies(); recomputeAllClaimAssessments(); } };
+
+function parseStudyIds(txt) { return (txt || "").split(/[\s,;，；]+/).map(s => s.trim().toUpperCase()).filter(Boolean); }
+
+function computeClaimAssessment(claim) {
+    const ids = parseStudyIds(claim.studyIds);
+    if (ids.length === 0) return { text: "不足", cls: "fail" };
+    let hasSig = false, hasTrend = false, anyLinked = false;
+    ids.forEach(id => {
+        const st = state.studies.find(s => (s.id || "").toUpperCase() === id);
+        if (!st) return;
+        anyLinked = true;
+        if ((st.judge || "") === "顯著") hasSig = true;
+        else if ((st.judge || "") === "趨勢") hasTrend = true;
+    });
+    if (hasSig) return { text: "充分", cls: "pass" };
+    if (hasTrend) return { text: "部分", cls: "warnbg" };
+    return anyLinked ? { text: "不足", cls: "fail" } : { text: "—" , cls: "" };
+}
+
+function updateClaimAssessmentCell(i) {
+    const assess = computeClaimAssessment(state.claims[i]);
+    const cell = byId(`c-assess-${i}`);
+    if (cell) {
+        cell.textContent = assess.text;
+        cell.className = `center ${assess.cls}`;
+    }
+}
+
+function recomputeAllClaimAssessments() { state.claims.forEach((_, i) => updateClaimAssessmentCell(i)); }
+
+function genAIConclusion() {
+    syncStateFromUI();
+    const byLevel = { 充分: [], 部分: [], 不足: [] };
+    state.claims.forEach(c => {
+        const level = computeClaimAssessment(c).text;
+        if(level !== '—') byLevel[level].push(`• ${c.text || '(未填寫宣稱)'}`);
+    });
+    const lines = ["總結：本產品宣稱之佐證整體評估如下："];
+    if (byLevel["充分"].length) lines.push("\n【充分佐證的宣稱】\n" + byLevel["充分"].join("\n"));
+    if (byLevel["部分"].length) lines.push("\n【部分佐證的宣稱】\n" + byLevel["部分"].join("\n"));
+    if (byLevel["不足"].length) lines.push("\n【佐證不足的宣稱】\n" + byLevel["不足"].join("\n"));
+    lines.push("\n建議：若存在佐證「不足」或「部分」的宣稱，建議補充更多研究，或調整宣稱用語以符合現有證據等級。");
+    byId('summary').value = lines.join('');
+    state.summary = byId('summary').value;
+    showStatus("AI 總結已產生", "info");
+}
+
+function printPage() { syncStateFromUI(); window.print(); }
+
+function bindEvents() {
+    byId('btnSave').addEventListener('click', saveData);
+    byId('addClaim').addEventListener('click', addClaim);
+    byId('addStudy').addEventListener('click', addStudy);
+    byId('genAIConclusion').addEventListener('click', genAIConclusion);
+    byId('btnPrint').addEventListener('click', printPage);
+}
+
+function seedSampleData() {
+    state.studies = [
+      {id: "S1", title: "體外 SPF 測試", type: "體外/體內外", n: "3", subjects: "PMMA 板", duration: "單次", method: "ISO 24443", results: "SPF 52.5±2.1, PFA 16.8±1.5", judge: "顯著"},
+      {id: "S2", title: "消費者使用測試", type: "消費者測試", n: "30", subjects: "25-40歲混合肌", duration: "14天", method: "居家使用後填寫問卷", results: "85%同意清爽不黏膩", judge: "趨勢"},
+      {id: "S3", title: "皮膚水分含量測試", type: "儀器測試", n: "22", subjects: "25-45歲乾性肌", duration: "8小時", method: "Corneometer CM825", results: "使用後8小時，皮膚水分顯著提升35% (p<0.05)", judge: "顯著"}
+    ];
+    state.claims = [
+      {text: "寬頻防曬 SPF50+ PA++++", type: "體外/體內外", studyIds: "S1", endpoints: "SPF, PFA (UVA-PF)"},
+      {text: "清爽不黏膩", type: "消費者測試", studyIds: "S2", endpoints: "使用者感受問卷"},
+      {text: "長效保濕", type: "儀器測試", studyIds: "S3", endpoints: "角質層含水量變化"}
+    ];
+    state.nextStudyIndex = 4;
+}
+
+initPage();
+
+</script>
+</body>
+</html>

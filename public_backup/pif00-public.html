@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PIF 00｜產品資訊檔案目錄 (公開版)</title>
+<style>
+  :root{
+    --fg:#111; --muted:#666; --line:#e5e7eb; --brand:#2563eb; --ok:#16a34a; --bad:#dc2626; --warn:#d97706;
+  }
+  html,body{background:#fff;color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei",Segoe UI,Roboto,Arial,sans-serif;line-height:1.5}
+  h1{font-size:1.4rem;margin:0 0 .25rem 0}
+  .toolbar{position:sticky;top:0;background:rgba(255,255,255,.95);backdrop-filter:blur(4px);border-bottom:1px solid var(--line);z-index:50}
+  .toolbar .wrap{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;padding:.6rem .8rem}
+  button{border:1px solid var(--line);background:#fff;padding:.45rem .7rem;border-radius:.5rem;cursor:pointer}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .container{max-width:800px;margin:0 auto;padding:1rem .8rem 3rem}
+  .toc-list{border:1px solid var(--line); border-radius:.75rem; overflow:hidden;}
+  .toc-item{display:flex; padding:.6rem .9rem; border-bottom:1px solid var(--line); align-items:center;}
+  .toc-item:last-child{border-bottom:none;}
+  .toc-item .no{flex-shrink:0; font-weight:500; width:5em;}
+  .toc-item .title{flex-grow:1;}
+  .toc-item .status{font-size:.8rem; color:var(--muted); text-align:right;}
+  .no-print{}
+  @media print{
+    .toolbar, .no-print{display:none!important}
+    .container{padding:0; max-width:none;}
+    h1 {text-align:center; margin-bottom:1.5rem;}
+    .toc-item .status {display:none;}
+  }
+</style>
+</head>
+<body>
+  <div class="toolbar no-print">
+    <div class="wrap">
+      <a href="pifs-public.html" style="text-decoration:none; color:inherit;"><button>返回入口</button></a>
+      <button onclick="window.print()" class="primary">列印 / 匯出 PDF</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1>產品資訊檔案目錄</h1>
+    <div id="toc-list" class="toc-list">
+      <!-- Content is now static -->
+    </div>
+  </div>
+
+<script>
+const pifModules = [
+    { no: 'PIF 00', title: '產品資訊檔案目錄', status: '本頁' },
+    { no: 'PIF 01', title: '產品基本資料 (診斷測試)', status: '可供檢視' },
+    { no: 'PIF 02', title: '完成產品登錄之證明文件', status: '可供檢視' },
+    { no: 'PIF 03', title: '產品配方', status: '需要登入' },
+    { no: 'PIF 04', title: '原料品質與安全性資料', status: '需要登入' },
+    { no: 'PIF 05', title: '產品安定性試驗報告', status: '需要登入' },
+    { no: 'PIF 06', title: '微生物檢測報告', status: '需要登入' },
+    { no: 'PIF 07', title: '防腐效能試驗報告', status: '需要登入' },
+    { no: 'PIF 08', title: '功能性成分之佐證資料', status: '需要登入' },
+    { no: 'PIF 09', title: '產品檢驗報告', status: '需要登入' },
+    { no: 'PIF 10', title: '容器相容性試驗', status: '需要登入' },
+    { no: 'PIF 11', title: '製造方法', status: '需要登入' },
+    { no: 'PIF 12', title: 'GMP符合性文件', status: '需要登入' },
+    { no: 'PIF 13', title: '不良反應彙整', status: '需要登入' },
+    { no: 'PIF 14', title: '產品安全評估報告', status: '需要登入' },
+];
+
+function renderTOC() {
+    const listEl = document.getElementById('toc-list');
+    listEl.innerHTML = ''; // Clear previous content
+
+    pifModules.forEach(item => {
+        const itemEl = document.createElement('div');
+        itemEl.className = 'toc-item';
+        itemEl.innerHTML = `
+            <div class="no">${item.no}</div>
+            <div class="title">${item.title}</div>
+            <div class="status">${item.status}</div>
+        `;
+        listEl.appendChild(itemEl);
+    });
+}
+
+// Initial render
+renderTOC();
+</script>
+</body>
+</html>

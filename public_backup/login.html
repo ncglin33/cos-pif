@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登入 - CosPIF 系統</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background-color: #f4f7f6; color: #333; }
+        .auth-container { background: #fff; padding: 2.5rem; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        h1 { color: #2563eb; margin-bottom: 0.5rem; font-size: 24px; }
+        .subtitle { color: #666; margin-bottom: 2rem; }
+        .form-group { margin-bottom: 1.5rem; text-align: left; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; background-color: #fcfcfc; }
+        input:focus { border-color: #2563eb; outline: none; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        .primary { width: 100%; padding: 12px; border: none; border-radius: 8px; background-color: #2563eb; color: white; font-size: 16px; font-weight: bold; cursor: pointer; transition: background-color 0.2s; margin-top: 1.5rem; }
+        .primary:hover:not(:disabled) { background-color: #1d4ed8; }
+        .primary:disabled { background-color: #9ca3af; cursor: not-allowed; }
+        .form-message { margin-top: 1.5rem; text-align: center; padding: 10px; border-radius: 8px; display: none; }
+        .form-message.error { background-color: #fee2e2; color: #991b1b; display: block; }
+        .form-message.info { background-color: #e0f2fe; color: #0c4a6e; display: block; }
+        .extra-links { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; width: 100%; font-size: 14px; }
+        p { margin-top: 1.5rem; color: #666; }
+        a { color: #2563eb; text-decoration: none; font-weight: 600; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <h1>會員登入</h1>
+        <p class="subtitle">登入您的 CosPIF 帳戶</p>
+        <form id="login-form">
+            <div class="form-group">
+                <label for="email">電子郵件</label>
+                <input type="email" id="email" required autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label for="password">密碼</label>
+                <input type="password" id="password" required autocomplete="current-password">
+            </div>
+             <div class="extra-links">
+                <a href="/forgot-password.html">忘記密碼？</a>
+            </div>
+            <button type="submit" id="submit-btn" class="primary">登入</button>
+        </form>
+        <div id="status" class="form-message"></div>
+        <div style="text-align: center;">
+            <p>還沒有帳號？ <a href="/register.html">立即註冊</a></p>
+        </div>
+    </div>
+
+    <script type="module" src="./login.js"></script>
+</body>
+</html>

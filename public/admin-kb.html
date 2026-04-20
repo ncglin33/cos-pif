@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>後台管理 - 知識平台 (KB)</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    .container { max-width: 1650px; }
+    .card { margin-bottom: 1.25rem; }
+    .subtitle { color: var(--muted); }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace; }
+
+    /* Tabs */
+    .tabs{
+      display:flex; gap:.5rem; flex-wrap:wrap; align-items:center;
+      background:#fff; border:1px solid var(--line); border-radius: 14px;
+      padding:.6rem; margin: .75rem 0 1rem;
+      box-shadow:0 4px 6px -1px rgb(0 0 0 / .05), 0 2px 4px -2px rgb(0 0 0 / .05);
+    }
+    .tab-btn{
+      display:inline-flex; align-items:center; gap:.45rem;
+      padding:.5rem .85rem; border-radius: 999px;
+      border:1px solid var(--line); background:#fff; color: var(--ink);
+      cursor:pointer; user-select:none; font-size:.92rem;
+    }
+    .tab-btn:hover{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+    .tab-btn.active{ background:#2563eb; border-color:#2563eb; color:#fff; }
+    .tab-panel{ display:none; }
+    .tab-panel.active{ display:block; }
+
+    /* Import UI */
+    .drop-zone-inner{
+      border: 2px dashed var(--line);
+      border-radius: .75rem;
+      padding: 1.65rem;
+      text-align: center;
+      cursor: pointer;
+      transition: background-color .2s, border-color .2s;
+    }
+    .drop-zone-inner.dragover{
+      background-color: var(--brand-bg-subtle);
+      border-color: var(--brand);
+    }
+    .file-info{ margin-top: .75rem; color: var(--muted); }
+
+    .preview-zone{ display:none; }
+    .preview-cards-container{
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 1rem;
+      margin-top: .75rem;
+    }
+    .data-card{
+      background: #fff;
+      border-radius: .75rem;
+      border: 1px solid var(--line);
+      box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+      display: flex;
+      flex-direction: column;
+      transition: box-shadow .2s;
+    }
+    .data-card:hover{
+      box-shadow:
+        0 4px 6px -1px rgb(0 0 0 / 0.1),
+        0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+    .data-card-header{
+      padding: 1rem 1.1rem;
+      border-bottom: 1px solid var(--line);
+      background: #f9fafb;
+      cursor: pointer;
+    }
+    .data-card-header h4{
+      margin: 0;
+      font-size: 1.05rem;
+      color: var(--ink);
+      word-break: break-word;
+      line-height: 1.25;
+    }
+    .data-card-body{
+      padding: 1rem 1.1rem;
+      flex-grow: 1;
+    }
+    .data-field{ margin-bottom: .95rem; }
+    .data-field:last-child{ margin-bottom: 0; }
+
+    .data-field-label{
+      font-weight: 700;
+      font-size: .78rem;
+      color: var(--muted);
+      margin-bottom: .25rem;
+      display: block;
+      letter-spacing: .02em;
+      text-transform: none;
+    }
+    .data-field-value{
+      font-size: .9rem;
+      padding: .5rem .6rem;
+      border-radius: .5rem;
+      transition: background-color .2s;
+      cursor: pointer;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 38px;
+      width: 100%;
+      border: 1px dashed transparent;
+    }
+    .data-field-value:hover{
+      background-color: #f0f8ff;
+      border-color: #bfdbfe;
+    }
+
+    .status-message{
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: .6rem;
+      text-align: left;
+      display: none;
+      border: 1px solid transparent;
+    }
+    .status-success{ background-color: var(--ok-bg); color: var(--ok-text); }
+    .status-error{ background-color: var(--error-bg); color: var(--error-text); }
+    .status-warning{
+      background-color: #fff7ed;
+      color: #9a3412;
+      border-color: #fdba74;
+      font-weight: 650;
+    }
+
+    textarea.manual-input{
+      width: 100%;
+      min-height: 160px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: .86rem;
+    }
+    .pill{
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: .25rem .6rem;
+      font-size: .8rem;
+      color: var(--muted);
+      background: #fff;
+      margin-right: .35rem;
+      margin-bottom: .35rem;
+    }
+    .pill strong{ color: var(--ink); }
+    .two-col{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 980px){
+      .two-col{ grid-template-columns: 1fr; }
+    }
+    .hint{
+      color: var(--muted);
+      font-size: .9rem;
+      line-height: 1.45;
+    }
+    .kpi{
+      display:flex; gap:.6rem; flex-wrap:wrap;
+      margin-top:.5rem;
+    }
+    .kpi .pill{ background:#f9fafb; }
+    .small{ font-size:.86rem; }
+    .right{ text-align:right; }
+
+    .switch{
+      display:inline-flex; align-items:center; gap:.5rem;
+      padding:.4rem .6rem; border:1px solid var(--line); border-radius: 999px; background:#fff;
+      cursor:pointer; user-select:none;
+    }
+    .switch input{ width:18px; height:18px; }
+    .switch span{ font-size:.9rem; color: var(--ink); }
+
+    .danger-note{
+      background:#fff1f2; border:1px solid #fecdd3; color:#9f1239;
+      padding:.75rem 1rem; border-radius:12px;
+      font-weight:650;
+    }
+    .hr{ border:none; border-top:1px solid #eef2f7; margin: 1rem 0; }
+  </style>
+</head>
+
+<body>
+  <header class="no-print">
+    <div class="wrap">
+      <h1><a href="admin.html" style="color:inherit; text-decoration:none;">管理後台</a></h1>
+      <div class="controls header-right">
+        <div id="user-info" style="display:inline-block; margin-left:1rem;"></div>
+        <button id="btnSignOut" class="btn btn-danger">登出</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <header>
+      <h2>知識平台後台（KB）</h2>
+      <p class="subtitle">
+        建議的資料結構：<span class="mono">kb_articles</span>（專業文章）、
+        <span class="mono">kb_terms</span>（名詞/原料卡片）、
+        <span class="mono">kb_refs</span>（參考文獻）。<br/>
+        這頁採「匯入 → 預覽可編輯 → 批次寫入 Firestore」的工作流（沿用你現有匯入頁的操作邏輯）。
+      </p>
+      <div class="kpi">
+        <span class="pill"><i class="fa-solid fa-file-lines"></i> 文章：<strong class="mono">kb_articles</strong></span>
+        <span class="pill"><i class="fa-solid fa-tag"></i> 名詞/原料：<strong class="mono">kb_terms</strong></span>
+        <span class="pill"><i class="fa-solid fa-book"></i> 文獻：<strong class="mono">kb_refs</strong></span>
+      </div>
+    </header>
+
+    <div class="tabs no-print" role="tablist" aria-label="KB tabs">
+      <button class="tab-btn active" data-tab="terms"><i class="fa-solid fa-tags"></i> 名詞 / 原料（CSV）</button>
+      <button class="tab-btn" data-tab="articles"><i class="fa-solid fa-newspaper"></i> 專業文章（JSON）</button>
+      <button class="tab-btn" data-tab="refs"><i class="fa-solid fa-book-open"></i> 參考文獻（CSV）</button>
+      <button class="tab-btn" data-tab="help"><i class="fa-solid fa-circle-info"></i> 說明 / 建議</button>
+    </div>
+
+    <!-- TERMS -->
+    <section class="tab-panel active" id="tab-terms" data-panel="terms">
+      <div class="card">
+        <h3>名詞 / 原料卡片（寫入 <span class="mono">kb_terms</span>）</h3>
+        <p class="hint">
+          推薦用於：濾劑/活性成分/檢測指標/法規名詞…（例如：<span class="mono">SPF</span>、<span class="mono">UVA-PF</span>、<span class="mono">Niacinamide</span>）。
+          CSV 匯入支援拖曳上傳或直接貼上。
+        </p>
+
+        <div class="two-col">
+          <div>
+            <div style="margin:.35rem 0 .7rem;">
+              <button class="btn" id="terms-download-template"><i class="fa-solid fa-download"></i> 下載名詞/原料 CSV 範本</button>
+              <button class="btn" id="terms-clear"><i class="fa-solid fa-eraser"></i> 清除預覽</button>
+            </div>
+
+            <label class="switch" title="若你前台仍在用 cosmetic_knowledge，勾選可同步寫入（會寫入子集合欄位映射）。">
+              <input type="checkbox" id="terms-sync-legacy">
+              <span>同步寫入舊集合 <span class="mono">cosmetic_knowledge</span>（可選）</span>
+            </label>
+
+            <div style="margin-top: .75rem;" id="terms-drop-zone">
+              <div class="drop-zone-inner">
+                <p><i class="fa-solid fa-upload"></i> 將 <strong>Terms CSV</strong> 拖曳至此，或點擊選擇</p>
+                <input type="file" id="terms-file-input" accept=".csv,text/csv" hidden>
+                <div class="file-info" id="terms-file-info">尚未選擇檔案</div>
+              </div>
+            </div>
+
+            <hr class="hr">
+            <h4>或直接貼上 CSV 內容</h4>
+            <textarea class="manual-input form-control" id="terms-manual" placeholder="第一行必須是標頭（請用範本）…"></textarea>
+            <div style="margin-top:.65rem;">
+              <button class="btn" id="terms-import-text"><i class="fa-solid fa-file-import"></i> 匯入文字到預覽</button>
+            </div>
+
+            <div id="terms-status" class="status-message"></div>
+          </div>
+
+          <div>
+            <div class="danger-note">
+              必填欄位：<span class="mono">nameZh 或 nameEn</span>（至少一個）。<br/>
+              系統會以 <span class="mono">type + nameEn/nameZh</span> 產生穩定 docId；同一批匯入重複者，以最後一筆覆蓋。
+            </div>
+            <div style="margin-top:.75rem;" class="hint small">
+              <div class="pill"><i class="fa-solid fa-layer-group"></i> type：<strong>term / ingredient / standard / regulation</strong></div>
+              <div class="pill"><i class="fa-solid fa-folder-tree"></i> topic/category：<strong>防曬、美白、抗老…</strong></div>
+              <div class="pill"><i class="fa-solid fa-magnifying-glass"></i> keywords/aliases：<strong>用逗號分隔</strong></div>
+            </div>
+
+            <div id="terms-preview" class="preview-zone">
+              <h4 style="margin:.3rem 0;">預覽（可點擊欄位直接修改）</h4>
+              <div class="preview-cards-container" id="terms-preview-cards"></div>
+              <div class="right" style="margin-top:1rem;">
+                <button class="btn primary" id="terms-write"><i class="fa-solid fa-check-double"></i> 確認並寫入 kb_terms</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ARTICLES -->
+    <section class="tab-panel" id="tab-articles" data-panel="articles">
+      <div class="card">
+        <h3>專業文章（寫入 <span class="mono">kb_articles</span>）</h3>
+        <p class="hint">
+          文章建議用 JSON 匯入（可一次匯入多篇）。每篇文章含：標題/摘要/章節（markdown）/引用名詞/引用文獻/狀態。
+        </p>
+
+        <div class="two-col">
+          <div>
+            <div style="margin:.35rem 0 .7rem;">
+              <button class="btn" id="articles-download-template"><i class="fa-solid fa-download"></i> 下載文章 JSON 範本</button>
+              <button class="btn" id="articles-clear"><i class="fa-solid fa-eraser"></i> 清除預覽</button>
+            </div>
+
+            <div id="articles-drop-zone">
+              <div class="drop-zone-inner">
+                <p><i class="fa-solid fa-upload"></i> 將 <strong>Articles JSON</strong> 拖曳至此，或點擊選擇</p>
+                <input type="file" id="articles-file-input" accept=".json,application/json,text/json" hidden>
+                <div class="file-info" id="articles-file-info">尚未選擇檔案</div>
+              </div>
+            </div>
+
+            <hr class="hr">
+            <h4>或直接貼上 JSON（支援 JSON Array 或 JSON Lines）</h4>
+            <textarea class="manual-input form-control" id="articles-manual" placeholder='範例：[{ "slug":"sunscreen", "title":"防曬專業知識", "topic":"防曬", "sections":[{"id":"s1","h2":"...", "bodyMd":"..."}]}]'></textarea>
+            <div style="margin-top:.65rem;">
+              <button class="btn" id="articles-import-text"><i class="fa-solid fa-file-import"></i> 匯入文字到預覽</button>
+            </div>
+
+            <div id="articles-status" class="status-message"></div>
+          </div>
+
+          <div>
+            <div class="danger-note">
+              必填欄位：<span class="mono">slug</span>、<span class="mono">title</span>。<br/>
+              docId 直接使用 <span class="mono">slug</span>（例如：<span class="mono">whitening</span>、<span class="mono">antiaging</span>）。
+            </div>
+            <div style="margin-top:.75rem;" class="hint small">
+              <div class="pill"><i class="fa-solid fa-code"></i> sections：<strong>[{id,h2,bodyMd}]</strong></div>
+              <div class="pill"><i class="fa-solid fa-link"></i> termRefs：<strong>["termId1","termId2"]</strong></div>
+              <div class="pill"><i class="fa-solid fa-quote-left"></i> refIds：<strong>["refId1","refId2"]</strong></div>
+              <div class="pill"><i class="fa-solid fa-toggle-on"></i> status：<strong>draft/review/published</strong></div>
+            </div>
+
+            <div id="articles-preview" class="preview-zone">
+              <h4 style="margin:.3rem 0;">預覽（可點擊欄位直接修改）</h4>
+              <div class="preview-cards-container" id="articles-preview-cards"></div>
+              <div class="right" style="margin-top:1rem;">
+                <button class="btn primary" id="articles-write"><i class="fa-solid fa-check-double"></i> 確認並寫入 kb_articles</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REFS -->
+    <section class="tab-panel" id="tab-refs" data-panel="refs">
+      <div class="card">
+        <h3>參考文獻（寫入 <span class="mono">kb_refs</span>）</h3>
+        <p class="hint">
+          建議把 ISO、法規、期刊、教科書都統一進文獻庫，文章/名詞只要引用 refIds。
+        </p>
+
+        <div class="two-col">
+          <div>
+            <div style="margin:.35rem 0 .7rem;">
+              <button class="btn" id="refs-download-template"><i class="fa-solid fa-download"></i> 下載文獻 CSV 範本</button>
+              <button class="btn" id="refs-clear"><i class="fa-solid fa-eraser"></i> 清除預覽</button>
+            </div>
+
+            <div id="refs-drop-zone">
+              <div class="drop-zone-inner">
+                <p><i class="fa-solid fa-upload"></i> 將 <strong>Refs CSV</strong> 拖曳至此，或點擊選擇</p>
+                <input type="file" id="refs-file-input" accept=".csv,text/csv" hidden>
+                <div class="file-info" id="refs-file-info">尚未選擇檔案</div>
+              </div>
+            </div>
+
+            <hr class="hr">
+            <h4>或直接貼上 CSV 內容</h4>
+            <textarea class="manual-input form-control" id="refs-manual" placeholder="第一行必須是標頭（請用範本）…"></textarea>
+            <div style="margin-top:.65rem;">
+              <button class="btn" id="refs-import-text"><i class="fa-solid fa-file-import"></i> 匯入文字到預覽</button>
+            </div>
+
+            <div id="refs-status" class="status-message"></div>
+          </div>
+
+          <div>
+            <div class="danger-note">
+              必填欄位：<span class="mono">title</span>（至少）。<br/>
+              docId 會依序使用：<span class="mono">doi</span> → <span class="mono">url</span> → <span class="mono">title+year</span> 產生穩定雜湊。
+            </div>
+            <div style="margin-top:.75rem;" class="hint small">
+              <div class="pill"><i class="fa-solid fa-book"></i> type：<strong>ISO/regulation/journal/book/guideline/web</strong></div>
+              <div class="pill"><i class="fa-solid fa-tag"></i> tags：<strong>用逗號分隔</strong></div>
+              <div class="pill"><i class="fa-solid fa-quote-left"></i> citationText：<strong>可留空（系統會自動簡易生成）</strong></div>
+            </div>
+
+            <div id="refs-preview" class="preview-zone">
+              <h4 style="margin:.3rem 0;">預覽（可點擊欄位直接修改）</h4>
+              <div class="preview-cards-container" id="refs-preview-cards"></div>
+              <div class="right" style="margin-top:1rem;">
+                <button class="btn primary" id="refs-write"><i class="fa-solid fa-check-double"></i> 確認並寫入 kb_refs</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HELP -->
+    <section class="tab-panel" id="tab-help" data-panel="help">
+      <div class="card">
+        <h3>建議的知識平台落地方式（最小可用 → 可擴充）</h3>
+        <div class="hint">
+          <ol>
+            <li><strong>先做三集合</strong>：<span class="mono">kb_terms</span> / <span class="mono">kb_articles</span> / <span class="mono">kb_refs</span>（本頁已支援匯入）。</li>
+            <li><strong>前台顯示</strong>：文章頁讀 <span class="mono">kb_articles</span>，名詞點擊彈窗讀 <span class="mono">kb_terms</span>。</li>
+            <li><strong>搜尋</strong>：先用 keywords/aliases 做基本查詢；之後再加全文檢索或語意搜尋。</li>
+            <li><strong>權限</strong>：前台只讀 published；後台需 editor/admin 才能寫入（用 Firestore Rules 管）。</li>
+          </ol>
+          <p class="danger-note" style="margin: .75rem 0 0;">
+            重要：前台「可見性」建議完全用 <span class="mono">status</span> 控制（draft/review/published）。
+          </p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Firestore Rules（簡化範例，請依你現有 roles 調整）</h3>
+        <pre class="mono" style="white-space:pre-wrap; background:#0b1220; color:#e5e7eb; padding:1rem; border-radius:12px; border:1px solid #111827; overflow:auto;">
+match /kb_terms/{id} {
+  allow read: if resource.data.status == "published";
+  allow write: if request.auth != null; // 建議改成 hasRole(editor/admin)
+}
+match /kb_articles/{id} {
+  allow read: if resource.data.status == "published";
+  allow write: if request.auth != null;
+}
+match /kb_refs/{id} {
+  allow read: if true; // 文獻可以開放讀，或同樣只 published
+  allow write: if request.auth != null;
+}</pre>
+        <p class="hint small">若你要我直接幫你接上「roles.admin/systemAdmin/editor」判斷，我可以依你現有 rules/claims 給完整可貼上版本。</p>
+      </div>
+    </section>
+  </div>
+
+  <script type="module">
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { doc, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { db, auth } from './firebase-config.js';
+
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+    // ===== Collections =====
+    const COL_TERMS = "kb_terms";
+    const COL_ARTICLES = "kb_articles";
+    const COL_REFS = "kb_refs";
+    const COL_LEGACY = "cosmetic_knowledge"; // optional sync (terms only)
+
+    // ===== Fields =====
+    const TERMS_FIELDS = [
+      "status","type","topic","category",
+      "nameZh","nameEn","inci",
+      "aliases","keywords",
+      "definition","mechanism","benefits",
+      "formulationTips","safetyNotes","regulatory",
+      "refIds"
+    ];
+    const REFS_FIELDS = [
+      "refId","status","type","title","org","year","doi","url","citationText","tags","notes"
+    ]
+    ;
+
+    // ===== State =====
+    const state = {
+      activeTab: "terms",
+      terms: { records: [] },
+      articles: { records: [] },
+      refs: { records: [] }
+    };
+
+    // ===== Tabs =====
+    function initTabs(){
+      $$(".tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => setTab(btn.dataset.tab));
+      });
+    }
+    function setTab(tab){
+      state.activeTab = tab;
+      $$(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+      $$(".tab-panel").forEach(p => p.classList.toggle("active", p.dataset.panel === tab));
+    }
+
+    // ===== Helpers =====
+    function escapeHtml(str){
+      return String(str ?? "")
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+    function showStatus(which, html, type){
+      const el = $(`#${which}-status`);
+      if (!el) return;
+      el.className = `status-message ${type ? `status-${type}` : ""}`.trim();
+      el.innerHTML = html || "";
+      el.style.display = html ? "block" : "none";
+    }
+    function stableId(prefix, key){
+      const s = String(key || "").trim();
+      if (!s) return `${prefix}_${Date.now()}`;
+      let hash = 0;
+      for (let i = 0; i < s.length; i++){
+        hash = ((hash << 5) - hash) + s.charCodeAt(i);
+        hash |= 0;
+      }
+      return `${prefix}_${Math.abs(hash).toString(16)}`;
+    }
+    function normalizeList(str){
+      const s = String(str || "").trim();
+      if (!s) return [];
+      return s
+        .replaceAll("，", ",")
+        .replaceAll("；", ";")
+        .split(/[,;]\s*/)
+        .map(x => x.trim())
+        .filter(Boolean);
+    }
+
+    function extractRefIdFromNotes(notes){
+      const s = String(notes || "");
+      // Accept formats like: "refId=r_ijms_2025_5722" or "refId: r_xxx"
+      const m = s.match(/refId\s*[:=]\s*(r_[0-9a-zA-Z_\-]+)/i);
+      return m ? m[1].trim() : "";
+    }
+
+    function stripRefIdInNotes(notes){
+      const s = String(notes || "");
+      // Remove the refId marker segment if present, keep remaining notes readable
+      return s.replace(/\s*[,;；，]*\s*refId\s*[:=]\s*r_[0-9a-zA-Z_\-]+\s*[,;；，]*/ig, " ").replace(/\s{2,}/g, " ").trim();
+    }
+
+    // ===== CSV Parser =====
+    function parseCsv(text){
+      const rows = [];
+      let row = [];
+      let field = '';
+      let i = 0;
+      let inQuotes = false;
+
+      const pushField = () => { row.push(field); field = ''; };
+
+      while (i < text.length){
+        const c = text[i];
+
+        if (inQuotes){
+          if (c === '"'){
+            if (text[i+1] === '"'){ field += '"'; i += 2; continue; }
+            inQuotes = false; i++; continue;
+          }
+          field += c; i++; continue;
+        }
+
+        if (c === '"'){ inQuotes = true; i++; continue; }
+        if (c === ','){ pushField(); i++; continue; }
+
+        if (c === '\n' || c === '\r'){
+          if (c === '\r' && text[i+1] === '\n') i++;
+          pushField();
+          rows.push(row);
+          row = [];
+          i++; continue;
+        }
+
+        field += c;
+        i++;
+      }
+
+      pushField();
+      rows.push(row);
+
+      while (rows.length && rows[rows.length-1].every(v => String(v).trim() === '')){
+        rows.pop();
+      }
+      return rows;
+    }
+
+    function stripBom(text){
+      let t = (text || "").trim();
+      if (!t) return t;
+      if (t.charCodeAt(0) === 0xFEFF) t = t.slice(1);
+      return t;
+    }
+
+    function parseCsvToRecords(rawText, fields){
+      const text = stripBom(rawText);
+      if (!text) throw new Error("內容是空的。");
+
+      const rows = parseCsv(text);
+      if (rows.length < 2) throw new Error("需要包含標頭與至少一筆資料。");
+
+      const headers = rows[0].map(h => String(h || "").trim());
+      const headerMap = {};
+      headers.forEach((h, i) => headerMap[h] = i);
+
+      const recs = rows.slice(1).map(values => {
+        if (values.length === 1 && String(values[0]).trim() === "") return null;
+        const r = {};
+        fields.forEach(f => {
+          const idx = headerMap[f];
+          r[f] = (idx !== undefined && values[idx] !== undefined) ? String(values[idx]).trim() : "";
+        });
+        return r;
+      }).filter(Boolean);
+
+      if (!recs.length) throw new Error("找不到有效資料筆。");
+      return { headers, recs };
+    }
+
+    function parseJsonRecords(rawText){
+      const text = stripBom(rawText);
+      if (!text) throw new Error("JSON 內容是空的。");
+
+      try{
+        const obj = JSON.parse(text);
+        if (Array.isArray(obj)) return obj;
+        if (obj && typeof obj === "object") return [obj];
+      }catch(e){ /* fallthrough */ }
+
+      // JSON lines
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      const out = [];
+      for (const line of lines){
+        try{
+          const obj = JSON.parse(line);
+          if (obj && typeof obj === "object") out.push(obj);
+        }catch(e){
+          throw new Error("JSON 解析失敗：請使用 JSON Array 或 JSON Lines（每行一個 JSON 物件）。");
+        }
+      }
+      if (!out.length) throw new Error("JSON 解析後為空。");
+      return out;
+    }
+
+    // ===== Preview rendering + inline edit =====
+    function renderPreviewCards(which, records, schema){
+      const wrap = $(`#${which}-preview`);
+      const cards = $(`#${which}-preview-cards`);
+      if (!wrap || !cards) return;
+
+      cards.innerHTML = records.map((rec, idx) => {
+        const primary = schema.primary(rec) || "[未命名]";
+        const fields = schema.fields(rec);
+
+        const body = fields.map(f => `
+          <div class="data-field">
+            <label class="data-field-label">${escapeHtml(f.label)}</label>
+            <div class="data-field-value" data-which="${which}" data-row="${idx}" data-field="${escapeHtml(f.key)}">
+              ${escapeHtml(String(f.value ?? ""))}
+            </div>
+          </div>
+        `).join("");
+
+        return `
+          <div class="data-card">
+            <div class="data-card-header">
+              <h4 data-which="${which}" data-row="${idx}" data-field="${escapeHtml(schema.primaryField)}">${escapeHtml(primary)}</h4>
+            </div>
+            <div class="data-card-body">${body}</div>
+          </div>
+        `;
+      }).join("");
+
+      wrap.style.display = "block";
+    }
+
+    function makeEditable(el){
+      if (el.querySelector("textarea")) return;
+      const which = el.dataset.which;
+      const row = Number(el.dataset.row);
+      const field = el.dataset.field;
+      const current = el.textContent;
+
+      el.innerHTML = "";
+      const ta = document.createElement("textarea");
+      ta.className = "form-control";
+      ta.style.minHeight = (field === "title" || field === "nameZh" || field === "nameEn" || field === "slug") ? "64px" : "120px";
+      ta.value = current.trim();
+      el.appendChild(ta);
+      ta.focus();
+      ta.select();
+
+      const save = () => {
+        const value = ta.value.trim();
+        const s = state[which];
+        if (!s || !s.records || !s.records[row]) return;
+        s.records[row][field] = value;
+        el.innerHTML = escapeHtml(value);
+      };
+
+      ta.addEventListener("blur", save, { once: true });
+      ta.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter" && (ev.ctrlKey || ev.metaKey)){
+          ev.preventDefault();
+          ta.blur();
+        } else if (ev.key === "Escape"){
+          ta.value = current;
+          ta.blur();
+        }
+      });
+    }
+
+    document.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t && (t.matches(".data-field-value") || t.matches(".data-card-header h4"))){
+        makeEditable(t);
+      }
+    });
+
+    // ===== Batch commit =====
+    async function commitOps(ops){
+      const CHUNK = 450; // safe under 500
+      let committed = 0;
+
+      for (let i = 0; i < ops.length; i += CHUNK){
+        const part = ops.slice(i, i + CHUNK);
+        const batch = writeBatch(db);
+        for (const op of part){
+          batch.set(op.ref, op.data, { merge: true });
+        }
+        await batch.commit();
+        committed += part.length;
+      }
+      return committed;
+    }
+
+    // ===== Drop zone =====
+    function wireDropZone(which, accept, onFile){
+      const fileInput = $(`#${which}-file-input`);
+      const fileInfo = $(`#${which}-file-info`);
+      const zoneWrap = $(`#${which}-drop-zone`);
+      if (!fileInput || !fileInfo || !zoneWrap) return;
+
+      const inner = zoneWrap.querySelector(".drop-zone-inner");
+      if (!inner) return;
+
+      inner.addEventListener("click", () => fileInput.click());
+      inner.addEventListener("dragover", (e) => { e.preventDefault(); inner.classList.add("dragover"); });
+      inner.addEventListener("dragleave", () => inner.classList.remove("dragover"));
+      inner.addEventListener("drop", (e) => {
+        e.preventDefault();
+        inner.classList.remove("dragover");
+        if (e.dataTransfer.files.length) onFile(e.dataTransfer.files[0], fileInfo);
+      });
+      fileInput.setAttribute("accept", accept);
+      fileInput.addEventListener("change", (e) => {
+        if (e.target.files.length) onFile(e.target.files[0], fileInfo);
+      });
+    }
+
+    function handleFileRead(file, expectExts, cb){
+      const name = (file?.name || "").toLowerCase();
+      const ok = expectExts.some(ext => name.endsWith(ext));
+      if (!ok) throw new Error(`檔案類型不符：請選擇 ${expectExts.join(" / ")}。`);
+
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try{
+            cb(String(e.target.result || ""));
+            resolve();
+          }catch(err){ reject(err); }
+        };
+        reader.onerror = () => reject(new Error("讀取檔案失敗。"));
+        reader.readAsText(file, "UTF-8");
+      });
+    }
+
+    // ===== Templates =====
+    function downloadCsvTemplate(filename, headerFields, exampleRows){
+      const header = headerFields.join(",") + "\n";
+      const body = (exampleRows || []).join("\n") + (exampleRows?.length ? "\n" : "");
+      const blob = new Blob(["\uFEFF" + header + body], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadJsonTemplate(filename, obj){
+      const pretty = JSON.stringify(obj, null, 2);
+      const blob = new Blob([pretty], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ===== TERMS =====
+    function importTermsFromText(text){
+      const { recs } = parseCsvToRecords(text, TERMS_FIELDS);
+      const records = recs.map(r => ({
+        status: (r.status || "draft").trim() || "draft",
+        type: (r.type || "term").trim() || "term",
+        topic: (r.topic || "").trim(),
+        category: (r.category || "").trim(),
+        nameZh: (r.nameZh || "").trim(),
+        nameEn: (r.nameEn || "").trim(),
+        inci: (r.inci || "").trim(),
+        aliases: (r.aliases || "").trim(),
+        keywords: (r.keywords || "").trim(),
+        definition: (r.definition || "").trim(),
+        mechanism: (r.mechanism || "").trim(),
+        benefits: (r.benefits || "").trim(),
+        formulationTips: (r.formulationTips || "").trim(),
+        safetyNotes: (r.safetyNotes || "").trim(),
+        regulatory: (r.regulatory || "").trim(),
+        refIds: (r.refIds || "").trim()
+      }));
+
+      state.terms.records = records;
+
+      renderPreviewCards("terms", records, {
+        primaryField: "nameZh",
+        primary: (r) => (r.nameZh || r.nameEn || "").trim(),
+        fields: (r) => [
+          { key:"status", label:"status", value:r.status },
+          { key:"type", label:"type", value:r.type },
+          { key:"topic", label:"topic", value:r.topic },
+          { key:"category", label:"category", value:r.category },
+          { key:"nameZh", label:"nameZh", value:r.nameZh },
+          { key:"nameEn", label:"nameEn", value:r.nameEn },
+          { key:"inci", label:"inci", value:r.inci },
+          { key:"aliases", label:"aliases (逗號/分號分隔)", value:r.aliases },
+          { key:"keywords", label:"keywords (逗號/分號分隔)", value:r.keywords },
+          { key:"definition", label:"definition", value:r.definition },
+          { key:"mechanism", label:"mechanism", value:r.mechanism },
+          { key:"benefits", label:"benefits", value:r.benefits },
+          { key:"formulationTips", label:"formulationTips", value:r.formulationTips },
+          { key:"safetyNotes", label:"safetyNotes", value:r.safetyNotes },
+          { key:"regulatory", label:"regulatory", value:r.regulatory },
+          { key:"refIds", label:"refIds (逗號/分號分隔)", value:r.refIds },
+        ]
+      });
+
+      showStatus("terms", "", "");
+    }
+
+    async function writeTerms(){
+      const records = state.terms.records || [];
+      const syncLegacy = !!$("#terms-sync-legacy")?.checked;
+
+      if (!records.length) return alert("沒有資料可寫入。");
+
+      const btn = $("#terms-write");
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中...';
+
+      try{
+        let written = 0;
+        let skipped = 0;
+        const ops = [];
+
+        for (const r of records){
+          const nameZh = (r.nameZh || "").trim();
+          const nameEn = (r.nameEn || "").trim();
+          if (!nameZh && !nameEn){ skipped++; continue; }
+
+          const type = (r.type || "term").trim() || "term";
+          const key = `${type}||${(nameEn || nameZh).trim()}`.toLowerCase();
+          const id = stableId("t", key);
+          const ref = doc(db, COL_TERMS, id);
+
+          const data = {
+            status: (r.status || "draft").trim() || "draft",
+            type,
+            topic: (r.topic || "").trim(),
+            category: (r.category || "").trim(),
+            nameZh,
+            nameEn,
+            inci: (r.inci || "").trim(),
+            aliases: normalizeList(r.aliases),
+            keywords: normalizeList(r.keywords),
+            definition: (r.definition || "").trim(),
+            mechanism: (r.mechanism || "").trim(),
+            benefits: (r.benefits || "").trim(),
+            formulationTips: (r.formulationTips || "").trim(),
+            safetyNotes: (r.safetyNotes || "").trim(),
+            regulatory: (r.regulatory || "").trim(),
+            refIds: normalizeList(r.refIds),
+            updatedAt: serverTimestamp()
+          };
+
+          ops.push({ ref, data });
+          written++;
+
+          if (syncLegacy){
+            // Map to cosmetic_knowledge (legacy shape)
+            const legacyCategory = (data.category || data.topic || "").trim() || "未分類";
+            const ingredientName = (data.nameEn || data.nameZh || "").trim();
+            const legacyId = stableId("cs", `${legacyCategory}||${ingredientName}`.toLowerCase());
+            const legacyRef = doc(db, COL_LEGACY, legacyId);
+
+            const notesJoin = [
+              data.definition ? `【定義】\n${data.definition}` : "",
+              data.formulationTips ? `【配方提示】\n${data.formulationTips}` : "",
+              data.safetyNotes ? `【安全/注意】\n${data.safetyNotes}` : "",
+              data.regulatory ? `【法規/限制】\n${data.regulatory}` : ""
+            ].filter(Boolean).join("\n\n");
+
+            const legacyData = {
+              category: legacyCategory,
+              ingredientName,
+              benefits: data.benefits || "",
+              mechanism: data.mechanism || "",
+              notes: notesJoin,
+              question: "",
+              answer: "",
+              keywords: [...(data.keywords||[]), ...(data.aliases||[])].join(","),
+              updatedAt: new Date().toISOString()
+            };
+            ops.push({ ref: legacyRef, data: legacyData });
+          }
+        }
+
+        const committed = await commitOps(ops);
+        showStatus("terms",
+          `<i class="fa-solid fa-check-circle"></i> 成功！已處理 ${written} 筆（寫入操作 ${committed} 次${syncLegacy ? "，含 legacy 同步" : ""}）；跳過 ${skipped} 筆（缺少 nameZh/nameEn）。`,
+          "success"
+        );
+      } catch (err){
+        console.error(err);
+        showStatus("terms",
+          `<i class="fa-solid fa-exclamation-triangle"></i> 寫入失敗：${escapeHtml(err?.message || String(err))}`,
+          "error"
+        );
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check-double"></i> 確認並寫入 kb_terms';
+      }
+    }
+
+    function clearTerms(){
+      state.terms.records = [];
+      $("#terms-preview").style.display = "none";
+      $("#terms-file-info").textContent = "尚未選擇檔案";
+      $("#terms-manual").value = "";
+      showStatus("terms", "", "");
+    }
+
+    // ===== REFS =====
+    function autoCitation(r){
+      const bits = [];
+      if (r.org) bits.push(r.org);
+      if (r.year) bits.push(r.year);
+      if (r.title) bits.push(r.title);
+      if (r.doi) bits.push(`DOI:${r.doi}`);
+      if (r.url) bits.push(r.url);
+      return bits.filter(Boolean).join(". ");
+    }
+
+    function importRefsFromText(text){
+      const { recs } = parseCsvToRecords(text, REFS_FIELDS);
+      const records = recs.map(r => ({
+        status: (r.status || "draft").trim() || "draft",
+        type: (r.type || "web").trim() || "web",
+        title: (r.title || "").trim(),
+        org: (r.org || "").trim(),
+        year: (r.year || "").trim(),
+        doi: (r.doi || "").trim(),
+        url: (r.url || "").trim(),
+        citationText: (r.citationText || "").trim(),
+        tags: (r.tags || "").trim(),
+        notes: (r.notes || "").trim()
+      }));
+
+      state.refs.records = records;
+
+      renderPreviewCards("refs", records, {
+        primaryField: "title",
+        primary: (r) => r.title,
+        fields: (r) => [
+          { key:"status", label:"status", value:r.status },
+          { key:"type", label:"type", value:r.type },
+          { key:"title", label:"title", value:r.title },
+          { key:"org", label:"org", value:r.org },
+          { key:"year", label:"year", value:r.year },
+          { key:"doi", label:"doi", value:r.doi },
+          { key:"url", label:"url", value:r.url },
+          { key:"citationText", label:"citationText", value:r.citationText },
+          { key:"tags", label:"tags (逗號/分號分隔)", value:r.tags },
+          { key:"notes", label:"notes", value:r.notes },
+        ]
+      });
+
+      showStatus("refs", "", "");
+    }
+
+    async function writeRefs(){
+      const records = state.refs.records || [];
+      if (!records.length) return alert("沒有資料可寫入。");
+
+      const btn = $("#refs-write");
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中...';
+
+      try{
+        let written = 0;
+        let skipped = 0;
+        const ops = [];
+
+        for (const r of records){
+          const title = (r.title || "").trim();
+          if (!title){ skipped++; continue; }
+
+          const doi = (r.doi || "").trim().toLowerCase();
+          const url = (r.url || "").trim().toLowerCase();
+          const year = (r.year || "").trim();
+          const explicitId = (r.refId || r.docId || "").trim();
+          const noteId = explicitId ? "" : extractRefIdFromNotes(r.notes);
+          const key = doi || url || `${title}||${year}`.toLowerCase();
+          const id = (explicitId || noteId || stableId("r", key)).trim();
+          const ref = doc(db, COL_REFS, id);
+
+          const data = {
+            status: (r.status || "draft").trim() || "draft",
+            type: (r.type || "web").trim() || "web",
+            title,
+            org: (r.org || "").trim(),
+            year: year ? Number(year) || year : "",
+            doi: (r.doi || "").trim(),
+            url: (r.url || "").trim(),
+            citationText: (r.citationText || "").trim() || autoCitation(r),
+            tags: normalizeList(r.tags),
+            refId: id,
+            notes: stripRefIdInNotes(r.notes),
+            updatedAt: serverTimestamp()
+          };
+
+          ops.push({ ref, data });
+          written++;
+        }
+
+        const committed = await commitOps(ops);
+        showStatus("refs",
+          `<i class="fa-solid fa-check-circle"></i> 成功！已寫入/更新 ${written} 筆（寫入操作 ${committed} 次）；跳過 ${skipped} 筆（缺少 title）。`,
+          "success"
+        );
+      } catch (err){
+        console.error(err);
+        showStatus("refs",
+          `<i class="fa-solid fa-exclamation-triangle"></i> 寫入失敗：${escapeHtml(err?.message || String(err))}`,
+          "error"
+        );
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check-double"></i> 確認並寫入 kb_refs';
+      }
+    }
+
+    function clearRefs(){
+      state.refs.records = [];
+      $("#refs-preview").style.display = "none";
+      $("#refs-file-info").textContent = "尚未選擇檔案";
+      $("#refs-manual").value = "";
+      showStatus("refs", "", "");
+    }
+
+    // ===== ARTICLES =====
+    function coerceArray(v){
+      if (Array.isArray(v)) return v;
+      if (typeof v === "string") return normalizeList(v);
+      return [];
+    }
+
+    function importArticlesFromText(text){
+      const raw = parseJsonRecords(text);
+
+      const records = raw.map(o => ({
+        status: (o.status || "draft").toString().trim() || "draft",
+        slug: (o.slug || "").toString().trim(),
+        title: (o.title || "").toString().trim(),
+        topic: (o.topic || "").toString().trim(),
+        summary: (o.summary || "").toString().trim(),
+        sections: Array.isArray(o.sections)
+          ? o.sections.map(s => ({
+              id: (s?.id || "").toString().trim() || stableId("s", (s?.h2 || s?.title || "section")),
+              h2: (s?.h2 || s?.title || "").toString().trim(),
+              bodyMd: (s?.bodyMd || s?.body || "").toString()
+            }))
+          : (typeof o.sections === "string" ? [{ id:"s1", h2:"", bodyMd: o.sections }] : []),
+        termRefs: coerceArray(o.termRefs),
+        refIds: coerceArray(o.refIds),
+      }));
+
+      state.articles.records = records;
+
+      renderPreviewCards("articles", records, {
+        primaryField: "title",
+        primary: (r) => `${r.title || "[未命名]"} (${r.slug || "no-slug"})`,
+        fields: (r) => [
+          { key:"status", label:"status", value:r.status },
+          { key:"slug", label:"slug", value:r.slug },
+          { key:"title", label:"title", value:r.title },
+          { key:"topic", label:"topic", value:r.topic },
+          { key:"summary", label:"summary", value:r.summary },
+          { key:"termRefs", label:"termRefs (逗號/分號分隔)", value:(r.termRefs||[]).join(",") },
+          { key:"refIds", label:"refIds (逗號/分號分隔)", value:(r.refIds||[]).join(",") },
+          { key:"sections", label:"sections（JSON，建議別在這裡大量編輯）", value: JSON.stringify(r.sections || [], null, 2) },
+        ]
+      });
+
+      showStatus("articles", "", "");
+    }
+
+    async function writeArticles(){
+      const records = state.articles.records || [];
+      if (!records.length) return alert("沒有資料可寫入。");
+
+      const btn = $("#articles-write");
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中...';
+
+      try{
+        let written = 0;
+        let skipped = 0;
+        const ops = [];
+
+        for (const r of records){
+          const slug = (r.slug || "").trim();
+          const title = (r.title || "").trim();
+          if (!slug || !title){ skipped++; continue; }
+
+          // If sections edited as text, re-parse
+          let sections = r.sections;
+          if (typeof sections === "string"){
+            try { sections = JSON.parse(sections); } catch(e){ sections = []; }
+          }
+
+          const ref = doc(db, COL_ARTICLES, slug);
+
+          const data = {
+            status: (r.status || "draft").trim() || "draft",
+            slug,
+            title,
+            topic: (r.topic || "").trim(),
+            summary: (r.summary || "").trim(),
+            sections: Array.isArray(sections) ? sections : [],
+            termRefs: Array.isArray(r.termRefs) ? r.termRefs : normalizeList(r.termRefs),
+            refIds: Array.isArray(r.refIds) ? r.refIds : normalizeList(r.refIds),
+            updatedAt: serverTimestamp()
+          };
+
+          ops.push({ ref, data });
+          written++;
+        }
+
+        const committed = await commitOps(ops);
+        showStatus("articles",
+          `<i class="fa-solid fa-check-circle"></i> 成功！已寫入/更新 ${written} 篇（寫入操作 ${committed} 次）；跳過 ${skipped} 筆（缺少 slug/title）。`,
+          "success"
+        );
+      } catch (err){
+        console.error(err);
+        showStatus("articles",
+          `<i class="fa-solid fa-exclamation-triangle"></i> 寫入失敗：${escapeHtml(err?.message || String(err))}`,
+          "error"
+        );
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check-double"></i> 確認並寫入 kb_articles';
+      }
+    }
+
+    function clearArticles(){
+      state.articles.records = [];
+      $("#articles-preview").style.display = "none";
+      $("#articles-file-info").textContent = "尚未選擇檔案";
+      $("#articles-manual").value = "";
+      showStatus("articles", "", "");
+    }
+
+    // ===== Wire UI =====
+    function wireUI(){
+      initTabs();
+
+      $("#terms-download-template").addEventListener("click", () => {
+        const ex1 = [
+          'draft,ingredient,防曬,UV濾劑,阿伏苯宗,Avobenzone,"Butyl Methoxydibenzoylmethane","Avobenzone;Parsol 1789","UVA filter,阿伏苯宗","長波UVA濾劑（油溶性）","吸收UVA並轉換能量","提升UVA防護","注意光安定性，常搭配Octocrylene或Tinosorb S","敏感肌可能刺激","各地法規允許濃度不同，需依市場確認","ISO 24443;SCCS opinions"'
+        ];
+        downloadCsvTemplate("kb_terms_template.csv", TERMS_FIELDS, ex1);
+      });
+
+      $("#refs-download-template").addEventListener("click", () => {
+        const ex = [
+          'draft,ISO,"ISO 24443:2012 Cosmetics — Sun protection test methods — In vitro determination of UVA protection","ISO","2012","","","ISO 24443:2012. Cosmetics — Sun protection test methods — In vitro determination of UVA protection.","UVA-PF;ISO24443","可補充版本與修訂年份"'
+        ];
+        downloadCsvTemplate("kb_refs_template.csv", REFS_FIELDS, ex);
+      });
+
+      $("#articles-download-template").addEventListener("click", () => {
+        const sample = [
+          {
+            status: "draft",
+            slug: "sunscreen",
+            title: "防曬專業知識（範例）",
+            topic: "防曬",
+            summary: "包含UV基礎、濾劑分類、SPF/UVA-PF、ISO方法與配方要點。",
+            termRefs: ["t_1", "t_2"],
+            refIds: ["r_1"],
+            sections: [
+              { id: "s1", h2: "UV 基礎與皮膚影響", bodyMd: "說明 UVA/UVB/UVC 與光老化、曬紅…（markdown）" },
+              { id: "s2", h2: "濾劑分類與配方策略", bodyMd: "有機/無機濾劑、光安定、相容性…" }
+            ]
+          }
+        ];
+        downloadJsonTemplate("kb_articles_template.json", sample);
+      });
+
+      // terms import
+      wireDropZone("terms", ".csv,text/csv", async (file, infoEl) => {
+        try{
+          infoEl.textContent = `已選擇檔案: ${file.name}`;
+          await handleFileRead(file, [".csv"], (text) => importTermsFromText(text));
+        } catch (err){
+          alert(`解析失敗: ${err.message}`);
+          clearTerms();
+        }
+      });
+      $("#terms-import-text").addEventListener("click", () => {
+        try { importTermsFromText($("#terms-manual").value); }
+        catch(err){ alert(`解析失敗: ${err.message}`); }
+      });
+      $("#terms-write").addEventListener("click", writeTerms);
+      $("#terms-clear").addEventListener("click", clearTerms);
+
+      // articles import
+      wireDropZone("articles", ".json,application/json,text/json", async (file, infoEl) => {
+        try{
+          infoEl.textContent = `已選擇檔案: ${file.name}`;
+          await handleFileRead(file, [".json"], (text) => importArticlesFromText(text));
+        } catch (err){
+          alert(`解析失敗: ${err.message}`);
+          clearArticles();
+        }
+      });
+      $("#articles-import-text").addEventListener("click", () => {
+        try { importArticlesFromText($("#articles-manual").value); }
+        catch(err){ alert(`解析失敗: ${err.message}`); }
+      });
+      $("#articles-write").addEventListener("click", writeArticles);
+      $("#articles-clear").addEventListener("click", clearArticles);
+
+      // refs import
+      wireDropZone("refs", ".csv,text/csv", async (file, infoEl) => {
+        try{
+          infoEl.textContent = `已選擇檔案: ${file.name}`;
+          await handleFileRead(file, [".csv"], (text) => importRefsFromText(text));
+        } catch (err){
+          alert(`解析失敗: ${err.message}`);
+          clearRefs();
+        }
+      });
+      $("#refs-import-text").addEventListener("click", () => {
+        try { importRefsFromText($("#refs-manual").value); }
+        catch(err){ alert(`解析失敗: ${err.message}`); }
+      });
+      $("#refs-write").addEventListener("click", writeRefs);
+      $("#refs-clear").addEventListener("click", clearRefs);
+    }
+
+    // ===== boot =====
+    document.body.style.opacity = "0";
+    onAuthStateChanged(auth, (user) => {
+      if (user){
+        $("#user-info").textContent = user.email;
+        $("#btnSignOut").addEventListener("click", () => signOut(auth));
+        wireUI();
+        document.body.style.opacity = "1";
+      } else {
+        window.location.href = 'login.html';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PIF 封面</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="style.css">
+<style>
+  :root{
+    --fg:#111; --muted:#666; --line:#e5e7eb; --brand:#2563eb;
+  }
+  html,body{
+    background:#fff;
+    color:var(--fg);
+    font-family:ui-sans-serif,system-ui,-apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei",Segoe UI,Roboto,Arial,sans-serif;
+    margin:0;
+  }
+  body{
+    min-height:100vh;
+  }
+  .container{
+    max-width:960px;
+    margin:0 auto;
+    padding:1.5rem 1.25rem 3rem;
+  }
+  h1{
+    text-align:center;
+    letter-spacing:.2em;
+    font-weight:700;
+    margin:2rem 0 1rem;
+  }
+  h2{
+    text-align:center;
+    font-weight:500;
+    margin:0 0 2.5rem;
+  }
+  label{
+    display:inline-block;
+    width:120px;
+    color:var(--muted);
+  }
+  .cover-wrapper{
+    display:flex;
+    justify-content:center;
+    margin-top:2.5rem;
+  }
+  .cover-box{
+    border:2px solid #111;
+    padding:2.5rem 3rem;
+    width:100%;
+    max-width:640px;
+  }
+  .cover-row{
+    display:flex;
+    align-items:center;
+    margin-bottom:1.25rem;
+    font-size:1rem;
+  }
+  .cover-value{
+    flex:1;
+    border-bottom:1px solid #999;
+    min-height:1.8em;
+    display:flex;
+    align-items:flex-end;
+    padding:0 .5rem .2rem;
+  }
+  input[type="text"]{
+    border:none;
+    border-radius:0;
+    font:inherit;
+    padding:0;
+    outline:none;
+    width:100%;
+    background:transparent;
+  }
+  input[type="date"]{
+    border:none;
+    border-radius:0;
+    font:inherit;
+    padding:0;
+    outline:none;
+    background:transparent;
+  }
+  input::placeholder{
+    color:#c4c4c4;
+  }
+
+  /* 封面下方提示 */
+  .hint{
+    max-width:640px;
+    margin:1rem auto 0;
+    font-size:.85rem;
+    color:var(--muted);
+    line-height:1.6;
+  }
+
+  /* 列印相關樣式 */
+  .print-header{
+    display:none;
+  }
+
+  /* CosPIF logo image */
+  header .logo img,
+  .logo-img{
+    height:40px;
+    width:auto;
+    display:block;
+  }
+
+  @media print{
+    header,
+    .toolbar,
+    .no-print {
+      display: none !important;
+    }
+    .print-header{
+      display:block;
+    }
+    .container{
+      width:100%;
+      max-width:100%;
+    }
+    body{
+      margin:0;
+    }
+    .cover-wrapper{
+      padding-top:1rem;
+    }
+    .cover-box{
+      border:2px solid #000;
+      padding: 3rem;
+      margin-top:3rem;
+    }
+    h1{
+      font-size:2.2rem;
+    }
+    h2{
+      font-size:1.4rem;
+    }
+    label{
+      font-size:1.1rem;
+    }
+    input{
+      font-size:1.1rem;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <nav>
+      <!-- 改成使用 CosPIF 圖檔 LOGO -->
+      <a href="index.html" class="logo"><img src="img/cospif-logo.png" alt="CosPIF Logo" class="logo-img"></a>
+      <ul class="nav-links">
+        <li><a href="pif-i.html">我的專案</a></li>
+        <li><a href="vendors.html">廠商資料庫</a></li>
+      </ul>
+      <div class="nav-actions">
+        <span id="userEmail"></span>
+        <button id="signOutBtn" class="btn btn-outline">登出</button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<!-- 列印時才會出現的 CosPIF 抬頭（也改用 LOGO） -->
+<div class="print-header">
+  <div style="display:flex;justify-content:space-between;align-items:center;font-size:.9rem;padding:0 1.5cm 0;">
+    <div style="display:flex;align-items:center;gap:.75rem;">
+      <a href="index.html" class="logo">
+        <img src="img/cospif-logo.png" alt="CosPIF Logo" class="logo-img">
+      </a>
+      <div>
+        <div style="font-weight:600;">產品資訊檔案 (Product Information File, PIF)</div>
+        <div style="color:#555;">本文件為化妝品產品資訊檔案之封面，供法規查核與內部品質管理使用。</div>
+      </div>
+    </div>
+    <div style="text-align:right;color:#555;">
+      <div>列印日期：<span id="printDate"></span></div>
+    </div>
+  </div>
+  <hr style="border:none;border-top:1px solid #000;margin:.4rem 1.5cm 0;">
+</div>
+
+<main>
+  <div class="container">
+
+    <section class="card">
+      <h1>產品資訊檔案</h1>
+      <h2>Product Information File (PIF)</h2>
+
+      <div class="cover-wrapper">
+        <div class="cover-box">
+          <div class="cover-row">
+            <label>產品名稱</label>
+            <div class="cover-value">
+              <input type="text" id="productName" placeholder="例：酪梨乳酸護手霜">
+            </div>
+          </div>
+
+          <div class="cover-row">
+            <label>PIFID代號</label>
+            <div class="cover-value">
+              <input type="text" id="pifId" readonly>
+            </div>
+          </div>
+
+          <div class="cover-row">
+            <label>公司 / 品牌</label>
+            <div class="cover-value">
+              <input type="text" id="companyName" placeholder="例：嘉南藥理大學 / 某某品牌">
+            </div>
+          </div>
+
+          <div class="cover-row">
+            <label>PIF製作</label>
+            <div class="cover-value">
+              <input type="text" id="authorName" placeholder="例：製作者姓名">
+            </div>
+          </div>
+
+          <div class="cover-row">
+            <label>安全評估人員</label>
+            <div class="cover-value">
+              <input type="text" id="safetyAssessor" placeholder="例：安全評估人員姓名">
+            </div>
+          </div>
+
+          <div class="cover-row">
+            <label>檔案完成日期</label>
+            <div class="cover-value">
+              <input type="date" id="completedDate">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="hint">
+        提示：本封面資料會與後續各章節（原料、安全性、功效等）一併存入 PIF 系統，以利日後查核與版本管理。<br>
+        若您尚未確定「安全評估人員」或「檔案完成日期」，可先暫留空白，於完成所有章節後再補上。
+      </p>
+    </section>
+
+  </div>
+</main>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB9Tx1T0AOgqKo4ptVMl1dB_1tItLEMN1Y",
+    authDomain: "cos-pif-48742662.firebaseapp.com",
+    projectId: "cos-pif-48742662",
+    storageBucket: "cos-pif-48742662.appspot.com",
+    messagingSenderId: "1029599292266",
+    appId: "1:1029599292266:web:3a27ff96d39f47596be9a5"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  const userEmailSpan = document.getElementById('userEmail');
+  const signOutBtn = document.getElementById('signOutBtn');
+  const navActions = document.querySelector('.nav-actions');
+
+  const pifIdInput = document.getElementById('pifId');
+  const productNameInput = document.getElementById('productName');
+  const companyNameInput = document.getElementById('companyName');
+  const authorNameInput = document.getElementById('authorName');
+  const safetyAssessorInput = document.getElementById('safetyAssessor');
+  const completedDateInput = document.getElementById('completedDate');
+  const printDateSpan = document.getElementById('printDate');
+
+  function loadCoverFromStorage(){
+    const stored = localStorage.getItem('pif01_cover');
+    if(stored){
+      try{
+        const data = JSON.parse(stored);
+        pifIdInput.value = data.pifId || '';
+        productNameInput.value = data.productName || '';
+        companyNameInput.value = data.companyName || '';
+        authorNameInput.value = data.authorName || '';
+        safetyAssessorInput.value = data.safetyAssessor || '';
+        completedDateInput.value = data.completedDate || '';
+      }catch(e){
+        console.error('解析封面暫存資料失敗', e);
+      }
+    }
+  }
+
+  function saveCoverToStorage(){
+    const data = {
+      pifId: pifIdInput.value,
+      productName: productNameInput.value.trim(),
+      companyName: companyNameInput.value.trim(),
+      authorName: authorNameInput.value.trim(),
+      safetyAssessor: safetyAssessorInput.value.trim(),
+      completedDate: completedDateInput.value
+    };
+    localStorage.setItem('pif01_cover', JSON.stringify(data));
+  }
+
+  [productNameInput, companyNameInput, authorNameInput, safetyAssessorInput, completedDateInput]
+    .forEach(input => {
+      input.addEventListener('change', saveCoverToStorage);
+      input.addEventListener('blur', saveCoverToStorage);
+    });
+
+  function getQueryParam(key){
+    const params = new URLSearchParams(window.location.search);
+    return params.get(key);
+  }
+
+  function initPifId(){
+    const pifIdFromUrl = getQueryParam('id');
+    if(pifIdFromUrl){
+      pifIdInput.value = pifIdFromUrl;
+    }else{
+      if(!pifIdInput.value){
+        const today = new Date();
+        const y = today.getFullYear();
+        const m = String(today.getMonth()+1).padStart(2,'0');
+        const d = String(today.getDate()).padStart(2,'0');
+        pifIdInput.value = `CN-${y}${m}${d}-001`;
+      }
+    }
+  }
+
+  function initPrintDate(){
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth()+1).padStart(2,'0');
+    const d = String(today.getDate()).padStart(2,'0');
+    if(printDateSpan){
+      printDateSpan.textContent = `${y}/${m}/${d}`;
+    }
+  }
+
+  window.addEventListener('beforeprint', () => {
+    saveCoverToStorage();
+    initPrintDate();
+  });
+
+  loadCoverFromStorage();
+  initPifId();
+
+  window.addEventListener('DOMContentLoaded', () => {
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is signed in.
+        userEmailSpan.textContent = user.email || '';
+        signOutBtn.style.display = 'inline-block';
+        signOutBtn.addEventListener('click', () => {
+          signOut(auth).then(() => {
+            window.location.href = 'login.html';
+          });
+        });
+      } else {
+        // User is signed out.
+        if (userEmailSpan) userEmailSpan.textContent = '訪客';
+        if (signOutBtn) signOutBtn.textContent = '登入';
+        if (signOutBtn) signOutBtn.addEventListener('click', () => { window.location.href = 'login.html'; });
+      }
+    });
+  });
+
+</script>
+
+</body>
+</html>

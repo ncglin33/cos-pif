@@ -1,0 +1,942 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PIF 04｜產品標籤、仿單、外包裝或容器</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="./style.css">
+<style>
+  body {
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+    background-color: #f9fafb;
+  }
+
+  .app-wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  .status-bar {
+    padding: 12px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: .9rem;
+    color: var(--muted);
+  }
+
+  .status-light {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #9ca3af;
+    margin-right: 8px;
+  }
+
+  .status-light.syncing {
+    background-color: #f59e0b;
+    animation: pulse 1.5s infinite;
+  }
+
+  .status-light.synced {
+    background-color: #22c55e;
+  }
+
+  .status-light.error {
+    background-color: #ef4444;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .5; }
+  }
+
+  #global-error {
+    text-align: center;
+    padding: 2rem;
+    color: red;
+  }
+
+  .toolbar {
+    position: sticky;
+    top: 0;
+    background: rgba(249,250,251,.9);
+    backdrop-filter: blur(8px);
+    z-index: 10;
+    border-bottom: 1px solid var(--line);
+    padding: 8px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .toolbar .btn {
+    margin-right: .5rem;
+  }
+
+  .badge {
+    font-size: .8rem;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    background: #eef2ff;
+    color: #3730a3;
+  }
+
+  .card {
+    border-radius: 12px;
+  }
+
+  .attachment-card .body h3 {
+    margin-top: 0;
+    margin-bottom: .5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+  }
+
+  .attachment-card .row {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 8px;
+    align-items: end;
+    margin-top: .75rem;
+  }
+
+  .attachment-card .row:first-of-type {
+    margin-top: 0;
+  }
+
+  .attachment-card .row .col-span-2 { grid-column: span 2; }
+  .attachment-card .row .col-span-3 { grid-column: span 3; }
+  .attachment-card .row .col-span-4 { grid-column: span 4; }
+  .attachment-card .row .col-span-6 { grid-column: span 6; }
+
+  .attachment-card label {
+    font-size: .8rem;
+    color: #4b5563;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .attachment-card .cell-input,
+  .attachment-card select.cell-input,
+  .attachment-card textarea.cell-input {
+    font-size: .9rem;
+  }
+
+  .preview-box {
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+    text-align: center;
+    overflow: hidden;
+    background: #fafafa;
+    color: var(--muted);
+  }
+
+  .preview-box img {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  .help {
+    font-size: .8rem;
+    color: #6b7280;
+  }
+
+  .filename {
+    font-size: .85rem;
+  }
+
+  #upload-status-pdf {
+    display: none;
+    padding: 0.75rem 1.25rem;
+    margin-top: 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    text-align: center;
+  }
+
+  .status-info {
+    background-color: #e0e7ff;
+    color: #3730a3;
+  }
+
+  .status-success {
+    background-color: #dcfce7;
+    color: #166534;
+  }
+
+  .status-error {
+    background-color: #fee2e2;
+    color: #991b1b;
+  }
+
+  #upload-status-pdf i {
+    margin-right: 0.5rem;
+  }
+
+  .print-only {
+    display: none;
+  }
+
+  /* 列印專用頂端表頭（與 PIF02/03 同風格） */
+  #print-header {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin: 0 0 12px 0;
+    background: #fff;
+  }
+
+  .print-header-grid {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .ph-left { flex: 1; min-width: 0; }
+  .ph-right { text-align: right; min-width: 220px; }
+
+  .ph-title {
+    font-size: 1.28rem;
+    font-weight: 800;
+    letter-spacing: .3px;
+    color: #111827;
+    margin: 0 0 4px 0;
+    line-height: 1.2;
+  }
+
+  .ph-sub {
+    font-size: .98rem;
+    color: #111827;
+    line-height: 1.35;
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  .ph-label {
+    font-weight: 700;
+    color: #374151;
+  }
+
+  @media (max-width: 900px) {
+    .attachment-card .row {
+      grid-template-columns: repeat(2, minmax(0,1fr));
+    }
+
+    .attachment-card .row .col-span-3,
+    .attachment-card .row .col-span-4,
+    .attachment-card .row .col-span-6 {
+      grid-column: span 2;
+    }
+
+    .print-header-grid {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .ph-right {
+      text-align: left;
+    }
+  }
+
+  @media print {
+    @page {
+      size: A4;
+      margin: 10mm;
+    }
+
+    body {
+      opacity: 1 !important;
+      background: #fff !important;
+    }
+
+    .no-print {
+      display: none !important;
+    }
+
+    .noprint, .noprint * {
+      display: none !important;
+    }
+
+    .app-wrap {
+      max-width: 100% !important;
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    .page-header {
+    display: none !important;
+  }
+    .card {
+      box-shadow: none !important;
+    }
+
+    /* 列印時附件區改為單欄，圖片可放大 */
+    .attachment-card .row:last-of-type {
+      grid-template-columns: 1fr !important;
+      gap: 8px !important;
+      align-items: start !important;
+    }
+
+    .preview-box {
+      min-height: 420px !important;
+      background: #fff !important;
+      border: 1px solid #d1d5db !important;
+    }
+
+    .preview-box img {
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+    }
+
+    /* 顯示列印用表頭 */
+    .print-only {
+      display: block !important;
+    }
+
+    /* 確保任何漏標 no-print 的按鈕也不會印出 */
+    button,
+    .btn,
+    a.btn,
+    .upload-btn {
+      display: none !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- 全站導覽＋PIF 頂端條（登入只在這裡出現一次） -->
+<pif-nav class="noprint"></pif-nav>
+<top-bar class="noprint"></top-bar>
+
+<div class="container">
+  <status-bar class="noprint"></status-bar>
+
+  <div id="app-container" style="display:none;">
+
+    <!-- 列印專用頂端（PIF04 標題 / PIFID / 產品 / 公司） -->
+    <div id="print-header" class="print-only">
+      <div class="print-header-grid">
+        <div class="ph-left">
+          <div class="ph-title" id="printTitle"></div>
+          <p class="ph-sub" id="printProductName"></p>
+        </div>
+        <div class="ph-right">
+          <p class="ph-sub">
+            <span class="ph-label">PIFID：</span>
+            <span id="printPifId"></span>
+          </p>
+          <p class="ph-sub" id="printCompanyName"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 本頁工具列：只保留返回＋儲存，不再顯示登入資訊 -->
+    <div class="toolbar no-print">
+      <a id="back-link" href="#" class="btn">
+        <i class="fa-solid fa-arrow-left"></i> 返回 PIF 檔案
+      </a>
+      <button id="btnSaveChanges" class="btn accent">
+        <i class="fa-solid fa-cloud-arrow-up"></i> 儲存變更至雲端
+      </button>
+    </div>
+
+    <div class="app-wrap">
+      <header class="page-header">
+        <div>
+          <h1>
+            <i class="fa-solid fa-tags" style="color:var(--primary-color)"></i>
+            PIF 04｜產品標籤、仿單、外包裝或容器
+          </h1>
+          <!-- 說明文字維持原本敘述，不再被公司/產品覆蓋 -->
+          <div id="project-subtitle" class="meta">
+            彙整產品標籤（Label）、仿單（Leaflet / IFU）、外盒/包材、容器等檔案或截圖。
+          </div>
+        </div>
+        <div>
+          <span id="pif-id-badge" class="badge"></span>
+        </div>
+      </header>
+
+      <div class="status-bar no-print">
+        <div>
+          <span id="status-light" class="status-light"></span>
+          <span id="status-text">正在初始化...</span>
+        </div>
+        <div style="display:flex; gap:0.5rem;">
+          <button id="btnAdd" class="btn">
+            <i class="fa-solid fa-plus"></i> 新增附件
+          </button>
+          <button id="btnUploadPdf" class="btn">
+            <i class="fa-solid fa-file-arrow-up"></i> 上傳本頁 PDF
+          </button>
+          <input type="file" id="pdfUploader" accept="application/pdf" style="display:none;">
+          <button onclick="window.print()" class="btn">
+            <i class="fa-solid fa-print"></i> 列印
+          </button>
+        </div>
+      </div>
+
+      <div id="upload-status-pdf" class="no-print"></div>
+
+      <div id="list" style="margin-top:1.5rem; display:grid; gap:1.5rem;"></div>
+    </div>
+  </div>
+
+  <div id="global-error"></div>
+</div>
+
+<script type="module">
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { doc, getDoc, setDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { ref, uploadBytes, getDownloadURL, deleteObject, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+  import { auth, db, storage } from "./firebase-config.js";
+  import "/components.js";
+
+  const $ = sel => document.querySelector(sel);
+
+  // Safe id generator (avoid recursive uuid() bugs and provide fallback)
+  const uid = () => {
+    try {
+      if (crypto && typeof crypto.randomUUID === "function") return crypto.randomUUID();
+    } catch (_) {}
+    return "id_" + Math.random().toString(16).slice(2) + Date.now().toString(16);
+  };
+
+  // Robust decode (handles values that may have been encoded more than once)
+  const safeDecode = (v) => {
+    if (!v) return "";
+    try {
+      const d1 = decodeURIComponent(v);
+      try { return decodeURIComponent(d1); } catch (_) { return d1; }
+    } catch (_) {
+      return v;
+    }
+  };
+
+  let pifDocRef;
+  let state = { attachments: [] };
+  let pageContext = {};
+  let hasUnsavedChanges = false;
+
+  const status = {
+    light: $("#status-light"),
+    text: $("#status-text"),
+    set(stateName, msg) {
+      this.light.className = `status-light ${stateName}`;
+      this.text.textContent = msg;
+      if (stateName === "synced" || stateName === "error" || stateName === "ready") {
+        setTimeout(() => {
+          if (!hasUnsavedChanges) {
+            this.set("ready", "就緒");
+          }
+        }, 3000);
+      }
+    },
+    markUnsaved() {
+      this.set("syncing", "有未儲存的變更");
+      hasUnsavedChanges = true;
+      $("#btnSaveChanges").disabled = false;
+    }
+  };
+
+  function startAuthFlow() {
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        try {
+          pageContext = setupPageContext();
+          // 產品資訊顯示交由 top-bar 處理，避免與本頁說明重複
+          if (pageContext.pifId) {
+            $("#pif-id-badge").textContent = pageContext.pifId;
+          }
+
+          pifDocRef = doc(db, "pifs", pageContext.pifId);
+          setupUIForUser(user);
+          initializeData();
+          setupTopBarAndPrintHeader(user);
+          $("#app-container").style.display = "block";
+        } catch (e) {
+          $("#global-error").innerHTML = `<strong>啟動錯誤：</strong> ${e.message}。`;
+        }
+        document.body.style.opacity = "1";
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+  }
+
+  function setupPageContext() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const context = {
+      pifId: urlParams.get("id"),
+      companyName: safeDecode(urlParams.get("companyName")),
+      productName: safeDecode(urlParams.get("productName"))
+    };
+    if (!context.pifId) {
+      throw new Error("網址中缺少專案 ID");
+    }
+    return context;
+  }
+
+  function setupUIForUser(user) {
+    // 登入 / 登出 改由共用的 pif-nav / top-bar 處理，避免重複顯示
+    const params = new URLSearchParams({
+      id: pageContext.pifId,
+      companyName: pageContext.companyName || "",
+      productName: pageContext.productName || ""
+    });
+    $("#back-link").href = `pif-i.html?${params.toString()}`;
+
+    $("#btnAdd").addEventListener("click", addAttachment);
+    $("#btnSaveChanges").addEventListener("click", saveData);
+    $("#btnSaveChanges").disabled = true;
+
+    $("#btnUploadPdf").addEventListener("click", () => $("#pdfUploader").click());
+    $("#pdfUploader").addEventListener("change", handlePdfUpload);
+
+    window.addEventListener("beforeunload", e => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    });
+  }
+
+  function setupTopBarAndPrintHeader(user) {
+    const { pifId, companyName, productName } = pageContext || {};
+
+    const topBarEl = document.querySelector("top-bar");
+    if (topBarEl && typeof customElements !== "undefined") {
+      customElements.whenDefined("top-bar").then(() => {
+        if (typeof topBarEl.setInfo === "function") {
+          topBarEl.setInfo(
+            pifId || "",
+            companyName || "",
+            productName || "",
+            "PIF 04 產品標籤／仿單／外包裝"
+          );
+        }
+        if (typeof topBarEl.setUser === "function") {
+          topBarEl.setUser(user);
+        }
+      }).catch(() => {});
+    }
+
+    const titleEl = document.getElementById("printTitle");
+    if (titleEl) {
+      titleEl.textContent = "PIF04 產品標籤、仿單、外包裝或容器";
+    }
+    const pifIdEl = document.getElementById("printPifId");
+    if (pifIdEl) pifIdEl.textContent = pifId || "";
+
+    const prodEl = document.getElementById("printProductName");
+    if (prodEl) prodEl.textContent = productName || "";
+
+    const compEl = document.getElementById("printCompanyName");
+    if (compEl) compEl.textContent = companyName || "";
+  }
+
+  async function initializeData() {
+    try {
+      status.set("syncing", "正在從雲端讀取資料...");
+      const docSnap = await getDoc(pifDocRef);
+      if (docSnap.exists()) {
+        const cloudData = docSnap.data();
+        if (cloudData.pif04 && Array.isArray(cloudData.pif04.attachments)) {
+          state.attachments = cloudData.pif04.attachments.map(item => ({
+            ...item,
+            id: (item && item.id) ? item.id : ("att_" + uid())
+          }));
+        }
+        status.set("synced", "資料讀取成功");
+      } else {
+        throw new Error("在資料庫中找不到對應的專案文件");
+      }
+      render();
+    } catch (err) {
+      console.error("Initialization failed: ", err);
+      status.set("error", `讀取失敗: ${err.message}`);
+      $("#global-error").textContent = `讀取資料時發生嚴重錯誤: ${err.message}`;
+    }
+  }
+
+  function render() {
+    const listEl = $("#list");
+    listEl.innerHTML = "";
+    if (!state.attachments || state.attachments.length === 0) {
+      listEl.innerHTML = `
+        <div class="card">
+          <div class="body center muted" style="padding: 2rem;">
+            尚未新增任何附件
+          </div>
+        </div>`;
+      return;
+    }
+    state.attachments.forEach(att => addAttachmentToDOM(att));
+  }
+
+  function addAttachmentToDOM(att) {
+    const card = document.createElement("div");
+    card.className = "card attachment-card";
+    card.setAttribute("data-id", att.id);
+
+    const safeTitle = escapeHtml(att.title);
+    const safeMarket = escapeHtml(att.market);
+    const safeVersion = escapeHtml(att.version);
+    const safeNotes = escapeHtml(att.notes);
+
+    const typeOptions = [
+      "產品標籤",
+      "仿單 / IFU",
+      "外包裝 / 盒",
+      "容器",
+      "其他"
+    ];
+
+    card.innerHTML = `
+      <div class="body">
+        <h3><i class="fa-solid fa-paperclip"></i> 附件</h3>
+        <div class="row">
+          <div>
+            <label>類型</label>
+            <select class="cell-input" data-field="type">
+              ${typeOptions.map(t => `<option value="${t}">${t}</option>`).join("")}
+            </select>
+          </div>
+          <div class="col-span-2">
+            <label>標題</label>
+            <input class="cell-input" data-field="title" value="${safeTitle}" placeholder="此附件的說明，例如：外盒正面">
+          </div>
+          <div>
+            <label>市場 / 語言</label>
+            <input class="cell-input" data-field="market" value="${safeMarket}" placeholder="例：TW / 中文">
+          </div>
+          <div>
+            <label>版號 / 版本</label>
+            <input class="cell-input" data-field="version" value="${safeVersion}" placeholder="例：v1.0 或 2024-01">
+          </div>
+          <div>
+            <label>日期</label>
+            <input class="cell-input" data-field="date" type="date" value="${att.date || ""}">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-span-6">
+            <label>備註</label>
+            <textarea class="cell-input" data-field="notes" rows="2" placeholder="內部備註">${safeNotes}</textarea>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-span-3 preview-box">尚未上傳檔案</div>
+          <div class="col-span-3">
+            <label class="btn primary btn-sm upload-btn no-print" style="width:100%;justify-content:center;">
+              <i class="fa-solid fa-upload"></i> 上傳檔案
+              <input class="file-input" type="file" accept="image/*,.pdf" hidden>
+            </label>
+            <div class="no-print">
+              <div class="help" style="margin-top:.5rem">
+                建議 140–200% 以確保列印清晰；列印時本頁改為單欄，圖片可放大至頁寬。
+              </div>
+              <label>顯示寬度（%｜螢幕與列印）</label>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input class="scale-range-input" type="range" min="20" max="200" step="5" value="${att.scale || 100}">
+                <input class="cell-input" data-field="scale" type="number" min="20" max="200" step="5" value="${att.scale || 100}" style="max-width:80px;">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer no-print" style="display:flex; justify-content:space-between; align-items:center;">
+        <span class="filename muted small"></span>
+        <button class="btn btn-danger btn-sm delete-btn">
+          <i class="fa-solid fa-trash"></i> 刪除
+        </button>
+      </div>
+    `;
+
+    $("#list").appendChild(card);
+
+    // 設定類型選單的值
+    const typeSelect = card.querySelector('select[data-field="type"]');
+    if (typeSelect) {
+      typeSelect.value = att.type || "產品標籤";
+    }
+
+    // input / textarea 變更
+    card.querySelectorAll(".cell-input").forEach(el => {
+      el.addEventListener("input", () => {
+        const field = el.dataset.field;
+        const value = el.type === "number" ? Number(el.value || 0) : el.value;
+        const attIndex = state.attachments.findIndex(a => a.id === att.id);
+        if (attIndex > -1) {
+          state.attachments[attIndex][field] = value;
+          // 同步縮放 slider
+          if (field === "scale") {
+            const range = card.querySelector(".scale-range-input");
+            if (range) range.value = value;
+            const img = card.querySelector(".preview-box img");
+            if (img) img.style.width = `${value}%`;
+          }
+          status.markUnsaved();
+        }
+      });
+    });
+
+    // 類型選單
+    if (typeSelect) {
+      typeSelect.addEventListener("change", () => {
+        const attIndex = state.attachments.findIndex(a => a.id === att.id);
+        if (attIndex > -1) {
+          state.attachments[attIndex].type = typeSelect.value;
+          status.markUnsaved();
+        }
+      });
+    }
+
+    // 縮放 slider
+    const rangeInput = card.querySelector(".scale-range-input");
+    if (rangeInput) {
+      rangeInput.addEventListener("input", () => {
+        const value = Number(rangeInput.value || 100);
+        const numberInput = card.querySelector('input[data-field="scale"]');
+        const attIndex = state.attachments.findIndex(a => a.id === att.id);
+        if (numberInput) numberInput.value = value;
+        if (attIndex > -1) {
+          state.attachments[attIndex].scale = value;
+          const img = card.querySelector(".preview-box img");
+          if (img) img.style.width = `${value}%`;
+          status.markUnsaved();
+        }
+      });
+    }
+
+    // 上傳檔案
+    const fileInput = card.querySelector(".file-input");
+    if (fileInput) {
+      fileInput.addEventListener("change", e => handleFileUpload(e, att.id));
+    }
+
+    // 刪除
+    const delBtn = card.querySelector(".delete-btn");
+    if (delBtn) {
+      delBtn.addEventListener("click", () => deleteAttachment(att.id));
+    }
+
+    // 初始預覽
+    renderPreview(card, att);
+  }
+
+  async function handleFileUpload(event, attachmentId) {
+    const file = event.target.files[0];
+    if (!pifDocRef || !file) return;
+
+    const card = document.querySelector(`[data-id="${attachmentId}"]`);
+    if (!card) return;
+    const previewBox = card.querySelector(".preview-box");
+    previewBox.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 上傳中...`;
+
+    const safeName = file.name.replace(/[^a-zA-Z0-9_.-]/g, "_");
+    const filePath = `pifs/${pageContext.pifId}/pif04/${attachmentId}-${safeName}`;
+    const fileRef = ref(storage, filePath);
+
+    try {
+      const uploadResult = await uploadBytes(fileRef, file);
+      const downloadURL = await getDownloadURL(uploadResult.ref);
+      const attIndex = state.attachments.findIndex(a => a.id === attachmentId);
+      if (attIndex > -1) {
+        const oldStoragePath = state.attachments[attIndex].storagePath;
+        if (oldStoragePath && oldStoragePath !== filePath) {
+          try {
+            await deleteObject(ref(storage, oldStoragePath));
+          } catch (e) {
+            console.warn("Could not delete old file", e);
+          }
+        }
+
+        state.attachments[attIndex] = {
+          ...state.attachments[attIndex],
+          storagePath: filePath,
+          downloadURL,
+          filename: file.name,
+          fileKind: file.type.startsWith("image/") ? "image" : "pdf"
+        };
+
+        renderPreview(card, state.attachments[attIndex]);
+        status.markUnsaved();
+      }
+    } catch (error) {
+      console.error("Upload failed", error);
+      previewBox.innerHTML = `上傳失敗`;
+      status.set("error", "檔案上傳失敗");
+    } finally {
+      event.target.value = "";
+    }
+  }
+
+  function renderPreview(card, att) {
+    const previewBox = card.querySelector(".preview-box");
+    const filenameEl = card.querySelector(".filename");
+
+    if (att.downloadURL && att.fileKind === "image") {
+      const scale = att.scale || 100;
+      previewBox.innerHTML = `
+        <a href="${att.downloadURL}" target="_blank">
+          <img src="${att.downloadURL}" alt="${escapeHtml(att.title)}" style="width:${scale}%;">
+        </a>`;
+    } else if (att.downloadURL && att.fileKind === "pdf") {
+      previewBox.innerHTML = `
+        <a href="${att.downloadURL}" target="_blank" style="display:flex;flex-direction:column;align-items:center;justify-content:center;color:#b91c1c;text-decoration:none;width:100%;height:100%;">
+          <i class="fa-solid fa-file-pdf fa-2x"></i>
+          <span style="margin-top:.5rem;">PDF 文件</span>
+        </a>`;
+    } else {
+      previewBox.textContent = "尚未上傳檔案";
+    }
+
+    if (filenameEl) {
+      filenameEl.innerHTML = att.filename
+        ? `<i class="fa-solid fa-paperclip"></i> ${escapeHtml(att.filename)}`
+        : "";
+    }
+  }
+
+  function addAttachment() {
+    const newAtt = {
+      id: (item && item.id) ? item.id : ("att_" + uid()),
+      type: "產品標籤",
+      title: "",
+      market: "",
+      version: "",
+      date: new Date().toISOString().slice(0, 10),
+      notes: "",
+      fileKind: "",
+      storagePath: null,
+      downloadURL: null,
+      scale: 100,
+      filename: ""
+    };
+    state.attachments.unshift(newAtt);
+    render();
+    status.markUnsaved();
+  }
+
+  async function deleteAttachment(id) {
+    if (!confirm("確定刪除此附件？此操作在儲存前不會真的從雲端刪除檔案。")) return;
+    state.attachments = state.attachments.filter(a => a.id !== id);
+    render();
+    status.markUnsaved();
+  }
+
+  async function saveData() {
+    status.set("syncing", "正在儲存至雲端...");
+    $("#btnSaveChanges").disabled = true;
+
+    const dataToSave = {
+      attachments: state.attachments.map(att => ({ ...att })),
+      lastModified: Timestamp.now()
+    };
+
+    try {
+      await setDoc(pifDocRef, { pif04: dataToSave }, { merge: true });
+      status.set("synced", "資料已成功儲存！");
+      hasUnsavedChanges = false;
+    } catch (err) {
+      console.error("Failed to save data: ", err);
+      status.set("error", `儲存失敗: ${err.message}`);
+      $("#btnSaveChanges").disabled = false;
+    }
+  }
+
+  function handlePdfUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+      alert("請僅上傳 PDF 檔案。");
+      return;
+    }
+    uploadMainPdf(file, `pifs/${pageContext.pifId}/04.pdf`);
+  }
+
+  function uploadMainPdf(file, storagePath) {
+    const uploadTask = uploadBytesResumable(ref(storage, storagePath), file);
+    const button = $("#btnUploadPdf");
+    button.disabled = true;
+
+    uploadTask.on(
+      "state_changed",
+      snapshot => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        setUploadStatusPdf(
+          `<i class="fa-solid fa-upload"></i> 正在上傳 PDF... ${Math.round(progress)}%`,
+          "status-info"
+        );
+      },
+      error => {
+        console.error("Main PDF Upload failed:", error);
+        setUploadStatusPdf(
+          `<i class="fa-solid fa-triangle-exclamation"></i> PDF 上傳失敗: ${error.code}`,
+          "status-error"
+        );
+        button.disabled = false;
+      },
+      () => {
+        setUploadStatusPdf(
+          '<i class="fa-solid fa-check-circle"></i> PDF 已成功上傳！儀表板狀態將會更新。',
+          "status-success"
+        );
+        button.disabled = false;
+        $("#pdfUploader").value = "";
+        setTimeout(() => setUploadStatusPdf("", "none"), 5000);
+      }
+    );
+  }
+
+  function setUploadStatusPdf(msg, styleClass) {
+    const statusEl = $("#upload-status-pdf");
+    if (!msg || styleClass === "none") {
+      statusEl.style.display = "none";
+    } else {
+      statusEl.innerHTML = msg;
+      statusEl.className = `no-print ${styleClass}`;
+      statusEl.style.display = "block";
+    }
+  }
+
+  const escapeHtml = str => {
+    return (str || "").replace(/[&<>"']/g, s => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[s]));
+  };
+
+  // 讓 pif-nav / top-bar 觸發的登出也能生效
+  document.body.addEventListener("logout-request", () => {
+    signOut(auth).then(() => {
+      window.location.href = "login.html";
+    });
+  });
+
+  startAuthFlow();
+</script>
+</body>
+</html>

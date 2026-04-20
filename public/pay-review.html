@@ -1,0 +1,1106 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>繳費證明 - 後台審核</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    .cell-wrap { max-width: 320px; white-space: normal; word-break: break-word; }
+    .cell-sm   { font-size: .85rem; color: var(--text-muted); }
+    .status-rejected  { color: var(--danger-color); font-weight: 700; }
+    .status-confirmed { color: var(--success-color); font-weight: 700; }
+
+    .final-actions{display:flex; gap:.4rem; flex-wrap:wrap; align-items:center;}
+    .final-hint{margin-top:.25rem}
+    .btn-link{display:inline-flex;align-items:center;gap:.35rem}
+
+    /* ====== Edit Modal ====== */
+    #edit-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 9999;
+    }
+    #edit-modal .modal-card {
+      background: #fff;
+      border-radius: 14px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 16px 40px rgba(0,0,0,.2);
+      padding: 1.25rem 1.5rem;
+    }
+    #edit-modal .modal-title {
+      font-size: 1.15rem;
+      margin-bottom: .75rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    #edit-modal .form-row { margin-bottom: 1rem; }
+    #edit-modal label {
+      display: block;
+      font-size: .9rem;
+      margin-bottom: .35rem;
+      color: #374151;
+    }
+    #edit-modal select,
+    #edit-modal textarea {
+      width: 100%;
+      padding: .5rem .6rem;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: .95rem;
+      background: #fff;
+    }
+    #edit-modal textarea { min-height: 120px; resize: vertical; }
+    #edit-modal .checkbox-inline {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-size: .95rem;
+    }
+    #edit-modal .hint {
+      font-size: .82rem;
+      color: var(--text-muted);
+      margin-top: .35rem;
+    }
+    #edit-modal .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: .5rem;
+      margin-top: 1rem;
+    }
+
+    @media print {
+      #edit-modal { display: none !important; }
+      .nav-actions, #btnSignOut { display: none !important; }
+      .btn-success, .btn-danger, .btn-secondary { display: none !important; }
+      .final-actions, .final-hint { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <nav>
+      <a href="index.html" class="logo"><i class="fa-solid fa-shield-halved"></i> CosPIF</a>
+      <ul id="nav-links" class="nav-links">
+        <li><a href="pif-i.html">我的專案</a></li>
+      </ul>
+      <div class="nav-actions" style="display:flex; align-items:center;">
+        <span id="user-info" style="margin-right:1.5rem; color: var(--text-muted);"></span>
+        <button id="btnSignOut" class="btn-login btn-danger">登出</button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<div class="main-content">
+  <div class="page-header">
+    <h1><i class="fa-solid fa-receipt"></i> 繳費證明 - 後台審核</h1>
+    <p class="text-muted">
+      上方為「待確認收款」（<code>status=pending</code>），下方為「已處理」（<code>status=confirmed/rejected</code>）。
+      <br>核准（收款確認）/ 退回補件時會要求填寫「管理備註」，並可選擇寄出通知信（Email 佇列：<code>mail</code>）。
+      <br>已新增：<strong>最終版 PIF 成品（final.pdf）上傳</strong>（Storage：<code>pifs/{pifId}/final.pdf</code>）。
+    </p>
+  </div>
+
+  <div id="admin-only-content" style="display:none;">
+    <!-- Pending -->
+    <div class="card">
+      <div class="card-body">
+        <h2 class="card-title" style="margin-bottom: .75rem;">待確認收款</h2>
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>繳費證明序號</th>
+                <th>廠商名稱</th>
+                <th>公司統編/歸戶代碼</th>
+                <th>聯絡人</th>
+                <th>電話</th>
+                <th>聯絡 Email</th>
+                <th>品名</th>
+                <th>PIFID</th>
+                <th>追蹤序號</th>
+                <th>金額</th>
+                <th>累計/應付</th>
+                <th>匯款日期</th>
+                <th>末五碼</th>
+                <th>繳費證明</th>
+                <th>最終PIF（final.pdf）</th>
+                <th>頁面</th>
+                <th style="width: 220px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="pendingTbody"></tbody>
+          </table>
+        </div>
+        <div id="pendingStatus" class="status-bar">正在載入待確認案件...</div>
+      </div>
+    </div>
+
+    <!-- Reviewed -->
+    <div class="card" style="margin-top: 1.5rem;">
+      <div class="card-body">
+        <h2 class="card-title" style="margin-bottom: .25rem;">已處理</h2>
+        <p class="text-muted" style="margin-bottom: .75rem;">
+          包含狀態為「confirmed / rejected」之案件。按「編修」可修改狀態與管理備註，
+          並可勾選是否重寄通知信（含管理備註）。
+          <br>已新增：最終版 PIF 成品（final.pdf）上傳/開啟。
+        </p>
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>序號</th>
+                <th>廠商</th>
+                <th>歸戶</th>
+                <th>品名</th>
+                <th>金額</th>
+                <th>累計/應付</th>
+                <th>匯款日期</th>
+                <th>狀態</th>
+                <th>審核時間</th>
+                <th>管理備註</th>
+                <th>繳費證明</th>
+                <th>最終PIF（final.pdf）</th>
+                <th style="width: 160px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="reviewedTbody"></tbody>
+          </table>
+        </div>
+        <div id="reviewedStatus" class="status-bar">正在載入已處理案件...</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="permission-denied" class="card" style="display:none; text-align:center; padding: 3rem;">
+    <div class="card-body">
+      <h2 style="color: var(--danger-color);">
+        <i class="fa-solid fa-exclamation-triangle"></i> 權限不足
+      </h2>
+      <p>只有管理員才能存取此頁面。</p>
+      <a href="pif-i.html" class="btn-submit">返回我的專案</a>
+    </div>
+  </div>
+</div>
+
+<!-- Global hidden input for final PDF upload -->
+<input id="finalUploadInput" type="file" accept="application/pdf" style="display:none" />
+
+<!-- ====== Edit Modal ====== -->
+<div id="edit-modal" aria-hidden="true">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+    <div class="modal-title" id="edit-modal-title">
+      <i class="fa-solid fa-pen-to-square"></i> 編修繳費證明審核資料
+    </div>
+
+    <div class="form-row">
+      <label for="edit-id">資料 ID（Firestore）</label>
+      <input id="edit-id" type="text" readonly
+             style="width:100%; padding:.5rem .6rem; border-radius:8px; border:1px solid #e5e7eb; background:#f9fafb;">
+    </div>
+
+    <div class="form-row">
+      <label for="edit-code">繳費證明序號</label>
+      <input id="edit-code" type="text" readonly
+             style="width:100%; padding:.5rem .6rem; border-radius:8px; border:1px solid #e5e7eb; background:#f9fafb;">
+    </div>
+
+    <div class="form-row">
+      <label for="edit-status">狀態</label>
+      <select id="edit-status">
+        <option value="confirmed">收款已確認</option>
+        <option value="rejected">退回補件</option>
+        <option value="pending">待確認</option>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <label for="edit-admin-note">管理備註（可回覆對帳資訊／補件內容）</label>
+      <textarea id="edit-admin-note" placeholder="例：已核對入帳，收款確認完成。／證明不清晰，請補上可辨識金額與日期之截圖..."></textarea>
+    </div>
+
+    <div class="form-row">
+      <label class="checkbox-inline">
+        <input type="checkbox" id="edit-resend">
+        重寄通知信（含管理備註）
+      </label>
+      <div class="hint">
+        通知信寄至「聯絡 Email」。若該筆未提供 Email，將不寄送。
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button id="edit-cancel" class="btn-secondary btn-sm">取消</button>
+      <button id="edit-save" class="btn-success btn-sm">
+        <i class="fa-solid fa-save"></i> 儲存
+      </button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import {
+    collection, getDocs, getDoc, doc,
+    query, where,
+    updateDoc, addDoc, setDoc, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+  import { auth, db } from './firebase-config.js';
+
+  const $ = sel => document.querySelector(sel);
+  const storage = getStorage();
+
+  const COLLECTION = "pif_payment_proofs"; // pay.html 對應 collection
+  const PIF_COLLECTION = "pifs";
+  const FINAL_FILE_PATH = (pifId) => `pifs/${pifId}/final.pdf`;
+
+
+// ====== Multi-payment support ======
+// 規則：同一個 PIFID 允許多筆繳費通知；以「已確認(confirmed)」之付款金額累加為 paidTotal，
+// 並與 pifs/{pifId}.amountDue（應付總額）比較，決定 paymentStatus：
+// - confirmed：paidTotal >= amountDue
+// - partial  ：0 < paidTotal < amountDue
+// - pending  ：paidTotal = 0
+//
+// 若 amountDue 未設定（舊案），則沿用舊規則：只要 paidTotal > 0 就視為 confirmed。
+function parseMoney(v){
+  if (v == null) return 0;
+  if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
+  const s = String(v).trim();
+  if (!s) return 0;
+  // remove commas / NT$ / spaces etc.
+  const cleaned = s.replace(/[^0-9.\-]/g, '');
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : 0;
+}
+
+async function recalcPifPayment(pifId) {
+  const pid = (pifId || '').toString().trim();
+  if (!pid) return null;
+
+  // 1) read pif to get amountDue
+  const pifRef = doc(db, PIF_COLLECTION, pid);
+  const pifSnap = await getDoc(pifRef);
+  const pifData = pifSnap.exists() ? (pifSnap.data() || {}) : {};
+  const amountDue = parseMoney(pifData.amountDue ?? pifData.totalDue ?? pifData.finance?.amountDue ?? pifData.finance?.amount ?? pifData.amount ?? pifData.totalAmount ?? 0);
+
+  // 2) sum confirmed payments
+  const q = query(
+    collection(db, COLLECTION),
+    where('pifId', '==', pid),
+    where('status', '==', 'confirmed')
+  );
+  const snap = await getDocs(q);
+  let paidTotal = 0;
+  snap.forEach(ds => {
+    const d = ds.data() || {};
+    paidTotal += parseMoney(d.paidAmount);
+  });
+
+  // 3) decide paymentStatus
+  let paymentStatus = 'pending';
+  if (amountDue > 0) {
+    paymentStatus = (paidTotal >= amountDue) ? 'confirmed' : (paidTotal > 0 ? 'partial' : 'pending');
+  } else {
+    paymentStatus = (paidTotal > 0) ? 'confirmed' : 'pending';
+  }
+
+  // 4) write back (merge)
+  const patch = {
+    paidTotal,
+    paymentStatus,
+    paymentUpdatedAt: serverTimestamp()
+  };
+
+  if (paymentStatus === 'confirmed') {
+    patch.paidConfirmedAt = serverTimestamp();
+    patch.paidConfirmedBy = currentUser?.uid || null;
+  } else {
+    // 若從 confirmed 改回 partial/pending，也同步清空確認欄位（避免誤判）
+    patch.paidConfirmedAt = null;
+    patch.paidConfirmedBy = null;
+  }
+
+  await setDoc(pifRef, patch, { merge: true });
+
+  return { pifId: pid, amountDue, paidTotal, paymentStatus };
+}
+
+  let currentUser = null;
+  let isAdmin = false;
+
+  // global upload context
+  const finalUploadInput = document.getElementById('finalUploadInput');
+  let uploadCtx = { pifId: null, row: null, btn: null, link: null, hint: null };
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      currentUser = user;
+      $('#user-info').textContent = `歡迎, ${user.displayName || user.email}`;
+      $('#btnSignOut').addEventListener('click', () =>
+        auth.signOut().then(() => window.location.href = 'login.html')
+      );
+
+      try {
+        const idTokenResult = await user.getIdTokenResult(true);
+        isAdmin = idTokenResult.claims.admin === true;
+        renderNavLinks();
+
+        if (isAdmin) {
+          $('#admin-only-content').style.display = 'block';
+          await loadPaymentProofs();
+        } else {
+          $('#permission-denied').style.display = 'block';
+        }
+      } catch (error) {
+        console.error("Permission check failed:", error);
+        const ps = $('#pendingStatus');
+        const rs = $('#reviewedStatus');
+        if (ps) ps.textContent = '無法驗證您的權限。';
+        if (rs) rs.textContent = '無法驗證您的權限。';
+        $('#permission-denied').style.display = 'block';
+      }
+    } else {
+      window.location.href = 'login.html';
+    }
+  });
+
+  function renderNavLinks() {
+    if (!isAdmin) return;
+    const adminLinks = `
+      <li><a href="vendors.html">廠商資料庫</a></li>
+      <li><a href="review.html">廠商申請審核</a></li>
+      <li><a href="pif-intent-review.html">PIF 意願審核</a></li>
+      <li><a href="pay-review.html" class="active">繳費證明審核</a></li>
+    `;
+    $('#nav-links').insertAdjacentHTML('beforeend', adminLinks);
+  }
+
+  function formatDateTime(date) {
+    if (!date) return '—';
+    const d = (date instanceof Date) ? date : date.toDate ? date.toDate() : null;
+    if (!d) return '—';
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+  }
+
+  function escapeHtml(str) {
+    return (str || '').replace(/[&<>"']/g, s => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    }[s] || s));
+  }
+
+
+  function cssEscape(str){
+    // Minimal escape for attribute selectors
+    return (str || '').toString().replace(/["\\]/g, '\\$&');
+  }
+
+
+  function safeCell(value, max = 80) {
+    const v = (value ?? '').toString().trim();
+    if (!v) return '—';
+    const clipped = v.length > max ? v.slice(0, max) + '…' : v;
+    return escapeHtml(clipped);
+  }
+
+  function toSafeHtmlWithBr(text) {
+    const t = (text ?? '').toString().trim();
+    if (!t) return '';
+    return escapeHtml(t).replace(/\n/g, '<br>');
+  }
+
+  function statusLabel(status) {
+    const s = (status || 'pending').toLowerCase();
+    if (s === 'confirmed') return { text: '收款已確認', cls: 'status-confirmed' };
+    if (s === 'rejected')  return { text: '退回補件', cls: 'status-rejected' };
+    return { text: '待確認', cls: '' };
+  }
+
+  function buildStatusUrl(sub) {
+    const code = (sub.paymentCode || sub.paymentCodeUpper || '').toString().trim();
+    if (!code) return '';
+    const base = (sub.url || 'pay.html').toString().trim() || 'pay.html';
+    const glue = base.includes('?') ? '&' : '?';
+    return `${base}${glue}code=${encodeURIComponent(code)}`;
+  }
+
+  async function checkFinalPdfUrl(pifId) {
+    if (!pifId) return null;
+    try {
+      const url = await getDownloadURL(ref(storage, FINAL_FILE_PATH(pifId)));
+      return url;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function finalCellHtml(pifId, proofDocId) {
+    const pid = (pifId || '').toString().trim();
+    const did = (proofDocId || '').toString().trim();
+    // 若尚未綁定 PIFID（常見於舊資料），提供「設定PIFID」按鈕
+    if (!pid) {
+      return `
+        <div class="final-actions">
+          <button class="btn-secondary btn-sm set-pifid-btn" data-docid="${escapeHtml(did)}">
+            <i class="fa-solid fa-link"></i> 設定PIFID
+          </button>
+        </div>
+        <div class="cell-sm final-hint" data-pifid="" data-docid="${escapeHtml(did)}">尚未綁定 PIFID（請先設定）</div>
+      `;
+    }
+
+    return `
+      <div class="final-actions">
+        <button class="btn-secondary btn-sm upload-final-btn" data-pifid="${escapeHtml(pid)}">
+          <i class="fa-solid fa-file-arrow-up"></i> 上傳/更新
+        </button>
+        <a class="btn-link open-final-link" data-pifid="${escapeHtml(pid)}" href="#" target="_blank" style="display:none;">
+          <i class="fa-solid fa-file-pdf"></i> 開啟
+        </a>
+      </div>
+      <div class="cell-sm final-hint" data-pifid="${escapeHtml(pid)}">檢查中...</div>
+    `;
+  }
+
+  function bindFinalUploadButtons(scopeEl) {
+    // 上傳/更新 final.pdf
+    scopeEl.querySelectorAll('.upload-final-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const pifId = btn.dataset.pifid;
+        const cell = btn.closest('td');
+        const link = cell.querySelector('.open-final-link');
+        const hint = cell.querySelector('.final-hint');
+
+        uploadCtx = { pifId, row: btn.closest('tr'), btn, link, hint };
+        finalUploadInput.value = '';
+        finalUploadInput.click();
+      });
+    });
+
+    // 舊資料：未綁定 pifId -> 先設定 PIFID
+    scopeEl.querySelectorAll('.set-pifid-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const docId = btn.dataset.docid;
+        const pifId = prompt('此筆繳費證明尚未綁定 PIFID，請輸入要綁定的 PIFID：');
+        if (pifId === null) return;
+        const pid = (pifId || '').trim();
+        if (!pid) return alert('PIFID 不可空白。');
+
+        try {
+          btn.disabled = true;
+          btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 設定中...';
+
+          // 回填到繳費證明資料
+          await updateDoc(doc(db, COLLECTION, docId), { pifId: pid });
+
+          // 同步到專案主檔（避免後續「確認收款」無法寫入）
+          await setDoc(doc(db, PIF_COLLECTION, pid), {
+            paymentProofDocId: docId,
+            paymentUpdatedAt: serverTimestamp()
+          }, { merge: true });
+
+          alert('已綁定 PIFID，頁面將重新載入以顯示上傳按鈕。');
+          await loadPaymentProofs();
+        } catch (err) {
+          console.error(err);
+          alert('設定 PIFID 失敗：' + (err.message || err));
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-link"></i> 設定PIFID';
+        }
+      });
+    });
+  }
+
+  async function refreshFinalCells(scopeEl) {
+    const hints = scopeEl.querySelectorAll('.final-hint');
+    const pifIds = new Set();
+    hints.forEach(h => {
+      const pid = (h.dataset.pifid || '').trim();
+      if (pid) pifIds.add(pid);
+      else {
+        if (h.dataset.docid) h.textContent = '尚未綁定 PIFID（請先設定）';
+      }
+    });
+
+    for (const pifId of pifIds) {
+      const url = await checkFinalPdfUrl(pifId);
+      scopeEl.querySelectorAll(`.final-hint[data-pifid="${CSS.escape(pifId)}"]`).forEach(h => {
+        h.textContent = url ? '已上傳（可開啟/可更新）' : '尚未上傳';
+      });
+      scopeEl.querySelectorAll(`.open-final-link[data-pifid="${CSS.escape(pifId)}"]`).forEach(a => {
+        if (url) {
+          a.href = url;
+          a.style.display = 'inline-flex';
+        } else {
+          a.href = '#';
+          a.style.display = 'none';
+  }
+
+
+  window.refreshProgressCells = async function(scopeEl) {
+    const els = scopeEl.querySelectorAll('.pay-progress');
+    const pifIds = new Set();
+    els.forEach(el => {
+      const pid = (el.dataset.pifid || '').trim();
+      if (pid) pifIds.add(pid);
+    });
+
+    for (const pid of pifIds) {
+      try {
+        const pifSnap = await getDoc(doc(db, PIF_COLLECTION, pid));
+        const p = pifSnap.exists() ? (pifSnap.data() || {}) : {};
+
+        const amountDue = parseMoney(p.amountDue ?? p.totalDue ?? p.finance?.amountDue ?? p.finance?.amount ?? p.amount ?? p.totalAmount ?? 0);
+        const paidTotal = parseMoney(p.paidTotal ?? 0);
+
+        let text = '—';
+        if (amountDue > 0) text = `NT$ ${paidTotal} / ${amountDue}`;
+        else if (paidTotal > 0) text = `NT$ ${paidTotal} / —`;
+
+        scopeEl.querySelectorAll(`.pay-progress[data-pifid="${cssEscape(pid)}"]`).forEach(el => {
+          el.textContent = text;
+        });
+      } catch (e) {
+        console.warn('refreshProgressCells failed:', pid, e);
+      }
+    }
+  }
+
+      });
+    }
+  }
+
+  finalUploadInput.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      alert('請上傳 PDF 檔案。');
+      finalUploadInput.value = '';
+      return;
+    }
+    if (!uploadCtx?.pifId) {
+      alert('缺少 PIFID，無法上傳。');
+      finalUploadInput.value = '';
+      return;
+    }
+
+    const pifId = uploadCtx.pifId;
+    const path = FINAL_FILE_PATH(pifId);
+    const btn = uploadCtx.btn;
+    const hint = uploadCtx.hint;
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 上傳中...`;
+    if (hint) hint.textContent = '上傳中...';
+
+    try {
+      const task = uploadBytesResumable(ref(storage, path), file);
+
+      task.on('state_changed',
+        (snap) => {
+          const p = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+          btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 上傳中 ${p}%`;
+          if (hint) hint.textContent = `上傳中 ${p}%`;
+        },
+        (err) => {
+          console.error('Final upload error:', err);
+          alert(`上傳失敗：${err.code || err.message}`);
+          btn.disabled = false;
+          btn.innerHTML = `<i class="fa-solid fa-file-arrow-up"></i> 上傳/更新`;
+          if (hint) hint.textContent = '上傳失敗';
+          finalUploadInput.value = '';
+        },
+        async () => {
+          // ✅ 寫回專案主檔（讓 client 儀表板可判斷是否顯示下載）
+          await setDoc(doc(db, PIF_COLLECTION, pifId), {
+            finalPdfReady: true,
+            finalPdfPath: path,
+            finalPdfFileName: file.name || 'final.pdf',
+            finalPdfSize: file.size || null,
+            finalPdfUpdatedAt: serverTimestamp(),
+            // 若此筆付款已在 pay-review 被確認，可同時維持/寫入 confirmed（不影響未付款者）
+            // paymentStatus: 'confirmed'
+          }, { merge: true });
+
+          const url = await checkFinalPdfUrl(pifId);
+          if (url && uploadCtx.link) {
+            uploadCtx.link.href = url;
+            uploadCtx.link.style.display = 'inline-flex';
+          }
+          btn.disabled = false;
+          btn.innerHTML = `<i class="fa-solid fa-file-arrow-up"></i> 上傳/更新`;
+          if (hint) hint.textContent = '已上傳（可開啟/可更新）';
+          finalUploadInput.value = '';
+
+          alert(`最終PIF已上傳：${pifId}\n路徑：${path}`);
+        }
+      );
+    } catch (err) {
+      console.error(err);
+      alert(`上傳失敗：${err.message}`);
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-file-arrow-up"></i> 上傳/更新`;
+      if (hint) hint.textContent = '上傳失敗';
+      finalUploadInput.value = '';
+    }
+  });
+
+  async function loadPaymentProofs() {
+    const pendingStatusEl  = $('#pendingStatus');
+    const pendingTbody     = $('#pendingTbody');
+    const reviewedStatusEl = $('#reviewedStatus');
+    const reviewedTbody    = $('#reviewedTbody');
+
+    if (pendingStatusEl)  pendingStatusEl.textContent  = '正在載入待確認案件...';
+    if (reviewedStatusEl) reviewedStatusEl.textContent = '正在載入已處理案件...';
+
+    pendingTbody.innerHTML  = '';
+    reviewedTbody.innerHTML = '';
+
+    try {
+      const snap = await getDocs(collection(db, COLLECTION));
+      const pending  = [];
+      const reviewed = [];
+
+      snap.forEach(docSnap => {
+        const data = docSnap.data() || {};
+        const rec  = { id: docSnap.id, ...data };
+        const st = (data.status || 'pending').toLowerCase();
+        if (!data.status || st === 'pending') pending.push(rec);
+        else reviewed.push(rec);
+      });
+
+      const sortBySubmittedDesc = (a, b) => {
+        const ta = a.submittedAt && a.submittedAt.toMillis ? a.submittedAt.toMillis() : 0;
+        const tb = b.submittedAt && b.submittedAt.toMillis ? b.submittedAt.toMillis() : 0;
+        return tb - ta;
+      };
+      pending.sort(sortBySubmittedDesc);
+      reviewed.sort(sortBySubmittedDesc);
+
+      // ====== Pending ======
+      if (pending.length === 0) {
+        pendingTbody.innerHTML =
+          '<tr><td colspan="17" style="text-align:center; padding:2rem; color: var(--text-muted);">目前沒有待確認的繳費證明。</td></tr>';
+        if (pendingStatusEl) pendingStatusEl.textContent = '目前沒有待確認的繳費證明。';
+      } else {
+        for (const sub of pending) {
+          const tr = pendingTbody.insertRow();
+
+          const code = (sub.paymentCode || sub.paymentCodeUpper || sub.id || '').toString();
+          const statusUrl = buildStatusUrl(sub);
+          const pifId = (sub.pifId || '').toString().trim();
+
+          tr.dataset.id = sub.id;
+          tr.dataset.code = code;
+          tr.dataset.pifid = pifId;
+          tr.dataset.contactEmail = (sub.contactEmail || '').trim();
+          tr.dataset.vendorName = (sub.vendorName || '').trim();
+          tr.dataset.productName = (sub.productName || '').trim();
+          tr.dataset.statusUrl = statusUrl;
+          tr.dataset.adminNote = sub.adminNote || '';
+
+          tr.innerHTML = `
+            <td><span class="text-sm">${escapeHtml(code || sub.id)}</span></td>
+            <td>${safeCell(sub.vendorName)}</td>
+            <td>${safeCell(sub.companyTaxId || sub.companyKey)}</td>
+            <td>${safeCell(sub.contactName)}</td>
+            <td>${safeCell(sub.contactPhone)}</td>
+            <td>${safeCell(sub.contactEmail)}</td>
+            <td>${safeCell(sub.productName)}</td>
+            <td>${safeCell(sub.pifId)}</td>
+            <td>${safeCell(sub.trackingCode)}</td>
+            <td>${(sub.paidAmount != null && sub.paidAmount !== '') ? `NT$ ${escapeHtml(String(sub.paidAmount))}` : '—'}</td>
+            <td><span class="pay-progress" data-pifid="${escapeHtml(pifId)}">—</span></td>
+            <td>${safeCell(sub.paidAt)}</td>
+            <td>${safeCell(sub.bankLast5)}</td>
+            <td>
+              ${sub.proofUrl
+                ? `<a href="${escapeHtml(sub.proofUrl)}" target="_blank" class="btn-link"><i class="fa-solid fa-file-arrow-up"></i> 開啟</a>`
+                : '—'}
+            </td>
+            <td>${finalCellHtml(pifId, sub.id)}</td>
+            <td>
+              ${statusUrl
+                ? `<a href="${escapeHtml(statusUrl)}" target="_blank" class="btn-link"><i class="fa-solid fa-up-right-from-square"></i> 狀態頁</a>`
+                : '—'}
+            </td>
+            <td>
+              <button class="btn-success btn-sm confirm-btn">
+                <i class="fa-solid fa-circle-check"></i> 確認收款
+              </button>
+              <button class="btn-danger btn-sm reject-btn">
+                <i class="fa-solid fa-circle-xmark"></i> 退回補件
+              </button>
+            </td>
+          `;
+        }
+
+        pendingTbody.querySelectorAll('.confirm-btn').forEach(btn => btn.addEventListener('click', handleReview));
+        pendingTbody.querySelectorAll('.reject-btn').forEach(btn => btn.addEventListener('click', handleReview));
+
+        bindFinalUploadButtons(pendingTbody);
+        await refreshFinalCells(pendingTbody);
+        await window.refreshProgressCells(pendingTbody);
+
+        if (pendingStatusEl) pendingStatusEl.textContent = `共 ${pending.length} 筆待確認繳費證明。`;
+      }
+
+      // ====== Reviewed ======
+      if (reviewed.length === 0) {
+        reviewedTbody.innerHTML =
+          '<tr><td colspan="13" style="text-align:center; padding:2rem; color: var(--text-muted);">尚無已處理案件。</td></tr>';
+        if (reviewedStatusEl) reviewedStatusEl.textContent = '尚無已處理案件。';
+      } else {
+        for (const sub of reviewed) {
+          const tr = reviewedTbody.insertRow();
+          tr.dataset.id = sub.id;
+
+          const pifId = (sub.pifId || '').toString().trim();
+          const code = (sub.paymentCode || sub.paymentCodeUpper || sub.id || '').toString();
+          const st = statusLabel(sub.status);
+          const reviewedAtText = formatDateTime(sub.reviewedAt);
+          const adminNoteText = sub.adminNote ? escapeHtml(sub.adminNote) : '—';
+
+          tr.innerHTML = `
+            <td><span class="text-sm">${escapeHtml(code || sub.id)}</span></td>
+            <td>${safeCell(sub.vendorName)}</td>
+            <td>${safeCell(sub.companyTaxId || sub.companyKey)}</td>
+            <td>${safeCell(sub.productName)}</td>
+            <td>${(sub.paidAmount != null && sub.paidAmount !== '') ? `NT$ ${escapeHtml(String(sub.paidAmount))}` : '—'}</td>
+            <td><span class="pay-progress" data-pifid="${escapeHtml(pifId)}">—</span></td>
+            <td>${safeCell(sub.paidAt)}</td>
+            <td class="${st.cls}">${st.text}</td>
+            <td><span class="text-sm">${reviewedAtText}</span></td>
+            <td class="cell-wrap"><span class="text-sm">${adminNoteText}</span></td>
+            <td>
+              ${sub.proofUrl
+                ? `<a href="${escapeHtml(sub.proofUrl)}" target="_blank" class="btn-link"><i class="fa-solid fa-file-arrow-up"></i> 開啟</a>`
+                : '—'}
+            </td>
+            <td>${finalCellHtml(pifId, sub.id)}</td>
+            <td>
+              <button class="btn-secondary btn-sm edit-btn">
+                <i class="fa-solid fa-pen"></i> 編修
+              </button>
+            </td>
+          `;
+        }
+
+        reviewedTbody.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => {
+          const row = e.currentTarget.closest('tr');
+          openEditModalById(row.dataset.id);
+        }));
+
+        bindFinalUploadButtons(reviewedTbody);
+        await refreshFinalCells(reviewedTbody);
+        await window.refreshProgressCells(reviewedTbody);
+
+        if (reviewedStatusEl) reviewedStatusEl.textContent = `共 ${reviewed.length} 筆已處理案件。`;
+      }
+
+    } catch (error) {
+      console.error("Error loading payment proofs:", error);
+      if (pendingStatusEl)  pendingStatusEl.textContent  = `載入失敗：${error.message}`;
+      if (reviewedStatusEl) reviewedStatusEl.textContent = `載入失敗：${error.message}`;
+      pendingTbody.innerHTML =
+        `<tr><td colspan="16" style="text-align:center; color: var(--danger-color);">${escapeHtml(error.message)}</td></tr>`;
+      reviewedTbody.innerHTML =
+        `<tr><td colspan="12" style="text-align:center; color: var(--danger-color);">${escapeHtml(error.message)}</td></tr>`;
+    }
+  }
+
+  // Pending: Confirm / Reject
+  async function handleReview(e) {
+    const btn = e.currentTarget;
+    const isConfirm = btn.classList.contains('confirm-btn');
+    const row = btn.closest('tr');
+    const id = row.dataset.id;
+    const code = row.dataset.code || id;
+    const actionText = isConfirm ? '確認收款' : '退回補件';
+
+    const notifyTo = (row.dataset.contactEmail || '').trim();
+    const statusUrl = (row.dataset.statusUrl || '').trim();
+    const existingNote = row.dataset.adminNote || '';
+    let pifId = (row.dataset.pifid || '').trim();
+    // 若舊資料未帶 pifId，先要求管理者補上，否則無法解鎖下載/上傳最終PIF
+    if (!pifId) {
+      const pid = prompt('此筆繳費證明未綁定 PIFID，請先輸入要綁定的 PIFID（之後才能確認收款/上傳成品）：');
+      if (pid === null) return;
+      pifId = (pid || '').trim();
+      if (!pifId) { alert('PIFID 不可空白。'); return; }
+      // 回填到繳費證明資料（避免下次再問）
+      await updateDoc(doc(db, COLLECTION, id), { pifId });
+      row.dataset.pifid = pifId;
+    }
+
+    const adminNote = prompt(
+      `請輸入「管理備註」（${isConfirm ? '可填入對帳資訊/收款說明' : '請填退回原因與補件要求'}；將包含在通知信中）：`,
+      existingNote
+    );
+    if (adminNote === null) return;
+
+    if (!isConfirm && !(adminNote || '').trim()) {
+      alert('退回補件請務必填寫管理備註（退回原因/補件要求）。');
+      return;
+    }
+
+    const willSendMail = !!notifyTo;
+    const confirmMailText = willSendMail ? `\n\n並寄送通知信至：${notifyTo}` : `\n\n（未提供聯絡 Email，將不寄送通知信）`;
+
+    if (!confirm(`確定要「${actionText}」序號 ${code} 嗎？${confirmMailText}`)) return;
+
+    row.querySelectorAll('button').forEach(b => b.disabled = true);
+    btn.parentElement.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 處理中...`;
+
+    try {
+      const submissionRef = doc(db, COLLECTION, id);
+      const newStatus = isConfirm ? 'confirmed' : 'rejected';
+      const statusText = isConfirm ? '收款已確認' : '退回補件';
+
+      await updateDoc(submissionRef, {
+        status: newStatus,
+        adminNote: (adminNote || '').trim(),
+        reviewedBy: currentUser.uid,
+        reviewedAt: serverTimestamp()
+      });
+
+// ✅ 多筆付款：確認/退回其中一筆後，重新計算該 PIF 的累計收款（已確認金額加總）
+let payCalc = null;
+if (pifId) {
+  payCalc = await recalcPifPayment(pifId);
+}
+
+      // Optional: send mail
+      if (willSendMail) {
+        const adminNoteHtml = toSafeHtmlWithBr(adminNote);
+        const emailContent = {
+          to: notifyTo,
+          message: {
+            subject: `【CosPIF 系統通知】繳費證明「${code}」${statusText}`,
+            html: `
+              <p>您好：</p>
+              <p>您於 CosPIF 系統提交的「繳費證明」（序號：<strong>${escapeHtml(code)}</strong>）已由管理員處理。</p>
+              
+<p>處理結果：<strong>${escapeHtml(statusText)}</strong></p>
+
+${
+  (payCalc && payCalc.amountDue > 0)
+    ? `<p>累計已確認：<strong>NT$ ${escapeHtml(String(payCalc.paidTotal))}</strong> ／ 應付總額：<strong>NT$ ${escapeHtml(String(payCalc.amountDue))}</strong>
+        （${payCalc.paymentStatus === 'confirmed' ? '已結清' : (payCalc.paymentStatus === 'partial' ? '未結清（部分收款）' : '尚未入帳') }）</p>`
+    : ''
+}
+
+              ${adminNoteHtml ? `
+                <hr>
+                <p><strong>管理備註：</strong><br>${adminNoteHtml}</p>
+              ` : ''}
+
+              <p>您可點擊以下連結查看狀態頁：</p>
+              <p><a href="${escapeHtml(statusUrl || '#')}">${escapeHtml(statusUrl || '狀態頁')}</a></p>
+
+              <p>此為系統自動發送的郵件，請勿直接回覆。</p>
+              <br>
+              <p>CosPIF 智慧科技整合系統 敬上</p>
+            `,
+          },
+        };
+        await addDoc(collection(db, "mail"), emailContent);
+      }
+
+      const calcMsg = (payCalc && payCalc.amountDue > 0)
+        ? `\n\n累計已確認：NT$ ${payCalc.paidTotal} / 應付：NT$ ${payCalc.amountDue}（${payCalc.paymentStatus === 'confirmed' ? '已結清' : (payCalc.paymentStatus === 'partial' ? '未結清' : '尚未入帳')}）`
+        : '';
+      alert(`已完成「${actionText}」。${willSendMail ? '通知信已加入發送佇列。' : ''}${calcMsg}`);
+      await loadPaymentProofs();
+
+    } catch (error) {
+      console.error(`${actionText} failed:`, error);
+      alert(`${actionText} 失敗：${error.message}`);
+      await loadPaymentProofs();
+    }
+  }
+
+  // ====== Edit Modal Logic ======
+  const editModal = document.getElementById('edit-modal');
+  const editIdInput = document.getElementById('edit-id');
+  const editCodeInput = document.getElementById('edit-code');
+  const editStatusSel = document.getElementById('edit-status');
+  const editNoteTa = document.getElementById('edit-admin-note');
+  const editResendChk = document.getElementById('edit-resend');
+  const editCancelBtn = document.getElementById('edit-cancel');
+  const editSaveBtn = document.getElementById('edit-save');
+
+  let editingId = null;
+  let editingData = null;
+
+  function openModal() {
+    editModal.style.display = 'flex';
+    editModal.setAttribute('aria-hidden', 'false');
+  }
+  function closeModal() {
+    editModal.style.display = 'none';
+    editModal.setAttribute('aria-hidden', 'true');
+    editingId = null;
+    editingData = null;
+    editResendChk.checked = false;
+    editSaveBtn.disabled = false;
+    editSaveBtn.innerHTML = '<i class="fa-solid fa-save"></i> 儲存';
+  }
+
+  editModal.addEventListener('click', (e) => { if (e.target === editModal) closeModal(); });
+  editCancelBtn.addEventListener('click', closeModal);
+
+  async function openEditModalById(id) {
+    try {
+      editingId = id;
+      editIdInput.value = id;
+      editResendChk.checked = false;
+
+      openModal();
+      editSaveBtn.disabled = true;
+      editSaveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 載入中...';
+
+      const submissionRef = doc(db, COLLECTION, id);
+      const snap = await getDoc(submissionRef);
+
+      if (!snap.exists()) {
+        alert('找不到這筆繳費證明資料。');
+        closeModal();
+        return;
+      }
+
+      editingData = snap.data() || {};
+      const code = (editingData.paymentCode || editingData.paymentCodeUpper || id || '').toString();
+      editCodeInput.value = code;
+
+      editStatusSel.value = (editingData.status || 'pending').toLowerCase();
+      editNoteTa.value = editingData.adminNote || '';
+
+      editSaveBtn.disabled = false;
+      editSaveBtn.innerHTML = '<i class="fa-solid fa-save"></i> 儲存';
+      editNoteTa.focus();
+    } catch (err) {
+      console.error('openEditModalById error:', err);
+      alert(`載入編修資料失敗：${err.message}`);
+      closeModal();
+    }
+  }
+
+  async function handleEditSave() {
+    if (!editingId || !editingData) return;
+
+    const newStatus = editStatusSel.value;
+    const newNote = (editNoteTa.value || '').trim();
+    const wantResend = editResendChk.checked;
+
+    editSaveBtn.disabled = true;
+    editSaveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 儲存中...';
+
+    try {
+      const submissionRef = doc(db, COLLECTION, editingId);
+
+      await updateDoc(submissionRef, {
+        status: newStatus,
+        adminNote: newNote,
+        reviewedBy: currentUser.uid,
+        reviewedAt: serverTimestamp()
+      });
+
+// ✅ 多筆付款：編修任一筆（pending/confirmed/rejected）後，重新計算該 PIF 的累計收款
+let payCalc = null;
+if (editingData.pifId) {
+  payCalc = await recalcPifPayment(editingData.pifId);
+}
+
+      let notifyTo = '';
+      if (wantResend) {
+        notifyTo = (editingData.contactEmail || '').trim();
+        if (!notifyTo) {
+          alert('未提供聯絡 Email，無法重寄通知信。');
+        } else {
+          const statusTextMap = { confirmed: '收款已確認', rejected: '退回補件', pending: '待確認' };
+          const statusText = statusTextMap[newStatus] || newStatus;
+
+          const code = (editingData.paymentCode || editingData.paymentCodeUpper || editingId || '').toString();
+          const statusUrl = buildStatusUrl({ ...editingData, paymentCode: code });
+
+          const adminNoteHtml = toSafeHtmlWithBr(newNote);
+
+          const emailContent = {
+            to: notifyTo,
+            message: {
+              subject: `【CosPIF 系統通知】繳費證明「${code}」狀態更新：${statusText}`,
+              html: `
+                <p>您好：</p>
+                <p>您於 CosPIF 系統提交的「繳費證明」（序號：<strong>${escapeHtml(code)}</strong>）審核資料已更新。</p>
+                <p>目前狀態：<strong>${escapeHtml(statusText)}</strong></p>
+
+                ${adminNoteHtml ? `
+                  <hr>
+                  <p><strong>管理備註：</strong><br>${adminNoteHtml}</p>
+                ` : ''}
+
+                <p>您可點擊以下連結查看狀態頁：</p>
+                <p><a href="${escapeHtml(statusUrl || '#')}">${escapeHtml(statusUrl || '狀態頁')}</a></p>
+
+                <p>此為系統自動發送的郵件，請勿直接回覆。</p>
+                <br>
+                <p>CosPIF 智慧科技整合系統 敬上</p>
+              `,
+            },
+          };
+          await addDoc(collection(db, "mail"), emailContent);
+        }
+      }
+
+      closeModal();
+      await loadPaymentProofs();
+
+      if (wantResend && notifyTo) {
+        alert(`已更新審核資料並重寄通知信至：${notifyTo}`);
+      } else if (wantResend && !notifyTo) {
+        alert('已更新審核資料（但未寄送通知信）。');
+      } else {
+        alert('已更新審核資料。');
+      }
+
+    } catch (err) {
+      console.error('handleEditSave error:', err);
+      alert(`儲存失敗：${err.message}`);
+      editSaveBtn.disabled = false;
+      editSaveBtn.innerHTML = '<i class="fa-solid fa-save"></i> 儲存';
+    }
+  }
+
+  editSaveBtn.addEventListener('click', handleEditSave);
+
+  // Expose for debug
+  window.openEditModalById = openEditModalById;
+</script>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>廠商資料庫查詢</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { background-color: #f9fafb; }
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .vendor-card {
+            background: #fff;
+            border: 1px solid var(--line-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            padding: 1.5rem;
+        }
+        .vendor-card h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0 0 1rem 0;
+            color: var(--primary-color);
+        }
+        .vendor-info {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 0.95rem;
+        }
+        .vendor-info li {
+            display: flex;
+            align-items: center;
+            color: var(--text-muted);
+            margin-bottom: 0.6rem;
+        }
+        .vendor-info li i {
+            margin-right: 0.8rem;
+            width: 16px;
+            text-align: center;
+            color: var(--primary-color-light);
+        }
+        #results-container .card {
+             text-align: center;
+             padding: 3rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo"><i class="fa-solid fa-shield-halved"></i> CosPIF</a>
+                <ul id="nav-links" class="nav-links">
+                    <li><a href="pif-i.html">我的PIF文件櫃</a></li>
+                    <li><a href="company.html">申請新增廠商</a></li>
+                    <li><a href="companies.html" class="active">廠商資料庫</a></li>
+                </ul>
+                <div class="nav-actions" style="display: flex; align-items: center;">
+                    <span id="user-info" style="margin-right: 1.5rem; color: var(--text-muted);"></span>
+                    <button id="btnSignOut" class="btn-login btn-danger">登出</button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <div class="page-header">
+            <div>
+                <h1><i class="fa-solid fa-magnifying-glass"></i> 廠商資料庫查詢</h1>
+                <p class="text-muted">您可以透過統一編號、公司名稱或所在縣市來搜尋已核准的廠商資料。</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h2 class="card-title">搜尋條件</h2></div>
+            <div class="card-body">
+                <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                    <div class="form-group">
+                        <label for="searchTaxId">統一編號 (優先查詢)</label>
+                        <input type="text" id="searchTaxId" class="form-input" placeholder="輸入 8 位數字">
+                    </div>
+                    <div class="form-group">
+                        <label for="searchCompanyName">公司名稱</label>
+                        <input type="text" id="searchCompanyName" class="form-input" placeholder="輸入公司部分或完整名稱">
+                    </div>
+                    <div class="form-group">
+                        <label for="searchCity">所在縣市</label>
+                        <select id="searchCity" class="form-input">
+                            <option value="">所有縣市</option>
+                            <option value="臺北市">臺北市</option>
+                            <option value="新北市">新北市</option>
+                            <option value="桃園市">桃園市</option>
+                            <option value="臺中市">臺中市</option>
+                            <option value="臺南市">臺南市</option>
+                            <option value="高雄市">高雄市</option>
+                            <option value="基隆市">基隆市</option>
+                            <option value="新竹市">新竹市</option>
+                            <option value="嘉義市">嘉義市</option>
+                            <option value="新竹縣">新竹縣</option>
+                            <option value="苗栗縣">苗栗縣</option>
+                            <option value="彰化縣">彰化縣</option>
+                            <option value="南投縣">南投縣</option>
+                            <option value="雲林縣">雲林縣</option>
+                            <option value="嘉義縣">嘉義縣</option>
+                            <option value="屏東縣">屏東縣</option>
+                            <option value="宜蘭縣">宜蘭縣</option>
+                            <option value="花蓮縣">花蓮縣</option>
+                            <option value="臺東縣">臺東縣</option>
+                            <option value="澎湖縣">澎湖縣</option>
+                            <option value="金門縣">金門縣</option>
+                            <option value="連江縣">連江縣</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer" style="text-align:right;">
+                <button id="btnSearch" class="btn-submit"><i class="fa-solid fa-search"></i> 開始查詢</button>
+            </div>
+        </div>
+
+        <div id="results-container"></div>
+    </div>
+
+<script type="module">
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { collection, query, where, getDocs, getDoc, doc, or } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { auth, db } from "./firebase-config.js";
+
+    const $ = sel => document.querySelector(sel);
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            $('#user-info').textContent = `歡迎, ${user.displayName || user.email}`;
+            $('#btnSignOut').addEventListener('click', () => signOut(auth).then(() => { window.location.href = 'login.html'; }));
+        } else {
+            window.location.href = 'login.html';
+        }
+    });
+
+    $('#btnSearch').addEventListener('click', searchVendors);
+
+    async function searchVendors() {
+        const taxId = $('#searchTaxId').value.trim();
+        const companyName = $('#searchCompanyName').value.trim();
+        const city = $('#searchCity').value;
+
+        if (!taxId && !companyName && !city) {
+            alert('請至少提供一個搜尋條件。');
+            return;
+        }
+
+        const btn = $('#btnSearch');
+        const resultsContainer = $('#results-container');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 查詢中...';
+        resultsContainer.innerHTML = '';
+        
+        let results = [];
+
+        try {
+            const vendorsRef = collection(db, "vendors");
+
+            // Priority 1: Search by Tax ID (most specific)
+            if (taxId) {
+                if (!/^\d{8}$/.test(taxId)) {
+                    alert('「統一編號」格式錯誤，請輸入 8 位數字。');
+                    throw new Error('Invalid Tax ID format.');
+                }
+                const docRef = doc(db, "vendors", taxId);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    results.push({ taxId: docSnap.id, ...docSnap.data() });
+                }
+            } 
+            // Search by other criteria if no Tax ID is given
+            else {
+                let qConstraints = [];
+                let firestoreQuery;
+
+                if (companyName) {
+                    qConstraints.push(where("name", ">=", companyName));
+                    qConstraints.push(where("name", "<=", companyName + '\uf8ff'));
+                }
+                if (city) {
+                    // Firestore allows multiple range filters on different fields ONLY if they are part of a composite index.
+                    // For simplicity and common use cases, if both companyName and city are provided,
+                    // we query by companyName (as it's often more selective) and filter by city client-side.
+                    // If only city is provided, we query by city directly.
+                    if (companyName) {
+                        // If companyName is already used for query, we'll filter city client-side.
+                        // The Firestore query will only include companyName constraints.
+                    } else {
+                        qConstraints.push(where("address", ">=", city));
+                        qConstraints.push(where("address", "<=", city + '\uf8ff'));
+                    }
+                }
+
+                if (qConstraints.length === 0) {
+                    resultsContainer.innerHTML = '<div class="card"><p>請提供有效的搜尋條件。</p></div>';
+                    return;
+                }
+                
+                firestoreQuery = query(vendorsRef, ...qConstraints);
+                const querySnapshot = await getDocs(firestoreQuery);
+                
+                querySnapshot.forEach(doc => {
+                    let vendorData = { taxId: doc.id, ...doc.data() };
+                    // If companyName was used for query and city was also provided, filter by city client-side now.
+                    if (companyName && city) {
+                        if (vendorData.address && vendorData.address.startsWith(city)) {
+                            results.push(vendorData);
+                        }
+                    } else {
+                        results.push(vendorData);
+                    }
+                });
+            }
+
+            if (results.length === 0) {
+                resultsContainer.innerHTML = '<div class="card"><p>查無符合資料。</p></div>';
+            } else {
+                const grid = document.createElement('div');
+                grid.className = 'results-grid';
+                results.forEach(data => {
+                    grid.appendChild(createVendorCard(data));
+                });
+                resultsContainer.appendChild(grid);
+            }
+
+        } catch (error) {
+            console.error("Search failed:", error);
+            if (error.message !== 'Invalid Tax ID format.') { // Avoid double alert
+               resultsContainer.innerHTML = `<div class="card error"><p>查詢時發生錯誤: ${error.message}</p></div>`;
+            }
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-search"></i> 開始查詢';
+        }
+    }
+
+    function createVendorCard(data) {
+        const card = document.createElement('div');
+        card.className = 'vendor-card';
+        card.innerHTML = `
+            <h3>${data.name || data.companyName || 'N/A'}</h3>
+            <ul class="vendor-info">
+                <li><i class="fa-solid fa-hashtag"></i> <span>${data.taxId || 'N/A'}</span></li>
+                <li><i class="fa-solid fa-location-dot"></i> <span>${data.address || data.fullAddress || '無地址資訊'}</span></li>
+                <li><i class="fa-solid fa-phone"></i> <span>${data.phone || '無電話資訊'}</span></li>
+            </ul>
+        `;
+        return card;
+    }
+
+</script>
+</body>
+</html>

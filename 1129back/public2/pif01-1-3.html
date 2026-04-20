@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PIF 封面</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="style.css">
+<style>
+  :root{
+    --fg:#111; --muted:#666; --line:#e5e7eb; --brand:#2563eb;
+  }
+  html,body{background:#fff;color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei",Segoe UI,Roboto,Arial,sans-serif;line-height:1.5}
+  h1,h2{margin:0;font-size:1.8rem;text-align:center;}
+  h2{font-size:1.2rem; color:var(--muted); font-weight:400; margin-top:.25rem;}
+  .toolbar{position:sticky;top:0;background:rgba(255,255,255,.95);backdrop-filter:blur(4px);border-bottom:1px solid var(--line);z-index:50}
+  .toolbar .wrap{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;padding:.6rem .8rem}
+  button{border:1px solid var(--line);background:#fff;padding:.45rem .7rem;border-radius:.5rem;cursor:pointer}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .container{max-width:800px;margin:0 auto;padding:2rem .8rem 4rem}
+  .cover-box{border:1px solid var(--line); border-radius:1rem; padding: 2.5rem 2rem; margin-top:2.5rem;}
+  .form-grid{display:grid; grid-template-columns:150px 1fr; gap:1.2rem; align-items:center;}
+  label{font-weight:500; text-align:right; color:var(--muted);}
+  input[type="text"],input[type="date"]{width:100%;padding:.5rem .6rem;border:1px solid var(--line);border-radius:.5rem}
+  .muted{color:var(--muted)}
+  .small{font-size:.82rem}
+  .no-print{}
+  @media print{
+    .toolbar, .no-print{display:none!important}
+    .container{padding:2rem; max-width:none;}
+    input, textarea, select {border:none!important; padding-left:0;}
+    .cover-box{border:2px solid #000; padding: 3rem; margin-top:3rem;}
+    h1{font-size:2.2rem;}
+    h2{font-size:1.4rem;}
+     label{font-size:1.1rem}
+    input{font-size:1.1rem}
+  }
+</style>
+</head>
+<body>
+<header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo"><i class="fa-solid fa-shield-halved"></i> CosPIF</a>
+                <ul class="nav-links">
+                    <li><a href="pif-i.html">我的專案</a></li>
+                    <li><a href="vendors.html">廠商資料庫</a></li>
+                </ul>
+                <div class="nav-actions" style="display: flex; align-items: center;">
+                    <span id="user-info" style="margin-right: 1.5rem; color: var(--text-muted);"></span>
+                    <button id="btnSignOut" class="btn-login btn-danger">登出</button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+  <div class="toolbar no-print">
+    <div class="wrap">
+      <button onclick="importJSON()">匯入 JSON</button>
+      <button onclick="exportJSON()">匯出 JSON</button>
+      <button onclick="downloadHTML()">下載 HTML</button>
+      <button onclick="window.print()" class="primary">列印 / 匯出 PDF</button>
+      <span class="muted small" id="autosaveHint"></span>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1>產品資訊檔案</h1>
+    <h2>Product Information File (PIF)</h2>
+
+    <div class="cover-box">
+        <div class="form-grid">
+            <label>產品名稱</label>
+            <input id="productName" type="text" placeholder="請輸入完整產品名稱">
+            
+            <label>PIFID代號</label>
+            <input id="productVersion" type="text" placeholder="例如：v1.0 或 P2024-001">
+
+            <label>公司 / 品牌</label>
+            <input id="company" type="text" placeholder="公司或品牌名稱">
+
+            <label>PIF製作</label>
+            <input id="author" type="text" placeholder="製作者姓名">
+
+            <label>安全評估人員</label>
+            <input id="assessor" type="text" placeholder="安全評估人員姓名">
+
+            <label>檔案完成日期</label>
+            <input id="completionDate" type="date">
+        </div>
+    </div>
+  </div>
+
+<script>
+const KEY = 'pif_cover_v1';
+const state = {
+  productName: '',
+  productVersion: '',
+  company: '',
+  author: '',
+  assessor: '',
+  completionDate: new Date().toISOString().slice(0, 10)
+};
+
+const $ = sel => document.querySelector(sel);
+
+function saveLocal() {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(state));
+    $('#autosaveHint').textContent = '已自動保存';
+  } catch (e) {
+    console.error("Save failed", e);
+  }
+}
+
+function loadLocal() {
+  try {
+    const stored = localStorage.getItem(KEY);
+    if (stored) {
+      Object.assign(state, JSON.parse(stored));
+    }
+  } catch (e) {
+    console.error("Load failed", e);
+  }
+}
+
+function loadFromURL() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const pifId = urlParams.get('id');
+  const companyName = urlParams.get('companyName');
+  const productName = urlParams.get('productName');
+
+  if (pifId) {
+    state.productVersion = pifId;
+  }
+  if (companyName) {
+    state.company = decodeURIComponent(companyName);
+  }
+  if (productName) {
+    state.productName = decodeURIComponent(productName);
+  }
+}
+
+function render() {
+  Object.keys(state).forEach(key => {
+    const el = $(`#${key}`);
+    if (el) {
+      el.value = state[key] || '';
+      el.addEventListener('input', () => {
+        state[key] = el.value;
+        saveLocal();
+      });
+    }
+  });
+}
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `PIF_Cover_${state.productName || 'data'}.json`;
+  a.click();
+}
+
+function importJSON() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const imported = JSON.parse(e.target.result);
+        Object.assign(state, imported);
+        render();
+        saveLocal();
+        alert('JSON 檔案已成功匯入。');
+      } catch (err) {
+        alert('匯入失敗，檔案格式錯誤。');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function downloadHTML(){
+    const doc = document.documentElement.cloneNode(true);
+    doc.querySelectorAll('script, .no-print').forEach(el => el.remove());
+    const html = "<!DOCTYPE html>\n" + doc.outerHTML;
+    const blob = new Blob([html], {type: 'text/html'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `PIF_Cover_${state.productName || 'report'}.html`;
+    a.click();
+}
+
+(function init(){
+  loadLocal();
+  loadFromURL();
+  render();
+})();
+</script>
+
+<script type="module">
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { auth } from './firebase-config.js';
+
+  const userInfoEl = document.getElementById('user-info');
+  const signOutBtn = document.getElementById('btnSignOut');
+
+  if (userInfoEl && signOutBtn) {
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        userInfoEl.textContent = `歡迎, ${user.displayName || user.email}`;
+        signOutBtn.addEventListener('click', () => {
+          signOut(auth).then(() => {
+            window.location.href = 'login.html';
+          });
+        });
+      } else {
+        window.location.href = 'login.html';
+      }
+    });
+  }
+</script>
+
+</body>
+</html>

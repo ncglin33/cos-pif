@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>後台管理 - 批次匯入理化特性</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .container { max-width: 1600px; }
+        .card { margin-bottom: 1.5rem; }
+
+        #drop-zone {
+            border: 2px dashed var(--line);
+            border-radius: .75rem;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        #drop-zone.dragover {
+            background-color: var(--brand-bg-subtle);
+            border-color: var(--brand);
+        }
+        #file-info { margin-top: 1rem; color: var(--muted); }
+        #preview-zone { display: none; }
+        
+        /* 卡片式預覽區 */
+        #preview-cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 1.5rem;
+        }
+        .data-card {
+            background: #fff;
+            border-radius: .75rem;
+            border: 1px solid var(--line);
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+            display: flex;
+            flex-direction: column;
+            transition: box-shadow .2s;
+        }
+        .data-card:hover {
+            box-shadow:
+                0 4px 6px -1px rgb(0 0 0 / 0.1),
+                0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .data-card-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--line);
+            background: #f9fafb;
+            cursor: pointer;
+        }
+        .data-card-header h4 {
+            margin: 0 0 .25rem 0;
+            font-size: 1.1rem;
+            color: var(--ink);
+            word-break: break-all;
+        }
+        .data-card-header p {
+            margin: 0;
+            font-family: monospace;
+            color: var(--brand);
+            font-weight: 500;
+            font-size: .85rem;
+        }
+        .data-card-body {
+            padding: 1.25rem;
+            flex-grow: 1;
+        }
+        .data-field {
+            margin-bottom: 1.1rem;
+        }
+        .data-field:last-child { margin-bottom: 0; }
+        .data-field-label {
+            font-weight: 500;
+            font-size: .8rem;
+            color: var(--muted);
+            margin-bottom: .25rem;
+            display: block;
+            text-transform: capitalize;
+        }
+        .data-field-value {
+            font-size: .9rem;
+            padding: .5rem;
+            border-radius: .375rem;
+            transition: background-color .2s;
+            cursor: pointer;
+            white-space: pre-wrap;      /* 多行文字完整顯示 */
+            word-break: break-word;     /* 長字不爆版 */
+            min-height: 38px;
+            width: 100%;
+        }
+        .data-field-value:hover {
+            background-color: #f0f8ff;
+        }
+
+        #status-message {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: .5rem;
+            text-align: center;
+            display: none;
+        }
+        .status-success { background-color: var(--ok-bg); color: var(--ok-text); }
+        .status-error { background-color: var(--error-bg); color: var(--error-text); }
+    </style>
+</head>
+<body>
+
+<header class="no-print">
+    <div class="wrap">
+        <h1><a href="dashboard.html" style="color: inherit; text-decoration: none;">管理後台</a></h1>
+        <div class="controls header-right">
+            <div id="user-info" style="display: inline-block; margin-left: 1rem;"></div>
+            <button id="btnSignOut" class="btn btn-danger">登出</button>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <header>
+        <h2>批次匯入理化特性 (源頭淨化版)</h2>
+        <p class="subtitle">上傳檔案 → 預覽與修正 → 最終寫入資料庫。</p>
+    </header>
+
+    <div class="card">
+        <h3>步驟一：下載範本與上傳檔案</h3>
+        <p>請先下載標準 CSV 範本，依格式填寫後再上傳。支援 UTF-8 編碼，第一行必須是標頭，<code>inciName</code> 是唯一必要的欄位。</p>
+        <div style="margin-bottom: 1rem;">
+            <button id="btn-download-template" class="btn">
+                <i class="fa-solid fa-download"></i> 下載 CSV 範本
+            </button>
+        </div>
+        <div id="drop-zone">
+            <p><i class="fa-solid fa-upload"></i> 將 CSV 檔案拖曳至此，或點擊選擇</p>
+            <input type="file" id="file-input" accept=".csv,text/csv" hidden>
+            <div id="file-info">尚未選擇檔案</div>
+        </div>
+    </div>
+
+    <div id="preview-zone" class="card">
+        <h3>步驟二：預覽並修正</h3>
+        <p>請仔細檢查資料。您可以直接點擊卡片內的欄位進行修改。系統將使用「標準化 ID」作為資料庫的唯一識別碼 (Document ID)。</p>
+        
+        <div id="preview-cards-container"></div>
+
+        <div id="status-message"></div>
+
+        <div style="margin-top: 1.5rem; text-align: right;">
+            <button id="btn-confirm-write" class="btn primary">
+                <i class="fa-solid fa-check-double"></i> 確認並寫入資料庫
+            </button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { doc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { db, auth } from './firebase-config.js';
+
+    const $ = sel => document.querySelector(sel);
+
+    let parsedRecords = [];
+
+    // ★ 標準欄位：理化特性
+    const PHYSCHEM_FIELDS = [
+        'inciName', 'cas', 'state', 'color', 'odor', 'solubility_water', 
+        'ph', 'melting_point', 'boiling_point', 'flash_point', 'density', 'viscosity'
+    ];
+
+    function startApp() {
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                setupUI(user);
+                document.body.style.opacity = '1';
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+    }
+
+    function setupUI(user) {
+        $('#user-info').textContent = user.email;
+        $('#btnSignOut').addEventListener('click', () => {
+            signOut(auth).then(() => { window.location.href = 'login.html'; });
+        });
+
+        $('#btn-download-template').addEventListener('click', downloadTemplate);
+
+        const dropZone = $('#drop-zone');
+        const fileInput = $('#file-input');
+        
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFile(e.target.files[0]);
+        });
+
+        $('#btn-confirm-write').addEventListener('click', handleConfirmAndWrite);
+        $('#preview-cards-container').addEventListener('click', handleCardClick);
+    }
+
+    // 下載目前欄位對應的 CSV 範本
+    function downloadTemplate() {
+        const csvContent = PHYSCHEM_FIELDS.join(',') + '\n';
+        const BOM = new Uint8Array([0xEF, 0xBB, 0xBF]); // UTF-8 BOM
+        const blob = new Blob([BOM, csvContent], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'physchem_template.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    
+    function handleFile(file) {
+        if (!file || !(file.type === 'text/csv' || file.name.endsWith('.csv'))) {
+            alert('錯誤：請選擇 .csv 檔案。');
+            return;
+        }
+        $('#file-info').textContent = `已選擇檔案: ${file.name}`;
+        parseFile(file);
+    }
+
+    // 解析 CSV → parsedRecords
+    function parseFile(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                let text = e.target.result || '';
+
+                // 移除 UTF-8 BOM（U+FEFF）
+                if (text[0] === '\uFEFF') {
+                    text = text.slice(1);
+                }
+
+                const rows = parseCsv(text);
+
+                if (rows.length < 1) throw new Error("CSV 檔案是空的或格式不正確。");
+
+                const headers = rows[0].map(h => h.trim());
+                if (!headers.includes('inciName')) {
+                    throw new Error(`CSV 標頭中必須包含 'inciName' 欄位。檢測到的標頭: ${headers.join(', ')}`);
+                }
+                
+                const headerMap = {};
+                headers.forEach((h, i) => { headerMap[h] = i; });
+
+                parsedRecords = [];
+                for (let i = 1; i < rows.length; i++) {
+                    const values = rows[i];
+                    if (values.length === 1 && values[0].trim() === '') continue; // 空列略過
+                    
+                    const record = {};
+                    PHYSCHEM_FIELDS.forEach(field => {
+                        const index = headerMap[field];
+                        record[field] = (index !== undefined && values[index] !== undefined)
+                            ? String(values[index]).trim()
+                            : '';
+                    });
+                    parsedRecords.push(record);
+                }
+
+                console.log('Parsed records:', parsedRecords.length);
+                renderPreviewCards(parsedRecords);
+
+            } catch (err) {
+                alert(`檔案解析失敗: ${err.message}`);
+                console.error(err);
+                parsedRecords = [];
+                $('#preview-zone').style.display = 'none';
+            }
+        };
+        reader.readAsText(file, 'UTF-8');
+    }
+
+    /**
+     * 穩定 CSV 解析：
+     * - 支援含逗號 / 換行的欄位（以雙引號包住）
+     * - 支援 " 轉義成 ""
+     */
+    function parseCsv(text) {
+        const rows = [];
+        let row = [];
+        let cur = '';
+        let inQuotes = false;
+
+        for (let i = 0; i < text.length; i++) {
+            const c = text[i];
+
+            if (c === '"') {
+                if (inQuotes && text[i + 1] === '"') {
+                    // 連續兩個 " → 轉成一個引號
+                    cur += '"';
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (c === ',' && !inQuotes) {
+                row.push(cur);
+                cur = '';
+            } else if ((c === '\n' || c === '\r') && !inQuotes) {
+                if (c === '\r' && text[i + 1] === '\n') {
+                    i++; // 處理 CRLF
+                }
+                row.push(cur);
+                if (row.some(cell => cell.trim() !== '')) {
+                    rows.push(row);
+                }
+                row = [];
+                cur = '';
+            } else {
+                cur += c;
+            }
+        }
+
+        // 最後一行（沒有換行結尾也處理）
+        if (cur.length > 0 || row.length > 0) {
+            row.push(cur);
+            if (row.some(cell => cell.trim() !== '')) {
+                rows.push(row);
+            }
+        }
+
+        return rows;
+    }
+
+    function getSanitizedDocId(name) {
+        if (!name || typeof name !== 'string') return `invalid_name_${Date.now()}`;
+        return name.trim().toLowerCase().replace(/[\s/]/g, '_');
+    }
+    
+    // 卡片式預覽
+    function renderPreviewCards(records) {
+        const container = $('#preview-cards-container');
+        container.innerHTML = records.map((record, rowIndex) => {
+            const sanitizedId = getSanitizedDocId(record.inciName);
+            const fieldsHtml = PHYSCHEM_FIELDS.map(field => {
+                if (field === 'inciName') return ''; // INCI Name 顯示在卡片標題即可
+                const value = record[field] || '';
+                return `
+                    <div class="data-field">
+                        <label class="data-field-label">${field.replace(/_/g, ' ')}</label>
+                        <div class="data-field-value" data-row-index="${rowIndex}" data-field="${field}">${value}</div>
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <div class="data-card" data-row-index="${rowIndex}">
+                    <div class="data-card-header">
+                        <h4 data-row-index="${rowIndex}" data-field="inciName">${record.inciName || '[No INCI Name]'}</h4>
+                        <p>ID: ${sanitizedId}</p>
+                    </div>
+                    <div class="data-card-body">${fieldsHtml}</div>
+                </div>
+            `;
+        }).join('');
+
+        $('#preview-zone').style.display = records.length ? 'block' : 'none';
+    }
+
+    // 點擊卡片 → 欄位可編輯
+    function handleCardClick(e) {
+        const target = e.target;
+        if (target.matches(".data-card-header h4")) {
+            makeEditable(target);
+        } else if (target.matches(".data-field-value")) {
+            makeEditable(target);
+        }
+    }
+
+    function makeEditable(element) {
+        if (element.querySelector('input, textarea')) return;
+
+        const rowIndex = element.dataset.rowIndex;
+        const field = element.dataset.field || 'inciName';
+        const currentValue = element.textContent;
+        const isTextArea =
+            ['references', 'MSDS', 'function'].includes(field) ||
+            (currentValue && currentValue.length > 80);
+
+        element.innerHTML = '';
+
+        let input;
+        if (isTextArea) {
+            input = document.createElement('textarea');
+            input.className = 'form-control';
+            input.style.minHeight = '120px';
+        } else {
+            input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'form-control';
+        }
+        input.value = currentValue;
+        element.appendChild(input);
+        input.focus();
+        input.select();
+
+        const saveChanges = () => {
+            const newValue = input.value;
+            element.innerHTML = newValue;
+            parsedRecords[rowIndex][field] = newValue;
+
+            if (field === 'inciName') {
+                const card = element.closest('.data-card');
+                const idElement = card.querySelector('.data-card-header p');
+                if (idElement) {
+                    idElement.textContent = `ID: ${getSanitizedDocId(newValue)}`;
+                }
+            }
+        };
+
+        input.addEventListener('blur', saveChanges, { once: true });
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && (!isTextArea || event.metaKey || event.ctrlKey)) {
+                event.preventDefault();
+                input.blur();
+            } else if (event.key === 'Escape') {
+                input.value = currentValue;
+                input.blur();
+            }
+        });
+    }
+
+    // 寫入 Firestore
+    async function handleConfirmAndWrite() {
+        if (parsedRecords.length === 0) {
+            alert("沒有可寫入的資料。");
+            return;
+        }
+
+        const btn = $('#btn-confirm-write');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 正在寫入...';
+        const statusMsg = $('#status-message');
+        statusMsg.style.display = 'none';
+
+        try {
+            const batch = writeBatch(db);
+            let writeCount = 0;
+
+            parsedRecords.forEach(record => {
+                if (!record.inciName || !record.inciName.trim()) return;
+
+                const docId = getSanitizedDocId(record.inciName);
+                const docRef = doc(db, "physchem_properties", docId);
+
+                const dataToSet = {};
+                PHYSCHEM_FIELDS.forEach(field => {
+                    if (record[field] !== undefined) dataToSet[field] = record[field];
+                });
+
+                batch.set(docRef, dataToSet, { merge: true });
+                writeCount++;
+            });
+
+            await batch.commit();
+
+            statusMsg.className = 'status-success';
+            statusMsg.innerHTML =
+                `<i class="fa-solid fa-check-circle"></i> 成功！共 ${writeCount} 筆資料已寫入或更新至資料庫。`;
+            statusMsg.style.display = 'block';
+
+        } catch (error) {
+            console.error("Error writing to database: ", error);
+            statusMsg.className = 'status-error';
+            statusMsg.innerHTML =
+                `<i class="fa-solid fa-exclamation-triangle"></i> 寫入失敗: ${error.message}`;
+            statusMsg.style.display = 'block';
+        }
+
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check-double"></i> 確認並寫入資料庫';
+    }
+
+    startApp();
+    document.body.style.opacity = '0';
+</script>
+</body>
+</html>

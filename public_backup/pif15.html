@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>PIF 10｜與產品接觸之包裝材質資料</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<style>
+  .container { max-width: 1600px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 1rem; }
+  .card h2 { font-size: 1.1rem; margin: 0; padding: 1rem 1.1rem; border-bottom: 1px solid var(--line); }
+  .card .body { padding: 1rem 1.1rem; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+  label { font-size: .9rem; color: var(--muted); display: block; margin-bottom: 4px; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { position: sticky; top: 0; z-index: 1; background: #f8fafc; }
+  th, td { border: 1px solid var(--line); padding: .5rem; text-align: left; vertical-align: top; white-space: nowrap; font-size: .9rem; }
+  td input, td select { width: 100%; border: 1px solid var(--line); border-radius: .4rem; padding: .3rem .4rem; background: transparent; }
+  /* Card view for printing */
+  .cards-view { display: none; }
+  body.card-mode .table-view { display: none; }
+  body.card-mode .cards-view { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+  .card-item { border: 1px solid var(--line); border-radius: 12px; padding: 1rem; break-inside: avoid; }
+  .card-item h3 { margin: 0 0 .8rem; font-size: 1.1rem; }
+  .card-item .grid-item { display: grid; grid-template-columns: 120px 1fr; gap: .5rem 1rem; }
+  .card-item .k { color: var(--muted); }
+
+  @media print {
+    body { font-size: 9px; }
+    .noprint { display: none !important; }
+    .container { max-width: 100%; padding: 0; }
+    th, td { white-space: normal; }
+    td input, td select { border: none !important; background: transparent !important; }
+    body:not(.card-mode) .table-view { display: block; }
+    body.card-mode .cards-view { display: grid; }
+    .card-item .grid-item { grid-template-columns: 100px 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<pif-nav></pif-nav>
+<top-bar></top-bar>
+
+<div class="container">
+  <status-bar></status-bar>
+
+  <div class="toolbar noprint">
+    <button id="btnSave" class="primary"><i class="fa-solid fa-cloud-arrow-up"></i> 儲存變更</button>
+    <button id="btnAdd"><i class="fa-solid fa-plus"></i> 新增部件</button>
+    <div style="flex-grow:1"></div>
+    <button id="btnExportJSON"><i class="fa-solid fa-file-code"></i> 匯出 JSON</button>
+    <button id="btnExportCSV"><i class="fa-solid fa-file-csv"></i> 匯出 CSV</button>
+    <label class="noprint" style="display:flex;align-items:center;gap:6px; margin: 0 .5rem;"><input type="checkbox" id="cardModeToggle"> 卡片式列印</label>
+    <button id="btnPrint"><i class="fa-solid fa-print"></i> 列印</button>
+  </div>
+
+  <div class="card">
+    <div class="body grid">
+        <div><label>產品名稱</label><input id="prodName" readonly></div>
+        <div><label>品號/代碼</label><input id="prodCode"></div>
+        <div><label>版本</label><input id="ver" placeholder="v1.0"></div>
+        <div><label>建檔日期</label><input id="dt" type="date"></div>
+    </div>
+  </div>
+
+  <div class="table-view">
+    <div class="card">
+      <div class="body" style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>部位</th><th>接觸</th><th>材質</th><th>等級/標準</th><th>供應商</th><th>型號/規格</th><th>顏色/添加劑</th><th>回收碼</th><th>OTR</th><th>WVTR</th><th>測試/證明</th><th>相容性</th><th>備註</th><th class="noprint">刪除</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <div class="cards-view"></div>
+
+  <div class="card">
+    <h2>人員資料</h2>
+    <div class="body grid">
+        <div><label>建檔人員</label><input id="tester" placeholder="輸入姓名"></div>
+        <div><label>建檔日期</label><input id="testDate" type="date"></div>
+        <div><label>複核人員</label><input id="reviewer" placeholder="輸入姓名"></div>
+        <div><label>複核日期</label><input id="reviewDate" type="date"></div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+import { auth, db } from "./firebase-config.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import "./components.js";
+
+const byId = id => document.getElementById(id);
+const showStatus = (message, type, duration) => customElements.whenDefined('status-bar').then(() => document.querySelector('status-bar').show(message, type, duration));
+
+let pifId, user, pifDocRef, companyName, pifProductName;
+
+const state = {
+    meta: { prodName: "", prodCode: "", ver: "", date: new Date().toISOString().slice(0, 10) },
+    signer: { tester: "", testDate: "", reviewer: "", reviewDate: "" },
+    items: []
+};
+
+const fields = [
+    { key: 'part', name: '部位', type: 'select', options: ['容器本體', '瓶蓋', '內塞', '封膜', '墊片/O-ring', '泵頭/噴頭', '管身', '其他'] },
+    { key: 'contact', name: '接觸', type: 'select', options: ['直接', '間接'] },
+    { key: 'material', name: '材質', type: 'select', options: ['PET', 'PETG', 'HDPE', 'LDPE', 'PP', 'PS', 'PVC', '玻璃', '鋁', '不鏽鋼', '矽膠', 'TPE'] },
+    { key: 'grade', name: '等級/標準', type: 'text' },
+    { key: 'vendor', name: '供應商', type: 'text' },
+    { key: 'model', name: '型號/規格', type: 'text' },
+    { key: 'additives', name: '顏色/添加劑', type: 'text' },
+    { key: 'recycle', name: '回收碼', type: 'text' },
+    { key: 'otr', name: 'OTR', type: 'number' },
+    { key: 'wvtr', name: 'WVTR', type: 'number' },
+    { key: 'tests', name: '測試/證明', type: 'text' },
+    { key: 'compat', name: '相容性', type: 'select', options: ['相容 (無異狀)', '需觀察 (輕微風險)', '不相容'] },
+    { key: 'notes', name: '備註', type: 'text' },
+];
+
+async function initPage() {
+    const params = new URLSearchParams(window.location.search);
+    pifId = params.get("id");
+    companyName = params.get("companyName");
+    pifProductName = params.get("productName");
+
+    onAuthStateChanged(auth, u => {
+        user = u;
+        if (user) {
+            pifDocRef = doc(db, 'pifs', pifId);
+            setupPage();
+            loadData();
+        } else {
+            window.location.href = 'login.html';
+        }
+    });
+}
+
+function setupPage() {
+    if (!pifId) {
+        showStatus("錯誤：URL 中缺少 PIF ID。", "error", -1);
+        document.querySelector('.container').innerHTML = '<p style="text-align:center; padding: 2rem;">無效的連結。</p>';
+        return;
+    }
+    customElements.whenDefined('top-bar').then(() => {
+        const topBar = document.querySelector('top-bar');
+        topBar.setInfo(pifId, companyName, pifProductName, "PIF 10 包裝材質資料");
+        topBar.setUser(user);
+    });
+    document.body.addEventListener('logout-request', () => auth.signOut());
+    bindEvents();
+    byId('dt').value = state.meta.date;
+}
+
+async function loadData() {
+    showStatus("正在載入資料...", "loading", 0);
+    try {
+        const docSnap = await getDoc(pifDocRef);
+        if (docSnap.exists() && docSnap.data().pif10) {
+            const data = docSnap.data().pif10;
+            Object.assign(state.meta, data.meta || {});
+            Object.assign(state.signer, data.signer || {});
+            state.items = data.items || [];
+        }
+        if (state.items.length === 0) addRow(); // Add one row if empty
+        render();
+        showStatus("資料載入完成！", "success");
+    } catch (error) {
+        console.error("Load error:", error);
+        showStatus(`載入失敗: ${error.message}`, "error", -1);
+        if (state.items.length === 0) addRow();
+        render();
+    }
+}
+
+async function saveData() {
+    showStatus("正在儲存變更...", "loading", 0);
+    byId('btnSave').disabled = true;
+    try {
+        syncStateFromUI();
+        await setDoc(pifDocRef, { 
+            pif10: { ...state },
+            lastModified: serverTimestamp()
+        }, { merge: true });
+        showStatus("所有變更已成功儲存！", "success");
+    } catch (error) {
+        console.error("Save error:", error);
+        showStatus(`儲存失敗: ${error.message}`, "error", -1);
+    } finally {
+        byId('btnSave').disabled = false;
+    }
+}
+
+function syncStateFromUI() {
+    state.meta.prodName = byId('prodName').value;
+    state.meta.prodCode = byId('prodCode').value;
+    state.meta.ver = byId('ver').value;
+    state.meta.date = byId('dt').value;
+    state.signer.tester = byId('tester').value;
+    state.signer.testDate = byId('testDate').value;
+    state.signer.reviewer = byId('reviewer').value;
+    state.signer.reviewDate = byId('reviewDate').value;
+}
+
+function render() {
+    byId('prodName').value = pifProductName;
+    byId('prodCode').value = state.meta.prodCode || "";
+    byId('ver').value = state.meta.ver || "v1.0";
+    byId('dt').value = state.meta.date;
+    byId('tester').value = state.signer.tester || "";
+    byId('testDate').value = state.signer.testDate || "";
+    byId('reviewer').value = state.signer.reviewer || "";
+    byId('reviewDate').value = state.signer.reviewDate || "";
+    renderTable();
+    if (document.body.classList.contains('card-mode')) renderCards();
+}
+
+function renderTable() {
+    const tbody = byId('tbody');
+    tbody.innerHTML = "";
+    state.items.forEach((item, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${i + 1}</td>
+            ${fields.map(f => { 
+                let control;
+                if(f.type === 'select'){
+                    control = `<select data-k="${f.key}">${f.options.map(o => `<option value="${o}" ${item[f.key] === o ? 'selected' : ''}>${o}</option>`).join('')}</select>`;
+                } else {
+                    control = `<input data-k="${f.key}" value="${item[f.key] || ''}" type="${f.type === 'number' ? 'number' : 'text'}">`;
+                }
+                return `<td>${control}</td>`;
+            }).join('')}
+            <td class="noprint"><button onclick="window.deleteRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
+        `;
+        tbody.appendChild(tr);
+    });
+    bindTableEvents();
+}
+
+function bindTableEvents(){
+    byId('tbody').querySelectorAll('input, select').forEach(el => {
+        el.addEventListener('change', (e) => {
+            const tr = e.target.closest('tr');
+            const index = Array.from(tr.parentNode.children).indexOf(tr);
+            const key = e.target.dataset.k;
+            state.items[index][key] = e.target.value;
+        });
+    });
+}
+
+window.deleteRow = (i) => { if(confirm('確定要刪除此部件嗎?')) { state.items.splice(i, 1); render(); } };
+function addRow() { state.items.push({}); render(); }
+
+function renderCards() {
+    const container = document.querySelector('.cards-view');
+    container.innerHTML = state.items.map((item, i) => `
+        <div class="card-item">
+            <h3>#${i + 1} ${item.part || '未命名部件'}</h3>
+            <div class="grid-item">
+                ${fields.map(f => `<div class="k">${f.name}</div><div class="v">${item[f.key] || '—'}</div>`).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+function exportData(format) {
+    syncStateFromUI();
+    const { meta, items } = state;
+    const productName = pifProductName || 'export';
+    if (format === 'json') {
+        download(JSON.stringify(state, null, 2), `pif10_包材資料_${productName}.json`, 'application/json;charset=utf-8;');
+    } else if (format === 'csv') {
+        const headers = fields.map(f => f.key);
+        const csvRows = [headers.join(',')];
+        items.forEach(item => {
+            csvRows.push(headers.map(h => `"${String(item[h] || '').replace(/"/g, '""')}"`).join(','));
+        });
+        download('\ufeff' + csvRows.join('\n'), `pif10_包材資料_${productName}.csv`, 'text/csv;charset=utf-8;');
+    }
+}
+
+function download(text, filename, mime) {
+    const blob = new Blob([text], { type: mime });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+function printPage() {
+    syncStateFromUI();
+    if (document.body.classList.contains('card-mode')) renderCards();
+    window.print();
+}
+
+function bindEvents() {
+    byId('btnSave').addEventListener('click', saveData);
+    byId('btnAdd').addEventListener('click', addRow);
+    byId('btnExportJSON').addEventListener('click', () => exportData('json'));
+    byId('btnExportCSV').addEventListener('click', () => exportData('csv'));
+    byId('btnPrint').addEventListener('click', printPage);
+    byId('cardModeToggle').addEventListener('change', (e) => {
+        document.body.classList.toggle('card-mode', e.target.checked);
+        if(e.target.checked) renderCards();
+    });
+}
+
+initPage();
+
+</script>
+</body>
+</html>

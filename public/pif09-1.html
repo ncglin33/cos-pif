@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PIF 09-1｜產品之物理及化學特性</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .container{max-width:1100px;}
+    h2{font-size:1.1rem; margin:1rem 0 .5rem}
+    .card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom: 1rem;}
+    .toolbar{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom: 1rem;}
+    .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:12px}
+    .col-3{grid-column: span 3}
+    .col-6{grid-column: span 6}
+    .col-12{grid-column: span 12}
+    .label{font-size:.9rem; color:var(--muted); margin-bottom:4px; display: block;}
+    @media (max-width: 900px){ .col-3, .col-6 { grid-column: span 6 } }
+    @media (max-width: 600px){ .col-3, .col-6 { grid-column: span 12 } }
+    
+    #upload-status-pdf { 
+        display: none; 
+        padding: 0.75rem 1.25rem; 
+        margin: 1rem 0;
+        border-radius: 8px; 
+        font-weight: 500; 
+        text-align: center; 
+    }
+    .status-info { background-color: #e0e7ff; color: #3730a3; }
+    .status-success { background-color: #dcfce7; color: #166534; }
+    .status-error { background-color: #fee2e2; color: #991b1b; }
+    #upload-status-pdf i { margin-right: 0.5rem; }
+
+    /* 🔹 列印專用表頭（跟 PIF07 / PIF08 一致） */
+    .print-only{display:none;}
+
+    #print-header{
+      border:1px solid #e5e7eb;
+      border-radius:10px;
+      padding:10px 12px;
+      margin:0 0 12px 0;
+      background:#fff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .print-header-grid{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+    }
+    .ph-left{flex:1;min-width:0;}
+    .ph-right{text-align:right;min-width:220px;}
+    .ph-title{
+      font-size:1.28rem;
+      font-weight:800;
+      letter-spacing:.3px;
+      color:#111827;
+      margin:0 0 4px 0;
+      line-height:1.2;
+    }
+    .ph-sub{
+      font-size:.98rem;
+      color:#111827;
+      line-height:1.35;
+      margin:0;
+      white-space:nowrap;
+    }
+    .ph-label{
+      font-weight:700;
+      color:#374151;
+    }
+
+    @media print{ 
+      @page { size: A4 portrait; margin: 12mm; }
+      body { background:#fff; color:#000; font-size: 10px; }
+      .noprint{display:none !important} 
+      .print-only{display:block !important} 
+      .container { max-width: 100%; padding: 0; }
+      h1 { font-size: 1.2rem; }
+      .card { border: 1px solid #ccc; padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 導覽列（螢幕用、列印隱藏） -->
+  <pif-nav class="noprint"></pif-nav>
+  <top-bar class="noprint"></top-bar>
+
+  <!-- 🔹 列印專用表頭（統一版型） -->
+  <div id="print-header" class="print-only">
+    <div class="print-header-grid">
+      <div class="ph-left">
+        <div class="ph-title" id="printTitle"></div>
+        <p class="ph-sub" id="printProductName"></p>
+      </div>
+      <div class="ph-right">
+        <p class="ph-sub">
+          <span class="ph-label">PIFID：</span>
+          <span id="printPifId"></span>
+        </p>
+        <p class="ph-sub" id="printCompanyName"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <status-bar></status-bar>
+
+    <div class="toolbar noprint">
+      <button id="btnSave" class="primary"><i class="fa-solid fa-cloud-arrow-up"></i> 儲存變更</button>
+      <button id="btnAiFill"><i class="fa-solid fa-wand-magic-sparkles"></i> AI 填充 (模擬)</button>
+      <button id="btnImportJSON"><i class="fa-solid fa-file-import"></i> 匯入 JSON</button>
+      <button id="btnImportCSV"><i class="fa-solid fa-file-csv"></i> 匯入 CSV</button>
+      <button id="btnExportJSON"><i class="fa-solid fa-file-export"></i> 匯出 JSON</button>
+      <button id="btnPrint"><i class="fa-solid fa-print"></i> 列印 / PDF</button>
+      <button id="btnUploadPdf"><i class="fa-solid fa-file-arrow-up"></i> 上傳本頁 PDF</button>
+      <input type="file" id="pdfUploader" accept="application/pdf" style="display:none;">
+    </div>
+    <div id="upload-status-pdf" class="noprint"></div>
+
+    <section id="product" class="card">
+      <h2>成品物理/化學特性</h2>
+      <div class="grid">
+        <div class="col-12"><div class="label">產品名稱</div><input id="p_name" type="text" placeholder="請輸入產品名稱" /></div>
+        <div class="col-3"><div class="label">外觀 / 顏色</div><input id="p_appearance" type="text" placeholder="例：乳白色乳液狀" /></div>
+        <div class="col-3"><div class="label">氣味</div><input id="p_odor" type="text" placeholder="例：淡花香" /></div>
+        <div class="col-3"><div class="label">pH (25°C)</div><input id="p_ph" type="text" placeholder="例：5.5 ± 0.3" /></div>
+        <div class="col-3"><div class="label">黏度 cP (25°C)</div><input id="p_visc" type="text" placeholder="例：3,000 cP (RV,20rpm)" /></div>
+        <div class="col-3"><div class="label">密度 / 比重</div><input id="p_density" type="text" placeholder="例：1.02 g/mL (25°C)" /></div>
+        <div class="col-3"><div class="label">折射率 nD</div><input id="p_ri" type="text" placeholder="例：1.335 (25°C)" /></div>
+        <div class="col-3"><div class="label">固形物 (%)</div><input id="p_solids" type="number" step="0.01" /></div>
+        <div class="col-3"><div class="label">水活性 aw</div><input id="p_aw" type="text" /></div>
+        <div class="col-3"><div class="label">粒徑 (如為分散體)</div><input id="p_particle" type="text" placeholder="例：D90 &lt; 5 μm" /></div>
+        <div class="col-3"><div class="label">閃點 (如含溶劑)</div><input id="p_fp" type="text" placeholder="例：&gt; 60°C (封閉杯)" /></div>
+        <div class="col-6"><div class="label">溶解度 / 相容性</div><textarea id="p_sol" placeholder="例：水可混；乙醇 70% 可混；油相不混"></textarea></div>
+        <div class="col-6"><div class="label">穩定性與保存建議</div><textarea id="p_stability" placeholder="例：5~45°C 安定；凍融 3 循環無異常；避光、緊閉保存"></textarea></div>
+        <div class="col-12"><div class="label">備註</div><textarea id="p_notes"></textarea></div>
+      </div>
+    </section>
+
+    <div class="toolbar noprint">
+       <button id="btnSave-bottom" class="primary" style="font-size: 1.1rem; padding: .5rem 1.5rem;"><i class="fa-solid fa-cloud-arrow-up"></i> 儲存本頁所有變更</button>
+    </div>
+
+    <div id="print-container" class="print-only"></div>
+
+  </div>
+
+  <script type="module">
+  import { auth, db, storage } from "./firebase-config.js";
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { ref, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+  import "./components.js";
+
+  const byId = id => document.getElementById(id);
+  const safeDecode = (v) => {
+      try { return v ? decodeURIComponent(v) : ""; } catch { return v || ""; }
+  };
+  const safeCall = (tagName, selector, callback) => {
+      customElements.whenDefined(tagName).then(() => {
+          const el = document.querySelector(selector);
+          if (el) callback(el);
+      });
+  };
+  const showStatus = (message, type, duration) =>
+      safeCall("status-bar", "status-bar", el => el.show(message, type, duration));
+
+  let pifId, user, pif_docRef, companyName, productName;
+  const state = { product: {} };
+  const fields = [
+    "name","appearance","odor","ph","visc","density","ri",
+    "solids","aw","particle","fp","sol","stability","notes"
+  ];
+
+  const initPage = () => {
+      const params = new URLSearchParams(window.location.search);
+      pifId = params.get("id");
+      companyName = params.get("companyName");
+      productName = params.get("productName");
+
+      if (!pifId) {
+          showStatus("錯誤：URL 中缺少 PIF ID。", "error", -1);
+          document.querySelector(".container").innerHTML =
+            '<p class="muted" style="text-align: center; padding: 2rem;">無效的連結，請從主控台重新進入。</p>';
+          return;
+      }
+
+      // 🔹 列印表頭文字
+      const decodedCompany = safeDecode(companyName);
+      const decodedProduct = safeDecode(productName);
+
+      const titleEl = byId("printTitle");
+      const prodEl  = byId("printProductName");
+      const pifEl   = byId("printPifId");
+      const compEl  = byId("printCompanyName");
+
+      if (titleEl) titleEl.textContent = "PIF09-1 產品物理及化學特性";
+      if (prodEl)  prodEl.textContent  = decodedProduct || "";
+      if (pifEl)   pifEl.textContent   = pifId || "";
+      if (compEl)  compEl.textContent  = decodedCompany || "";
+
+      // 螢幕上的按鈕先鎖住，等登入後再開啟
+      document
+        .querySelectorAll("#btnSave, #btnSave-bottom, #btnUploadPdf")
+        .forEach(b => (b.disabled = true));
+
+      safeCall("top-bar", "top-bar", el =>
+        el.setInfo(pifId, companyName, productName, "09-1 產品物理及化學特性")
+      );
+      document.body.addEventListener("logout-request", () =>
+        signOut(auth).catch(error =>
+          showStatus(`登出失敗: ${error.message}`, "error")
+        )
+      );
+
+      onAuthStateChanged(auth, u => {
+          user = u;
+          if (user) {
+              safeCall("top-bar", "top-bar", el => el.setUser(user));
+              pif_docRef = doc(db, "pifs", pifId);
+              document
+                .querySelectorAll("#btnSave, #btnSave-bottom, #btnUploadPdf")
+                .forEach(b => (b.disabled = false));
+              loadData();
+          } else {
+              safeCall("top-bar", "top-bar", el => el.setUser(null));
+              showStatus("您尚未登入，雲端功能（載入/儲存/上傳）已停用。", "warning", -1);
+              fields.forEach(f => (state.product[f] = ""));
+              state.product.name = decodedProduct;
+              updateForm();
+          }
+      });
+      bindEvents();
+  };
+
+  const loadData = async () => {
+      if (!user) return;
+      showStatus("正在載入資料...", "loading", 0);
+      try {
+          const pif_snap = await getDoc(pif_docRef);
+          const cloudData = pif_snap.exists() ? pif_snap.data()?.pif09_1 : null;
+          if (cloudData && cloudData.product) {
+              state.product = cloudData.product;
+          } else {
+              fields.forEach(f => (state.product[f] = ""));
+              state.product.name = safeDecode(productName);
+          }
+          updateForm();
+          showStatus("資料載入完成！", "success");
+      } catch (error) {
+          console.error("Load Data:", error);
+          showStatus(`載入失敗: ${error.message}`, "error", -1);
+      }
+  };
+
+  const saveData = async () => {
+      if (!user) {
+          showStatus("請先登入以儲存您的變更。", "error");
+          return;
+      }
+      showStatus("正在儲存變更...", "loading", 0);
+      document
+        .querySelectorAll("#btnSave, #btnSave-bottom")
+        .forEach(b => (b.disabled = true));
+      try {
+          updateStateFromForm();
+          await setDoc(
+            pif_docRef,
+            {
+              pif09_1: { product: state.product },
+              lastModified: serverTimestamp(),
+              productName: state.product.name
+            },
+            { merge: true }
+          );
+          showStatus("所有變更已成功儲存！", "success");
+          safeCall("top-bar", "top-bar", el =>
+            el.setInfo(
+              pifId,
+              companyName,
+              state.product.name,
+              "09-1 產品物理及化學特性"
+            )
+          );
+          // 同步更新列印表頭的產品名稱
+          const prodEl = byId("printProductName");
+          if (prodEl) prodEl.textContent = state.product.name || "";
+      } catch (error) {
+          console.error("Save Data:", error);
+          showStatus(`儲存失敗: ${error.message}`, "error", -1);
+      } finally {
+          document
+            .querySelectorAll("#btnSave, #btnSave-bottom")
+            .forEach(b => (b.disabled = false));
+      }
+  };
+
+  const updateForm = () => {
+      fields.forEach(key => {
+          const el = byId(`p_${key}`);
+          if (el) el.value = state.product[key] || "";
+      });
+  };
+  const updateStateFromForm = () => {
+      fields.forEach(key => {
+          const el = byId(`p_${key}`);
+          if (el) state.product[key] = el.value;
+      });
+  };
+
+  /* --------- PDF 上傳相關 --------- */
+
+  function handlePdfUpload(event) {
+      if (!user) {
+          showStatus("請先登入以上傳檔案。", "error");
+          return;
+      }
+      const file = event.target.files[0];
+      if (!file) return;
+      if (file.type !== "application/pdf") {
+          showStatus("請僅上傳 PDF 檔案。", "warning");
+          return;
+      }
+      uploadMainPdf(file, `pifs/${pifId}/09-1.pdf`);
+  }
+
+  function uploadMainPdf(file, storagePath) {
+      const uploadTask = uploadBytesResumable(ref(storage, storagePath), file);
+      const button = byId("btnUploadPdf");
+      button.disabled = true;
+
+      uploadTask.on(
+        "state_changed",
+        snapshot => {
+            const progress =
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            setUploadStatusPdf(
+              `<i class="fa-solid fa-upload"></i> 正在上傳 PDF... ${Math.round(
+                progress
+              )}%`,
+              "status-info"
+            );
+        },
+        error => {
+            console.error("Main PDF Upload failed:", error);
+            setUploadStatusPdf(
+              `<i class="fa-solid fa-triangle-exclamation"></i> PDF 上傳失敗: ${error.code}`,
+              "status-error"
+            );
+            button.disabled = false;
+        },
+        () => {
+            setUploadStatusPdf(
+              '<i class="fa-solid fa-check-circle"></i> PDF 已成功上傳！儀表板狀態將會更新。',
+              "status-success"
+            );
+            button.disabled = false;
+            byId("pdfUploader").value = "";
+            setTimeout(() => setUploadStatusPdf("", "none"), 5000);
+        }
+      );
+  }
+
+  function setUploadStatusPdf(msg, styleClass) {
+      const statusEl = byId("upload-status-pdf");
+      if (!msg || styleClass === "none") {
+          statusEl.style.display = "none";
+      } else {
+          statusEl.innerHTML = msg;
+          statusEl.className = `noprint ${styleClass}`;
+          statusEl.style.display = "block";
+      }
+  }
+
+  /* --------- 其他工具功能 --------- */
+
+  async function aiFill() {
+      updateStateFromForm();
+      const demo = {
+          appearance: "乳白色乳液狀",
+          odor: "淡花香，無異味",
+          ph: "5.5 ± 0.3（25°C）",
+          visc: "3,000 cP（RV, 20 rpm, 25°C）",
+          density: "1.02 g/mL（25°C）",
+          ri: "1.335（25°C）",
+          solids: "18.0",
+          aw: "0.88",
+          particle: "D90 < 5 μm",
+          fp: "> 60°C（封閉杯）",
+          sol: "水可混；乙醇 70% 可混；油相不混",
+          stability:
+            "5–45°C 安定；凍融 3 循環無明顯分層或析出；建議避光、緊閉保存。",
+          notes: "以上為示範填寫，請依實際檢驗結果修正。"
+      };
+
+      fields.forEach(f => {
+          if (!state.product[f] && demo[f]) {
+              state.product[f] = demo[f];
+          }
+      });
+      updateForm();
+      showStatus(
+        "已用示範值填入空白欄位，請再依實際檢驗結果調整。",
+        "info",
+        8000
+      );
+  }
+
+  function exportJSON() {
+      updateStateFromForm();
+      const payload = {
+          pifId,
+          product: state.product
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+          type: "application/json"
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = (pifId || "pif09-1") + "_physchem.json";
+      a.click();
+      URL.revokeObjectURL(url);
+      showStatus("JSON 匯出完成。", "success", 4000);
+  }
+
+  function importJSON() {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".json,application/json";
+      input.onchange = async e => {
+          const file = e.target.files[0];
+          if (!file) return;
+          try {
+              const text = await file.text();
+              const raw = JSON.parse(text);
+              const src = raw.product || raw || {};
+              fields.forEach(f => {
+                  if (src[f] !== undefined && src[f] !== null) {
+                      state.product[f] = String(src[f]);
+                  }
+              });
+              updateForm();
+              showStatus(`已從 ${file.name} 匯入 JSON。`, "success", 6000);
+          } catch (err) {
+              console.error("Import JSON:", err);
+              showStatus(`JSON 匯入失敗：${err.message}`, "error", 8000);
+          }
+      };
+      input.click();
+  }
+
+  function importCSV() {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".csv,text/csv";
+      input.onchange = async e => {
+          const file = e.target.files[0];
+          if (!file) return;
+          try {
+              const text = await file.text();
+              const lines = text
+                .split(/\r?\n/)
+                .map(l => l.trim())
+                .filter(l => l);
+              if (lines.length < 2) {
+                  throw new Error("CSV 至少需有標題列與一列資料。");
+              }
+              const headers = lines[0].split(",").map(h => h.trim());
+              const values = lines[1].split(",").map(v => v.trim());
+
+              const data = {};
+              headers.forEach((h, i) => {
+                  if (h) data[h] = values[i] || "";
+              });
+
+              fields.forEach(f => {
+                  if (data[f] !== undefined) {
+                      state.product[f] = data[f];
+                  }
+              });
+
+              updateForm();
+              showStatus(`已從 ${file.name} 匯入 CSV（第一列資料）。`, "success", 6000);
+          } catch (err) {
+              console.error("Import CSV:", err);
+              showStatus(`CSV 匯入失敗：${err.message}`, "error", 8000);
+          }
+      };
+      input.click();
+  }
+
+  function printPage() {
+      window.print();
+  }
+
+  function bindEvents() {
+      byId("btnSave").addEventListener("click", saveData);
+      byId("btnSave-bottom").addEventListener("click", saveData);
+      byId("btnAiFill").addEventListener("click", aiFill);
+      byId("btnExportJSON").addEventListener("click", exportJSON);
+      byId("btnImportJSON").addEventListener("click", importJSON);
+      byId("btnImportCSV").addEventListener("click", importCSV);
+      byId("btnPrint").addEventListener("click", printPage);
+      byId("btnUploadPdf").addEventListener("click", () =>
+        byId("pdfUploader").click()
+      );
+      byId("pdfUploader").addEventListener("change", handlePdfUpload);
+  }
+
+  initPage();
+
+  </script>
+</body>
+</html>

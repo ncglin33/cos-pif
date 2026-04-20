@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PIF 10｜各成分之毒理學資料</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="style.css">
+<style>
+  .container { max-width: 1600px; }
+  .card, .ingredient-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
+  .card h2, .ingredient-card h3 { font-size: 1.2rem; margin: 0; padding: 1rem 1.25rem; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center;}
+  .card .body { padding: 1.25rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+  label { font-size: .9rem; color: var(--muted); display: block; margin-bottom: 4px; font-weight: 500; }
+  input, select, textarea { width: 100%; border: 1px solid var(--line); border-radius: .4rem; padding: .4rem .5rem; background: #fff; font-family: inherit; }
+  input[readonly] { background: #f1f5f9; color: #64748b; border-color: #e2e8f0; cursor: not-allowed; }
+  textarea { min-height: 40px; resize: vertical; }
+  .info-box { background-color: #eef2ff; color: #4338ca; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: .9rem; }
+  
+  .ingredient-card .card-header-id { font-size: .9rem; font-weight: 400; color: #64748b; }
+  /* New 2-column layout inspired by pif09-2 */
+  .ingredient-card .fields-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Strict two-column layout */
+    gap: 0.75rem 1.5rem; 
+    padding: 1.25rem;
+  }
+  .field-item { display: contents; } /* Allows label/textarea to be direct grid children */
+  .field-item label {
+    grid-column: 1;
+    text-transform: capitalize;
+    color: #374151;
+    font-weight: 500;
+    align-self: center;
+  }
+  .field-item textarea {
+    grid-column: 2;
+    font-size: 14px;
+  }
+
+  @media (max-width: 768px) {
+    .ingredient-card .fields-grid {
+       grid-template-columns: 1fr; /* Single column on smaller screens */
+    }
+    .field-item label, .field-item textarea {
+        grid-column: 1; /* Both take up the full column */
+    }
+  }
+
+  @media print {
+    .noprint { display: none !important; }
+    body { background: #fff; }
+    .container { margin: 0; padding: 0; }
+    .card, .ingredient-card { border: none; box-shadow: none; margin-bottom: 2rem; page-break-inside: avoid; }
+    textarea { border-color: transparent !important; resize: none; }
+  }
+</style>
+</head>
+<body>
+
+<pif-nav class="noprint"></pif-nav>
+<top-bar class="noprint"></top-bar>
+
+<div class="container">
+  <status-bar class="noprint"></status-bar>
+
+  <div class="toolbar noprint">
+    <button id="btnSave" class="primary"><i class="fa-solid fa-cloud-arrow-up"></i> 儲存變更</button>
+    <div style="flex-grow:1"></div>
+    <button id="btnPrint"><i class="fa-solid fa-print"></i> 列印</button>
+  </div>
+
+  <div class="info-box noprint">
+    <i class="fa-solid fa-circle-info"></i> 系統將自動從 `rms` 資料庫查詢並預填資料 (查詢不區分大小寫)。您儲存後的版本將專屬於此份 PIF 文件。
+  </div>
+
+  <div class="card">
+    <div class="body grid">
+        <div><label>產品名稱</label><input id="prodName" readonly></div>
+        <div><label>品號/代碼</label><input id="prodCode" readonly></div>
+        <div><label>版本</label><input id="ver" placeholder="v1.0"></div>
+        <div><label>建檔日期</label><input id="dt" type="date"></div>
+    </div>
+  </div>
+
+  <div id="ingredients-cards-container"></div>
+  
+  <div class="card">
+    <h2>人員資料</h2>
+    <div class="body grid">
+        <div><label>建檔人員</label><input id="tester" placeholder="輸入姓名"></div>
+        <div><label>建檔日期</label><input id="testDate" type="date"></div>
+        <div><label>複核人員</label><input id="reviewer" placeholder="輸入姓名"></div>
+        <div><label>複核日期</label><input id="reviewDate" type="date"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { auth, db } from "./firebase-config.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, getDoc, setDoc, serverTimestamp, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import "./components.js";
+
+const byId = id => document.getElementById(id);
+const showStatus = (message, type, duration) => customElements.whenDefined('status-bar').then(() => document.querySelector('status-bar').show(message, type, duration));
+
+let pifId, user, pifDocRef, companyName, pifProductName;
+let rmsCache = { byCas: new Map(), byInci: new Map() };
+
+const state = {
+    meta: { ver: "", date: new Date().toISOString().slice(0, 10) },
+    signer: { tester: "", testDate: "", reviewer: "", reviewDate: "" },
+    toxicologyData: {}
+};
+
+async function initPage() {
+    const params = new URLSearchParams(window.location.search);
+    pifId = params.get("id");
+    if (!pifId) {
+        document.querySelector('.container').innerHTML = '<div style="text-align:center; padding: 2rem;"><h2>無效的連結</h2><p>請確認網址是否包含有效的專案 ID。</p><a href="/pifs-list.html">返回 PIF 列表</a></div>';
+        document.querySelectorAll('.toolbar, pif-nav, top-bar').forEach(el => el.remove());
+        return;
+    }
+    companyName = params.get("companyName");
+    pifProductName = params.get("productName");
+
+    onAuthStateChanged(auth, u => {
+        user = u;
+        if (user) {
+            pifDocRef = doc(db, 'pifs', pifId);
+            setupPage();
+            loadData();
+        } else {
+            window.location.href = `login.html?redirect=${encodeURIComponent(window.location.href)}`;
+        }
+    });
+}
+
+function setupPage() {
+    customElements.whenDefined('top-bar').then(() => {
+        document.querySelector('top-bar').setInfo(pifId, companyName, pifProductName, "PIF 10 各成分之毒理學資料");
+    });
+    bindEvents();
+}
+
+async function cacheRMSData() {
+    if (rmsCache.byInci.size > 0) return; // Cache already built
+    try {
+        const querySnapshot = await getDocs(collection(db, 'rms'));
+        querySnapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.cas) rmsCache.byCas.set(data.cas.trim().toLowerCase(), data);
+            if (data.inci) rmsCache.byInci.set(data.inci.trim().toLowerCase(), data);
+        });
+    } catch (e) {
+        console.error("Error caching RMS data: ", e);
+        showStatus("無法載入中央資料庫 (RMS)，將只顯示已儲存的資料。", "error");
+    }
+}
+
+async function loadData() {
+    showStatus("正在載入資料...", "loading", 0);
+    try {
+        await cacheRMSData(); // Ensure RMS data is cached
+
+        const docSnap = await getDoc(pifDocRef);
+        let pif03_ingredients = [];
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.pif10_toxicology) {
+                Object.assign(state, data.pif10_toxicology);
+                state.meta = state.meta || {};
+                state.signer = state.signer || {};
+                state.toxicologyData = state.toxicologyData || {};
+            }
+            byId('prodCode').value = data.pif01?.meta?.prodCode || '';
+            pif03_ingredients = data.pif03?.recipe || [];
+        }
+        
+        renderUI(pif03_ingredients);
+        showStatus("資料載入完成！", "success");
+    } catch (error) {
+        console.error("Load error:", error);
+        showStatus(`載入失敗: ${error.message}`, "error", -1);
+        renderUI([]);
+    }
+}
+
+function renderUI(ingredients) {
+    byId('prodName').value = pifProductName;
+    byId('ver').value = state.meta.ver || "v1.0";
+    byId('dt').value = state.meta.date || new Date().toISOString().slice(0, 10);
+    byId('tester').value = state.signer.tester || "";
+    byId('testDate').value = state.signer.testDate || "";
+    byId('reviewer').value = state.signer.reviewer || "";
+    byId('reviewDate').value = state.signer.reviewDate || "";
+    renderCards(ingredients);
+}
+
+function renderCards(ingredients) {
+    const container = byId('ingredients-cards-container');
+    if (!ingredients || ingredients.length === 0) {
+        container.innerHTML = `<div class="card"><div class="body" style="text-align:center;padding:2rem;">尚未在 PIF 03 中新增任何成分。</div></div>`;
+        return;
+    }
+
+    container.innerHTML = "";
+    ingredients.forEach((ing, i) => {
+        const ingId = ing.cas || ing.inci;
+        const savedData = state.toxicologyData[ingId] || {};
+        
+        // Case-insensitive lookup
+        const rmsEntry = rmsCache.byCas.get(ing.cas?.trim().toLowerCase()) || rmsCache.byInci.get(ing.inci?.trim().toLowerCase()) || {};
+
+        const card = document.createElement('div');
+        card.className = 'ingredient-card';
+        card.dataset.ingId = ingId;
+
+        const allKeys = new Set([...Object.keys(rmsEntry), ...Object.keys(savedData)]);
+        const ignoreKeys = ['id', 'cas', 'inci', 'inci_chi', 'tradename', 'supplier', 'common'];
+
+        const sortedKeys = Array.from(allKeys)
+                                .filter(key => !ignoreKeys.includes(key.toLowerCase()))
+                                .sort((a, b) => a.localeCompare(b)); // Sort alphabetically
+
+        let fieldsHtml = '';
+        if (sortedKeys.length === 0) {
+            fieldsHtml = '<p style="grid-column: 1 / -1; color: #6b7280; font-size: 14px; text-align: center;">無此成分的毒理學資料可顯示。</p>';
+        } else {
+            sortedKeys.forEach(key => {
+                const value = savedData[key] !== undefined ? savedData[key] : (rmsEntry[key] || '');
+                fieldsHtml += `
+                    <div class="field-item">
+                        <label for="${ingId}_${key}">${key.replace(/_/g, ' ')}</label>
+                        <textarea id="${ingId}_${key}" data-k="${key}" rows="2">${value}</textarea>
+                    </div>`;
+            });
+        }
+
+        card.innerHTML = `
+            <h3>
+                <span>${i + 1}. ${ing.inci}</span>
+                <span class="card-header-id">CAS: ${ing.cas || 'N/A'}</span>
+            </h3>
+            <div class="fields-grid">${fieldsHtml}</div>
+        `;
+        container.appendChild(card);
+
+        if (!state.toxicologyData[ingId]) { state.toxicologyData[ingId] = {}; }
+        card.querySelectorAll('textarea').forEach(ta => {
+             if (state.toxicologyData[ingId][ta.dataset.k] === undefined) {
+                state.toxicologyData[ingId][ta.dataset.k] = ta.value;
+             }
+        });
+    });
+}
+
+async function saveData() {
+    showStatus("正在儲存變更...", "loading", 0);
+    byId('btnSave').disabled = true;
+    try {
+        syncStateFromUI();
+        await setDoc(pifDocRef, { 
+            pif10_toxicology: { ...state, lastModified: serverTimestamp() },
+        }, { merge: true });
+        showStatus("所有變更已成功儲存！", "success");
+    } catch (error) {
+        console.error("Save error:", error);
+        showStatus(`儲存失敗: ${error.message}`, "error", -1);
+    } finally {
+        byId('btnSave').disabled = false;
+    }
+}
+
+function syncStateFromUI() {
+    state.meta.ver = byId('ver').value;
+    state.meta.date = byId('dt').value;
+    state.signer.tester = byId('tester').value;
+    state.signer.testDate = byId('testDate').value;
+    state.signer.reviewer = byId('reviewer').value;
+    state.signer.reviewDate = byId('reviewDate').value;
+}
+
+function handleCardInput(e) {
+    const target = e.target;
+    if (!target.matches('textarea')) return;
+    const card = target.closest('.ingredient-card');
+    const ingId = card.dataset.ingId;
+    const key = target.dataset.k;
+    if (!ingId || !key) return;
+
+    state.toxicologyData[ingId] = state.toxicologyData[ingId] || {};
+    state.toxicologyData[ingId][key] = target.value;
+}
+
+function bindEvents() {
+    byId('btnSave').addEventListener('click', saveData);
+    byId('ingredients-cards-container').addEventListener('input', handleCardInput);
+    byId('btnPrint').addEventListener('click', () => window.print());
+}
+
+initPage();
+
+</script>
+</body>
+</html>

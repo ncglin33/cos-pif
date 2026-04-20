@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PIF 08｜產品使用不良反應資料</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    :root{--max:1200px;}
+
+    body{
+      background:#f0f2f5;
+    }
+
+    .container{
+      max-width:var(--max);
+      margin:0 auto;
+      padding:1rem;
+    }
+
+    h2 { font-size: 1.1rem; margin-bottom: .6rem;}
+    .card { margin-bottom: 1rem; }
+    .toolbar{display:flex;flex-wrap:wrap;gap:8px; justify-content: flex-end; margin-bottom: 1rem;}
+
+    .stat{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0}
+    .stat .card{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:130px}
+    .stat .n{font-size:20px;font-weight:700}
+    .stat .t{font-size:12px;color:#aab3bd}
+    
+    table{width:100%;border-collapse:collapse;background:#ffffff;border:1px solid var(--line); font-size: 0.9rem;}
+    thead th{position:sticky;top:0;background:#f8fafc;border-bottom:1px solid var(--line);padding:10px;font-weight:600;text-align:left; white-space: nowrap;}
+    tbody td{border-top:1px solid var(--line);padding:8px;vertical-align:top}
+    tbody td input, tbody td select, tbody td textarea { width: 100%; box-sizing: border-box; font-family: inherit; font-size: inherit;}
+
+    .num{width:40px;text-align:center;color:#666}
+    .w-sm{width:100px}
+    .w-md{width:150px}
+    .w-lg{width:200px}
+
+    #printView{display:none}
+
+    #upload-status-pdf { 
+        display: none; 
+        padding: 0.75rem 1.25rem; 
+        margin-top: 1rem; 
+        border-radius: 8px; 
+        font-weight: 500; 
+        text-align: center; 
+    }
+    .status-info { background-color: #e0e7ff; color: #3730a3; }
+    .status-success { background-color: #dcfce7; color: #166534; }
+    .status-error { background-color: #fee2e2; color: #991b1b; }
+    #upload-status-pdf i { margin-right: 0.5rem; }
+
+    .muted{color:var(--muted);font-size:12px;}
+
+    /* 🔹 列印專用表頭（與 PIF07 同款） */
+    .print-only{display:none;}
+
+    #print-header{
+      border:1px solid #e5e7eb;
+      border-radius:10px;
+      padding:10px 12px;
+      margin:0 0 12px 0;
+      background:#fff;
+    }
+    .print-header-grid{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+    }
+    .ph-left{flex:1;min-width:0;}
+    .ph-right{text-align:right;min-width:220px;}
+    .ph-title{
+      font-size:1.28rem;
+      font-weight:800;
+      letter-spacing:.3px;
+      color:#111827;
+      margin:0 0 4px 0;
+      line-height:1.2;
+    }
+    .ph-sub{
+      font-size:.98rem;
+      color:#111827;
+      line-height:1.35;
+      margin:0;
+      white-space:nowrap;
+    }
+    .ph-label{
+      font-weight:700;
+      color:#374151;
+    }
+
+    @media print{
+      @page { size: A4 portrait; margin: 12mm; }
+      .noprint{display:none!important}
+      body{background:white;color:black;font-size:10px}
+      .container { max-width: 100%; padding: 0; }
+
+      #editor{display:none}
+      #printView{display:block}
+      .print-only{display:block!important;}
+
+      h2, h3 { margin: 12px 0 6px 0; }
+      pre{white-space:pre-wrap; font-family: inherit; font-size: 10px;}
+      .p-cards{display:grid;grid-template-columns:1fr;gap:8px}
+      .p-card{border:1px solid #aaa;border-radius:8px;padding:10px 12px;break-inside:avoid;page-break-inside:avoid;background:#fff}
+      .p-card h3{margin:0 0 6px 0;font-size:12px}
+      .p-meta{display:grid;grid-template-columns:1fr 1fr;gap:5px 10px;margin:6px 0}
+      .p-meta .item{font-size:10px}
+      .p-meta .lbl{color:#555;margin-right:4px; font-weight: 500;}
+      .p-desc{margin-top:6px;font-size:10px}
+    }
+  </style>
+</head>
+<body>
+
+<pif-nav class="noprint"></pif-nav>
+<top-bar class="noprint"></top-bar>
+
+<div class="container">
+
+  <status-bar class="noprint"></status-bar>
+
+  <!-- 列印表頭 -->
+  <div id="print-header" class="print-only">
+    <div class="print-header-grid">
+      <div class="ph-left">
+        <div class="ph-title" id="printTitle"></div>
+        <p class="ph-sub" id="printProductName"></p>
+      </div>
+      <div class="ph-right">
+        <p class="ph-sub">
+          <span class="ph-label">PIFID：</span>
+          <span id="printPifId"></span>
+        </p>
+        <p class="ph-sub" id="printCompanyName"></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="editor">
+    <div class="toolbar noprint">
+      <button id="btnAdd" class="primary"><i class="fa-solid fa-plus"></i> 新增一列</button>
+      <button id="btnSave" class="primary"><i class="fa-solid fa-cloud-arrow-up"></i> 儲存變更</button>
+      <button id="btnSample"><i class="fa-solid fa-flask"></i> 載入示例</button>
+    </div>
+    <div class="toolbar noprint">
+        <button id="btnExportJson"><i class="fa-solid fa-file-export"></i> 匯出 JSON</button>
+        <button id="btnExportCsv"><i class="fa-solid fa-file-csv"></i> 匯出 CSV</button>
+        <button id="btnPrint"><i class="fa-solid fa-print"></i> 列印 / PDF</button>
+        <button id="btnUploadPdf"><i class="fa-solid fa-file-arrow-up"></i> 上傳本頁 PDF</button>
+        <input type="file" id="pdfUploader" accept="application/pdf" style="display:none;">
+    </div>
+    <div id="upload-status-pdf" class="noprint"></div>
+
+    <section class="card">
+        <h2>統計儀表板</h2>
+        <div class="stat" id="stats">
+          <div class="card"><div class="n" id="sTotal">0</div><div class="t">總通報數</div></div>
+          <div class="card"><div class="n" id="sSerious">0</div><div class="t">嚴重不良反應</div></div>
+          <div class="card"><div class="n" id="sMild">0</div><div class="t">輕度</div></div>
+          <div class="card"><div class="n" id="sModerate">0</div><div class="t">中度</div></div>
+          <div class="card"><div class="n" id="sSevere">0</div><div class="t">重度</div></div>
+          <div class="card"><div class="n" id="sProbable">0</div><div class="t">因果：很可能/可能</div></div>
+          <div class="card"><div class="n" id="sResolved">0</div><div class="t">已恢復/好轉</div></div>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>不良反應事件清單</h2>
+        <div style="overflow-x: auto;">
+            <table id="tbl">
+              <thead>
+                <tr>
+                  <th class="num">#</th>
+                  <th class="w-md">事件編號</th><th class="w-md">產品品名</th><th class="w-sm">批號</th><th class="w-md">事件日期</th><th class="w-md">國家/通路</th><th class="w-md">通報來源</th><th class="w-sm">年齡</th><th class="w-sm">性別</th><th class="w-md">使用部位</th><th class="w-lg">不良反應描述</th><th class="w-md">發生時間</th><th class="w-md">嚴重度</th><th class="w-md">是否SAE</th><th class="w-md">因果關係</th><th class="w-md">處置</th><th class="w-md">結果</th><th class="w-sm">就醫</th><th class="w-md">追蹤</th><th class="w-md">附件/連結</th><th class="w-lg">備註</th><th class="noprint w-sm">動作</th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- 無不良反應情形之說明 -->
+    <section class="card">
+      <h2>無不良反應情形之說明</h2>
+      <textarea id="noAeText" rows="3"
+        placeholder="本產品截至文件產生日（自動帶入），目前本產品尚未有任何不良反應事件報告。如有不良反應或嚴重的資料時，會立即更新於本產品資訊檔案，並提供給安全資料簽署人員。"></textarea>
+      <p class="muted">
+        若本產品尚未有不良反應通報，可於此輸入說明文字；將一併列印於文件中，以補充交付文件版面。
+      </p>
+    </section>
+
+  </div>
+
+  <div class="wrap" id="printView"></div>
+
+</div>
+
+<script type="module">
+import { auth, db, storage } from "./firebase-config.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { ref, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+import "./components.js";
+
+const byId = id => document.getElementById(id);
+const safeCall = (tagName, selector, callback) => {
+  customElements.whenDefined(tagName).then(() => {
+    const element = document.querySelector(selector);
+    if (element) callback(element);
+  });
+};
+
+const showStatus = (message, type, duration) => {
+  safeCall('status-bar', 'status-bar', el => el.show(message, type, duration));
+};
+
+let pifId, user, pif_docRef, companyName, productName;
+const state = { items: [], noAeText: '' };
+
+const SEVERITY=['輕度','中度','重度'],
+      CAUSALITY=['確定','很可能','可能','不太可能','無法評估'],
+      SOURCE=['消費者','醫事人員','門市/通路','客服','線上表單'],
+      OUTCOME=['已恢復','好轉中','未改善','未知'],
+      ACTIONS=['停用','持續使用','減量','就醫/外用藥'],
+      GENDER=['女','男','其他/未填'];
+
+const initPage = () => {
+  const params = new URLSearchParams(window.location.search);
+  pifId = params.get("id");
+  companyName = params.get("companyName");
+  productName = params.get("productName");
+
+  const titleEl = document.getElementById('printTitle');
+  if (titleEl){
+    const raw = document.title || '';
+    const stripped = raw.replace(/^PIF\\s*08\\s*｜\\s*/i,'').trim();
+    titleEl.textContent = `PIF08 ${stripped || '產品使用不良反應資料'}`;
+  }
+  const pifEl = document.getElementById('printPifId');
+  if (pifEl) pifEl.textContent = pifId || '';
+  const prodEl = document.getElementById('printProductName');
+  if (prodEl) prodEl.textContent = productName || '';
+  const compEl = document.getElementById('printCompanyName');
+  if (compEl) compEl.textContent = companyName || '';
+
+  if (!pifId) {
+    showStatus("錯誤：URL 中缺少 PIF ID。", "error", -1);
+    document.getElementById('editor').innerHTML =
+      '<p class="muted" style="text-align: center; padding: 2rem;">無效的頁面連結，請從主控台重新進入。</p>';
+    return;
+  }
+
+  safeCall('top-bar', 'top-bar',
+    el => el.setInfo(pifId, companyName, productName, "08 產品使用不良反應資料"));
+
+  document.body.addEventListener('logout-request', () =>
+    signOut(auth).catch(error => showStatus(`登出失敗: ${error.message}`, 'error')));
+
+  onAuthStateChanged(auth, u => {
+    user = u;
+    if (user) {
+      safeCall('top-bar', 'top-bar', el => el.setUser(user));
+      pif_docRef = doc(db, 'pifs', pifId);
+      loadData();
+    } else {
+      window.location.href = '/';
+    }
+  });
+  addEventListeners();
+};
+
+const loadData = async () => {
+  showStatus("正在從雲端載入資料...", "loading", 0);
+  try {
+    const pif_snap = await getDoc(pif_docRef);
+    const cloudData = pif_snap.exists() ? pif_snap.data()?.pif08 : null;
+
+    // ✅ 不再自動塞 1 筆 defaultRow；沒有資料就保持 0 筆
+    if (cloudData && Array.isArray(cloudData.items)) {
+      state.items = cloudData.items;
+    } else {
+      state.items = [];
+    }
+
+    const defaultNoAeText =
+      `本產品截至文件產生日（${todayDisplay()}），目前本產品尚未有任何不良反應事件報告。` +
+      `如有不良反應或嚴重的資料時，會立即更新於本產品資訊檔案，並提供給安全資料簽署人員。`;
+
+    state.noAeText =
+      (cloudData && typeof cloudData.noAeText === 'string' && cloudData.noAeText.trim() !== '')
+        ? cloudData.noAeText
+        : defaultNoAeText;
+
+    render();
+    showStatus("資料載入完成！", "success");
+  } catch (error) {
+    console.error("Load Data Error:", error);
+    showStatus(`載入資料時發生錯誤: ${error.message}`, "error", -1);
+  }
+};
+
+const saveData = async () => {
+  showStatus("正在儲存變更至雲端...", "loading", 0);
+  const saveButtons = document.querySelectorAll('#btnSave');
+  saveButtons.forEach(btn => btn.disabled = true);
+  try {
+    await setDoc(pif_docRef, { 
+      pif08: { items: state.items, noAeText: state.noAeText },
+      lastModified: serverTimestamp() 
+    }, { merge: true });
+    showStatus("所有變更已成功儲存！", "success");
+  } catch (error) {
+    console.error("Save Data Error:", error);
+    showStatus(`儲存失敗: ${error.message}`, "error", -1);
+  } finally {
+    saveButtons.forEach(btn => btn.disabled = false);
+  }
+};
+
+function todayISO(){
+  const d = new Date();
+  return d.getFullYear() + '-' +
+         String(d.getMonth()+1).padStart(2,'0') + '-' +
+         String(d.getDate()).padStart(2,'0');
+}
+function todayDisplay(){
+  const [y,m,d] = todayISO().split('-');
+  return `${y}/${m}/${d}`;
+}
+function genCaseId(){
+  return `AE-${todayISO().replace(/-/g,'')}-${String(state.items.length+1).padStart(3,'0')}`;
+}
+function defaultRow(){
+  return {
+    case_id: genCaseId(),
+    product: productName || '',
+    lot:'',
+    date: todayISO(),
+    country:'',
+    source:'消費者',
+    age:'',
+    gender:'女',
+    site:'',
+    desc:'',
+    onset:'',
+    severity:'輕度',
+    serious:false,
+    causality:'可能',
+    action:'停用',
+    outcome:'已恢復',
+    medical:'否',
+    follow:'否',
+    follow_date:'',
+    attach:'',
+    notes:''
+  };
+}
+
+function render() {
+  const tbody = byId('tbody');
+  tbody.innerHTML = '';
+  state.items.forEach((row, index) => {
+    const tr = document.createElement('tr');
+    const createCell = (content, className) => {
+      const td=document.createElement('td');
+      if(className) td.className=className;
+      td.append(content);
+      return td;
+    };
+    const createInput = (value, field, type='text') => {
+      const i=document.createElement('input');
+      i.type=type;
+      i.value=value|| '';
+      i.addEventListener('change', e=>state.items[index][field]=e.target.value);
+      return i;
+    };
+    const createTextarea = (value, field) => {
+      const t=document.createElement('textarea');
+      t.rows=2;
+      t.value=value|| '';
+      t.addEventListener('change', e=>state.items[index][field]=e.target.value);
+      return t;
+    };
+    const createSelect = (options, value, field) => {
+      const select = document.createElement('select');
+      options.forEach(opt => {
+        const o=document.createElement('option');
+        o.value=o.textContent=opt;
+        if(opt===value)o.selected=true;
+        select.add(o);
+      });
+      select.addEventListener('change', e => {
+        let val = field === 'serious' ? (e.target.value === '是') : e.target.value;
+        state.items[index][field] = val;
+        if(['severity','serious','causality','outcome'].includes(field)) refreshStats();
+      });
+      return select;
+    };
+    const createFollowUp = (row, index) => {
+      const wrap=document.createElement('div');
+      wrap.style.display='flex';
+      wrap.style.gap='4px';
+      const select=createSelect(['否','是'],row.follow|| '否','follow');
+      const dateInput=createInput(row.follow_date,'follow_date','date');
+      dateInput.disabled=row.follow!=='是';
+      select.addEventListener('change',()=>dateInput.disabled=select.value!=='是');
+      wrap.append(select,dateInput);
+      return wrap;
+    };
+    const deleteBtn = document.createElement('button');
+    deleteBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+    deleteBtn.className = 'danger small';
+    deleteBtn.title = '刪除此列';
+    deleteBtn.onclick = () => {
+      if(confirm(`確定刪除事件「${row.case_id}」？`)) {
+        state.items.splice(index,1);
+        render();
+      }
+    };
+    
+    tr.append(
+      createCell(String(index + 1),'num'),
+      createCell(createInput(row.case_id, 'case_id')),
+      createCell(createInput(row.product, 'product')),
+      createCell(createInput(row.lot, 'lot')),
+      createCell(createInput(row.date, 'date','date')),
+      createCell(createInput(row.country, 'country')),
+      createCell(createSelect(SOURCE, row.source, 'source')),
+      createCell(createInput(row.age, 'age', 'number')),
+      createCell(createSelect(GENDER, row.gender, 'gender')),
+      createCell(createInput(row.site, 'site')),
+      createCell(createTextarea(row.desc, 'desc')),
+      createCell(createInput(row.onset, 'onset')),
+      createCell(createSelect(SEVERITY, row.severity, 'severity')),
+      createCell(createSelect(['否', '是'], row.serious ? '是' : '否', 'serious')),
+      createCell(createSelect(CAUSALITY, row.causality, 'causality')),
+      createCell(createSelect(ACTIONS, row.action, 'action')),
+      createCell(createSelect(OUTCOME, row.outcome, 'outcome')),
+      createCell(createSelect(['否', '是'], row.medical || '否', 'medical')),
+      createCell(createFollowUp(row, index)),
+      createCell(createInput(row.attach, 'attach')),
+      createCell(createTextarea(row.notes, 'notes')),
+      createCell(deleteBtn, 'noprint')
+    );
+    tbody.appendChild(tr);
+  });
+  refreshStats();
+
+  const noAeEl = byId('noAeText');
+  if (noAeEl) noAeEl.value = state.noAeText || '';
+}
+
+function addRow() {
+  state.items.push(defaultRow());
+  render();
+  byId('tbody').lastElementChild?.scrollIntoView({behavior:'smooth'});
+}
+
+function sample() {
+  if (!confirm('這將會覆蓋目前的資料，確定要載入示例嗎？')) return;
+  state.items = [
+    {
+      case_id:'AE-20240101-001',
+      product:productName||'舒敏修護乳',
+      lot:'A240901',
+      date: todayISO(),
+      country:'TW/藥妝門市',
+      source:'消費者',
+      age:'28',
+      gender:'女',
+      site:'臉頰',
+      desc:'輕微刺癢與泛紅，約30分鐘後緩解。',
+      onset:'使用後10分鐘',
+      severity:'輕度',
+      serious:false,
+      causality:'可能',
+      action:'停用',
+      outcome:'已恢復',
+      medical:'否',
+      follow:'否',
+      follow_date:'',
+      attach:'',
+      notes:''
+    },
+    {
+      case_id:'AE-20240102-002',
+      product:productName||'去屑洗髮精',
+      lot:'B240821',
+      date: todayISO(),
+      country:'TW/電商',
+      source:'消費者',
+      age:'35',
+      gender:'男',
+      site:'頭皮',
+      desc:'大範圍紅疹伴輕度灼熱感。',
+      onset:'第3日第2次使用後',
+      severity:'中度',
+      serious:false,
+      causality:'很可能',
+      action:'停用',
+      outcome:'好轉中',
+      medical:'是',
+      follow:'是',
+      follow_date: todayISO(),
+      attach:'',
+      notes:'建議帶產品就醫評估。'
+    }
+  ];
+  state.noAeText = '';
+  render();
+  showStatus('已載入示例資料，請記得儲存。', 'info');
+}
+
+function refreshStats() {
+  const arr = state.items;
+  byId('sTotal').textContent = arr.length;
+  byId('sSerious').textContent = arr.filter(x=>x.serious).length;
+  byId('sMild').textContent = arr.filter(x=>x.severity==='輕度').length;
+  byId('sModerate').textContent = arr.filter(x=>x.severity==='中度').length;
+  byId('sSevere').textContent = arr.filter(x=>x.severity==='重度').length;
+  byId('sProbable').textContent = arr.filter(x=>['很可能','可能'].includes(x.causality)).length;
+  byId('sResolved').textContent = arr.filter(x=>['已恢復','好轉中'].includes(x.outcome)).length;
+}
+
+function csvEscape(v){
+  const s=String(v==null?'':v);
+  return (s.includes('"')||s.includes(',')||s.includes('\n'))
+    ? '"' + s.replace(/"/g, '""') + '"'
+    : s;
+}
+
+function exportJSON(){
+  const blob=new Blob(
+    [JSON.stringify({items: state.items, noAeText: state.noAeText},null,2)],
+    {type:'application/json;charset=utf-8'}
+  );
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`PIF08_${pifId}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function exportCSV(){
+  const header=[
+    '事件編號','產品品名','批號','事件日期','國家/通路','通報來源','年齡','性別',
+    '使用部位','不良反應描述','發生時間','嚴重度','是否SAE','因果關係',
+    '處置','結果','就醫','需追蹤','追蹤日期','附件/連結','備註'
+  ];
+  const rows=state.items.map(r=>[
+    r.case_id,r.product,r.lot,r.date,r.country,r.source,r.age,r.gender,
+    r.site,r.desc,r.onset,r.severity,r.serious?'是':'否',r.causality,
+    r.action,r.outcome,r.medical||'否',r.follow||'否',r.follow_date,r.attach,r.notes
+  ]);
+  const csv=[header, ...rows].map(row=>row.map(csvEscape).join(',')).join('\r\n');
+  const blob=new Blob([new Uint8Array([0xEF,0xBB,0xBF]), csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`PIF08_${pifId}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, s => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[s]));
+}
+
+function buildPrintView(){
+  const pv=byId('printView');
+  pv.innerHTML='';
+  pv.insertAdjacentHTML('beforeend', `<h2>08 產品使用不良反應資料－事件摘要</h2>`);
+
+  if (state.noAeText && state.noAeText.trim() !== '') {
+    const txt = escapeHtml(state.noAeText).replace(/\n/g,'<br>');
+    pv.insertAdjacentHTML(
+      'beforeend',
+      `<p style="font-size:10px;margin:4px 0 10px 0;">${txt}</p>`
+    );
+  }
+
+  const stats = byId('stats').cloneNode(true);
+  pv.appendChild(stats);
+
+  const wrap=document.createElement('div');
+  wrap.className='p-cards';
+
+  const addMeta=(meta,label,val)=>{
+    meta.insertAdjacentHTML(
+      'beforeend',
+      `<div class="item"><span class="lbl">${label}：</span><span>${escapeHtml(val||'')}</span></div>`
+    );
+  };
+
+  state.items.forEach(r=>{
+    const card=document.createElement('div');
+    card.className='p-card';
+    card.innerHTML=
+      `<h3>[${escapeHtml(r.case_id|| '')}] ${escapeHtml(r.product || '')} (${escapeHtml(r.date || '')})</h3>`;
+    const meta=document.createElement('div');
+    meta.className='p-meta';
+    addMeta(meta,'批號',r.lot);
+    addMeta(meta,'國家/通路',r.country);
+    addMeta(meta,'通報來源',r.source);
+    addMeta(meta,'年齡/性別',`${r.age|| ''} / ${r.gender||''}`);
+    addMeta(meta,'使用部位',r.site);
+    addMeta(meta,'發生時間',r.onset);
+    addMeta(meta,'嚴重度',r.severity);
+    addMeta(meta,'SAE',r.serious?'是':'否');
+    addMeta(meta,'因果關係',r.causality);
+    addMeta(meta,'處置',r.action);
+    addMeta(meta,'結果',r.outcome);
+    addMeta(meta,'就醫',r.medical||'否');
+    addMeta(meta,'追蹤',`${r.follow||'否'}${r.follow_date?' / '+r.follow_date:''}`);
+    addMeta(meta,'附件/連結',r.attach);
+    card.appendChild(meta);
+
+    if(r.desc)
+      card.insertAdjacentHTML(
+        'beforeend',
+        `<div class="p-desc"><b>不良反應描述：</b>${escapeHtml(r.desc)}</div>`
+      );
+    if(r.notes)
+      card.insertAdjacentHTML(
+        'beforeend',
+        `<div class="p-desc"><b>備註：</b>${escapeHtml(r.notes)}</div>`
+      );
+    wrap.appendChild(card);
+  });
+  pv.appendChild(wrap);
+}
+
+function handlePdfUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.type !== "application/pdf") {
+    alert("請僅上傳 PDF 檔案。");
+    return;
+  }
+  uploadMainPdf(file, `pifs/${pifId}/08.pdf`);
+}
+
+function uploadMainPdf(file, storagePath) {
+  const uploadTask = uploadBytesResumable(ref(storage, storagePath), file);
+  const button = byId('btnUploadPdf');
+  button.disabled = true;
+
+  uploadTask.on('state_changed', 
+    (snapshot) => {
+      const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      setUploadStatusPdf(`<i class="fa-solid fa-upload"></i> 正在上傳 PDF... ${Math.round(progress)}%`, 'status-info');
+    }, 
+    (error) => {
+      console.error("Main PDF Upload failed:", error);
+      setUploadStatusPdf(`<i class="fa-solid fa-triangle-exclamation"></i> PDF 上傳失敗: ${error.code}`, 'status-error');
+      button.disabled = false;
+    }, 
+    () => {
+      setUploadStatusPdf('<i class="fa-solid fa-check-circle"></i> PDF 已成功上傳！', 'status-success');
+      button.disabled = false;
+      byId('pdfUploader').value = '';
+      setTimeout(() => setUploadStatusPdf('', 'none'), 5000);
+    }
+  );
+}
+
+function setUploadStatusPdf(msg, styleClass) {
+  const statusEl = byId('upload-status-pdf');
+  if (!msg || styleClass === 'none') {
+    statusEl.style.display = 'none';
+  } else {
+    statusEl.innerHTML = msg;
+    statusEl.className = `noprint ${styleClass}`;
+    statusEl.style.display = 'block';
+  }
+}
+
+function addEventListeners() {
+  byId('btnAdd').addEventListener('click', addRow);
+  byId('btnSample').addEventListener('click', sample);
+  byId('btnSave').addEventListener('click', saveData);
+  byId('btnExportJson').addEventListener('click', exportJSON);
+  byId('btnExportCsv').addEventListener('click', exportCSV);
+  byId('btnPrint').addEventListener('click', () => { buildPrintView(); window.print(); });
+  byId('btnUploadPdf').addEventListener('click', () => byId('pdfUploader').click());
+  byId('pdfUploader').addEventListener('change', handlePdfUpload);
+
+  const noAeEl = byId('noAeText');
+  if (noAeEl){
+    noAeEl.addEventListener('input', e => { state.noAeText = e.target.value; });
+  }
+}
+
+initPage();
+
+</script>
+</body>
+</html>

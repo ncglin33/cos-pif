@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>後台資料庫</title>
+<style>
+  :root { --brand: #4f46e5; --bg: #f3f4f6; --fg: #111827; --card: #fff; --line: #e5e7eb; }
+  body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; background-color: var(--bg); margin: 0; color: var(--fg); }
+  .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+  h1 { font-size: 2rem; font-weight: 700; margin-bottom: 1.5rem; }
+  .table-container { background-color: var(--card); border-radius: .75rem; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  thead { background-color: #f9fafb; }
+  th, td { padding: .75rem 1rem; text-align: left; border-bottom: 1px solid var(--line); }
+  th { font-size: .875rem; font-weight: 600; color: #374151; }
+  tbody tr:hover { background-color: #f9fafb; }
+  .pif-code { font-family: monospace; }
+  .loading { text-align: center; padding: 2rem; color: #6b7280; }
+  .empty { text-align: center; padding: 2rem; color: #6b7280; }
+  a { color: var(--brand); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>PIF 後台資料庫</h1>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>PIF 編碼</th>
+            <th>產品名稱</th>
+            <th>品牌</th>
+            <th>品項/色號</th>
+            <th>建立日期</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="pif-table-body">
+          <tr class="loading">
+            <td colspan="6">資料庫讀取中...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="pif-table-empty" class="empty" style="display: none;">
+      資料庫中沒有任何 PIF 文件。
+    </div>
+  </div>
+
+  <script src="firebase-config.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+
+    const firebaseConfig = getFirebaseConfig();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const tableBody = document.getElementById('pif-table-body');
+    const emptyMessage = document.getElementById('pif-table-empty');
+
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        loadPifData();
+      } else {
+        // For simplicity, this admin page is public for now.
+        // In a real app, you would redirect to a login page.
+        // window.location.href = 'login.html';
+        loadPifData(); // for now, allow public access for demonstration
+      }
+    });
+
+    async function loadPifData() {
+      tableBody.innerHTML = '<tr class="loading"><td colspan="6">資料庫讀取中...</td></tr>';
+      emptyMessage.style.display = 'none';
+
+      try {
+        const pifsCollection = collection(db, 'pifs');
+        const q = query(pifsCollection, orderBy('createdAt', 'desc')); // Assuming a 'createdAt' field exists
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+          tableBody.innerHTML = '';
+          emptyMessage.style.display = 'block';
+          return;
+        }
+
+        let html = '';
+        querySnapshot.forEach(doc => {
+          const data = doc.data();
+          const basic = data.basic || {};
+          const createdAt = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString() : 'N/A';
+          
+          html += `
+            <tr>
+              <td><span class="pif-code">${escapeHtml(doc.id)}</span></td>
+              <td>${escapeHtml(basic.name)}</td>
+              <td>${escapeHtml(data.brand)}</td>
+              <td>${escapeHtml(data.variant)}</td>
+              <td>${createdAt}</td>
+              <td>
+                <a href="pif01.html?pifCode=${doc.id}" target="_blank">編輯</a>
+              </td>
+            </tr>
+          `;
+        });
+
+        tableBody.innerHTML = html;
+
+      } catch (error) {
+        console.error("Error loading PIF data: ", error);
+        tableBody.innerHTML = '<tr class="loading"><td colspan="6">讀取資料時發生錯誤。</td></tr>';
+      }
+    }
+
+    function escapeHtml(str) {
+        return String(str || '').replace(/[&<\"\']/g, s => ({'&':'&amp;','<':'&lt;','"':'&quot;',"'":'&#39;'})[s]);
+    }
+
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>產品資訊檔案 Product Information File (PIF)</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="./pif01-3.css">
+
+<style>
+  /* A4 視覺版面：畫面直接以一張紙呈現 */
+  body {
+    background-color: #f0f2f5;
+  }
+  .app-wrap {
+    max-width: 210mm;
+    margin: 1.5rem auto 2rem;
+    padding: 1.5rem 2rem 2rem;
+    background-color: #ffffff;
+    box-shadow: 0 0 6px rgba(0,0,0,0.08);
+    min-height: 297mm;
+    box-sizing: border-box;
+  }
+
+  .cover-basic-info {
+    margin-top: 1.5rem;
+  }
+
+  /* 封面抬頭：LOGO + 中英文置中標題 + PIF ID / 版本 / 日期 */
+  .print-header {
+    display: block;
+    text-align: center;
+    margin: 1.25rem auto 0.75rem;
+  }
+  .print-header .logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 0.35rem;
+  }
+  .print-header .logo img.logo-img-print {
+    height: 26px;
+    width: auto;
+    display: block;
+  }
+  .print-header h1 {
+    margin: 0 0 0.35rem;
+    font-size: 1.35rem;
+    line-height: 1.4;
+  }
+  .print-header .en-title {
+    font-size: 1.05rem;
+    font-weight: 400;
+  }
+  .print-header .project-info {
+    font-size: 0.95rem;
+  }
+  .print-header .project-info .info-item {
+    margin-bottom: 0.15rem;
+  }
+
+  /* 基本資料欄位：兩欄文字式排版，不要框框 */
+  .value-input {
+    width: 100%;
+    padding: 3px 0;
+    border: none;
+    border-bottom: 1px solid #ccc;
+    border-radius: 0;
+    font-size: 0.95rem;
+    background-color: #fff;
+    color: #333;
+  }
+
+  .info-card,
+  .vendor-block {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  .info-grid.basic-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 1.5rem;
+    row-gap: 0.75rem;
+  }
+  .basic-info-grid > div {
+    display: flex;
+    align-items: center;
+  }
+  .basic-info-grid > div > label {
+    margin-bottom: 0;
+    margin-right: 0.5rem;
+    white-space: nowrap;
+    font-size: 0.95rem;
+  }
+  .basic-info-grid > div > .value,
+  .basic-info-grid > div > .value-input {
+    flex: 1 1 auto;
+    font-size: 0.95rem;
+  }
+
+  /* 責任業者：僅文字列，不要卡片框線 */
+  .vendor-block-title {
+    font-size: 1rem;
+    margin: 1.5rem 0 0.5rem;
+  }
+  .vendor-details-grid {
+    display: block;
+    font-size: 0.95rem;
+  }
+  .vendor-details-grid .field-line {
+    margin-bottom: 0.25rem;
+  }
+  .vendor-details-grid .field-label {
+    font-weight: 600;
+    margin-right: 0.25rem;
+  }
+
+  @media print {
+    body {
+      background-color: #ffffff;
+    }
+    .app-wrap {
+      max-width: none;
+      margin: 0;
+      box-shadow: none;
+      padding: 0;
+      min-height: auto;
+    }
+    .toolbar.no-print,
+    .status-bar.no-print {
+      display: none !important;
+    }
+    .page-main-title,
+    #project-subtitle,
+    #pif-id-badge {
+      display: none !important;
+    }
+    .print-header {
+      display: block;
+    }
+    .value-input {
+      border: none;
+      padding: 0;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div id="app-container" style="display: none;">
+    <div class="toolbar no-print">
+        <a id="back-link" href="#" class="btn"><i class="fa-solid fa-arrow-left"></i> 返回 PIF 列表</a>
+        <button id="btnSaveChanges" class="btn primary"><i class="fa-solid fa-cloud-arrow-up"></i> 儲存變更至雲端</button>
+        <div class="right">
+          <div id="user-info" style="display: inline-block; margin-right: 1rem; font-size: .9rem;"></div>
+          <button id="btnSignOut" class="btn danger">登出</button>
+        </div>
+    </div>
+    <div class="app-wrap">
+<div class="print-header">
+  <div class="logo">
+    <img src="img/cospif-logo.png" alt="CosPIF Logo" class="logo-img-print">
+    <span>CosPIF</span>
+  </div>
+  <h1>
+    <span class="zh-title">產品資訊檔案</span><br>
+    <span class="en-title">Product Information File (PIF)</span>
+  </h1>
+  <div class="project-info">
+    <div class="info-item"><strong>PIF ID：</strong><span id="print-pif-id"></span></div>
+    <div class="info-item"><strong>PIF 版本：</strong><span id="print-pif-version"></span></div>
+    <div class="info-item"><strong>製作日期：</strong><span id="print-pif-date"></span></div>
+  </div>
+</div>
+
+        <header style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+                <h1 class="page-main-title"><i class="fa-solid fa-id-card"></i>產品資訊檔案 PIF</h1>
+                <div id="project-subtitle" class="text-secondary" style="margin-top: 0.25rem;">此頁面包含產品基本資料。任何變更都需要手動儲存。</div>
+            </div>
+            <div id="pif-id-badge" class="badge" style="font-size: 1rem; padding: .5rem .8rem; border-radius: .5rem;"></div>
+        </header>
+
+        <div class="status-bar no-print">
+            <div>
+                <span id="status-light" class="status-light"></span>
+                <span id="status-text">正在初始化...</span>
+            </div>
+            <div>
+                <button onclick="window.print()" class="btn"><i class="fa-solid fa-print"></i> 列印 / 匯出 PDF</button>
+            </div>
+        </div>
+
+        <div id="product-info-container" class="cover-basic-info"></div>
+        <div class="vendor-info-container">
+            <div id="responsible-vendor-container"></div>
+            <div id="sites-container"></div>
+        </div>
+    </div>
+</div>
+
+<div id="global-error" style="display:none;"></div>
+
+<script type="module">
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { doc, getDoc, setDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { auth, db } from './firebase-config.js';
+
+  const $ = sel => document.querySelector(sel);
+  let pifDocRef;
+  let pageContext = {};
+  let hasUnsavedChanges = false;
+  let currentPifData = {};
+
+  const status = {
+      light: $("#status-light"),
+      text: $("#status-text"),
+      set: function(state, msg) {
+          this.light.className = `status-light ${state}`;
+          this.text.textContent = msg;
+          $('#btnSaveChanges').disabled = (state !== 'syncing' && !hasUnsavedChanges);
+          if (state === 'synced' || state === 'error') {
+              setTimeout(() => this.set(hasUnsavedChanges ? 'syncing' : 'ready', hasUnsavedChanges ? '有未儲存的變更' : '就緒'), 3000);
+          }
+      },
+      markUnsaved: function() {
+          if (hasUnsavedChanges) return;
+          hasUnsavedChanges = true;
+          this.set('syncing', '有未儲存的變更');
+          $('#btnSaveChanges').disabled = false;
+      }
+  };
+
+  function startAuthFlow() {
+      onAuthStateChanged(auth, user => {
+          if (user) {
+              try {
+                  pageContext = setupPageContext();
+                  pifDocRef = doc(db, 'pifs', pageContext.pifId);
+                  setupUIForUser(user);
+                  initializeData();
+                  $('#app-container').style.display = 'block';
+              } catch (e) {
+                  $('#global-error').textContent = `啟動錯誤：${e.message}。請確認網址是否正確。`;
+                  $('#global-error').style.display = 'block';
+              }
+          } else {
+              window.location.href = `login.html?redirect=${encodeURIComponent(window.location.href)}`;
+          }
+          document.body.style.opacity = '1';
+      });
+  }
+
+  function setupPageContext() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const context = {
+          pifId: urlParams.get('id'),
+          companyName: urlParams.get('companyName'),
+          productName: urlParams.get('productName')
+      };
+      if (!context.pifId) throw new Error('網址中缺少專案 ID');
+      return context;
+  }
+
+  function setupUIForUser(user) {
+      $('#user-info').textContent = user.email;
+      $('#pif-id-badge').textContent = pageContext.pifId;
+      $('#btnSignOut').addEventListener('click', () => signOut(auth));
+      const params = new URLSearchParams({ id: pageContext.pifId, companyName: pageContext.companyName, productName: pageContext.productName });
+      $('#back-link').href = `pif-i.html?${params.toString()}`;
+      $('#btnSaveChanges').addEventListener('click', saveData);
+      $('#btnSaveChanges').disabled = true;
+      window.addEventListener('beforeunload', e => {
+          if (hasUnsavedChanges) {
+              e.preventDefault();
+              e.returnValue = '';
+          }
+      });
+  }
+
+  async function initializeData() {
+      status.set('syncing', '正在從雲端讀取資料...');
+      try {
+          const docSnap = await getDoc(pifDocRef);
+          if (docSnap.exists()) {
+              currentPifData = docSnap.data();
+              renderBasicInfo(currentPifData.pif01 || {}, currentPifData);
+              status.set('synced', '資料讀取成功');
+          } else {
+              console.warn("在資料庫中找不到對應的專案文件，將會建立新的。");
+              status.set('ready', '就緒 (新檔案)');
+          }
+      } catch (err) {
+          console.error("Initialization failed: ", err);
+          status.set('error', `讀取失敗: ${err.message}`);
+      }
+  }
+
+  function renderBasicInfo(pif01Data, rootData) {
+      // 安全轉義，避免 XSS
+      const escape = str => str
+          ? String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]))
+          : '';
+
+      const basicInfo = pif01Data.basic || {};
+      const productName = rootData.productName || basicInfo.name || '';
+      const productNameEn = rootData.productNameEn || basicInfo.productNameEn || '';
+      const category = basicInfo.category || '';
+      const form = basicInfo.form || '';
+      const safetyAssessor = basicInfo.safetyAssessor || '';
+      const pifMaker = basicInfo.pifMaker || '';
+      const pifVersion = basicInfo.pifVersion || '';
+      const pifDate = basicInfo.pifDate || basicInfo.createdDate || '';
+
+      const productInfoContainer = $('#product-info-container');
+      productInfoContainer.innerHTML = `
+        <div class="info-card">
+          <div class="info-grid basic-info-grid">
+            <div>
+              <label>產品中文名稱</label>
+              <div class="value">${escape(productName) || '—'}</div>
+            </div>
+            <div>
+              <label>產品英文名稱</label>
+              <div class="value">${escape(productNameEn) || '—'}</div>
+            </div>
+            <div>
+              <label>產品類別</label>
+              <div class="value">${escape(category) || '—'}</div>
+            </div>
+            <div>
+              <label>產品形式</label>
+              <div class="value">${escape(form) || '—'}</div>
+            </div>
+            <div>
+              <label for="safetyAssessor">安全評估人員</label>
+              <input type="text" id="safetyAssessor" class="value-input" value="${escape(safetyAssessor)}">
+            </div>
+            <div>
+              <label for="pifMaker">PIF 製作人員</label>
+              <input type="text" id="pifMaker" class="value-input" value="${escape(pifMaker)}">
+            </div>
+            <div>
+              <label for="pifVersion">PIF 版本</label>
+              <input type="text" id="pifVersion" class="value-input" value="${escape(pifVersion)}">
+            </div>
+            <div>
+              <label for="pifDate">製作日期</label>
+              <input type="text" id="pifDate" class="value-input" value="${escape(pifDate)}">
+            </div>
+          </div>
+        </div>`;
+
+      // 欄位變更時，標記「尚未儲存」
+      const safetyInput = $('#safetyAssessor');
+      const makerInput = $('#pifMaker');
+      const versionInput = $('#pifVersion');
+      const dateInput = $('#pifDate');
+      if (safetyInput) safetyInput.addEventListener('input', status.markUnsaved.bind(status));
+      if (makerInput) makerInput.addEventListener('input', status.markUnsaved.bind(status));
+      if (versionInput) versionInput.addEventListener('input', status.markUnsaved.bind(status));
+      if (dateInput) dateInput.addEventListener('input', status.markUnsaved.bind(status));
+
+      // 責任業者區塊：純文字條列
+      const escapeOrEmpty = v => v ? escape(v) : '';
+      const createField = (label, value) =>
+          value ? `<div class="field-line"><span class="field-label">${escape(label)}：</span><span class="field-value">${escapeOrEmpty(value)}</span></div>` : '';
+
+      const maker = pif01Data.maker;
+      const respVendorContainer = $('#responsible-vendor-container');
+      if (respVendorContainer) {
+          if (maker) {
+              respVendorContainer.innerHTML = `
+                  <div class="vendor-block">
+                      <h3 class="vendor-block-title"><i class="fa-solid fa-user-tie"></i> 責任業者</h3>
+                      <div class="vendor-details-grid">
+                          ${createField('名稱', maker.name || maker.companyName)}
+                          ${createField('地址', maker.addr)}
+                          ${createField('電話', maker.tel)}
+                          ${createField('統一編號', maker.tax)}
+                      </div>
+                  </div>`;
+          } else {
+              respVendorContainer.innerHTML = '';
+          }
+      }
+
+      // 畫面上的副標：公司名稱 - 產品名稱
+      const companyName = rootData.companyName || pageContext.companyName || '';
+      $('#project-subtitle').textContent = `${companyName} - ${productName || '產品資料'}`;
+
+      // 頂部抬頭：同步 PIF ID / 版本 / 日期
+      const printPifIdEl = $('#print-pif-id');
+      const printVersionEl = $('#print-pif-version');
+      const printDateEl = $('#print-pif-date');
+      if (printPifIdEl) printPifIdEl.textContent = pageContext.pifId || '';
+      if (printVersionEl) printVersionEl.textContent = escape(pifVersion) || '';
+      if (printDateEl) printDateEl.textContent = escape(pifDate) || '';
+  }
+
+  async function saveData() {
+      status.set('syncing', '正在儲存至雲端...');
+
+      const safetyAssessorValue = $('#safetyAssessor') ? $('#safetyAssessor').value : '';
+      const pifMakerValue = $('#pifMaker') ? $('#pifMaker').value : '';
+      const pifVersionValue = $('#pifVersion') ? $('#pifVersion').value : '';
+      const pifDateValue = $('#pifDate') ? $('#pifDate').value : '';
+
+      const dataToSave = {
+          'pif01.basic.safetyAssessor': safetyAssessorValue,
+          'pif01.basic.pifMaker': pifMakerValue,
+          'pif01.basic.pifVersion': pifVersionValue,
+          'pif01.basic.pifDate': pifDateValue
+      };
+
+      try {
+          // Using set with merge to update nested fields is safer
+          await setDoc(
+              pifDocRef,
+              { pif01: { basic: { safetyAssessor: safetyAssessorValue, pifMaker: pifMakerValue, pifVersion: pifVersionValue, pifDate: pifDateValue } } },
+              { merge: true }
+          );
+
+          hasUnsavedChanges = false;
+          status.set('synced', '資料已成功儲存！');
+
+          // Re-fetch data to confirm and get latest state
+          await initializeData();
+
+      } catch (err) {
+          status.set('error', `資料庫儲存失敗: ${err.message}`);
+          console.error("Firestore save failed: ", err);
+      }
+  }
+
+  startAuthFlow();
+</script>
+</body>
+</html>

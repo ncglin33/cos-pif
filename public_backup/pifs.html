@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PIF 製作入口</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="pifs.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+      body {
+        opacity: 0;
+        transition: opacity 0.4s ease-in-out;
+      }
+      .header .wrap {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+        padding: 2rem;
+      }
+      [contenteditable="true"]:focus {
+        outline: 2px solid var(--accent, #2563eb);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+        border-radius: 4px;
+      }
+    </style>
+</head>
+<body>
+  <header class="header">
+    <div class="wrap">
+        <h1 id="project-title" class="app-title" style="font-size: 1.5rem;">PIF 製作入口</h1>
+        <div class="controls header-right">
+          <button id="btnSaveChanges" class="btn primary" style="display: none;"><i class="fa-solid fa-save"></i> 儲存名稱變更</button>
+          <a href="vendors.html" class="btn"><i class="fa-solid fa-database"></i> 廠商資料庫管理</a>
+          <a href="pif-i.html" class="btn btn-secondary">返回儀表板</a>
+          <a id="btnAdmin" href="admin.html" class="btn accent" style="display: none;"><i class="fa-solid fa-user-shield"></i> 管理後台</a>
+          <div id="user-info" style="display: inline-block; margin-left: 1rem;"></div>
+          <button id="btnSignOut" class="btn btn-danger">登出</button>
+        </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="grid" class="grid"></div>
+    <div id="error-message" style="text-align: center; padding: 2rem; color: red;"></div>
+  </main>
+
+  <script type="module">
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, getDocs, doc, writeBatch, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { auth, db } from './firebase-config.js';
+
+    let currentUser = null;
+    let isAdmin = false;
+    let pendingTitleChanges = new Map();
+
+    class PIFCard extends HTMLElement { 
+        constructor() { super(); this.attachShadow({ mode: 'open' }); }
+        connectedCallback() { this.render(); }
+        static get observedAttributes() { return ['no', 'title', 'href', 'editable']; }
+        attributeChangedCallback() { this.render(); }
+        render() {
+            const no = this.getAttribute('no') || '';
+            const title = this.getAttribute('title') || '未命名';
+            const href = this.getAttribute('href') || '#';
+            const editable = this.hasAttribute('editable');
+
+            this.shadowRoot.innerHTML = `
+                <style>
+                  :host { display: block; }
+                  .card { background: var(--card, #fff); border: 1px solid var(--line, #e2e8f0); border-radius: 16px; padding: 14px; box-shadow: 0.3px 0.5px 0.7px hsl(0deg 0% 63% / 0.34); transition: all 0.25s ease-out; }
+                  .card:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0.3px 0.5px 0.7px hsl(0deg 0% 63% / 0.36), 0.8px 1.6px 2px -0.8px hsl(0deg 0% 63% / 0.36), 2.1px 4.1px 5.2px -1.7px hsl(0deg 0% 63% / 0.36); }
+                  .title { display: flex; align-items: center; gap: 8px; font-weight: 700; transition: color 0.2s ease-out; }
+                  .card:hover .title { color: var(--accent, #2563eb); }
+                  .badge { display: inline-block; min-width: 46px; text-align: center; font-variant-numeric: tabular-nums; background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; border-radius: 999px; padding: 2px 8px; font-size: 12px; }
+                  .t { font-size: 14px; flex-grow: 1; }
+                  .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+                  a.btn { text-decoration: none; display: inline-flex; align-items: center; color: var(--ink, #0f172a); background: #fff; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight:500; box-shadow: 0.2px 0.4px 0.5px hsl(220 3% 69% / 0.34); transition: all 0.2s ease-out; }
+                  a.btn:hover { transform: translateY(-1px); box-shadow: 0 1px 2px -1px #0002; }
+                  [contenteditable="true"]:focus { outline: 2px solid #2563eb; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2); border-radius: 4px; background: #fefce8; }
+                </style>
+                <div class="card">
+                    <div class="title">
+                      <span class="badge">${no}</span>
+                      <span class="t" ${editable ? 'contenteditable="true"' : ''}>${title}</span>
+                    </div>
+                    <div class="actions">
+                        <a class="btn" href="${href}">前往</a>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    customElements.define('pif-card', PIFCard);
+    
+    async function startApp() {
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+
+                const idTokenResult = await user.getIdTokenResult();
+                isAdmin = idTokenResult.claims.admin || false;
+                if (isAdmin) {
+                    document.getElementById('btnAdmin').style.display = 'inline-flex';
+                }
+
+                const projectData = setupProjectContext();
+                if (projectData) {
+                    setupUIForUser(projectData);
+                    await renderGrid(projectData);
+                }
+                document.body.style.opacity = '1';
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+    }
+
+    function setupProjectContext() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const pifId = urlParams.get('id');
+        const companyName = urlParams.get('companyName');
+        const productName = urlParams.get('productName');
+        const errorMessageEl = document.getElementById('error-message');
+        
+        if (!pifId || !companyName || !productName) {
+            errorMessageEl.innerHTML = '<strong>錯誤：</strong>網址中缺少必要的專案資訊。請返回<a href="pif-i.html">儀表板</a>並重新選擇專案。';
+            document.body.style.opacity = '1';
+            return null;
+        }
+
+        return {
+            pifId: pifId,
+            companyName: decodeURIComponent(companyName),
+            productName: decodeURIComponent(productName)
+        };
+    }
+
+    function setupUIForUser(projectData) {
+        document.getElementById('project-title').innerHTML = `${projectData.companyName} - <strong>${projectData.productName}</strong>`;
+        document.title = `製作 PIF - ${projectData.productName}`;
+        document.getElementById('user-info').textContent = currentUser.email;
+        document.getElementById('btnSignOut').addEventListener('click', () => {
+            signOut(auth).then(() => { 
+                alert('您已成功登出。');
+                window.location.href = 'login.html';
+            });
+        });
+        document.getElementById('btnSaveChanges').addEventListener('click', saveTitleChanges);
+    }
+
+    async function initializePifModules() {
+        const modulesRef = collection(db, "pif_modules");
+        const snapshot = await getDocs(modulesRef);
+        let modules = [];
+        if (snapshot.empty) {
+            console.log("Initializing PIF modules in database...");
+            modules = [
+                { no: 'PIF', title: '封面', href: 'pif-cover.html', order: 0 },
+                { no: 'PIF 00', title: '產品資訊檔案目錄', href: 'pif00.html', order: 1 },
+                { no: 'PIF 01', title: '產品基本資料', href: 'pif01.html', order: 2 },
+                { no: 'PIF 02', title: '完成產品登錄之證明文件', href: 'pif02.html', order: 3 },
+                { no: 'PIF 03', title: '產品配方', href: 'pif03.html', order: 4 },
+                { no: 'PIF 04', title: '原料品質與安全性資料', href: 'pif04.html', order: 5 },
+                { no: 'PIF 05', title: '產品安定性試驗報告', href: 'pif05.html', order: 6 },
+                { no: 'PIF 06', title: '微生物檢測報告', href: 'pif06.html', order: 7 },
+                { no: 'PIF 07', title: '防腐效能試驗報告', href: 'pif07.html', order: 8 },
+                { no: 'PIF 08', title: '產品使用不良反應資料', href: 'pif08.html', order: 9 },
+                { no: 'PIF 09-1', title: '產品之物理及化學特性', href: 'pif09-1.html', order: 10 },
+                { no: 'PIF 09-2', title: '各成分之物理及化學特性', href: 'pif09-2.html', order: 11 },
+                { no: 'PIF 10', title: '與產品接觸之包裝材質資料', href: 'pif15.html', order: 12 },
+                { no: 'PIF 11', title: '製造方法', href: 'pif11.html', order: 13 },
+                { no: 'PIF 12', title: 'GMP符合性文件', href: 'pif12.html', order: 14 },
+                { no: 'PIF 13', title: '不良反應彙整', href: 'pif13.html', order: 15 },
+                { no: 'PIF 14', title: '產品安全評估報告', href: 'pif14.html', order: 16 },
+                { no: 'PIF 15', title: '（舊）產品安全評估簽署人員', href: 'pif15.html', order: 17 },
+                { no: 'PIF 16', title: '產品安全資料', href: 'pif16.html', order: 18 },
+            ];
+            const batch = writeBatch(db);
+            modules.forEach(mod => {
+                const docRef = doc(db, "pif_modules", mod.no);
+                batch.set(docRef, mod);
+            });
+            await batch.commit();
+        } else {
+          snapshot.forEach(doc => modules.push(doc.data()));
+        }
+        return modules.sort((a, b) => a.order - b.order);
+    }
+
+    async function renderGrid(projectData) {
+        const grid = document.getElementById('grid');
+        grid.innerHTML = '';
+        if (!projectData || !projectData.pifId) return;
+
+        const pifModules = await initializePifModules();
+
+        const { pifId, companyName, productName } = projectData;
+        const companyNameEncoded = encodeURIComponent(companyName);
+        const productNameEncoded = encodeURIComponent(productName);
+
+        pifModules.forEach(pif => {
+            const card = document.createElement('pif-card');
+            card.setAttribute('no', pif.no);
+            card.setAttribute('title', pif.title);
+            
+            let href = pif.href;
+            // Correct the link for PIF 10 to point to the correct file
+            if (pif.no === 'PIF 10') {
+                href = 'pif15.html';
+            }
+            const newHref = `${href}?id=${pifId}&companyName=${companyNameEncoded}&productName=${productNameEncoded}`;
+            card.setAttribute('href', newHref);
+            
+            if (isAdmin) {
+                card.setAttribute('editable', '');
+                const titleSpan = card.shadowRoot.querySelector('.t');
+                titleSpan.addEventListener('blur', (e) => {
+                    const newTitle = e.target.innerText.trim();
+                    if (newTitle && newTitle !== pif.title) {
+                        pendingTitleChanges.set(pif.no, newTitle);
+                        document.getElementById('btnSaveChanges').style.display = 'inline-flex';
+                    }
+                });
+            }
+            
+            grid.appendChild(card);
+        });
+    }
+    
+    async function saveTitleChanges() {
+        const btn = document.getElementById('btnSaveChanges');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 儲存中...';
+        
+        const batch = writeBatch(db);
+        pendingTitleChanges.forEach((title, no) => {
+            const docRef = doc(db, "pif_modules", no);
+            batch.update(docRef, { title: title });
+        });
+
+        try {
+            await batch.commit();
+            pendingTitleChanges.clear();
+            btn.style.display = 'none';
+            // alert('名稱變更已成功儲存！');
+        } catch (error) {
+            console.error("Error saving title changes: ", error);
+            alert('儲存失敗，請稍後再試。錯誤：' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-save"></i> 儲存名稱變更';
+        }
+    }
+
+    startApp();
+
+  </script>
+</body>
+</html>

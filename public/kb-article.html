@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>化妝品專業知識</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <!-- Markdown renderer (lightweight) -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    .container{ max-width: 1650px; }
+    .page-header{ background:#fff; border:1px solid var(--line); border-radius:16px; padding: 1.25rem 1.25rem; margin: .9rem 0 1rem; }
+    .page-header h2{ margin:0; }
+    .sub{ color: var(--muted); margin-top:.35rem; line-height:1.45; }
+
+    .layout{
+      display:grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 1rem;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .layout{ grid-template-columns: 1fr; }
+    }
+
+    .cardish{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.05);
+      padding: 1.1rem 1.1rem;
+    }
+
+    .toc{
+      margin: .4rem 0 0;
+      padding: 0;
+      list-style: none;
+      display:flex;
+      flex-direction:column;
+      gap: .35rem;
+    }
+    .toc a{
+      color: var(--ink);
+      text-decoration:none;
+      padding:.45rem .6rem;
+      border-radius: 10px;
+      border:1px solid transparent;
+      display:block;
+    }
+    .toc a:hover{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+
+    .badge{
+      display:inline-flex; align-items:center; gap:.35rem;
+      border:1px solid var(--line);
+      border-radius: 999px;
+      padding:.25rem .6rem;
+      font-size:.82rem;
+      background:#fff;
+      color: var(--muted);
+      margin-left:.5rem;
+    }
+
+    .article h1{ font-size: 1.65rem; margin: .25rem 0 .5rem; }
+    .article h2{ font-size: 1.28rem; margin: 1.1rem 0 .55rem; }
+    .article h3{ font-size: 1.1rem; margin: .95rem 0 .4rem; }
+    .article p, .article li{ line-height: 1.75; }
+    .article pre{
+      background:#0b1220;
+      color:#e5e7eb;
+      padding: .9rem 1rem;
+      border-radius: 12px;
+      border:1px solid #111827;
+      overflow:auto;
+    }
+    .article code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace; }
+    .article blockquote{
+      border-left: 4px solid #93c5fd;
+      padding: .2rem .9rem;
+      background:#f8fafc;
+      border-radius: 10px;
+      margin: .8rem 0;
+      color: #334155;
+    }
+
+    .term-link{
+      display:inline;
+      cursor:pointer;
+      padding: .02rem .15rem;
+      border-bottom: 2px dotted #60a5fa;
+      border-radius: 6px;
+      background: rgba(59,130,246,.06);
+    }
+    .term-link:hover{ background: rgba(59,130,246,.12); }
+
+    .searchrow{
+      display:flex; gap:.5rem; align-items:center;
+      border:1px solid var(--line);
+      border-radius: 12px;
+      padding:.55rem .6rem;
+      background:#fff;
+    }
+    .searchrow input{
+      border:none; outline:none;
+      width:100%;
+      font-size: .95rem;
+    }
+    .searchrow i{ color: var(--muted); }
+
+    .results{
+      margin-top:.6rem;
+      display:flex; flex-direction:column; gap:.4rem;
+    }
+    .res{
+      border:1px solid var(--line);
+      border-radius: 12px;
+      padding:.55rem .65rem;
+      cursor:pointer;
+      background:#fff;
+    }
+    .res:hover{ background:#eff6ff; border-color:#bfdbfe; }
+    .res .t{ font-weight:800; }
+    .res .m{ color: var(--muted); font-size:.85rem; margin-top:.15rem; }
+
+    .refs ol{ padding-left: 1.2rem; }
+    .refs li{ margin: .4rem 0; }
+
+    .ref-item{
+      cursor:pointer;
+      border-radius: 10px;
+      padding: .25rem .35rem;
+      margin-left: -.35rem;
+      margin-right: -.35rem;
+    }
+    .ref-item:hover{
+      background:#eff6ff;
+      outline: 1px solid #bfdbfe;
+    }
+    .muted{ color: var(--muted); }
+
+    /* Modal */
+    .modal-backdrop{
+      position:fixed; inset:0;
+      background: rgba(2,6,23,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 1rem;
+      z-index: 50;
+    }
+    .modal-backdrop.open{ display:flex; }
+    .modal{
+      width: min(860px, 100%);
+      background:#fff;
+      border-radius: 16px;
+      border:1px solid var(--line);
+      box-shadow: 0 20px 50px rgba(0,0,0,.25);
+      overflow:hidden;
+    }
+    .modal-head{
+      display:flex; align-items:center; justify-content:space-between;
+      padding: .9rem 1.05rem;
+      border-bottom: 1px solid var(--line);
+      background:#f9fafb;
+    }
+    .modal-head h3{ margin:0; font-size: 1.05rem; }
+    .modal-body{
+      padding: 1rem 1.05rem 1.1rem;
+      max-height: 70vh;
+      overflow:auto;
+    }
+    .kvgrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .8rem;
+      margin-top:.75rem;
+    }
+    @media (max-width: 880px){ .kvgrid{ grid-template-columns: 1fr; } }
+    .kv{
+      border:1px solid var(--line);
+      border-radius: 12px;
+      padding:.7rem .8rem;
+      background:#fff;
+    }
+    .k{ font-weight:800; font-size:.85rem; color: var(--muted); }
+    .v{ margin-top:.25rem; white-space:pre-wrap; line-height:1.6; }
+    .btnx{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius: 12px;
+      padding:.45rem .65rem;
+      cursor:pointer;
+    }
+    .btnx:hover{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+    .pill{
+      display:inline-flex; gap:.35rem; align-items:center;
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:.2rem .55rem;
+      font-size:.82rem;
+      color: var(--muted);
+      margin-left:.45rem;
+      background:#fff;
+    }
+
+    .topbar{
+      display:flex; gap:.6rem; align-items:center; justify-content:space-between;
+      padding: .85rem 1rem;
+      border-bottom: 1px solid var(--line);
+      background:#fff;
+    }
+    .topbar .left{
+      display:flex; gap:.6rem; align-items:center;
+    }
+    .topbar a{
+      text-decoration:none;
+      color: var(--ink);
+      font-weight:800;
+    }
+    .topbar .right{
+      display:flex; gap:.5rem; align-items:center;
+    }
+    .tiny{ font-size:.86rem; color: var(--muted); }
+    .noauth{ display:none; }
+  
+    .articleSelect{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius: 12px;
+      padding:.42rem .6rem;
+      font-weight:800;
+      color: var(--ink);
+      max-width: 520px;
+    }
+    .articleSelect:focus{ outline: none; border-color:#bfdbfe; box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
+    @media (max-width: 520px){
+      .articleSelect{ max-width: 170px; }
+    }
+
+</style>
+</head>
+
+<body>
+  <header class="no-print">
+    <div class="topbar">
+      <div class="left">
+        <a href="index.html"><i class="fa-solid fa-house"></i> 首頁</a>
+        <span class="badge" id="slugBadge">slug: —</span>
+        <select id="articleSelect" class="articleSelect" title="選擇文章">
+          <option value="">載入文章清單…</option>
+        </select>
+      </div>
+      <div class="right">
+        <span class="tiny" id="userInfo"></span>
+        <button class="btn btn-danger noauth" id="btnSignOut">登出</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="page-header">
+      <h2 id="pageTitle">化妝品專業知識</h2>
+      <div class="sub" id="pageSub">讀取中…</div>
+    </div>
+
+    <div class="layout">
+      <!-- LEFT: ARTICLE -->
+      <main class="cardish article">
+        <div id="articleTop"></div>
+        <div id="articleBody"></div>
+
+        <section class="refs" id="refBlock" style="display:none; margin-top: 1.25rem;">
+          <h2>參考文獻</h2>
+          <ol id="refList"></ol>
+          <div class="muted" style="margin-top:.5rem;">※ 文獻資料來自 <code>kb_refs</code>，文章引用欄位為 <code>refIds</code>。</div>
+        </section>
+
+        <div id="emptyState" style="display:none; margin-top:.5rem;">
+          <div class="muted">
+            找不到文章資料。請先到 <code>admin-kb.html</code> 匯入一篇 <code>kb_articles</code>（slug 設為 <span id="slugText"></span>）。
+          </div>
+        </div>
+      </main>
+
+      <!-- RIGHT: TOC + TERM SEARCH -->
+      <aside class="cardish">
+        <h3 style="margin-top:0;"><i class="fa-solid fa-list"></i> 章節索引</h3>
+        <ul class="toc" id="toc"></ul>
+
+        <hr style="border:none; border-top:1px solid #eef2f7; margin: 1rem 0;">
+
+        <h3 style="margin:0;"><i class="fa-solid fa-book-open"></i> 名詞 / 原料快速查</h3>
+        <div class="muted" style="margin-top:.3rem; line-height:1.5;">
+          可用「中文名 / 英文名 / INCI / aliases / keywords」查詢；或直接點文章內被標示的專有名詞。
+        </div>
+
+        <div class="searchrow" style="margin-top:.7rem;">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input id="termSearch" type="text" placeholder="例如：SPF、UVA-PF、Avobenzone、Zinc Oxide…">
+        </div>
+        <div class="results" id="termResults"></div>
+
+        <div class="muted" style="margin-top:1rem;">
+          提示：文章底部若有引用文獻，會出現「參考文獻」清單；你也可以在這裡直接查詢文獻庫。
+        </div>
+
+        <hr style="border:none; border-top:1px solid #eef2f7; margin: 1rem 0;">
+
+        <h3 style="margin:0;"><i class="fa-solid fa-book"></i> 參考文獻快速查</h3>
+        <div class="muted" style="margin-top:.3rem; line-height:1.5;">
+          可用「title / org / year / DOI / tags」查詢；點擊結果可查看詳情與連結。
+        </div>
+
+        <div class="searchrow" style="margin-top:.7rem;">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input id="refSearch" type="text" placeholder="例如：ISO 24444、COLIPA、UVA、TFDA、DOI…">
+        </div>
+        <div class="results" id="refResults"></div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- TERM MODAL -->
+  <div class="modal-backdrop" id="termModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <h3 id="modalTitle">名詞卡</h3>
+        <button class="btnx" id="modalClose"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div id="modalMeta" class="muted"></div>
+        <div class="kvgrid" id="modalKv"></div>
+
+        <div id="modalRefsWrap" style="margin-top:1rem; display:none;">
+          <h3 style="margin: .2rem 0 .35rem; font-size: 1rem;">參考文獻</h3>
+          <ol id="modalRefs" style="padding-left: 1.2rem; margin: .35rem 0 0;"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- REF MODAL -->
+  <div class="modal-backdrop" id="refModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="refModalTitle">
+      <div class="modal-head">
+        <h3 id="refModalTitle">參考文獻</h3>
+        <button class="btnx" id="refModalClose"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div id="refModalMeta" class="muted"></div>
+        <div class="kvgrid" id="refModalKv"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import {
+      doc, getDoc, getDocs, collection, query, where, limit
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { db, auth } from "./firebase-config.js";
+
+    const $ = (s) => document.querySelector(s);
+
+    // ===== Settings =====
+    const COL_ARTICLES = "kb_articles";
+    const COL_TERMS = "kb_terms";
+    const COL_REFS = "kb_refs";
+
+    const cache = {
+      refsById: new Map(),   // id -> ref doc
+      refsAll: null          // full list for search
+    };
+
+    // ===== Slug =====
+    const params = new URLSearchParams(location.search);
+    const slug = (params.get("slug") || "sunscreen").trim();
+    const showGuide = params.get("showGuide") === "1"; // default: hide internal reader-guide sections
+    $("#slugBadge").textContent = `slug: ${slug}`;
+    $("#slugText").textContent = slug;
+
+    // ===== Article list selector (topbar dropdown) =====
+    async function loadArticleList(){
+      const sel = document.querySelector("#articleSelect");
+      if (!sel) return;
+
+      sel.innerHTML = `<option value="">選擇文章…</option>`;
+
+      try{
+        const snaps = await getDocs(collection(db, COL_ARTICLES));
+        const all = snaps.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        // Prefer published items (for public KB). If none are marked published, show all.
+        const published = all.filter(a => String(a.status || "").toLowerCase() === "published");
+        const list = (published.length ? published : all).filter(a => (a.slug || a.id));
+
+        // Stable sort: topic then title/slug
+        list.sort((a,b) => {
+          const la = `${a.topic || ""} ${a.title || a.slug || a.id || ""}`.trim();
+          const lb = `${b.topic || ""} ${b.title || b.slug || b.id || ""}`.trim();
+          return la.localeCompare(lb, "zh-Hant");
+        });
+
+        for (const a of list){
+          const value = (a.slug || a.id).toString();
+          const label = `${a.topic ? a.topic + "｜" : ""}${a.title || value}`;
+          const opt = document.createElement("option");
+          opt.value = value;
+          opt.textContent = label;
+          if (value === slug) opt.selected = true;
+          sel.appendChild(opt);
+        }
+
+        sel.addEventListener("change", () => {
+          const v = (sel.value || "").trim();
+          if (!v) return;
+          const url = new URL(location.href);
+          url.searchParams.set("slug", v);
+          location.href = url.toString();
+        });
+
+      }catch(e){
+        console.warn("loadArticleList failed:", e);
+        // keep the selector but indicate failure
+        sel.innerHTML = `<option value="">（無法載入文章清單）</option>`;
+      }
+    }
+
+
+    // ===== Auth UI (optional) =====
+    function wireAuthUI(){
+      onAuthStateChanged(auth, (user) => {
+        if (user){
+          $("#userInfo").textContent = user.email || "";
+          $("#btnSignOut").classList.remove("noauth");
+          $("#btnSignOut").addEventListener("click", () => signOut(auth));
+        } else {
+          $("#userInfo").textContent = "";
+          $("#btnSignOut").classList.add("noauth");
+        }
+      });
+    }
+
+    // ===== Markdown + term markup =====
+    function escapeHtml(str){
+      return String(str ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+    }
+
+    // Support: [[t_xxx|label]] / [[r_xxx|label]] or [[label]] (label used as search key)
+    function expandTermMarkup(md){
+      if (!md) return "";
+      let out = String(md);
+
+      // Auto-link refIds like r_xxx when they appear as standalone list items or after "refId:"
+      // This lets legacy articles that list refIds directly become clickable without manually adding [[...]].
+      out = out
+        .replace(/(refId\s*[:=：]\s*)(r_[A-Za-z0-9_:-]+)/g, "$1[[$2|$2]]")
+        .replace(/^(\s*[-*]\s*)(r_[A-Za-z0-9_:-]+)\s*$/gm, "$1[[$2|$2]]")
+        .replace(/^(\s*\d+\.\s*)(r_[A-Za-z0-9_:-]+)\s*$/gm, "$1[[$2|$2]]");
+
+      // Support: [[t_xxx|label]] / [[r_xxx|label]] or [[label]] (label used as search key)
+      out = out.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, (_m, key, label) => {
+        return `<span class="term-link" data-term="${escapeHtml(key)}">${escapeHtml(label)}</span>`;
+      });
+      out = out.replace(/\[\[([^\]]+)\]\]/g, (_m, label) => {
+        return `<span class="term-link" data-term="${escapeHtml(label)}">${escapeHtml(label)}</span>`;
+      });
+      return out;
+    }
+
+    function mdToHtml(md){
+      const prepared = expandTermMarkup(md);
+      // Allow inline HTML tags from prepared term markup
+      marked.setOptions({ gfm: true, breaks: true });
+      return marked.parse(prepared);
+    }
+
+    function ensureSectionId(id, h2){
+      const base = (id || h2 || "section").toString().trim().toLowerCase()
+        .replace(/[^\p{L}\p{N}]+/gu, "-")
+        .replace(/^-+|-+$/g, "");
+      return base || ("section-" + Math.random().toString(16).slice(2));
+    }
+
+    // ===== Article rendering =====
+    function renderToc(sections){
+      const toc = $("#toc");
+      toc.innerHTML = "";
+      for (const s of sections){
+        const sid = ensureSectionId(s.id, s.h2);
+        const a = document.createElement("a");
+        a.href = `#${sid}`;
+        a.textContent = s.h2 || "未命名章節";
+        const li = document.createElement("li");
+        li.appendChild(a);
+        toc.appendChild(li);
+      }
+    }
+
+    function renderArticle(article){
+      $("#pageTitle").textContent = article.title || "化妝品專業知識";
+      $("#pageSub").textContent = article.summary || (article.topic ? `主題：${article.topic}` : "");
+
+      const top = $("#articleTop");
+      top.innerHTML = `
+        <h1 style="margin-top:.1rem;">${escapeHtml(article.title || "")}</h1>
+        <div class="muted" style="margin-top:.25rem;">
+          ${article.topic ? `<span class="pill"><i class="fa-solid fa-folder-open"></i> ${escapeHtml(article.topic)}</span>` : ""}
+          ${article.status ? `<span class="pill"><i class="fa-solid fa-toggle-on"></i> ${escapeHtml(article.status)}</span>` : ""}
+        </div>
+      `;
+
+      const rawSections = Array.isArray(article.sections) ? article.sections : [];
+      const sections = rawSections.filter(s => {
+        if (showGuide) return true;
+        const h2 = String(s?.h2 || "");
+        const id = String(s?.id || "");
+        const audience = String(s?.audience || "").toLowerCase();
+        if (s?.hidden === true || s?.internal === true) return false;
+        if (audience === "internal" || audience === "admin") return false;
+        if (id.startsWith("_")) return false;
+        // Hide reader-guide / internal instruction sections by default
+        if (/讀者導覽/.test(h2)) return false;
+        return true;
+      });
+      renderToc(sections);
+
+      const body = $("#articleBody");
+      body.innerHTML = sections.map((s) => {
+        const sid = ensureSectionId(s.id, s.h2);
+        return `
+          <section id="${escapeHtml(sid)}">
+            <h2>${escapeHtml(s.h2 || "")}</h2>
+            <div class="md">${mdToHtml(s.bodyMd || "")}</div>
+          </section>
+        `;
+      }).join("");
+
+      // Wire term clicks inside article
+      body.querySelectorAll(".term-link").forEach(el => {
+        el.addEventListener("click", async () => {
+          const key = (el.getAttribute("data-term") || "").trim();
+          if (!key) return;
+
+          // If the markup key is a reference id (r_xxx), open kb_refs card instead of kb_terms
+          if (key.startsWith("r_")) {
+            try {
+              await openRefById(key);
+            } catch (e) {
+              alert(`找不到文獻卡：${key}\n請先在 admin-kb.html 匯入 kb_refs（參考文獻 CSV）。`);
+            }
+            return;
+          }
+
+          await openTermByKey(key);
+        });
+      });
+    }
+
+    // ===== Refs rendering =====
+    async function loadRefs(refIds){
+      const ids = (Array.isArray(refIds) ? refIds : []).filter(Boolean);
+      if (!ids.length){
+        $("#refBlock").style.display = "none";
+        return;
+      }
+      const docs = await Promise.all(ids.map(async (id) => {
+        try{
+          const snap = await getDoc(doc(db, COL_REFS, id));
+          return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+        }catch(e){
+          return null;
+        }
+      }));
+      const list = docs.filter(Boolean);
+      if (!list.length){
+        $("#refBlock").style.display = "none";
+        return;
+      }
+
+      const ol = $("#refList");
+      ol.innerHTML = list.map(r => {
+        const text = r.citationText || r.title || r.id;
+        const url = r.url || "";
+        const doi = r.doi || "";
+        const extra = [
+          url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener">Link</a>` : "",
+          doi ? `<span class="muted">DOI: ${escapeHtml(doi)}</span>` : ""
+        ].filter(Boolean).join(" · ");
+
+        return `<li>
+          <div class="ref-item" data-refid="${escapeHtml(r.id)}">${escapeHtml(text)}</div>
+          ${extra ? `<div class="muted" style="margin-top:.15rem;">${extra}</div>` : ""}
+        </li>`;
+      }).join("");
+
+      // cache + click to open modal
+      list.forEach(r => cache.refsById.set(r.id, r));
+      ol.querySelectorAll(".ref-item").forEach(el => {
+        el.addEventListener("click", async () => {
+          const id = (el.getAttribute("data-refid") || "").trim();
+          if (!id) return;
+          await openRefById(id);
+        });
+      });
+
+      $("#refBlock").style.display = "block";
+    }
+
+    // ===== Term search / open =====
+    const modal = $("#termModal");
+    $("#modalClose").addEventListener("click", () => modal.classList.remove("open"));
+    modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("open"); });
+
+    // ===== Ref modal =====
+    const refModal = $("#refModal");
+    $("#refModalClose").addEventListener("click", () => refModal.classList.remove("open"));
+    refModal.addEventListener("click", (e) => { if (e.target === refModal) refModal.classList.remove("open"); });
+
+    function renderRefModal(r){
+      const title = (r.title || r.citationText || r.id || "參考文獻").toString();
+      $("#refModalTitle").textContent = title;
+
+      const metaBits = [];
+      if (r.type) metaBits.push(`type: ${r.type}`);
+      if (r.org) metaBits.push(`org: ${r.org}`);
+      if (r.year) metaBits.push(`year: ${r.year}`);
+      if (Array.isArray(r.tags) && r.tags.length) metaBits.push(`tags: ${r.tags.join(", ")}`);
+      $("#refModalMeta").textContent = metaBits.join(" · ");
+
+      const kv = $("#refModalKv");
+      const items = [
+        ["citationText", r.citationText],
+        ["title", r.title],
+        ["org", r.org],
+        ["year", r.year],
+        ["DOI", r.doi],
+        ["URL", r.url],
+        ["tags", Array.isArray(r.tags) ? r.tags.join(", ") : (r.tags || "")],
+        ["notes", r.notes],
+      ].filter(([_, v]) => (v !== undefined && v !== null && String(v).trim() !== ""));
+
+      kv.innerHTML = items.map(([k, v]) => {
+        if (k === "URL" && String(v).trim()){
+          const u = String(v).trim();
+          return `
+            <div class="kv">
+              <div class="k">${escapeHtml(k)}</div>
+              <div class="v"><a href="${escapeHtml(u)}" target="_blank" rel="noopener">${escapeHtml(u)}</a></div>
+            </div>
+          `;
+        }
+        return `
+          <div class="kv">
+            <div class="k">${escapeHtml(k)}</div>
+            <div class="v">${escapeHtml(String(v))}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function openRefById(refId){
+      const id = (refId || "").trim();
+      if (!id) return;
+
+      // cache hit
+      if (cache.refsById.has(id)){
+        renderRefModal(cache.refsById.get(id));
+        refModal.classList.add("open");
+        return;
+      }
+
+      // 1) Try document id match (preferred)
+      let snap = await getDoc(doc(db, COL_REFS, id));
+      if (snap.exists()){
+        const r = { id: snap.id, ...snap.data() };
+        cache.refsById.set(id, r);
+        renderRefModal(r);
+        refModal.classList.add("open");
+        return;
+      }
+
+      // 2) Fallback: some importers use auto-id; try lookup by field `title` == refId
+      const q = query(collection(db, COL_REFS), where("title", "==", id), limit(1));
+      const qs = await getDocs(q);
+      if (!qs.empty){
+        const d = qs.docs[0];
+        const r = { id: d.id, ...d.data() };
+        // cache by requested id so [[r_xxx]] keeps working even if doc id is random
+        cache.refsById.set(id, r);
+        renderRefModal(r);
+        refModal.classList.add("open");
+        return;
+      }
+
+      // not found
+      throw new Error("找不到文獻（kb_refs）：" + id);
+    }
+
+    async function ensureRefsAll(){
+      if (cache.refsAll) return cache.refsAll;
+      const snaps = await getDocs(collection(db, COL_REFS));
+      const all = snaps.docs.map(d => ({ id: d.id, ...d.data() }));
+      const published = all.filter(x => String(x.status || "").toLowerCase() === "published");
+      cache.refsAll = (published.length ? published : all);
+      // cache map
+      cache.refsAll.forEach(r => cache.refsById.set(r.id, r));
+      return cache.refsAll;
+    }
+
+    // Right-side ref search (client-side filter, good for small/medium KB)
+    let refTimer = null;
+    $("#refSearch")?.addEventListener("input", () => {
+      clearTimeout(refTimer);
+      refTimer = setTimeout(runRefSearch, 250);
+    });
+
+    async function runRefSearch(){
+      const k = ($("#refSearch")?.value || "").trim();
+      const box = $("#refResults");
+      if (!box) return;
+      box.innerHTML = "";
+      if (!k) return;
+
+      let all = [];
+      try{
+        all = await ensureRefsAll();
+      }catch(e){
+        box.innerHTML = `<div class="muted" style="margin-top:.6rem;">（文獻庫讀取失敗或無權限）</div>`;
+        return;
+      }
+
+      const q = k.toLowerCase();
+      const hit = all.filter(r => {
+        const text = [
+          r.citationText, r.title, r.org,
+          r.year != null ? String(r.year) : "",
+          r.doi, r.url,
+          Array.isArray(r.tags) ? r.tags.join(" ") : (r.tags || ""),
+          r.notes
+        ].filter(Boolean).join(" ").toLowerCase();
+        return text.includes(q);
+      });
+
+      const list = hit.slice(0, 20).sort((a,b) => {
+        const ya = Number(a.year) || 0;
+        const yb = Number(b.year) || 0;
+        return yb - ya;
+      });
+
+      if (!list.length){
+        box.innerHTML = `<div class="muted" style="margin-top:.6rem;">沒有找到相關文獻（請試著用 ISO 編號、作者/機構、年份、UVA/UVB、DOI）。</div>`;
+        return;
+      }
+
+      list.forEach(r => {
+        const div = document.createElement("div");
+        div.className = "res";
+        const title = (r.title || r.citationText || r.id || "").toString();
+        const meta = [
+          r.org ? r.org : "",
+          r.year ? String(r.year) : "",
+          (Array.isArray(r.tags) && r.tags.length) ? r.tags.slice(0,3).join(", ") : ""
+        ].filter(Boolean).join(" · ");
+        div.innerHTML = `<div class="t">${escapeHtml(title)}</div><div class="m">${escapeHtml(meta)}</div>`;
+        div.addEventListener("click", () => {
+          cache.refsById.set(r.id, r);
+          renderRefModal(r);
+          refModal.classList.add("open");
+        });
+        box.appendChild(div);
+      });
+    }
+
+    async function openTermDoc(termId){
+      const snap = await getDoc(doc(db, COL_TERMS, termId));
+      if (!snap.exists()) throw new Error("找不到名詞卡（kb_terms）");
+      const t = { id: snap.id, ...snap.data() };
+      renderTermModal(t);
+      modal.classList.add("open");
+    }
+
+    function renderTermModal(t){
+      const title = (t.nameZh || t.nameEn || t.inci || t.id || "名詞卡").toString();
+      $("#modalTitle").textContent = title;
+
+      const metaBits = [];
+      if (t.type) metaBits.push(`type: ${t.type}`);
+      if (t.topic) metaBits.push(`topic: ${t.topic}`);
+      if (t.category) metaBits.push(`category: ${t.category}`);
+      if (t.status) metaBits.push(`status: ${t.status}`);
+      $("#modalMeta").textContent = metaBits.join(" · ");
+
+      const kv = $("#modalKv");
+      const items = [
+        ["英文名", t.nameEn],
+        ["中文名", t.nameZh],
+        ["INCI", t.inci],
+        ["aliases", Array.isArray(t.aliases) ? t.aliases.join(", ") : (t.aliases || "")],
+        ["keywords", Array.isArray(t.keywords) ? t.keywords.join(", ") : (t.keywords || "")],
+        ["定義", t.definition],
+        ["作用機制", t.mechanism],
+        ["效益/用途", t.benefits],
+        ["配方提示", t.formulationTips],
+        ["安全/注意", t.safetyNotes],
+        ["法規/限制", t.regulatory],
+      ].filter(([_, v]) => (v !== undefined && v !== null && String(v).trim() !== ""));
+
+      kv.innerHTML = items.map(([k, v]) => `
+        <div class="kv">
+          <div class="k">${escapeHtml(k)}</div>
+          <div class="v">${escapeHtml(String(v))}</div>
+        </div>
+      `).join("");
+
+      // refs
+      const refIds = Array.isArray(t.refIds) ? t.refIds : [];
+      if (!refIds.length){
+        $("#modalRefsWrap").style.display = "none";
+      } else {
+        $("#modalRefsWrap").style.display = "block";
+        $("#modalRefs").innerHTML = `<li class="muted">讀取中…</li>`;
+        loadTermRefs(refIds).catch(() => {
+          $("#modalRefs").innerHTML = `<li class="muted">（文獻讀取失敗或無權限）</li>`;
+        });
+      }
+    }
+
+    async function loadTermRefs(refIds){
+      const docs = await Promise.all(refIds.map(async (id) => {
+        try{
+          const snap = await getDoc(doc(db, COL_REFS, id));
+          return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+        }catch(e){ return null; }
+      }));
+      const list = docs.filter(Boolean);
+      if (!list.length){
+        $("#modalRefs").innerHTML = `<li class="muted">（找不到文獻資料）</li>`;
+        return;
+      }
+      $("#modalRefs").innerHTML = list.map(r => {
+        const text = r.citationText || r.title || r.id;
+        const url = r.url || "";
+        return `<li><span class="ref-item" data-refid="${escapeHtml(r.id)}">${escapeHtml(text)}</span>${url ? ` — <a href="${escapeHtml(url)}" target="_blank" rel="noopener">Link</a>` : ""}</li>`;
+      }).join("");
+      // Click to open reference modal
+      $("#modalRefs").querySelectorAll(".ref-item").forEach(el => {
+        el.addEventListener("click", async () => {
+          const id = (el.getAttribute("data-refid") || "").trim();
+          if (!id) return;
+          await openRefById(id);
+        });
+      });
+    }
+
+    function normalizeTermKey(s){
+      if (!s) return "";
+      return String(s)
+        .replace(/\u3000/g, " ")
+        .replace(/[（]/g, "(")
+        .replace(/[）]/g, ")")
+        .replace(/\s+/g, " ")
+        .replace(/\(\s+/g, "(")
+        .replace(/\s+\)/g, ")")
+        .trim();
+    }
+
+    function expandKeyVariants(raw){
+      const base = normalizeTermKey(raw);
+      const out = [];
+      const push = (v) => {
+        v = normalizeTermKey(v);
+        if (v && !out.includes(v)) out.push(v);
+      };
+      push(base);
+
+      // Common pattern: "中文 (English)" or "中文（English）"
+      const m = base.match(/^(.+?)\s*\(\s*([^)]+?)\s*\)\s*$/);
+      if (m){
+        push(m[1]);
+        push(m[2]);
+      }
+
+      // Parentheses in the middle: "A (B) C"
+      const m2 = base.match(/^(.*?)[(]\s*([^()]+?)\s*[)](.*)$/);
+      if (m2){
+        push((m2[1] + " " + m2[3]).trim()); // remove parenthetical
+        push(m2[1].trim());
+        push(m2[3].trim());
+        push(m2[2].trim());
+      }
+
+      // Extra separators
+      if (base.includes("／") || base.includes("/") || base.includes("、")){
+        base.split(/[\/／、,;]+/).forEach(part => push(part));
+      }
+
+      return out.slice(0, 8);
+    }
+
+    async function openTermByKey(key){
+      const variants = expandKeyVariants(key);
+      if (!variants.length) return;
+
+      // If any variant looks like docId, open directly
+      for (const k of variants){
+        if (/^[a-zA-Z0-9_:-]{4,}$/.test(k) && k.startsWith("t_")){
+          await openTermDoc(k);
+          return;
+        }
+      }
+
+      // Otherwise search exact match across fields (OR by doing multiple queries)
+      for (const k of variants){
+        const candidates = new Map();
+        const col = collection(db, COL_TERMS);
+
+        const qlist = [
+          query(col, where("nameZh", "==", k), limit(5)),
+          query(col, where("nameEn", "==", k), limit(5)),
+          query(col, where("inci", "==", k), limit(5)),
+          query(col, where("aliases", "array-contains", k), limit(5)),
+          query(col, where("keywords", "array-contains", k), limit(5)),
+        ];
+
+        for (const qx of qlist){
+          try{
+            const snaps = await getDocs(qx);
+            snaps.docs.forEach(s => {
+              if (s.exists()) candidates.set(s.id, { id: s.id, ...s.data() });
+            });
+          }catch(e){ /* ignore */ }
+        }
+
+        const found = Array.from(candidates.values())[0];
+        if (found){
+          renderTermModal(found);
+          modal.classList.add("open");
+          return;
+        }
+      }
+
+      alert(`找不到名詞卡：${normalizeTermKey(key)}\n請先在 admin-kb.html 匯入 kb_terms（nameZh/nameEn/aliases/keywords）。`);
+    }
+
+    // Right-side search
+    let searchTimer = null;
+    $("#termSearch").addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(runTermSearch, 250);
+    });
+
+    async function runTermSearch(){
+      const k = ($("#termSearch").value || "").trim();
+      const box = $("#termResults");
+      box.innerHTML = "";
+      if (!k) return;
+
+      const candidates = new Map();
+      const col = collection(db, COL_TERMS);
+
+      const qlist = [
+        query(col, where("nameZh", "==", k), limit(8)),
+        query(col, where("nameEn", "==", k), limit(8)),
+        query(col, where("inci", "==", k), limit(8)),
+        query(col, where("aliases", "array-contains", k), limit(8)),
+        query(col, where("keywords", "array-contains", k), limit(8)),
+      ];
+
+      for (const qx of qlist){
+        try{
+          const snaps = await getDocs(qx);
+          snaps.docs.forEach(s => candidates.set(s.id, { id: s.id, ...s.data() }));
+        }catch(e){ /* ignore */ }
+      }
+
+      const list = Array.from(candidates.values()).slice(0, 12);
+      if (!list.length){
+        box.innerHTML = `<div class="muted" style="margin-top:.6rem;">沒有找到（目前是「精準/同義詞」查詢）。可改用 aliases/keywords，或先匯入 kb_terms。</div>`;
+        return;
+      }
+
+      list.forEach(t => {
+        const div = document.createElement("div");
+        div.className = "res";
+        const title = (t.nameZh || t.nameEn || t.inci || t.id || "").toString();
+        const meta = [
+          t.type ? `type:${t.type}` : "",
+          t.topic ? `topic:${t.topic}` : "",
+          t.category ? `category:${t.category}` : "",
+        ].filter(Boolean).join(" · ");
+
+        div.innerHTML = `<div class="t">${escapeHtml(title)}</div><div class="m">${escapeHtml(meta)}</div>`;
+        div.addEventListener("click", () => {
+          renderTermModal(t);
+          modal.classList.add("open");
+        });
+        box.appendChild(div);
+      });
+    }
+
+    // ===== Load article =====
+    async function loadArticle(){
+      try{
+        $("#pageSub").textContent = "讀取文章中…";
+        const snap = await getDoc(doc(db, COL_ARTICLES, slug));
+        if (!snap.exists()){
+          $("#pageTitle").textContent = "找不到文章";
+          $("#pageSub").textContent = "（kb_articles 無此 slug，或無權限讀取）";
+          $("#emptyState").style.display = "block";
+          return;
+        }
+        const article = { id: snap.id, ...snap.data() };
+        renderArticle(article);
+        await loadRefs(article.refIds || []);
+        $("#emptyState").style.display = "none";
+      }catch(err){
+        console.error(err);
+        $("#pageTitle").textContent = "讀取失敗";
+        $("#pageSub").textContent = err?.message || String(err);
+        $("#emptyState").style.display = "block";
+      }
+    }
+
+    wireAuthUI();
+    loadArticleList();
+    loadArticle();
+  </script>
+</body>
+</html>

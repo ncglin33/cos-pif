@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>附錄 A ｜成分參考資料</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="style.css">
+<style>
+  html { scroll-behavior: smooth; }
+  body { background-color: #f0f2f5; }
+  .container { padding: 1rem; }
+
+  .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+  }
+
+  .toolbar-group {
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+  }
+
+  /* 共用：只在列印出現的元素 */
+  .print-only { display: none; }
+
+  /* 列印表頭（與 pif02/03/04/05/06 統一風格） */
+  #print-header {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin: 0 0 12px 0;
+      background: #fff;
+  }
+  .print-header-grid {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+  }
+  .ph-left { flex: 1; min-width: 0; }
+  .ph-right { text-align: right; min-width: 220px; }
+  .ph-title {
+      font-size: 1.28rem;
+      font-weight: 800;
+      letter-spacing: .3px;
+      color: #111827;
+      margin: 0 0 4px 0;
+      line-height: 1.2;
+  }
+  .ph-sub {
+      font-size: .98rem;
+      color: #111827;
+      line-height: 1.35;
+      margin: 0;
+      white-space: nowrap;
+  }
+  .ph-label {
+      font-weight: 700;
+      color: #374151;
+  }
+
+  #editor-panel {
+    background: #fff; border-radius: 8px; margin-bottom: 2rem; 
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out, padding 0.5s ease-out; padding: 0;
+  }
+  #editor-panel.open { padding: 1.5rem; max-height: 1000px; }
+  #editor-header { font-size: 1.5rem; font-weight: 600; color: #111827; margin-bottom: 1rem; }
+  #editor-body { display: grid; grid-template-columns: 1fr; }
+  #editor-footer { padding-top: 1.5rem; text-align: right; }
+
+  #cards-container { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+  .ingredient-card { background: #fff; border: 2px solid transparent; border-radius: 8px; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1); display: flex; flex-direction: column; transition: all 0.3s ease; }
+  .ingredient-card.editing { border-color: var(--brand); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+
+  .card-header h3 { font-size: 1.2rem; }
+  .card-header p { font-size: 0.9rem; }
+  .card-body { padding: 1rem; flex-grow: 1; }
+  .data-point-full .label { font-weight: 500; font-size: 1rem; color: #374151; display: block; margin-bottom: 0.5rem;}
+  
+  .references-value { 
+    word-break: break-word; 
+    font-size: 0.9rem;
+    color: #4b5563;
+    white-space: pre-wrap;
+    line-height: 1.5;
+  }
+  .references-value ol {
+      margin: 0;
+      padding-left: 1.25rem;
+  }
+  .references-value li {
+      margin-bottom: 0.5rem;
+  }
+
+  .value.no-data { font-style: italic; color: #9ca3af; }
+
+  #upload-status-pdf { 
+      display: none; 
+      padding: 0.75rem 1.25rem; 
+      margin-bottom: 1rem;
+      border-radius: 8px; 
+      font-weight: 500; 
+      text-align: center; 
+  }
+  .status-info { background-color: #e0e7ff; color: #3730a3; }
+  .status-success { background-color: #dcfce7; color: #166534; }
+  .status-error { background-color: #fee2e2; color: #991b1b; }
+  #upload-status-pdf i { margin-right: 0.5rem; }
+
+  @media print {
+    body { background-color: #fff; font-size: 10pt; }
+
+    /* 不列印導覽、工具列、提示等 */
+    pif-nav, top-bar, status-bar,
+    #editor-panel,
+    .card-footer,
+    .page-header,
+    #upload-status-pdf,
+    .noprint {
+        display: none !important;
+    }
+
+    /* 只列印標記為 print-only 的內容（列印表頭） */
+    .print-only { display: block !important; }
+
+    .container { padding: 0; }
+    .ingredient-card { 
+      box-shadow: none;
+      border: 1px solid #ddd;
+      page-break-inside: avoid;
+      margin-bottom: 1rem;
+    }
+    #report-container { display: block; }
+
+    /* 列印用字級微調 */
+    .ph-title { font-size: 1.24rem !important; }
+    .ph-sub { font-size: .95rem !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 導覽列 & top-bar 只在螢幕顯示 -->
+<pif-nav class="noprint"></pif-nav>
+<top-bar class="noprint"></top-bar>
+
+<div class="container">
+    <!-- ✅ 統一樣式的列印表頭（只在列印時顯示） -->
+    <div id="print-header" class="print-only">
+        <div class="print-header-grid">
+            <div class="ph-left">
+                <div class="ph-title">附錄 A 成分參考資料</div>
+                <p class="ph-sub"><span id="print-product-name"></span></p>
+            </div>
+            <div class="ph-right">
+                <p class="ph-sub">
+                    <span class="ph-label">PIFID：</span>
+                    <span id="print-pif-id"></span>
+                </p>
+                <p class="ph-sub"><span id="print-company-name"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <status-bar class="noprint"></status-bar>
+
+    <header class="page-header noprint">
+        <div>
+            <h2>成分參考資料</h2>
+            <p class="subtitle">此工作台將自動比對您的配方，並允許您編輯各成分的參考資料。</p>
+        </div>
+        <div class="toolbar-group">
+            <button id="btnUploadPdf" class="btn"><i class="fa-solid fa-file-arrow-up"></i> 上傳本頁 PDF</button>
+            <input type="file" id="pdfUploader" accept="application/pdf" style="display:none;">
+            <button id="btn-print" class="btn primary"><i class="fa-solid fa-print"></i> 列印報告</button>
+        </div>
+    </header>
+
+    <div id="upload-status-pdf" class="noprint"></div>
+    
+    <div id="editor-panel" class="noprint">
+        <h3 id="editor-header"></h3>
+        <div id="editor-body"></div>
+        <div id="editor-footer">
+            <button id="editor-cancel" class="btn">取消</button>
+            <button id="editor-save" class="btn primary">儲存變更</button>
+        </div>
+    </div>
+
+    <div id="report-container">
+        <div id="cards-container"></div>
+    </div>
+</div>
+
+<script type="module">
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { doc, getDoc, setDoc, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { getStorage, ref, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+  import { db, auth } from './firebase-config.js';
+  import "./components.js";
+
+  const $ = sel => document.querySelector(sel);
+  const storage = getStorage(auth.app);
+  const showStatus = (message, type, duration) => customElements.whenDefined('status-bar').then(() => document.querySelector('status-bar').show(message, type, duration));
+  
+  const GLOBAL_DATA_COLLECTION = "rms";
+  let pageContext = {};
+  let recipeCache = [];
+  let globalPropertiesCache = new Map(); 
+  let pifAData = {}; 
+  let currentEditingInciKey = null;
+
+  async function main() {
+      onAuthStateChanged(auth, user => {
+          if (user) initPage(user); 
+          else window.location.href = 'login.html';
+      });
+  }
+
+  function initPage(user) {
+    pageContext = setupPageContext();
+    document.body.addEventListener('logout-request', () => auth.signOut());
+    setupUI(user, pageContext);
+    initializeWorkspace();
+  }
+
+  function setupPageContext() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const pifId = urlParams.get('id');
+    if (!pifId) {
+        showStatus('錯誤：URL 中缺少 PIF ID。', 'error', -1);
+        throw new Error("PIF ID is missing.");
+    }
+    return { 
+      pifId, 
+      companyName: decodeURIComponent(urlParams.get('companyName')||''), 
+      productName: decodeURIComponent(urlParams.get('productName')||'') 
+    };
+  }
+
+  function setupUI(user, context) {
+      customElements.whenDefined('top-bar').then(() => {
+          const topBar = document.querySelector('top-bar');
+          topBar.setInfo(context.pifId, context.companyName, context.productName, "附錄 A 成分參考資料");
+          topBar.setUser(user);
+      });
+
+      // 填入列印表頭
+      $('#print-pif-id').textContent = context.pifId;
+      $('#print-company-name').textContent = context.companyName;
+      $('#print-product-name').textContent = context.productName;
+
+      $('#editor-cancel').addEventListener('click', closeEditor);
+      $('#btn-print').addEventListener('click', () => window.print());
+      $('#cards-container').addEventListener('click', e => {
+          const button = e.target.closest('.btn-edit');
+          if (button) openEditor({ inci: button.dataset.inci });
+      });
+      $('#btnUploadPdf').addEventListener('click', () => $('#pdfUploader').click());
+      $('#pdfUploader').addEventListener('change', handlePdfUpload);
+  }
+
+  async function initializeWorkspace() {
+    showStatus('載入資料中...', 'loading');
+    await loadGlobalPropertiesData(); 
+    
+    const pifDocRef = doc(db, "pifs", pageContext.pifId);
+    const pifDocSnap = await getDoc(pifDocRef);
+
+    if (!pifDocSnap.exists()) {
+        showStatus(`錯誤：找不到 PIF 專案 (ID: ${pageContext.pifId})`, 'error', -1);
+        return;
+    }
+
+    const pifData = pifDocSnap.data();
+    if (!pifData.pif03?.recipe?.length) {
+        showStatus('<h3><i class="fa-solid fa-box-open"></i> 缺少 PIF 03 配方</h3><p>請先填寫產品配方，才能編輯參考資料。</p>', 'warning', -1);
+        return;
+    }
+    
+    recipeCache = pifData.pif03.recipe;
+    pifAData = pifData.pifA || {}; 
+
+    renderIngredientCards(recipeCache);
+    showStatus('資料載入完成！', 'success');
+  }
+
+  async function loadGlobalPropertiesData() {
+    const querySnapshot = await getDocs(collection(db, GLOBAL_DATA_COLLECTION));
+    querySnapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const keys = new Set();
+        keys.add(docSnap.id.trim().toLowerCase());
+        if (data.inci) keys.add(data.inci.trim().toLowerCase());
+        if (data.common_name) keys.add(data.common_name.trim().toLowerCase());
+        if (data.inciName) keys.add(data.inciName.trim().toLowerCase());
+        keys.forEach(key => {
+            if (key) globalPropertiesCache.set(key, data);
+        });
+    });
+  }
+
+  function renderIngredientCards(recipe) {
+    const container = $('#cards-container');
+    container.innerHTML = recipe.map(ing => generateCard(ing)).join('');
+    
+    container.querySelectorAll('.ingredient-card').forEach(card => {
+        const inci = card.dataset.inciName;
+        const inciKey = inci.trim().toLowerCase();
+        
+        const globalData = globalPropertiesCache.get(inciKey);
+        
+        const casValue = globalData?.cas || 'N/A';
+        const casElement = card.querySelector('.card-header p');
+        if (casElement) casElement.textContent = `CAS: ${casValue}`;
+
+        const editButton = card.querySelector('.btn-edit');
+        if (editButton) editButton.dataset.cas = casValue;
+
+        const projectRef = pifAData[inciKey];
+        const globalRef = globalData?.references;
+        const refStr = projectRef ?? globalRef ?? '';
+        const refContainer = card.querySelector('.references-value');
+        renderReferences(refStr, refContainer);
+    });
+  }
+
+  function generateCard(ing) {
+    const inci = ing.inci || '[未命名]';
+    return `
+    <div class="ingredient-card" data-inci-name="${inci}">
+      <div class="card-header"><h3>${inci}</h3><p>CAS: N/A</p></div>
+      <div class="card-body">
+        <div class="data-point-full">
+            <span class="label">參考資料</span>
+            <div class="value references-value"></div>
+        </div>
+      </div>
+      <div class="card-footer noprint"><button class="btn btn-edit" data-inci="${inci}"><i class="fa-solid fa-pen-to-square"></i> 編輯</button></div>
+    </div>`;
+  }
+
+  function renderReferences(refStr, container) {
+      container.innerHTML = ''; 
+      if (!refStr || !refStr.trim()) {
+          container.textContent = '尚未提供參考資料';
+          container.classList.add('no-data');
+          return;
+      }
+      container.classList.remove('no-data');
+      const refs = refStr.split('|').map(s => s.trim()).filter(Boolean);
+      const ol = document.createElement('ol');
+      refs.forEach(r => {
+          const li = document.createElement('li');
+          li.textContent = r;
+          ol.appendChild(li);
+      });
+      container.appendChild(ol);
+  }
+  
+  function openEditor(ingredient) {
+    const inciKey = ingredient.inci.trim().toLowerCase();
+    currentEditingInciKey = inciKey;
+
+    document.querySelectorAll('.ingredient-card.editing').forEach(c => c.classList.remove('editing'));
+    const card = $(`div[data-inci-name="${ingredient.inci}"]`);
+    if (card) {
+        card.classList.add('editing');
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    const editorPanel = $('#editor-panel');
+    editorPanel.classList.add('open');
+    if(window.scrollY > editorPanel.offsetTop) {
+        window.scrollTo(0, editorPanel.offsetTop - 20);
+    }
+
+    $('#editor-header').textContent = `編輯參考資料: ${ingredient.inci}`;
+    
+    const projectRef = pifAData[inciKey];
+    const globalData = globalPropertiesCache.get(inciKey);
+    const globalRef = globalData?.references;
+    const currentValue = projectRef ?? globalRef ?? '';
+
+    $('#editor-body').innerHTML = `
+        <div class="form-group">
+            <label for="references-textarea">參考資料 (References)</label>
+            <textarea id="references-textarea" class="form-control" rows="10" placeholder="請在此處輸入參考文獻，多筆文獻請用「|」分隔...">${currentValue}</textarea>
+        </div>
+    `;
+
+    const saveButton = $('#editor-save');
+    const newSaveButton = saveButton.cloneNode(true);
+    saveButton.parentNode.replaceChild(newSaveButton, saveButton);
+    newSaveButton.addEventListener('click', () => handleSaveData(ingredient));
+  }
+  
+  function closeEditor() {
+    $('#editor-panel').classList.remove('open');
+    document.querySelectorAll('.ingredient-card.editing').forEach(c => c.classList.remove('editing'));
+    currentEditingInciKey = null;
+  }
+
+  async function handleSaveData(ingredient) {
+      const saveButton = $('#editor-save');
+      saveButton.disabled = true; 
+      saveButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 儲存中...';
+      
+      const newReferencesValue = $('#references-textarea').value;
+      const inciKey = ingredient.inci.trim().toLowerCase();
+
+      try {
+          const pifDocRef = doc(db, "pifs", pageContext.pifId);
+          const updatePayload = { [`pifA.${inciKey}`]: newReferencesValue };
+          await setDoc(pifDocRef, { ...updatePayload, lastModified: serverTimestamp() }, { merge: true });
+          
+          pifAData[inciKey] = newReferencesValue;
+          
+          const card = $(`div[data-inci-name="${ingredient.inci}"]`);
+          if (card) {
+              const refContainer = card.querySelector('.references-value');
+              renderReferences(newReferencesValue, refContainer);
+          }
+          
+          closeEditor();
+          showStatus(`成功更新了 ${ingredient.inci} 的參考資料！`, 'success');
+      } catch (error) {
+          console.error("Save Error:", error);
+          showStatus(`儲存失敗: ${error.message}`, 'error');
+      } finally {
+          saveButton.disabled = false; 
+          saveButton.innerHTML = '儲存變更';
+      }
+  }
+
+  function handlePdfUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      if (file.type !== "application/pdf") {
+          showStatus("請僅上傳 PDF 檔案。", "warning");
+          return;
+      }
+      const pifId = pageContext.pifId;
+      if (!pifId) {
+          showStatus("錯誤：缺少 PIF ID，無法確定上傳路徑。", "error");
+          return;
+      }
+      uploadMainPdf(file, `pifs/${pifId}/A.pdf`);
+  }
+
+  function uploadMainPdf(file, storagePath) {
+      const uploadTask = uploadBytesResumable(ref(storage, storagePath), file);
+      const button = $('#btnUploadPdf');
+      button.disabled = true;
+
+      uploadTask.on('state_changed', 
+          (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              setUploadStatusPdf(`<i class="fa-solid fa-upload"></i> 正在上傳 PDF... ${Math.round(progress)}%`, 'status-info');
+          }, 
+          (error) => {
+              console.error("Main PDF Upload failed:", error);
+              setUploadStatusPdf(`<i class="fa-solid fa-triangle-exclamation"></i> PDF 上傳失敗: ${error.code}`, 'status-error');
+              button.disabled = false;
+          }, 
+          () => {
+              setUploadStatusPdf('<i class="fa-solid fa-check-circle"></i> PDF 已成功上傳！儀表板狀態將會更新。', 'status-success');
+              button.disabled = false;
+              $('#pdfUploader').value = ''; // Reset file input
+              setTimeout(() => setUploadStatusPdf('', 'none'), 5000);
+          }
+      );
+  }
+
+  function setUploadStatusPdf(msg, styleClass) {
+      const statusEl = $('#upload-status-pdf');
+      if (!msg || styleClass === 'none') {
+          statusEl.style.display = 'none';
+          statusEl.innerHTML = '';
+      } else {
+          statusEl.innerHTML = msg;
+          statusEl.className = `noprint ${styleClass}`;
+          statusEl.style.display = 'block';
+      }
+  }
+
+  main();
+</script>
+</body>
+</html>

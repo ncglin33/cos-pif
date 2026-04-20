@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>我的帳戶資料 - CosPIF 智慧科技整合系統</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    /* 讓本頁就算 style.css 缺少某些 class 也能好看 */
+    body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;background:#fff;color:#111827;}
+    main{display:block;}
+    .auth-container{width:100%;max-width:1600px;margin:0 auto;padding:1.6rem 1.2rem;}
+    .auth-card{width:100%;background:transparent;border:0;border-radius:0;padding:0;box-shadow:none;}
+    .auth-title { margin:0 0 .8rem; font-size:1.25rem; }
+    .subtle { color:#6b7280; font-size:.9rem; }
+    .grid-2{display:grid;grid-template-columns:1fr;gap:.9rem;}
+    .form-group { margin:.7rem 0; }
+    .form-control { width:100%; padding:.65rem .8rem; border:1px solid #e5e7eb; border-radius:10px; outline:none; }
+    .form-control:focus { border-color:#c7d2fe; box-shadow:0 0 0 3px rgba(99,102,241,.12); }
+    .row { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+    .pill { display:inline-flex; align-items:center; gap:.4rem; padding:.25rem .55rem; border-radius:999px; font-size:.82rem; border:1px solid #e5e7eb; background:#f9fafb; }
+    .pill.ok { border-color:#bbf7d0; background:#f0fdf4; }
+    .pill.warn { border-color:#fde68a; background:#fffbeb; }
+    .pill.bad { border-color:#fecaca; background:#fef2f2; }
+    .form-message { margin:.6rem 0 0; padding:.55rem .7rem; border-radius:10px; background:#f9fafb; border:1px solid #e5e7eb; }
+    .form-message.success { border-color:#bbf7d0; background:#f0fdf4; }
+    .form-message.error { border-color:#fecaca; background:#fef2f2; }
+    .btn { cursor:pointer; border:none; border-radius:12px; padding:.7rem 1rem; font-weight:600; }
+    .btn-primary { background:#111827; color:#fff; }
+    .btn-ghost { background:#f3f4f6; color:#111827; }
+    .btn:disabled { opacity:.6; cursor:not-allowed; }
+    .section { margin-top: 1.1rem; padding-top: 1.1rem; border-top:1px dashed #e5e7eb; }
+    details { border:1px solid #e5e7eb; border-radius:12px; padding:.7rem .8rem; background:#fff; }
+    details summary { cursor:pointer; font-weight:700; }
+    .mini { font-size:.85rem; color:#6b7280; }
+    .top-actions { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="container">
+    <nav>
+      <a href="index.html" class="logo"><i class="fa-solid fa-shield-halved"></i> CosPIF</a>
+      <ul class="nav-links">
+        <li><a href="index.html#features">核心功能</a></li>
+        <li><a href="index.html#about">關於CosPIF</a></li>
+        <li><a href="contact.html">聯絡我們</a></li>
+      </ul>
+      <div class="row">
+        <a href="index.html" class="btn-login" style="text-decoration:none;">回首頁</a>
+        <button id="btn-signout" class="btn btn-ghost" type="button">登出</button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="top-actions">
+        <div>
+          <h2 class="auth-title">我的帳戶資料</h2>
+          <div class="row">
+            <span class="pill" id="pill-auth"><i class="fa-solid fa-user"></i> 未登入</span>
+            <span class="pill" id="pill-verify"><i class="fa-solid fa-envelope"></i> Email 未驗證</span>
+            <span class="pill" id="pill-status"><i class="fa-solid fa-clipboard-check"></i> 審核狀態：-</span>
+          </div>
+          <div class="subtle" style="margin-top:.35rem;">
+            此頁可修改您的註冊資料（姓名/公司/公司歸戶代碼等）。若帳戶已核准，為避免公司歸戶錯置，系統會鎖定「統編/歸戶手機」欄位。
+          </div>
+        </div>
+        <div class="row">
+          <button id="btn-resend-verify" class="btn btn-ghost" type="button">重寄驗證信</button>
+          <a id="btn-login" href="login.html" class="btn btn-primary" style="text-decoration:none; display:none;">前往登入</a>
+        </div>
+      </div>
+
+      <div id="status" class="form-message" style="display:none;"></div>
+
+      <form id="profile-form" autocomplete="on">
+        <div class="section">
+          <div class="row" style="justify-content:space-between;">
+            <div style="font-weight:700;">基本資料</div>
+            <div class="mini">電子郵件為登入帳號（此頁預設不提供直接更改登入信箱）</div>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="name">姓名 *</label>
+              <input type="text" id="name" required class="form-control">
+            </div>
+            <div class="form-group">
+              <label for="email">電子郵件（登入帳號）</label>
+              <input type="email" id="email" class="form-control" readonly>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="company">公司名稱 *</label>
+            <input type="text" id="company" required class="form-control">
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="company-tax-id">公司統編</label>
+              <input type="text" id="company-tax-id" class="form-control" placeholder="例：12345678">
+              <div style="margin-top:.35rem;display:flex;align-items:center;gap:.45rem;">
+                <input type="checkbox" id="no-tax-id-toggle">
+                <span style="font-size:.85rem;color:#6b7280;">尚無統編，改用「手機號碼」作為公司歸戶代碼</span>
+              </div>
+              <div class="mini" id="companyKeyNote" style="margin-top:.35rem;"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="company-mobile">手機號碼（無統編者必填）</label>
+              <input type="tel" id="company-mobile" class="form-control" placeholder="例：0912-345-678">
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:.9rem;">
+            <button id="btn-save" class="btn btn-primary" type="submit">儲存修改</button>
+            <button id="btn-reload" class="btn btn-ghost" type="button">重新載入</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <details>
+            <summary>安全性：變更密碼（選用）</summary>
+            <div class="mini" style="margin:.45rem 0 .75rem;">
+              變更密碼需要您輸入「目前密碼」以重新驗證身分（Firebase 規則）。
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label for="current-password">目前密碼</label>
+                <input type="password" id="current-password" class="form-control" autocomplete="current-password">
+              </div>
+              <div></div>
+              <div class="form-group">
+                <label for="new-password">新密碼（至少 6 位）</label>
+                <input type="password" id="new-password" class="form-control" minlength="6" autocomplete="new-password">
+              </div>
+              <div class="form-group">
+                <label for="new-password2">再次輸入新密碼</label>
+                <input type="password" id="new-password2" class="form-control" minlength="6" autocomplete="new-password">
+              </div>
+            </div>
+            <div class="row">
+              <button id="btn-change-password" class="btn btn-ghost" type="button">更新密碼</button>
+            </div>
+          </details>
+        </div>
+
+        <div class="section">
+          <details>
+            <summary>進階：變更登入信箱（選用）</summary>
+            <div class="mini" style="margin:.45rem 0 .75rem;">
+              若真的需要更換登入信箱：輸入「新信箱 + 目前密碼」→ 更新成功後會重新寄出驗證信。
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label for="new-email">新電子郵件</label>
+                <input type="email" id="new-email" class="form-control" autocomplete="email">
+              </div>
+              <div class="form-group">
+                <label for="email-password">目前密碼（用於重新驗證）</label>
+                <input type="password" id="email-password" class="form-control" autocomplete="current-password">
+              </div>
+            </div>
+            <div class="row">
+              <button id="btn-change-email" class="btn btn-ghost" type="button">更新登入信箱</button>
+            </div>
+          </details>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="container">
+    <p>&copy; 2025 CosPIF 化妝品智慧科技整合系統. 勝美生技有限公司 All Rights Reserved.</p>
+  </div>
+</footer>
+
+<script type="module">
+  import { auth, db } from './firebase-config.js';
+  import {
+    onAuthStateChanged,
+    signOut,
+    sendEmailVerification,
+    updatePassword,
+    updateEmail,
+    reauthenticateWithCredential,
+    EmailAuthProvider
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+  import {
+    doc, getDoc, updateDoc, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  const form = document.getElementById('profile-form');
+  const statusEl = document.getElementById('status');
+  const btnSave = document.getElementById('btn-save');
+  const btnReload = document.getElementById('btn-reload');
+  const btnLogin = document.getElementById('btn-login');
+  const btnSignout = document.getElementById('btn-signout');
+  const btnResendVerify = document.getElementById('btn-resend-verify');
+  const pillAuth = document.getElementById('pill-auth');
+  const pillVerify = document.getElementById('pill-verify');
+  const pillStatus = document.getElementById('pill-status');
+
+  const nameEl = document.getElementById('name');
+  const emailEl = document.getElementById('email');
+  const companyEl = document.getElementById('company');
+  const companyTaxIdEl = document.getElementById('company-tax-id');
+  const companyMobileEl = document.getElementById('company-mobile');
+  const noTaxToggleEl = document.getElementById('no-tax-id-toggle');
+  const companyKeyNoteEl = document.getElementById('companyKeyNote');
+
+  const btnChangePassword = document.getElementById('btn-change-password');
+  const currentPasswordEl = document.getElementById('current-password');
+  const newPasswordEl = document.getElementById('new-password');
+  const newPassword2El = document.getElementById('new-password2');
+
+  const btnChangeEmail = document.getElementById('btn-change-email');
+  const newEmailEl = document.getElementById('new-email');
+  const emailPasswordEl = document.getElementById('email-password');
+
+  let currentUser = null;
+  let userDocCache = null;
+
+  function showStatus(message, type = 'info') {
+    statusEl.style.display = 'block';
+    statusEl.textContent = message;
+    statusEl.className = `form-message ${type}`;
+  }
+
+  function setPill(el, text, kind = '') {
+    el.textContent = text;
+    el.className = `pill ${kind}`.trim();
+  }
+
+  function isValidCompanyTaxId(taxId) {
+    return /^\\d{8}$/.test((taxId || '').trim());
+  }
+
+  function isValidTWMobile(mobile) {
+    return /^09\\d{8}$/.test((mobile || '').trim());
+  }
+
+  function syncNoTaxUI(locked = false) {
+    const on = !!noTaxToggleEl?.checked;
+    if (companyTaxIdEl) {
+      companyTaxIdEl.disabled = locked || on;
+      if (on && !locked) companyTaxIdEl.value = '';
+    }
+    if (companyMobileEl) {
+      companyMobileEl.disabled = locked || !on;
+      companyMobileEl.placeholder = on ? '例：0912-345-678' : '（僅無統編者需填寫）';
+      if (!on && !locked) companyMobileEl.value = '';
+    }
+
+    if (companyKeyNoteEl) {
+      companyKeyNoteEl.textContent = locked
+        ? '（已核准帳戶：為避免公司歸戶錯置，統編/歸戶手機已鎖定；如需更改請聯絡管理員。）'
+        : '公司歸戶代碼會使用：統編（8 碼）或手機（09 開頭 10 碼）。';
+    }
+  }
+
+  noTaxToggleEl?.addEventListener('change', () => {
+    // locked 狀態要由 loadUserDoc 重新設定，這裡先以目前 cache 判斷
+    const locked = !!userDocCache && ['approved','active'].includes(String(userDocCache.status || '').toLowerCase());
+    syncNoTaxUI(locked);
+  });
+
+  async function loadUserDoc(user) {
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    if (!snap.exists()) {
+      userDocCache = null;
+      showStatus('找不到您的 users 文件（Firestore/users/{uid}）。請聯絡管理員協助。', 'error');
+      return;
+    }
+    userDocCache = snap.data() || {};
+
+    // 填值
+    nameEl.value = userDocCache.name || '';
+    companyEl.value = userDocCache.company || '';
+    emailEl.value = user.email || userDocCache.email || '';
+
+    const keyType = userDocCache.companyKeyType || (userDocCache.companyTaxId ? 'taxId' : (userDocCache.companyMobileKey ? 'mobile' : 'taxId'));
+    const isMobileKey = keyType === 'mobile';
+    noTaxToggleEl.checked = isMobileKey;
+
+    companyTaxIdEl.value = userDocCache.companyTaxId || '';
+    companyMobileEl.value = userDocCache.companyMobileKey || '';
+
+    // 狀態 badge
+    const st = String(userDocCache.status || '-');
+    const stLower = st.toLowerCase();
+    const statusKind = (stLower === 'approved' || stLower === 'active') ? 'ok' : (stLower === 'pending' ? 'warn' : (stLower === 'rejected' ? 'bad' : ''));
+    setPill(pillStatus, `審核狀態：${st}`, statusKind);
+
+    // companyKey 是否鎖定：核准後不讓使用者自行改歸戶
+    const locked = (stLower === 'approved' || stLower === 'active');
+    syncNoTaxUI(locked);
+    noTaxToggleEl.disabled = locked;
+
+    // 快取公司歸戶代碼
+    const companyKey = userDocCache.companyKey || '';
+    try { if (companyKey) localStorage.setItem('cospif_companyKey', companyKey); } catch(e){}
+  }
+
+  function setAuthUI(user) {
+    if (!user) {
+      setPill(pillAuth, '未登入', 'bad');
+      setPill(pillVerify, 'Email -', '');
+      btnLogin.style.display = 'inline-flex';
+      btnSignout.style.display = 'none';
+      btnResendVerify.disabled = true;
+      btnSave.disabled = true;
+      form.querySelectorAll('input,button,details').forEach(el => {
+        if (el.id === 'btn-login') return;
+        if (el.id === 'btn-signout') return;
+        // details 也 disable 會影響 summary, 所以只 disable 內部按鈕/欄位
+      });
+      showStatus('請先登入後再修改資料。', 'error');
+      return;
+    }
+
+    setPill(pillAuth, `已登入：${user.email || ''}`, 'ok');
+    btnLogin.style.display = 'none';
+    btnSignout.style.display = 'inline-flex';
+    btnResendVerify.disabled = false;
+    btnSave.disabled = false;
+
+    const verified = !!user.emailVerified;
+    setPill(pillVerify, verified ? 'Email 已驗證' : 'Email 未驗證', verified ? 'ok' : 'warn');
+  }
+
+  onAuthStateChanged(auth, async (user) => {
+    currentUser = user;
+    setAuthUI(user);
+    if (!user) return;
+
+    try {
+      showStatus('載入您的資料中...', 'info');
+      await loadUserDoc(user);
+      showStatus('資料已載入。', 'success');
+    } catch (err) {
+      console.error(err);
+      showStatus(`載入失敗：${err?.message || err}`, 'error');
+    }
+  });
+
+  btnReload?.addEventListener('click', async () => {
+    if (!currentUser) return;
+    try {
+      showStatus('重新載入中...', 'info');
+      await loadUserDoc(currentUser);
+      showStatus('已重新載入。', 'success');
+    } catch (err) {
+      console.error(err);
+      showStatus(`重新載入失敗：${err?.message || err}`, 'error');
+    }
+  });
+
+  btnSignout?.addEventListener('click', async () => {
+    try {
+      await signOut(auth);
+      showStatus('已登出。', 'success');
+      location.href = 'login.html';
+    } catch (err) {
+      console.error(err);
+      showStatus(`登出失敗：${err?.message || err}`, 'error');
+    }
+  });
+
+  btnResendVerify?.addEventListener('click', async () => {
+    if (!currentUser) return;
+    try {
+      await sendEmailVerification(currentUser);
+      showStatus('已重新寄出驗證信，請至信箱收取。', 'success');
+    } catch (err) {
+      console.error(err);
+      showStatus(`重寄驗證信失敗：${err?.message || err}`, 'error');
+    }
+  });
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!currentUser) {
+      showStatus('請先登入。', 'error');
+      return;
+    }
+    btnSave.disabled = true;
+
+    const name = (nameEl.value || '').trim();
+    const company = (companyEl.value || '').trim();
+    const noTaxId = !!noTaxToggleEl.checked;
+    const companyTaxId = (companyTaxIdEl.value || '').trim();
+    const companyMobile = (companyMobileEl.value || '').trim();
+
+    if (!name || !company) {
+      showStatus('請填寫「姓名」與「公司名稱」。', 'error');
+      btnSave.disabled = false;
+      return;
+    }
+
+    // 決定是否鎖定 companyKey
+    const stLower = String(userDocCache?.status || '').toLowerCase();
+    const locked = (stLower === 'approved' || stLower === 'active');
+
+    // 公司歸戶代碼：統編 or 手機（與註冊頁一致）
+    let nextCompanyKey = userDocCache?.companyKey || '';
+    let nextKeyType = userDocCache?.companyKeyType || (noTaxId ? 'mobile' : 'taxId');
+    let nextTaxId = userDocCache?.companyTaxId ?? null;
+    let nextMobileKey = userDocCache?.companyMobileKey ?? null;
+
+    if (!locked) {
+      if (noTaxId) {
+        if (!companyMobile) {
+          showStatus('您已勾選「尚無統編」，請填寫手機號碼以便公司歸戶。', 'error');
+          btnSave.disabled = false;
+          return;
+        }
+        const normalized = companyMobile.replace(/[^0-9]/g,''); // 允許 0912-345-678
+        if (!isValidTWMobile(normalized)) {
+          showStatus('手機號碼格式似乎不正確，請輸入 09 開頭 10 碼。', 'error');
+          btnSave.disabled = false;
+          return;
+        }
+        nextCompanyKey = normalized;
+        nextKeyType = 'mobile';
+        nextTaxId = null;
+        nextMobileKey = normalized;
+      } else {
+        if (!companyTaxId) {
+          showStatus('請填寫公司統編，或勾選「尚無統編」改用手機號碼歸戶。', 'error');
+          btnSave.disabled = false;
+          return;
+        }
+        if (!isValidCompanyTaxId(companyTaxId)) {
+          showStatus('公司統編格式似乎不正確，請輸入 8 碼數字。', 'error');
+          btnSave.disabled = false;
+          return;
+        }
+        nextCompanyKey = companyTaxId;
+        nextKeyType = 'taxId';
+        nextTaxId = companyTaxId;
+        nextMobileKey = null;
+      }
+    }
+
+    try {
+      showStatus('正在儲存修改...', 'info');
+
+      const patch = {
+        name,
+        company,
+        updatedAt: serverTimestamp()
+      };
+
+      // 不鎖定時才允許更改 companyKey
+      if (!locked) {
+        patch.companyTaxId = nextTaxId;
+        patch.companyMobileKey = nextMobileKey;
+        patch.companyKeyType = nextKeyType;
+        patch.companyKey = nextCompanyKey;
+      }
+
+      await updateDoc(doc(db, 'users', currentUser.uid), patch);
+
+      // 更新 cache 與 localStorage
+      userDocCache = { ...(userDocCache || {}), ...patch };
+      try { if (userDocCache.companyKey) localStorage.setItem('cospif_companyKey', userDocCache.companyKey); } catch(e){}
+
+      showStatus(locked ? '已更新（公司歸戶資訊已鎖定，僅更新姓名/公司名稱）。' : '已更新您的資料。', 'success');
+
+    } catch (err) {
+      console.error(err);
+      showStatus(`儲存失敗：${err?.message || err}`, 'error');
+    } finally {
+      btnSave.disabled = false;
+    }
+  });
+
+  // 變更密碼
+  btnChangePassword?.addEventListener('click', async () => {
+    if (!currentUser) return showStatus('請先登入。', 'error');
+
+    const currentPw = (currentPasswordEl.value || '').trim();
+    const np1 = (newPasswordEl.value || '').trim();
+    const np2 = (newPassword2El.value || '').trim();
+
+    if (!currentPw || !np1 || !np2) return showStatus('請填寫「目前密碼」與「新密碼」兩欄。', 'error');
+    if (np1.length < 6) return showStatus('新密碼至少 6 位。', 'error');
+    if (np1 !== np2) return showStatus('兩次輸入的新密碼不一致。', 'error');
+
+    btnChangePassword.disabled = true;
+    try {
+      showStatus('正在更新密碼...', 'info');
+      const cred = EmailAuthProvider.credential(currentUser.email, currentPw);
+      await reauthenticateWithCredential(currentUser, cred);
+      await updatePassword(currentUser, np1);
+      currentPasswordEl.value = '';
+      newPasswordEl.value = '';
+      newPassword2El.value = '';
+      showStatus('密碼已更新。', 'success');
+    } catch (err) {
+      console.error(err);
+      const msg = (err?.code === 'auth/wrong-password')
+        ? '目前密碼不正確。'
+        : `更新密碼失敗：${err?.message || err}`;
+      showStatus(msg, 'error');
+    } finally {
+      btnChangePassword.disabled = false;
+    }
+  });
+
+  // 變更登入信箱
+  btnChangeEmail?.addEventListener('click', async () => {
+    if (!currentUser) return showStatus('請先登入。', 'error');
+
+    const newEmail = (newEmailEl.value || '').trim();
+    const pw = (emailPasswordEl.value || '').trim();
+
+    if (!newEmail || !pw) return showStatus('請填寫新信箱與目前密碼。', 'error');
+
+    btnChangeEmail.disabled = true;
+    try {
+      showStatus('正在更新登入信箱...', 'info');
+      const cred = EmailAuthProvider.credential(currentUser.email, pw);
+      await reauthenticateWithCredential(currentUser, cred);
+
+      await updateEmail(currentUser, newEmail);
+      await sendEmailVerification(currentUser);
+
+      // 同步 Firestore users.email（可選）
+      try {
+        await updateDoc(doc(db, 'users', currentUser.uid), { email: newEmail, updatedAt: serverTimestamp() });
+      } catch (e) {
+        console.warn('users.email 同步失敗（不影響登入信箱已更新）', e);
+      }
+
+      emailEl.value = newEmail;
+      newEmailEl.value = '';
+      emailPasswordEl.value = '';
+      setPill(pillAuth, `已登入：${newEmail}`, 'ok');
+      setPill(pillVerify, 'Email 未驗證', 'warn');
+      showStatus('登入信箱已更新，且已重新寄出驗證信（請至新信箱收取）。', 'success');
+
+    } catch (err) {
+      console.error(err);
+      let msg = `更新登入信箱失敗：${err?.message || err}`;
+      if (err?.code === 'auth/email-already-in-use') msg = '此新信箱已被使用，請改用其他信箱。';
+      if (err?.code === 'auth/wrong-password') msg = '目前密碼不正確。';
+      showStatus(msg, 'error');
+    } finally {
+      btnChangeEmail.disabled = false;
+    }
+  });
+
+</script>
+</body>
+</html>

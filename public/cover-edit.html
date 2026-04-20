@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KB 後台｜月刊封面編輯（載入/更新/刪除｜A4 自動裁切/縮放）</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <style>
+    .container{ max-width: 1500px; }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.85rem 1rem; background:#fff;
+      border:1px solid var(--line); border-radius:16px;
+      margin:.9rem 0 1rem;
+    }
+    .topbar .left{ display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
+    .topbar a{ text-decoration:none; color:var(--ink); font-weight:800; }
+    .badge{
+      display:inline-flex; align-items:center; gap:.35rem;
+      border:1px solid var(--line); border-radius:999px;
+      padding:.25rem .6rem; font-size:.82rem; background:#fff; color:var(--muted);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 540px 1fr;
+      gap: 1rem;
+      align-items:start;
+    }
+    @media (max-width: 1100px){ .grid{ grid-template-columns: 1fr; } }
+
+    .card{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.05);
+      padding: 1rem 1rem;
+    }
+
+    .row{ display:flex; gap:.55rem; align-items:center; flex-wrap:wrap; }
+    .grow{ flex:1 1 auto; min-width: 180px; }
+
+    .input, select, textarea{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:.5rem .6rem;
+      font-size:.95rem;
+      outline:none;
+      background:#fff;
+    }
+    .input:focus, select:focus, textarea:focus{
+      border-color:#bfdbfe; box-shadow:0 0 0 3px rgba(59,130,246,.15);
+    }
+
+    .btnx{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius: 12px;
+      padding:.5rem .75rem;
+      cursor:pointer;
+      font-weight:900;
+      display:inline-flex; align-items:center; gap:.45rem;
+    }
+    .btnx:hover{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+    .btn-danger{ border-color:#fecaca; }
+    .btn-danger:hover{ background:#fff1f2; border-color:#fca5a5; color:#b91c1c; }
+
+    .muted{ color: var(--muted); }
+    .small{ font-size:.86rem; }
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:.86rem;
+    }
+
+    .hr{ border:none; border-top:1px solid #eef2f7; margin: .9rem 0; }
+
+    .warn{
+      padding:.6rem .7rem;
+      border:1px solid #fde68a;
+      background:#fffbeb;
+      border-radius:12px;
+      color:#92400e;
+    }
+    .ok{
+      padding:.6rem .7rem;
+      border:1px solid #bbf7d0;
+      background:#f0fdf4;
+      border-radius:12px;
+      color:#166534;
+    }
+
+    .disabled{ opacity:.55; pointer-events:none; }
+
+    .previewWrap{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      align-items:start;
+    }
+    @media (max-width: 1100px){ .previewWrap{ grid-template-columns: 1fr; } }
+
+    .canvasBox{
+      border:1px solid var(--line);
+      border-radius:16px;
+      overflow:hidden;
+      background: #f8fafc;
+    }
+
+    .progress{
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: #f1f5f9;
+      border: 1px solid var(--line);
+      overflow:hidden;
+    }
+    .progress > div{
+      height:100%;
+      width:0%;
+      background:#3b82f6;
+      transition: width .15s ease;
+    }
+
+    .links{
+      display:flex;
+      flex-direction:column;
+      gap:.45rem;
+      margin-top:.6rem;
+    }
+    .linkRow{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:.55rem .65rem;
+      background:#fff;
+    }
+    .linkRow .t{ font-weight:900; margin-bottom:.25rem; }
+    .linkRow a{ word-break: break-all; color:inherit; }
+    .hint{
+      padding:.65rem .75rem;
+      border:1px dashed #cbd5e1;
+      border-radius:14px;
+      background:#f8fafc;
+      color: var(--muted);
+      line-height:1.6;
+    }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:.35rem;
+      border:1px solid var(--line); border-radius:999px;
+      padding:.25rem .6rem; font-size:.82rem; background:#fff;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="left">
+        <a href="index.html"><i class="fa-solid fa-house"></i> 首頁</a>
+        <span class="badge" id="authBadge">未登入</span>
+        <span class="badge" id="roleBadge">role: —</span>
+        <span class="badge" id="existsBadge">cover: 未檢查</span>
+      </div>
+      <div class="row">
+        <span class="muted small" id="userInfo"></span>
+        <button class="btnx" id="btnSignOut"><i class="fa-solid fa-right-from-bracket"></i> 登出</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT -->
+      <aside class="card" id="panel">
+        <h2 style="margin:.1rem 0 .35rem;">月刊封面編輯（載入 / 更新 / 刪除）</h2>
+        <div class="muted small">
+          ✅ 依月份固定檔名（<span class="kbd">kb_covers/YYYY-MM.jpg|png</span>）<br/>
+          ✅ 可先<strong>載入目前封面</strong>再<strong>更新覆蓋</strong>或<strong>刪除</strong><br/>
+          ✅ 本機圖片會自動<strong>中心裁切成 A4 比例</strong>並縮放到指定尺寸
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row">
+          <div class="grow">
+            <label class="muted small">發行月份（YYYY-MM）</label>
+            <input id="month" class="input" type="month" />
+          </div>
+          <div style="width:170px;">
+            <label class="muted small">上傳格式</label>
+            <select id="format">
+              <option value="jpg" selected>JPG（推薦）</option>
+              <option value="png">PNG</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:.55rem;">
+          <label class="row" style="gap:.45rem;">
+            <input type="checkbox" id="autoDetect" checked />
+            <span class="small">載入/偵測時自動嘗試 .jpg / .png</span>
+          </label>
+          <button class="btnx" id="btnLoad"><i class="fa-solid fa-rotate"></i> 載入目前封面</button>
+          <button class="btnx btn-danger" id="btnDelete"><i class="fa-solid fa-trash"></i> 刪除目前封面</button>
+        </div>
+
+        <div style="margin-top:.65rem;">
+          <label class="muted small">Storage 固定路徑（以「上傳格式」計算）</label>
+          <input id="storagePath" class="input kbd" readonly />
+          <div class="muted small" style="margin-top:.35rem;">
+            你可以先「載入目前封面」看現有圖片，再用同一路徑覆蓋更新。
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:.65rem;">
+          <div class="grow">
+            <label class="muted small">輸出尺寸（A4 直式）</label>
+            <select id="preset">
+              <option value="web" selected>Web A4：1600×2260（較小、載入快）</option>
+              <option value="print">印刷 A4：2480×3508（300dpi）</option>
+            </select>
+          </div>
+          <div style="width:210px;">
+            <label class="muted small">快取策略（建議短）</label>
+            <select id="cacheCtl">
+              <option value="short" selected>短快取（1小時）</option>
+              <option value="none">不快取（0）</option>
+              <option value="long">長快取（1年）</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-top:.65rem;">
+          <label class="muted small">選擇本機封面圖片（用於更新/覆蓋）</label>
+          <input id="file" class="input" type="file" accept="image/*" />
+          <div class="muted small" style="margin-top:.35rem;">
+            會以「中心裁切」轉成 A4 比例（避免變形）。
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row">
+          <button class="btnx" id="btnBuild" title="重新產生 A4 圖"><i class="fa-solid fa-wand-magic-sparkles"></i> 產生 A4 圖</button>
+          <button class="btnx" id="btnUpload"><i class="fa-solid fa-cloud-arrow-up"></i> 更新封面（覆蓋上傳）</button>
+          <button class="btnx btn-danger" id="btnClear"><i class="fa-solid fa-eraser"></i> 清除本機選圖</button>
+        </div>
+
+        <div style="margin-top:.7rem;">
+          <div class="muted small">上傳/刪除進度</div>
+          <div class="progress" style="margin-top:.25rem;"><div id="bar"></div></div>
+          <div class="muted small" id="progressText" style="margin-top:.35rem;">—</div>
+        </div>
+
+        <div style="margin-top:.8rem;">
+          <label class="row" style="gap:.45rem; align-items:flex-start;">
+            <input type="checkbox" id="syncIssue" checked />
+            <span class="small">
+              同步寫入 <span class="kbd">kb_issues/{issueId}</span> 的 <span class="kbd">coverImageUrl</span>
+              <div class="muted small">（若文件不存在，會自動建立/合併寫入）</div>
+            </span>
+          </label>
+
+          <div class="row" style="margin-top:.45rem;">
+            <label class="row" style="gap:.45rem;">
+              <input type="checkbox" id="bustUrl" checked />
+              <span class="small">自動加版本參數（避免更新後仍顯示舊圖）</span>
+            </label>
+          </div>
+
+          <div style="margin-top:.55rem;">
+            <label class="muted small">issueId（預設 = YYYY-MM）</label>
+            <input id="issueId" class="input kbd" placeholder="例如：2025-12" />
+          </div>
+
+          <div class="row" style="margin-top:.55rem;">
+            <label class="row" style="gap:.45rem;">
+              <input type="checkbox" id="clearIssueOnDelete" />
+              <span class="small">刪除封面後，同步清空該刊物的 coverImageUrl</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="msg" style="margin-top:.8rem;"></div>
+
+        <div class="hint" style="margin-top:.85rem;">
+          <strong>更新封面為何會「看起來沒變」？</strong><br/>
+          若網址相同，瀏覽器可能使用快取。此頁預設會：<br/>
+          1) 上傳時使用「短快取（1 小時）」<br/>
+          2) Firestore 存入的 coverImageUrl 會加上 <span class="kbd">v=時間戳</span> 當作版本。
+        </div>
+      </aside>
+
+      <!-- RIGHT -->
+      <main class="card">
+        <h2 style="margin:.1rem 0 .35rem;">預覽</h2>
+        <div class="muted small">
+          左：Storage 現有封面（載入後才會顯示）｜右：本機圖片轉 A4 的輸出（將用來覆蓋上傳）
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="previewWrap">
+          <div>
+            <div class="row" style="justify-content:space-between;">
+              <div class="muted small">目前封面（Storage）</div>
+              <span class="pill kbd" id="currentMeta">—</span>
+            </div>
+            <div class="canvasBox" style="margin-top:.35rem;">
+              <img id="currentPreview" alt="" style="display:block; width:100%; height:auto; background:#f8fafc;"/>
+            </div>
+          </div>
+
+          <div>
+            <div class="muted small">A4 輸出（會上傳這張）</div>
+            <div class="canvasBox" style="margin-top:.35rem;">
+              <canvas id="out" style="display:block; width:100%; height:auto;"></canvas>
+            </div>
+            <div class="muted small" id="outMeta" style="margin-top:.4rem;">—</div>
+
+            <div class="links" id="links" style="display:none;">
+              <div class="linkRow">
+                <div class="t">目前使用的 Storage Path</div>
+                <div class="kbd" id="pathText">—</div>
+              </div>
+              <div class="linkRow">
+                <div class="t">Public URL（alt=media）</div>
+                <a id="publicUrl" href="#" target="_blank" rel="noopener">—</a>
+                <div class="row" style="margin-top:.4rem;">
+                  <button class="btnx" id="copyPublic"><i class="fa-regular fa-copy"></i> 複製</button>
+                  <button class="btnx" id="openPublic"><i class="fa-solid fa-up-right-from-square"></i> 開啟</button>
+                </div>
+              </div>
+              <div class="linkRow">
+                <div class="t">Firestore 建議存入的 URL（可能含 v= 版本）</div>
+                <a id="savedUrl" href="#" target="_blank" rel="noopener">—</a>
+                <div class="row" style="margin-top:.4rem;">
+                  <button class="btnx" id="copySaved"><i class="fa-regular fa-copy"></i> 複製</button>
+                  <button class="btnx" id="openSaved"><i class="fa-solid fa-up-right-from-square"></i> 開啟</button>
+                </div>
+              </div>
+              <div class="linkRow">
+                <div class="t">Download URL（SDK getDownloadURL）</div>
+                <a id="downloadUrl" href="#" target="_blank" rel="noopener">—</a>
+                <div class="row" style="margin-top:.4rem;">
+                  <button class="btnx" id="copyDownload"><i class="fa-regular fa-copy"></i> 複製</button>
+                  <button class="btnx" id="openDownload"><i class="fa-solid fa-up-right-from-square"></i> 開啟</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script type="module">
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getStorage, ref as sRef, uploadBytesResumable, getDownloadURL, getMetadata, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+    import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { auth, db } from "./firebase-config.js";
+
+    const $ = (s) => document.querySelector(s);
+    const storage = getStorage();
+    const COL_ISSUES = "kb_issues";
+
+    let canEdit = false;
+    let rawFile = null;
+    let rawImg = null;
+
+    // current storage cover
+    let currentPath = "";
+    let currentAltMediaUrl = "";
+    let currentDownloadUrl = "";
+
+    function esc(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+    }
+
+    function showMsg(text, kind="ok"){
+      $("#msg").innerHTML = `<div class="${kind === "ok" ? "ok" : "warn"}">${text}</div>`;
+      setTimeout(() => { if ($("#msg").innerHTML) $("#msg").innerHTML = ""; }, 5200);
+    }
+
+    function setProgress(pct, text){
+      $("#bar").style.width = `${pct}%`;
+      $("#progressText").textContent = text || "—";
+    }
+
+    function getMonth(){
+      return ($("#month").value || "").trim(); // YYYY-MM
+    }
+
+    function getUploadExt(){
+      return ($("#format").value || "jpg").trim();
+    }
+
+    function pathsForMonth(m){
+      return {
+        jpg: `kb_covers/${m}.jpg`,
+        png: `kb_covers/${m}.png`
+      };
+    }
+
+    function monthToUploadPath(){
+      const m = getMonth();
+      const ext = getUploadExt();
+      if (!m) return "";
+      return `kb_covers/${m}.${ext}`;
+    }
+
+    function syncIssueId(){
+      const m = getMonth();
+      if (!$("#issueId").value.trim() && m) $("#issueId").value = m;
+    }
+
+    function updatePathUI(){
+      const p = monthToUploadPath();
+      $("#storagePath").value = p ? p : "";
+      $("#pathText").textContent = p ? p : "—";
+    }
+
+    function getPresetSize(){
+      const preset = ($("#preset").value || "web").trim();
+      if (preset === "print") return { w: 2480, h: 3508 };
+      return { w: 1600, h: 2260 };
+    }
+
+    function cacheControlValue(){
+      const v = ($("#cacheCtl").value || "short").trim();
+      if (v === "none") return "public,max-age=0";
+      if (v === "long") return "public,max-age=31536000";
+      return "public,max-age=3600";
+    }
+
+    function withBust(url, bust){
+      if (!url) return "";
+      const join = url.includes("?") ? "&" : "?";
+      return `${url}${join}v=${encodeURIComponent(String(bust))}`;
+    }
+
+    async function evaluateRoles(user){
+      canEdit = false;
+
+      if (!user){
+        $("#authBadge").textContent = "未登入";
+        $("#roleBadge").textContent = "role: —";
+        $("#userInfo").textContent = "";
+        $("#panel").classList.add("disabled");
+        return;
+      }
+
+      $("#authBadge").textContent = "已登入";
+      $("#userInfo").textContent = user.email || "";
+
+      if (typeof window.__coverForcedRefresh === "undefined") window.__coverForcedRefresh = false;
+
+      try{
+        const token = await user.getIdTokenResult(!window.__coverForcedRefresh);
+        window.__coverForcedRefresh = true;
+
+        const claims = token?.claims || {};
+        const rolesObj = (claims.roles && typeof claims.roles === "object") ? claims.roles : {};
+        const roles = {
+          admin: !!claims.admin,
+          systemAdmin: !!claims.systemAdmin,
+          secretary: !!claims.secretary,
+          editor: !!claims.editor,
+          ...rolesObj
+        };
+
+        canEdit = !!(roles.admin || roles.systemAdmin || roles.secretary || roles.editor);
+
+        const roleKeys = ["admin","systemAdmin","secretary","editor"];
+        const roleList = roleKeys.filter(k => !!roles[k]).join(", ");
+        $("#roleBadge").textContent = `role: ${roleList || "（none）"}`;
+
+        if (!canEdit){
+          $("#panel").classList.add("disabled");
+          showMsg("你已登入，但缺少 admin/systemAdmin/secretary/editor 權限（已鎖定更新/刪除）。", "warn");
+        }else{
+          $("#panel").classList.remove("disabled");
+        }
+      }catch(e){
+        console.error(e);
+        $("#roleBadge").textContent = "role: （讀取失敗）";
+        $("#panel").classList.add("disabled");
+        showMsg("無法讀取使用者權限（請確認自訂 claims）。", "warn");
+      }
+    }
+
+    function loadImageFromFile(file){
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          resolve(img);
+        };
+        img.onerror = reject;
+        img.src = url;
+      });
+    }
+
+    function drawToA4(img){
+      const { w: outW, h: outH } = getPresetSize();
+      const canvas = $("#out");
+      canvas.width = outW;
+      canvas.height = outH;
+      const ctx = canvas.getContext("2d", { alpha: false });
+
+      const target = outW / outH;
+
+      const sw = img.naturalWidth || img.width;
+      const sh = img.naturalHeight || img.height;
+      const src = sw / sh;
+
+      let sx=0, sy=0, sWidth=sw, sHeight=sh;
+      if (src > target){
+        sHeight = sh;
+        sWidth = Math.round(sh * target);
+        sx = Math.round((sw - sWidth) / 2);
+        sy = 0;
+      } else {
+        sWidth = sw;
+        sHeight = Math.round(sw / target);
+        sx = 0;
+        sy = Math.round((sh - sHeight) / 2);
+      }
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0,0,outW,outH);
+      ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, outW, outH);
+
+      $("#outMeta").textContent = `輸出尺寸：${outW}×${outH}（A4 比例）｜來源：${sw}×${sh}｜裁切：${sWidth}×${sHeight} @ (${sx},${sy})`;
+    }
+
+    async function rebuild(){
+      if (!rawFile) return showMsg("請先選擇本機圖片。", "warn");
+      rawImg = await loadImageFromFile(rawFile);
+      drawToA4(rawImg);
+      showMsg("A4 圖已更新。");
+    }
+
+    function canvasToBlob(format){
+      const canvas = $("#out");
+      return new Promise((resolve) => {
+        if (format === "png"){
+          canvas.toBlob((b) => resolve(b), "image/png");
+        } else {
+          canvas.toBlob((b) => resolve(b), "image/jpeg", 0.9);
+        }
+      });
+    }
+
+    function buildPublicAltMediaUrl(path){
+      const bucket = storage.app?.options?.storageBucket || "";
+      if (!bucket || !path) return "";
+      const enc = encodeURIComponent(path);
+      return `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${enc}?alt=media`;
+    }
+
+    async function tryLoadPath(path){
+      const ref = sRef(storage, path);
+      const meta = await getMetadata(ref);          // throws if not exists / not allowed
+      let downloadUrl = "";
+      try { downloadUrl = await getDownloadURL(ref); } catch { downloadUrl = ""; }
+      const publicUrl = buildPublicAltMediaUrl(path);
+      return { path, meta, publicUrl, downloadUrl };
+    }
+
+    async function loadExistingCover(){
+      const m = getMonth();
+      if (!m) return showMsg("請先選擇發行月份。", "warn");
+
+      $("#existsBadge").textContent = "cover: 讀取中…";
+      $("#currentMeta").textContent = "讀取中…";
+      $("#currentPreview").removeAttribute("src");
+
+      const { jpg, png } = pathsForMonth(m);
+      const prefer = monthToUploadPath(); // preferred ext path
+      const auto = !!$("#autoDetect").checked;
+
+      const candidates = auto
+        ? [prefer, prefer.endsWith(".jpg") ? png : jpg]
+        : [prefer];
+
+      let found = null;
+      for (const p of candidates){
+        try{
+          found = await tryLoadPath(p);
+          break;
+        }catch(e){
+          // continue
+        }
+      }
+
+      if (!found){
+        currentPath = "";
+        currentAltMediaUrl = "";
+        currentDownloadUrl = "";
+        $("#existsBadge").textContent = "cover: 不存在";
+        $("#currentMeta").textContent = "—";
+        showMsg("此月份尚未有封面檔（你可以直接上傳建立）。");
+        return;
+      }
+
+      currentPath = found.path;
+      currentAltMediaUrl = found.publicUrl;
+      currentDownloadUrl = found.downloadUrl;
+
+      const updated = found.meta?.updated || "";
+      const size = found.meta?.size != null ? `${found.meta.size} bytes` : "";
+      const ct = found.meta?.contentType || "";
+
+      $("#existsBadge").textContent = "cover: 已存在";
+      $("#currentMeta").textContent = `${currentPath}｜${ct}｜${size}${updated ? "｜" + updated : ""}`;
+
+      // preview with cache-bust so admin can see latest
+      const bust = Date.now();
+      const u = withBust(currentAltMediaUrl || currentDownloadUrl, bust);
+      $("#currentPreview").src = u;
+
+      // also refresh link panel if user wants to copy
+      $("#links").style.display = "block";
+      $("#pathText").textContent = currentPath;
+
+      $("#publicUrl").textContent = currentAltMediaUrl || "—";
+      $("#publicUrl").href = currentAltMediaUrl || "#";
+
+      $("#downloadUrl").textContent = currentDownloadUrl || "—";
+      $("#downloadUrl").href = currentDownloadUrl || "#";
+
+      const saved = $("#bustUrl").checked ? withBust(currentAltMediaUrl || currentDownloadUrl, bust) : (currentAltMediaUrl || currentDownloadUrl);
+      $("#savedUrl").textContent = saved || "—";
+      $("#savedUrl").href = saved || "#";
+
+      showMsg("已載入目前封面。");
+    }
+
+    async function upload(){
+      if (!canEdit) return showMsg("你沒有更新權限。", "warn");
+
+      const m = getMonth();
+      if (!m) return showMsg("請先選擇發行月份。", "warn");
+      if (!rawFile) return showMsg("請先選擇本機圖片。", "warn");
+
+      // ensure A4 output exists
+      if (!rawImg){
+        rawImg = await loadImageFromFile(rawFile);
+        drawToA4(rawImg);
+      }
+
+      const uploadPath = monthToUploadPath(); // fixed by month + ext
+      const ref = sRef(storage, uploadPath);
+
+      const format = getUploadExt();
+      const blob = await canvasToBlob(format);
+      if (!blob) return showMsg("產生圖片失敗（canvas toBlob）。", "warn");
+
+      // decide if it's an update or create
+      let existed = false;
+      try{
+        await getMetadata(ref);
+        existed = true;
+      }catch{ existed = false; }
+
+      setProgress(0, existed ? "更新中（覆蓋上傳）…" : "建立中（第一次上傳）…");
+      $("#existsBadge").textContent = existed ? "cover: 更新中…" : "cover: 建立中…";
+
+      const meta = {
+        contentType: (format === "png" ? "image/png" : "image/jpeg"),
+        cacheControl: cacheControlValue()
+      };
+
+      const task = uploadBytesResumable(ref, blob, meta);
+
+      await new Promise((resolve, reject) => {
+        task.on("state_changed",
+          (snap) => {
+            const pct = snap.totalBytes ? Math.round((snap.bytesTransferred / snap.totalBytes) * 100) : 0;
+            setProgress(pct, `${existed ? "更新" : "上傳"}中… ${pct}%（${snap.bytesTransferred}/${snap.totalBytes} bytes）`);
+          },
+          (err) => reject(err),
+          () => resolve()
+        );
+      });
+
+      setProgress(100, "上傳完成，更新連結…");
+
+      const bust = Date.now();
+
+      // after upload, load metadata + urls
+      let meta2 = null;
+      try { meta2 = await getMetadata(ref); } catch {}
+
+      currentPath = uploadPath;
+      currentAltMediaUrl = buildPublicAltMediaUrl(uploadPath);
+
+      try{
+        currentDownloadUrl = await getDownloadURL(ref);
+      }catch{
+        currentDownloadUrl = "";
+      }
+
+      const baseUrl = currentAltMediaUrl || currentDownloadUrl;
+      const savedUrl = ($("#bustUrl").checked && baseUrl) ? withBust(baseUrl, bust) : baseUrl;
+
+      // show links
+      $("#links").style.display = "block";
+      $("#pathText").textContent = currentPath;
+
+      $("#publicUrl").textContent = currentAltMediaUrl || "—";
+      $("#publicUrl").href = currentAltMediaUrl || "#";
+
+      $("#downloadUrl").textContent = currentDownloadUrl || "—";
+      $("#downloadUrl").href = currentDownloadUrl || "#";
+
+      $("#savedUrl").textContent = savedUrl || "—";
+      $("#savedUrl").href = savedUrl || "#";
+
+      // update current preview with bust
+      $("#currentPreview").src = savedUrl || withBust(baseUrl, bust) || "";
+
+      if (meta2){
+        const updated = meta2.updated || "";
+        const size = meta2.size != null ? `${meta2.size} bytes` : "";
+        const ct = meta2.contentType || "";
+        $("#currentMeta").textContent = `${currentPath}｜${ct}｜${size}${updated ? "｜" + updated : ""}`;
+      }
+
+      $("#existsBadge").textContent = "cover: 已存在";
+
+      // optional sync to issue doc
+      if ($("#syncIssue").checked){
+        const issueId = ($("#issueId").value || "").trim() || m;
+        if (issueId && savedUrl){
+          try{
+            await setDoc(doc(db, COL_ISSUES, issueId), {
+              issueId,
+              coverImageUrl: savedUrl,
+              coverPath: currentPath,
+              coverUpdatedAt: serverTimestamp(),
+              updatedAt: serverTimestamp()
+            }, { merge: true });
+          }catch(e){
+            console.error(e);
+            showMsg(`封面已${existed ? "更新" : "上傳"}，但同步寫入 kb_issues 失敗：${esc(e.message || e)}`, "warn");
+            return;
+          }
+        }
+      }
+
+      showMsg(`封面已${existed ? "更新" : "上傳"}完成。`);
+    }
+
+    async function deleteCover(){
+      if (!canEdit) return showMsg("你沒有刪除權限。", "warn");
+
+      const m = getMonth();
+      if (!m) return showMsg("請先選擇發行月份。", "warn");
+
+      // determine which file to delete: if currentPath already loaded use it; else try detect
+      if (!currentPath){
+        await loadExistingCover();
+      }
+      if (!currentPath){
+        return showMsg("找不到可刪除的封面檔。", "warn");
+      }
+
+      const ok = confirm(`確定要刪除封面？\n${currentPath}`);
+      if (!ok) return;
+
+      setProgress(10, "刪除中…");
+      $("#existsBadge").textContent = "cover: 刪除中…";
+
+      try{
+        await deleteObject(sRef(storage, currentPath));
+      }catch(e){
+        console.error(e);
+        setProgress(0, "—");
+        $("#existsBadge").textContent = "cover: 刪除失敗";
+        return showMsg(`刪除失敗：${esc(e.message || e)}`, "warn");
+      }
+
+      // optional clear issue doc
+      if ($("#clearIssueOnDelete").checked){
+        const issueId = ($("#issueId").value || "").trim() || m;
+        if (issueId){
+          try{
+            await setDoc(doc(db, COL_ISSUES, issueId), {
+              issueId,
+              coverImageUrl: "",
+              coverPath: "",
+              coverUpdatedAt: serverTimestamp(),
+              updatedAt: serverTimestamp()
+            }, { merge: true });
+          }catch(e){
+            console.error(e);
+            // still treat delete success
+            showMsg(`封面已刪除，但清空 kb_issues/${esc(issueId)} 失敗：${esc(e.message || e)}`, "warn");
+          }
+        }
+      }
+
+      // reset UI
+      currentPath = "";
+      currentAltMediaUrl = "";
+      currentDownloadUrl = "";
+      $("#currentPreview").removeAttribute("src");
+      $("#currentMeta").textContent = "—";
+      $("#existsBadge").textContent = "cover: 不存在";
+      $("#links").style.display = "none";
+      setProgress(0, "—");
+      showMsg("封面已刪除。");
+    }
+
+    async function copyText(txt){
+      try{
+        await navigator.clipboard.writeText(txt);
+        showMsg("已複製到剪貼簿。");
+      }catch{
+        showMsg("複製失敗（瀏覽器限制）。", "warn");
+      }
+    }
+
+    function clearLocalSelection(){
+      rawFile = null;
+      rawImg = null;
+      $("#file").value = "";
+      const c = $("#out");
+      const ctx = c.getContext("2d");
+      ctx.clearRect(0,0,c.width,c.height);
+      $("#outMeta").textContent = "—";
+      showMsg("已清除本機選圖。");
+    }
+
+    // ---- events
+    $("#btnSignOut").addEventListener("click", () => signOut(auth));
+
+    $("#month").addEventListener("change", async () => {
+      syncIssueId();
+      updatePathUI();
+      // auto load existing when month changes
+      await loadExistingCover();
+    });
+    $("#format").addEventListener("change", updatePathUI);
+    $("#preset").addEventListener("change", () => { if (rawImg) drawToA4(rawImg); });
+
+    $("#btnLoad").addEventListener("click", loadExistingCover);
+    $("#btnDelete").addEventListener("click", deleteCover);
+
+    $("#file").addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      rawFile = file;
+      try{
+        rawImg = await loadImageFromFile(file);
+        drawToA4(rawImg);
+        showMsg("已載入圖片並轉成 A4。");
+      }catch(err){
+        console.error(err);
+        showMsg("載入圖片失敗。", "warn");
+      }
+    });
+
+    $("#btnBuild").addEventListener("click", rebuild);
+    $("#btnUpload").addEventListener("click", upload);
+    $("#btnClear").addEventListener("click", clearLocalSelection);
+
+    $("#copyPublic").addEventListener("click", () => copyText($("#publicUrl").textContent || ""));
+    $("#copySaved").addEventListener("click", () => copyText($("#savedUrl").textContent || ""));
+    $("#copyDownload").addEventListener("click", () => copyText($("#downloadUrl").textContent || ""));
+
+    $("#openPublic").addEventListener("click", () => { const u = $("#publicUrl").href; if (u && u !== "#") window.open(u, "_blank"); });
+    $("#openSaved").addEventListener("click", () => { const u = $("#savedUrl").href; if (u && u !== "#") window.open(u, "_blank"); });
+    $("#openDownload").addEventListener("click", () => { const u = $("#downloadUrl").href; if (u && u !== "#") window.open(u, "_blank"); });
+
+    // init defaults
+    (function initDefaults(){
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth()+1).padStart(2,"0");
+      $("#month").value = `${yyyy}-${mm}`;
+      $("#issueId").value = `${yyyy}-${mm}`;
+      updatePathUI();
+      setProgress(0, "—");
+    })();
+
+    onAuthStateChanged(auth, async (user) => {
+      await evaluateRoles(user);
+      // after login, auto load existing cover
+      await loadExistingCover();
+    });
+  </script>
+</body>
+</html>

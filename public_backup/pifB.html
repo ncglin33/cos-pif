@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PIF 附錄 B｜其他附件（標籤／彩盒／照片）</title>
+<style>
+  :root{
+    --fg: #111; --muted: #666; --line: #e5e7eb; --brand: #2563eb; 
+  }
+  body{font-family: ui-sans-serif, system-ui, -apple-system, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Segoe UI, Roboto, Arial, sans-serif; background: #f9fafb; color: var(--fg); margin: 0; padding-bottom: 2rem;}
+  .container{max-width: 1200px; margin: 0 auto; padding: 1.25rem;}
+  h1{font-size: 1.5rem; margin-bottom: .5rem;}
+  .toolbar{ position: sticky; top: 0; background: rgba(255,255,255,.95); backdrop-filter: blur(4px); z-index: 10; padding: .75rem 1.25rem; border-bottom: 1px solid var(--line); margin: -1.25rem -1.25rem 1.25rem; display: flex; align-items: center; gap: 1rem; }
+  button, .btn {border: 1px solid var(--line); background: #fff; padding: .5rem .8rem; border-radius: .5rem; cursor: pointer; font-size: .9rem;}
+  button.primary, .btn.primary { background: var(--brand); color: #fff; border-color: var(--brand); }
+  #status{ text-align: center; padding: 2rem; color: var(--muted); border: 2px dashed var(--line); border-radius: .75rem; background: #fff; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.25rem; margin-top: 1.25rem;}
+  .img-card { background: #fff; border: 1px solid var(--line); border-radius: .75rem; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); overflow: hidden; break-inside: avoid; position: relative; }
+  .img-card img { display: block; width: 100%; height: 200px; object-fit: cover; }
+  .img-card-body { padding: .8rem; }
+  .img-card-title { font-weight: 500; margin: 0 0 .2rem; word-break: break-all; }
+  .img-card-meta { font-size: .8rem; color: var(--muted); }
+  .img-card .delete-btn { position: absolute; top: .5rem; right: .5rem; background: rgba(0,0,0,.5); color: #fff; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 16px; line-height: 28px; text-align: center; cursor: pointer; opacity: 0; transition: opacity .2s; }
+  .img-card:hover .delete-btn { opacity: 1; }
+  .no-print { }
+  @media print{
+    .no-print { display: none; }
+    body { background: #fff; }
+    .container { max-width: none; padding: 0; }
+    .toolbar { display: none; }
+    .grid { grid-template-columns: repeat(2, 1fr); }
+    .img-card { box-shadow: none; border-radius: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>附錄 B｜其他附件（標籤／彩盒／照片）</h1>
+    <p class="muted">上傳並管理產品的標籤、彩盒、容器照片或其他相關附件。資料將暫存於您的瀏覽器。</p>
+  </header>
+  
+  <div class="toolbar no-print">
+    <label class="btn primary">
+        ＋ 新增附件...
+        <input id="file-input" type="file" multiple accept="image/*,application/pdf" hidden>
+    </label>
+    <button onclick="window.location.href='pifs.html'">返回主選單</button>
+    <button onclick="window.print()">列印 / 匯出 PDF</button>
+  </div>
+
+  <div id="grid-container">
+    <div id="status">點擊「新增附件」或將檔案拖曳至此處，以開始上傳。</div>
+    <div id="grid" class="grid"></div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+    'use strict';
+    const KEY = 'pifB_attachments_v1';
+    const $ = sel => document.querySelector(sel);
+    const grid = $('#grid');
+    const statusEl = $('#status');
+    const fileInput = $('#file-input');
+    
+    let state = {
+        files: [] // { name, type, size, dataUrl }
+    };
+
+    function save() {
+        try {
+            localStorage.setItem(KEY, JSON.stringify(state));
+        } catch (e) {
+            console.error("Error saving to localStorage", e);
+            alert('無法儲存附件，儲存空間可能已滿。');
+        }
+    }
+
+    function load() {
+        try {
+            const storedState = localStorage.getItem(KEY);
+            if (storedState) {
+                state = JSON.parse(storedState);
+            }
+        } catch (e) {
+            console.error("Error loading from localStorage", e);
+        }
+    }
+
+    function render() {
+        grid.innerHTML = '';
+        if (state.files.length === 0) {
+            statusEl.style.display = 'block';
+            return;
+        }
+        statusEl.style.display = 'none';
+
+        state.files.forEach((file, index) => {
+            const card = document.createElement('div');
+            card.className = 'img-card';
+            
+            const isImage = file.type.startsWith('image/');
+            const previewHtml = isImage 
+                ? `<img src="${file.dataUrl}" alt="${file.name}">`
+                : `<div style="height: 200px; display: flex; align-items: center; justify-content: center; background: #eee; flex-direction:column;">
+                     <span style="font-size: 48px;">📄</span>
+                     <span style="font-size: .9rem; color:#555;">PDF 文件</span>
+                   </div>`;
+
+            card.innerHTML = `
+                ${previewHtml}
+                <div class="img-card-body">
+                    <h3 class="img-card-title">${file.name}</h3>
+                    <p class="img-card-meta">${(file.size / 1024).toFixed(1)} KB</p>
+                </div>
+                <button class="delete-btn no-print" data-index="${index}">&times;</button>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    function handleFiles(files) {
+        if (!files || files.length === 0) return;
+
+        let processed = 0;
+        for (const file of files) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                state.files.push({
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    dataUrl: e.target.result
+                });
+                processed++;
+                if (processed === files.length) {
+                    save();
+                    render();
+                }
+            };
+            reader.onerror = () => {
+                processed++;
+                 console.error("Failed to read file:", file.name);
+                if (processed === files.length) {
+                    save();
+                    render();
+                }
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+    
+    fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+    });
+
+    grid.addEventListener('click', (e) => {
+        if (e.target.classList.contains('delete-btn')) {
+            const index = parseInt(e.target.dataset.index, 10);
+            if (confirm(`確定要刪除附件「${state.files[index].name}」嗎？`)) {
+                state.files.splice(index, 1);
+                save();
+                render();
+            }
+        }
+    });
+
+    // Drag and Drop support
+    const container = $('body');
+    container.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    });
+    container.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    });
+    container.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleFiles(e.dataTransfer.files);
+    });
+
+
+    // Initial load
+    load();
+    render();
+
+})();
+</script>
+
+</body>
+</html>

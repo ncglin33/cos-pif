@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>主題票選｜主辦設定</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <style>
+    .container{ max-width: 1700px; }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.85rem 1rem; background:#fff;
+      border:1px solid var(--line); border-radius:16px;
+      margin:.9rem 0 1rem;
+    }
+    .topbar .left{ display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
+    .topbar a{ text-decoration:none; color:var(--ink); font-weight:900; }
+    .badge{
+      display:inline-flex; align-items:center; gap:.35rem;
+      border:1px solid var(--line); border-radius:999px;
+      padding:.25rem .6rem; font-size:.82rem; background:#fff; color:var(--muted);
+    }
+    .btnx{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius: 12px;
+      padding:.48rem .7rem;
+      cursor:pointer;
+      font-weight:900;
+      display:inline-flex; align-items:center; gap:.45rem;
+      text-decoration:none;
+      color: var(--ink);
+    }
+    .btnx:hover{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+    .btn-primary{
+      background: linear-gradient(135deg, #111827, #2563eb);
+      border-color:#2563eb; color:#fff;
+      box-shadow: 0 12px 35px rgba(37,99,235,.22);
+    }
+    .btn-primary:hover{ background: linear-gradient(135deg, #0b1220, #1d4ed8); color:#fff; border-color:#1d4ed8; }
+    .btn-danger{ border-color:#fecaca; }
+    .btn-danger:hover{ background:#fff1f2; border-color:#fca5a5; color:#b91c1c; }
+
+    .grid{
+      display:grid; grid-template-columns: 560px 1fr; gap: 1rem; align-items:start;
+    }
+    @media (max-width: 1200px){ .grid{ grid-template-columns: 1fr; } }
+
+    .card{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:16px;
+      box-shadow:0 1px 3px rgba(0,0,0,.05);
+      padding: 1rem 1rem;
+    }
+    .muted{ color:var(--muted); }
+    .small{ font-size:.88rem; }
+    .hr{ border:none; border-top:1px solid #eef2f7; margin: .9rem 0; }
+
+    input, textarea, select{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius: 12px;
+      padding:.55rem .65rem;
+      font-size:.95rem;
+      outline:none;
+      background:#fff;
+    }
+    textarea{ min-height: 90px; resize: vertical; }
+    input:focus, textarea:focus, select:focus{
+      border-color:#bfdbfe; box-shadow:0 0 0 3px rgba(59,130,246,.15);
+    }
+
+    table{
+      width:100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      border:1px solid var(--line);
+      border-radius:16px;
+      overflow:hidden;
+      background:#fff;
+    }
+    th, td{
+      padding:.55rem .55rem;
+      border-bottom:1px solid #eef2f7;
+      vertical-align:top;
+    }
+    th{
+      background:#f8fafc;
+      color: var(--muted);
+      font-weight:900;
+      font-size:.84rem;
+      text-align:left;
+    }
+    tr:last-child td{ border-bottom:none; }
+    .rowBtns{
+      display:flex; gap:.45rem; flex-wrap:wrap;
+    }
+    .msgOk{
+      padding:.6rem .7rem;
+      border:1px solid #bbf7d0;
+      background:#f0fdf4;
+      border-radius:12px;
+      color:#166534;
+      margin-top:.65rem;
+      white-space: pre-wrap;
+    }
+    .msgWarn{
+      padding:.6rem .7rem;
+      border:1px solid #fde68a;
+      background:#fffbeb;
+      border-radius:12px;
+      color:#92400e;
+      margin-top:.65rem;
+      white-space: pre-wrap;
+    }
+    .msgBad{
+      padding:.6rem .7rem;
+      border:1px solid #fecaca;
+      background:#fff1f2;
+      border-radius:12px;
+      color:#9f1239;
+      margin-top:.65rem;
+      white-space: pre-wrap;
+    }
+    .disabledAll{ opacity:.6; pointer-events:none; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="left">
+        <a href="index.html"><i class="fa-solid fa-house"></i> 首頁</a>
+        <a href="topic-poll.html" style="margin-left:.25rem;"><i class="fa-solid fa-square-poll-vertical"></i> 票選前台</a>
+        <span class="badge" id="authBadge">未登入</span>
+        <span class="badge" id="roleBadge">role: —</span>
+      </div>
+      <div class="left">
+        <span class="badge" id="userBadge">—</span>
+        <a class="btnx" id="btnLogin" href="login.html"><i class="fa-solid fa-right-to-bracket"></i> 登入</a>
+        <button class="btnx" id="btnLogout" style="display:none;"><i class="fa-solid fa-right-from-bracket"></i> 登出</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <section class="card" id="leftCard">
+        <h2 style="margin:.1rem 0 .25rem;">建立 / 編輯 poll</h2>
+        <div class="muted small">
+          票選資料存放於：<span class="mono">kb_topic_polls/{pollId}</span>；投票存放於子集合 <span class="mono">votes/{uid}</span>。
+        </div>
+
+        <div class="hr"></div>
+
+        <label class="muted small">pollId（建議 YYYY-MM，例如 2026-01）</label>
+        <input id="pollId" placeholder="2026-01" class="mono"/>
+        <div style="margin-top:.55rem;">
+          <div class="muted small">
+            前台預設顯示（已發布）：<span class="mono" id="publishedPoll">—</span>
+          </div>
+          <div class="rowBtns" style="margin-top:.45rem;">
+            <button class="btnx" id="btnPublish"><i class="fa-solid fa-bullhorn"></i> 發布到前台（設為預設）</button>
+            <a class="btnx" id="btnOpenFrontDefault" href="topic-poll.html" target="_blank"><i class="fa-solid fa-up-right-from-square"></i> 開前台（預設）</a>
+          </div>
+        </div>
+
+
+        <div style="margin-top:.65rem;">
+          <label class="muted small">title</label>
+          <input id="title" placeholder="2026-01 下期月刊主題票選" />
+        </div>
+
+        <div style="margin-top:.65rem;">
+          <label class="muted small">desc（可選）</label>
+          <textarea id="desc" placeholder="可填入票選說明…"></textarea>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:.8rem; margin-top:.65rem;">
+          <div>
+            <label class="muted small">openFrom（開始）</label>
+            <input id="openFrom" type="datetime-local" />
+          </div>
+          <div>
+            <label class="muted small">openUntil（結束）</label>
+            <input id="openUntil" type="datetime-local" />
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:.8rem; margin-top:.65rem;">
+          <div>
+            <label class="muted small">maxSelections（最多勾選）</label>
+            <input id="maxSelections" type="number" min="1" max="10" value="3"/>
+          </div>
+          <div>
+            <label class="muted small">allowSuggestion</label>
+            <select id="allowSuggestion">
+              <option value="true">true</option>
+              <option value="false">false</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="rowBtns" style="margin-top:.75rem;">
+          <button class="btnx" id="btnLoad"><i class="fa-solid fa-folder-open"></i> 讀取</button>
+          <button class="btnx" id="btnDefaultWindow"><i class="fa-regular fa-calendar"></i> 套用預設 1~15</button>
+          <button class="btnx btn-primary" id="btnSave"><i class="fa-solid fa-floppy-disk"></i> 儲存 poll</button>
+          <a class="btnx" id="btnOpenFront" href="topic-poll.html" target="_blank"><i class="fa-solid fa-up-right-from-square"></i> 開前台</a>
+        </div>
+
+        <div id="msg"></div>
+
+        <div class="hr"></div>
+
+        <h3 style="margin:.2rem 0 .35rem;">快速建立「下期」poll</h3>
+        <div class="muted small">一鍵填入下個月的 pollId + 預設投票期間（1 號 00:00 ～ 15 號 23:59）。</div>
+        <div class="rowBtns" style="margin-top:.55rem;">
+          <button class="btnx" id="btnQuickNext"><i class="fa-solid fa-wand-magic-sparkles"></i> 生成下期</button>
+        </div>
+      </section>
+
+      <section class="card" id="rightCard">
+        <div style="display:flex; align-items:end; justify-content:space-between; gap:.75rem; flex-wrap:wrap;">
+          <div>
+            <h2 style="margin:.1rem 0 .2rem;">候選主題清單</h2>
+            <div class="muted small">每筆：id / title / desc。id 建議英文或短碼（例如 ai_reg, sunscreen_iso）。</div>
+          </div>
+          <div class="rowBtns" style="flex-wrap:wrap;">
+            <button class="btnx" id="btnAdd"><i class="fa-solid fa-plus"></i> 新增候選</button>
+            <button class="btnx" id="btnClear"><i class="fa-regular fa-trash-can"></i> 清空候選</button>
+
+            <label class="btnx" for="fileImport"><i class="fa-solid fa-file-arrow-up"></i> 匯入 CSV/JSON</label>
+            <input id="fileImport" type="file" accept=".csv,.json,text/csv,application/json" style="display:none" />
+
+            <button class="btnx" id="btnApplyReplace" disabled><i class="fa-solid fa-square-check"></i> 套用(取代)</button>
+            <button class="btnx" id="btnApplyMerge" disabled><i class="fa-solid fa-layer-group"></i> 套用(合併)</button>
+
+            <button class="btnx" id="btnExportCandCSV"><i class="fa-solid fa-file-csv"></i> 匯出候選CSV</button>
+            <button class="btnx" id="btnExportCandJSON"><i class="fa-solid fa-file-code"></i> 匯出候選JSON</button>
+          </div>
+          <div id="importHint" class="muted small" style="margin-top:.45rem;"></div>
+          <div id="importPreview" class="small" style="margin-top:.35rem;"></div>
+        </div>
+
+        <div class="hr"></div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 170px;">id</th>
+              <th style="width: 260px;">title</th>
+              <th>desc</th>
+              <th style="width: 210px;">操作</th>
+            </tr>
+          </thead>
+          <tbody id="candBody"></tbody>
+        </table>
+
+        <div class="hr"></div>
+
+        <h3 style="margin:.2rem 0 .35rem;">結果摘要（主辦用）</h3>
+        <div class="muted small">按「刷新結果」會讀取 votes 子集合並統計票數（僅主辦可讀）。</div>
+
+        <div class="rowBtns" style="margin-top:.55rem; flex-wrap:wrap;">
+          <button class="btnx" id="btnRefresh"><i class="fa-solid fa-rotate"></i> 刷新結果</button>
+          <button class="btnx" id="btnExport"><i class="fa-solid fa-file-csv"></i> 匯出 CSV</button>
+          <button class="btnx" id="btnExportJSON"><i class="fa-solid fa-file-code"></i> 匯出 JSON</button>
+        </div>
+
+        <div id="resultBox" style="margin-top:.65rem;"></div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { doc, getDoc, setDoc, serverTimestamp, Timestamp, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { db, auth } from "./firebase-config.js";
+
+    const $ = (s)=>document.querySelector(s);
+    const POLLS = "kb_topic_polls";
+    const PUBLIC_CFG_REF = doc(db, "kb_public_config", "topic_poll");
+
+    let user = null;
+    let canAdmin = false;
+    let candidates = [];
+    let lastVotes = []; // for export
+    let lastSummary = null; // for JSON export
+    let importBuffer = null; // parsed candidates from CSV/JSON
+
+    function pad2(n){ return String(n).padStart(2,"0"); }
+    function esc(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;").replaceAll("'","&#39;");
+    }
+    function setMsg(kind, text){
+      const box = $("#msg");
+      if (!text){ box.innerHTML = ""; return; }
+      const cls = kind === "ok" ? "msgOk" : kind === "warn" ? "msgWarn" : "msgBad";
+      box.innerHTML = `<div class="${cls}">${esc(text)}</div>`;
+      setTimeout(()=>{ if (box.innerHTML) box.innerHTML=""; }, 4000);
+    }
+
+    function toLocalInputValue(d){
+      // datetime-local expects "YYYY-MM-DDTHH:MM"
+      const y = d.getFullYear();
+      const mo = pad2(d.getMonth()+1);
+      const da = pad2(d.getDate());
+      const hh = pad2(d.getHours());
+      const mm = pad2(d.getMinutes());
+      return `${y}-${mo}-${da}T${hh}:${mm}`;
+    }
+    function fromLocalInputValue(s){
+      if (!s) return null;
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    function nextMonthId(){
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = d.getMonth()+1;
+      const ny = (m === 12) ? (y+1) : y;
+      const nm = (m === 12) ? 1 : (m+1);
+      return `${ny}-${pad2(nm)}`;
+    }
+    function defaultWindowForPollId(pid){
+      // pid: YYYY-MM
+      const [yS, mS] = String(pid||"").split("-");
+      const y = Number(yS);
+      const m = Number(mS);
+      if (!y || !m) return null;
+      const start = new Date(y, m-1, 1, 0, 0, 0, 0);
+      const end = new Date(y, m-1, 15, 23, 59, 0, 0);
+      return { start, end };
+    }
+
+    async function refreshRole(u){
+      canAdmin = false;
+      $("#roleBadge").textContent = "role: —";
+      if (!u) return;
+
+      try{
+        const token = await u.getIdTokenResult(true);
+        const claims = token?.claims || {};
+        const rolesObj = (claims.roles && typeof claims.roles === "object") ? claims.roles : {};
+        const roles = {
+          admin: !!claims.admin,
+          systemAdmin: !!claims.systemAdmin,
+          secretary: !!claims.secretary,
+          editor: !!claims.editor,
+          ...rolesObj
+        };
+        canAdmin = !!(roles.admin || roles.systemAdmin || roles.editor || roles.secretary);
+        const roleKeys = ["admin","systemAdmin","secretary","editor"];
+        const roleList = roleKeys.filter(k => !!roles[k]).join(", ");
+        $("#roleBadge").textContent = `role: ${roleList || "（none）"}`;
+      }catch(e){
+        console.error(e);
+        $("#roleBadge").textContent = "role: （讀取失敗）";
+      }
+    }
+
+    function renderCandidates(){
+      const body = $("#candBody");
+      body.innerHTML = "";
+      if (!candidates.length){
+        body.innerHTML = `<tr><td colspan="4" class="muted small">尚無候選主題，請按「新增候選」。</td></tr>`;
+        return;
+      }
+
+      candidates.forEach((c, idx) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><input data-k="id" data-i="${idx}" value="${esc(c.id||"")}" placeholder="ai_reg" class="mono"/></td>
+          <td><input data-k="title" data-i="${idx}" value="${esc(c.title||"")}" placeholder="AI 法規趨勢"/></td>
+          <td><textarea data-k="desc" data-i="${idx}" placeholder="簡短描述（可空）">${esc(c.desc||"")}</textarea></td>
+          <td>
+            <div class="rowBtns">
+              <button class="btnx" data-act="up" data-i="${idx}"><i class="fa-solid fa-arrow-up"></i></button>
+              <button class="btnx" data-act="down" data-i="${idx}"><i class="fa-solid fa-arrow-down"></i></button>
+              <button class="btnx btn-danger" data-act="del" data-i="${idx}"><i class="fa-solid fa-trash"></i> 刪除</button>
+            </div>
+          </td>
+        `;
+        body.appendChild(tr);
+      });
+
+      body.querySelectorAll("input, textarea").forEach(el => {
+        el.addEventListener("input", () => {
+          const i = Number(el.dataset.i);
+          const k = el.dataset.k;
+          if (!Number.isFinite(i) || !k) return;
+          candidates[i] = candidates[i] || {};
+          candidates[i][k] = el.value;
+        });
+      });
+
+      body.querySelectorAll("button[data-act]").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          const i = Number(btn.dataset.i);
+          const act = btn.dataset.act;
+          if (!Number.isFinite(i)) return;
+
+          if (act === "del"){
+            candidates.splice(i,1);
+          }else if (act === "up" && i > 0){
+            const tmp = candidates[i-1]; candidates[i-1]=candidates[i]; candidates[i]=tmp;
+          }else if (act === "down" && i < candidates.length-1){
+            const tmp = candidates[i+1]; candidates[i+1]=candidates[i]; candidates[i]=tmp;
+          }
+          renderCandidates();
+        });
+      });
+    }
+
+    function getPollId(){
+      return ($("#pollId").value || "").trim();
+    }
+
+    async function loadPublishedPoll(){
+      try{
+        const snap = await getDoc(PUBLIC_CFG_REF);
+        const data = snap.exists() ? (snap.data() || {}) : {};
+        const active = (typeof data.activePollId === "string") ? data.activePollId.trim() : "";
+        $("#publishedPoll").textContent = active || "—";
+        return active || "";
+      }catch(e){
+        console.warn(e);
+        $("#publishedPoll").textContent = "（讀取失敗）";
+        return "";
+      }
+    }
+
+    async function publishToFront(){
+      if (!canAdmin){ setMsg("warn","你沒有主辦權限。"); return; }
+      const pid = getPollId();
+      if (!pid){ setMsg("warn","pollId 不可空。"); return; }
+
+      // ensure poll exists (created/saved)
+      const psnap = await getDoc(doc(db, POLLS, pid));
+      if (!psnap.exists()){
+        setMsg("warn", "找不到該 poll。請先「儲存 poll」建立（或讀取正確的 pollId）。");
+        return;
+      }
+
+      await setDoc(PUBLIC_CFG_REF, {
+        activePollId: pid,
+        updatedAt: serverTimestamp(),
+        updatedBy: user?.email || user?.uid || ""
+      }, { merge:true });
+
+      await loadPublishedPoll();
+      setMsg("ok", `✅ 已發布：前台預設顯示 ${pid}（即使尚未到投票時間，也會先公開候選主題）。`);
+    }
+
+
+    async function loadPoll(){
+      if (!canAdmin){ setMsg("warn","你沒有主辦權限。"); return; }
+      const pid = getPollId();
+      if (!pid){ setMsg("warn","請先填入 pollId。"); return; }
+
+      const ref = doc(db, POLLS, pid);
+      const snap = await getDoc(ref);
+      if (!snap.exists()){
+        setMsg("warn", "找不到該 poll（將以目前表單內容建立新 poll）。");
+        candidates = [];
+        renderCandidates();
+        return;
+      }
+      const data = snap.data() || {};
+      $("#title").value = data.title || `${pid} 下期月刊主題票選`;
+      $("#desc").value = data.desc || "";
+
+      $("#maxSelections").value = String(Number(data.maxSelections || 3));
+      $("#allowSuggestion").value = String(data.allowSuggestion !== false);
+
+      const of = data.openFrom?.toDate?.();
+      const ou = data.openUntil?.toDate?.();
+      if (of) $("#openFrom").value = toLocalInputValue(of);
+      if (ou) $("#openUntil").value = toLocalInputValue(ou);
+
+      candidates = Array.isArray(data.candidates) ? data.candidates.map(x => ({
+        id: x.id || x.key || "",
+        title: x.title || x.name || "",
+        desc: x.desc || x.description || "",
+      })) : [];
+
+      renderCandidates();
+      setMsg("ok", "已載入 poll。");
+    }
+
+    async function savePoll(){
+      if (!canAdmin){ setMsg("warn","你沒有主辦權限。"); return; }
+      const pid = getPollId();
+      if (!pid){ setMsg("warn","pollId 不可空。"); return; }
+
+      const title = ($("#title").value || "").trim() || `${pid} 下期月刊主題票選`;
+      const desc = ($("#desc").value || "").trim();
+      const maxSelections = Math.max(1, Math.min(10, Number($("#maxSelections").value || 3)));
+      const allowSuggestion = ($("#allowSuggestion").value === "true");
+
+      const dFrom = fromLocalInputValue($("#openFrom").value);
+      const dUntil = fromLocalInputValue($("#openUntil").value);
+      if (!dFrom || !dUntil){
+        setMsg("warn","請設定 openFrom / openUntil。");
+        return;
+      }
+      if (dFrom >= dUntil){
+        setMsg("warn","openFrom 必須早於 openUntil。");
+        return;
+      }
+
+      // normalize candidates
+      const norm = (candidates || []).map((c, idx) => {
+        const id = String(c.id || "").trim() || `cand_${idx+1}`;
+        const title = String(c.title || "").trim() || id;
+        const desc = String(c.desc || "").trim();
+        return { id, title, desc };
+      });
+
+      const ref = doc(db, POLLS, pid);
+      await setDoc(ref, {
+        pollId: pid,
+        title,
+        desc,
+        openFrom: Timestamp.fromDate(dFrom),
+        openUntil: Timestamp.fromDate(dUntil),
+        maxSelections,
+        allowSuggestion,
+        candidates: norm,
+        updatedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+      }, { merge:true });
+
+      setMsg("ok", "✅ 已儲存 poll。");
+    }
+
+    function applyDefaultWindow(){
+      const pid = getPollId();
+      const w = defaultWindowForPollId(pid);
+      if (!w){ setMsg("warn","pollId 格式需為 YYYY-MM。"); return; }
+      $("#openFrom").value = toLocalInputValue(w.start);
+      $("#openUntil").value = toLocalInputValue(w.end);
+      setMsg("ok", "已套用預設投票期間（1～15）。");
+    }
+
+    function quickNext(){
+      const pid = nextMonthId();
+      $("#pollId").value = pid;
+      $("#title").value = `${pid} 下期月刊主題票選`;
+      const w = defaultWindowForPollId(pid);
+      if (w){
+        $("#openFrom").value = toLocalInputValue(w.start);
+        $("#openUntil").value = toLocalInputValue(w.end);
+      }
+      $("#maxSelections").value = "3";
+      $("#allowSuggestion").value = "true";
+      candidates = [];
+      renderCandidates();
+      setMsg("ok", "已生成下期 poll 表單（尚未儲存）。");
+      $("#btnOpenFront").href = `topic-poll.html?poll=${encodeURIComponent(pid)}`;
+    }
+
+    async function refreshResults(){
+      if (!canAdmin){ setMsg("warn","你沒有主辦權限。"); return; }
+      const pid = getPollId();
+      if (!pid){ setMsg("warn","pollId 不可空。"); return; }
+
+      const votesRef = collection(db, POLLS, pid, "votes");
+      const snap = await getDocs(votesRef);
+      lastVotes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // Count picks
+      const counts = new Map();
+      const sug = [];
+      lastVotes.forEach(v => {
+        (Array.isArray(v.picks) ? v.picks : []).forEach(id => {
+          const k = String(id);
+          counts.set(k, (counts.get(k) || 0) + 1);
+        });
+        const s = String(v.suggestion || "").trim();
+        if (s) sug.push({ email: v.email || "", suggestion: s, uid: v.uid || "" });
+      });
+
+      // candidate title lookup
+      const candMap = new Map((candidates||[]).map(c => [String(c.id||""), c.title || c.id]));
+      const rows = Array.from(counts.entries()).map(([id, n]) => ({
+        id, title: candMap.get(id) || id, n
+      })).sort((a,b)=> b.n - a.n);
+
+      lastSummary = { totalVotes: lastVotes.length, counts: rows, suggestions: sug };
+
+      const box = $("#resultBox");
+      if (!lastVotes.length){
+        box.innerHTML = `<div class="msgWarn">目前尚無投票。</div>`;
+        return;
+      }
+
+      const topHtml = rows.map(r => `
+        <div style="display:flex; justify-content:space-between; gap:.8rem; padding:.45rem .6rem; border:1px solid var(--line); border-radius:14px; margin:.45rem 0;">
+          <div><b>${esc(r.title)}</b> <span class="muted small mono">(${esc(r.id)})</span></div>
+          <div><b>${r.n}</b> 票</div>
+        </div>
+      `).join("");
+
+      const sugHtml = sug.length ? `
+        <div class="hr"></div>
+        <h4 style="margin:.2rem 0 .35rem;">建議主題（${sug.length}）</h4>
+        ${sug.slice(0, 50).map(x => `
+          <div style="padding:.45rem .6rem; border:1px solid var(--line); border-radius:14px; margin:.45rem 0;">
+            <div class="muted small">${esc(x.email || x.uid || "")}</div>
+            <div>${esc(x.suggestion)}</div>
+          </div>
+        `).join("")}
+        ${sug.length > 50 ? `<div class="muted small">（僅顯示前 50 筆，請用 CSV 匯出查看完整）</div>` : ``}
+      ` : "";
+
+      box.innerHTML = `
+        <div class="msgOk">已讀取投票：${lastVotes.length} 份</div>
+        <div style="margin-top:.55rem;">
+          <h4 style="margin:.2rem 0 .35rem;">候選主題票數</h4>
+          ${topHtml || `<div class="muted small">（尚無勾選票）</div>`}
+          ${sugHtml}
+        </div>
+      `;
+    }
+
+    function exportCsv(){
+      const pid = getPollId();
+      if (!lastVotes.length){ setMsg("warn","尚無結果可匯出（請先刷新結果）。"); return; }
+
+      const rows = [];
+      rows.push(["pollId","uid","email","picks","suggestion","createdAt","updatedAt"].join(","));
+      lastVotes.forEach(v => {
+        const picks = JSON.stringify(Array.isArray(v.picks) ? v.picks : []);
+        const sug = JSON.stringify(String(v.suggestion || ""));
+        const ca = v.createdAt?.toDate?.()?.toISOString?.() || "";
+        const ua = v.updatedAt?.toDate?.()?.toISOString?.() || "";
+        const line = [
+          JSON.stringify(pid),
+          JSON.stringify(v.uid || ""),
+          JSON.stringify(v.email || ""),
+          picks,
+          sug,
+          JSON.stringify(ca),
+          JSON.stringify(ua),
+        ].join(",");
+        rows.push(line);
+      });
+
+      const blob = new Blob([rows.join("\\n")], { type:"text/csv;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `topic-poll-${pid}-votes.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+
+    function slugifyId(s, fallback){
+      const raw = String(s||"").trim();
+      if (raw) return raw;
+      return fallback;
+    }
+
+    function parseCSVText(text){
+      // Robust-ish CSV parser (supports quoted fields with commas)
+      const rows = [];
+      let i = 0, field = "", row = [], inQuotes = false;
+      const pushField = ()=>{ row.push(field); field=""; };
+      const pushRow = ()=>{ rows.push(row); row=[]; };
+
+      while (i < text.length){
+        const ch = text[i];
+        if (inQuotes){
+          if (ch === '"'){
+            if (text[i+1] === '"'){ field += '"'; i += 2; continue; }
+            inQuotes = false; i++; continue;
+          }
+          field += ch; i++; continue;
+        } else {
+          if (ch === '"'){ inQuotes = true; i++; continue; }
+          if (ch === ","){ pushField(); i++; continue; }
+          if (ch === "\r"){ i++; continue; }
+          if (ch === "\n"){ pushField(); pushRow(); i++; continue; }
+          field += ch; i++; continue;
+        }
+      }
+      pushField();
+      // avoid adding last empty row if all empty
+      if (row.some(v => String(v).trim() !== "")) pushRow();
+
+      // Trim all cells
+      return rows.map(r => r.map(c => String(c ?? "").trim()));
+    }
+
+    function candidatesFromCSV(text){
+      const rows = parseCSVText(text).filter(r => r.some(x => x));
+      if (!rows.length) return [];
+      // header detection
+      const head = rows[0].map(s => s.toLowerCase());
+      const hasHeader = head.includes("title") || head.includes("id") || head.includes("desc");
+      const dataRows = hasHeader ? rows.slice(1) : rows;
+      const idxId = hasHeader ? head.indexOf("id") : 0;
+      const idxTitle = hasHeader ? head.indexOf("title") : (hasHeader ? -1 : 1);
+      const idxDesc = hasHeader ? head.indexOf("desc") : (hasHeader ? -1 : 2);
+
+      const out = [];
+      dataRows.forEach((r, k) => {
+        const id = (idxId >= 0 ? (r[idxId]||"") : "").trim();
+        const title = (idxTitle >= 0 ? (r[idxTitle]||"") : (r[0]||"")).trim();
+        const desc = (idxDesc >= 0 ? (r[idxDesc]||"") : (r[2]||"")).trim();
+        if (!title && !id) return;
+        out.push({
+          id: id || `cand_${k+1}`,
+          title: title || id || `候選${k+1}`,
+          desc: desc || ""
+        });
+      });
+      return out;
+    }
+
+    function candidatesFromJSON(text){
+      let obj = null;
+      try { obj = JSON.parse(text); } catch(e){ return null; }
+      let arr = null;
+      if (Array.isArray(obj)) arr = obj;
+      else if (obj && Array.isArray(obj.candidates)) arr = obj.candidates;
+      else return null;
+
+      const out = [];
+      arr.forEach((c, k) => {
+        if (!c) return;
+        const id = String(c.id || "").trim() || `cand_${k+1}`;
+        const title = String(c.title || "").trim() || id;
+        const desc = String(c.desc || "").trim();
+        out.push({ id, title, desc });
+      });
+      return out;
+    }
+
+    function downloadText(filename, mime, text){
+      const blob = new Blob([text], { type: mime });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 500);
+    }
+
+    function downloadJSON(filename, data){
+      downloadText(filename, "application/json;charset=utf-8", JSON.stringify(data, null, 2));
+    }
+
+    function candidatesToCSV(pid, arr){
+      const rows = ["id,title,desc"];
+      (arr||[]).forEach(c => {
+        const id = String(c.id||"").replaceAll('"','""');
+        const title = String(c.title||"").replaceAll('"','""');
+        const desc = String(c.desc||"").replaceAll('"','""');
+        rows.push(`"${id}","${title}","${desc}"`);
+      });
+      downloadText(`topic-poll-${pid}-candidates.csv`, "text/csv;charset=utf-8", rows.join("\n"));
+    }
+
+    // Buttons
+    $("#btnLoad").addEventListener("click", (e)=>{ e.preventDefault(); loadPoll(); });
+    $("#btnSave").addEventListener("click", (e)=>{ e.preventDefault(); savePoll(); });
+    $("#btnDefaultWindow").addEventListener("click", (e)=>{ e.preventDefault(); applyDefaultWindow(); });
+    $("#btnQuickNext").addEventListener("click", (e)=>{ e.preventDefault(); quickNext(); });
+    $("#btnPublish").addEventListener("click", (e)=>{ e.preventDefault(); publishToFront(); });
+
+    $("#btnAdd").addEventListener("click", (e)=>{ e.preventDefault(); candidates.push({ id:"", title:"", desc:"" }); renderCandidates(); });
+    $("#btnClear").addEventListener("click", (e)=>{ e.preventDefault(); if(confirm("確定清空候選清單？")){ candidates=[]; renderCandidates(); } });
+
+    // Bulk import candidates (CSV/JSON)
+    $("#fileImport").addEventListener("change", async (e)=>{
+      const f = e.target.files && e.target.files[0];
+      importBuffer = null;
+      $("#importPreview").innerHTML = "";
+      $("#importHint").textContent = "";
+      $("#btnApplyReplace").disabled = true;
+      $("#btnApplyMerge").disabled = true;
+      if (!f) return;
+
+      const text = await f.text();
+      let cand = null;
+
+      if (f.name.toLowerCase().endsWith(".json")){
+        cand = candidatesFromJSON(text);
+        if (!cand){ setMsg("bad","JSON 解析失敗：請提供 candidates 陣列（[{id,title,desc}...]）或 {candidates:[...]}."); return; }
+      } else {
+        // treat as csv by default
+        cand = candidatesFromCSV(text);
+        if (!cand.length){ 
+          // maybe json without extension
+          const tryJson = candidatesFromJSON(text);
+          if (tryJson) cand = tryJson;
+        }
+        if (!cand.length){ setMsg("bad","CSV 解析失敗：請確認欄位格式（id,title,desc）或至少有 title。"); return; }
+      }
+
+      // normalize ids
+      cand = cand.map((c, idx)=>({
+        id: String(c.id||"").trim() || `cand_${idx+1}`,
+        title: String(c.title||"").trim() || String(c.id||"").trim() || `候選${idx+1}`,
+        desc: String(c.desc||"").trim()
+      }));
+
+      importBuffer = cand;
+      $("#btnApplyReplace").disabled = false;
+      $("#btnApplyMerge").disabled = false;
+
+      $("#importHint").textContent = `已載入匯入檔：${f.name}（${cand.length} 筆）。可選「取代」或「合併」，再按「儲存 poll」寫回資料庫。`;
+
+      const preview = cand.slice(0, 8).map(c => `<li><span class="mono">${esc(c.id)}</span> — ${esc(c.title)} ${c.desc?`<span class="muted small">(${esc(c.desc.slice(0,40))}${c.desc.length>40?"…":""})</span>`:""}</li>`).join("");
+      $("#importPreview").innerHTML = `<div class="muted small" style="margin:.15rem 0 .25rem;">預覽（前 8 筆）</div><ul style="margin:.1rem 0 .4rem; padding-left:1.2rem;">${preview}</ul>`;
+      setMsg("ok", "已解析匯入檔，請選擇「取代」或「合併」。");
+    });
+
+    $("#btnApplyReplace").addEventListener("click", (e)=>{
+      e.preventDefault();
+      if (!importBuffer){ setMsg("warn","尚未選擇匯入檔。"); return; }
+      candidates = importBuffer.slice();
+      renderCandidates();
+      setMsg("ok", `已套用（取代）候選 ${candidates.length} 筆。請按「儲存 poll」。`);
+    });
+
+    $("#btnApplyMerge").addEventListener("click", (e)=>{
+      e.preventDefault();
+      if (!importBuffer){ setMsg("warn","尚未選擇匯入檔。"); return; }
+      const map = new Map((candidates||[]).map(c => [String(c.id||"").trim(), c]));
+      importBuffer.forEach(c => { map.set(String(c.id||"").trim(), c); });
+      // keep stable order: existing order + new ids appended
+      const existingIds = (candidates||[]).map(c => String(c.id||"").trim()).filter(Boolean);
+      const merged = [];
+      existingIds.forEach(id => { if (map.has(id)) merged.push(map.get(id)); map.delete(id); });
+      // append remaining (new)
+      for (const [id, c] of map.entries()) merged.push(c);
+      candidates = merged;
+      renderCandidates();
+      setMsg("ok", `已套用（合併）候選 ${candidates.length} 筆。請按「儲存 poll」。`);
+    });
+
+    $("#btnExportCandCSV").addEventListener("click", (e)=>{
+      e.preventDefault();
+      const pid = getPollId() || "poll";
+      candidatesToCSV(pid, candidates||[]);
+    });
+
+    $("#btnExportCandJSON").addEventListener("click", (e)=>{
+      e.preventDefault();
+      const pid = getPollId() || "poll";
+      downloadJSON(`topic-poll-${pid}-candidates.json`, { pollId: pid, candidates: (candidates||[]) });
+    });
+
+    $("#btnExportJSON").addEventListener("click", (e)=>{
+      e.preventDefault();
+      const pid = getPollId();
+      if (!pid){ setMsg("warn","pollId 不可空。"); return; }
+      if (!lastVotes || !lastVotes.length){
+        const ok = confirm("尚未載入投票結果（votes）。要先「刷新結果」再匯出 JSON 嗎？");
+        if (ok) { refreshResults().then(()=>{ $("#btnExportJSON").click(); }); }
+        return;
+      }
+      const payload = {
+        pollId: pid,
+        title: ($("#title").value || "").trim(),
+        exportedAt: new Date().toISOString(),
+        summary: lastSummary,
+        votes: lastVotes
+      };
+      downloadJSON(`topic-poll-${pid}-votes.json`, payload);
+    });
+
+
+    $("#btnRefresh").addEventListener("click", (e)=>{ e.preventDefault(); refreshResults(); });
+    $("#btnExport").addEventListener("click", (e)=>{ e.preventDefault(); exportCsv(); });
+
+    $("#btnLogout").addEventListener("click", async () => { try{ await signOut(auth); }catch(e){ console.error(e); } });
+
+    onAuthStateChanged(auth, async (u) => {
+      user = u || null;
+
+      if (!user){
+        $("#authBadge").textContent = "未登入";
+        $("#userBadge").textContent = "請登入";
+        $("#btnLogin").style.display = "inline-flex";
+        $("#btnLogout").style.display = "none";
+        $("#leftCard").classList.add("disabledAll");
+        $("#rightCard").classList.add("disabledAll");
+        setMsg("warn", "請先登入，且需主辦權限（admin/systemAdmin/editor/secretary）。");
+        return;
+      }
+
+      $("#authBadge").textContent = "已登入";
+      $("#userBadge").textContent = user.email || user.uid;
+      $("#btnLogin").style.display = "none";
+      $("#btnLogout").style.display = "inline-flex";
+
+      await refreshRole(user);
+
+      if (!canAdmin){
+        $("#leftCard").classList.add("disabledAll");
+        $("#rightCard").classList.add("disabledAll");
+        setMsg("warn", "你已登入，但缺少主辦權限（admin/systemAdmin/editor/secretary）。");
+        return;
+      }
+
+      $("#leftCard").classList.remove("disabledAll");
+      $("#rightCard").classList.remove("disabledAll");
+
+      // prefill: default load the SAME poll that front-end is showing (published activePollId)
+      setMsg("", "");
+
+      const qs = new URLSearchParams(location.search);
+      const qp = (qs.get("poll") || "").trim();
+      let initPid = qp;
+
+      // 1) If URL has ?poll=..., honor it
+      // 2) Else use the published poll (front default)
+      // 3) Else fallback to "next month" preset
+      const publishedPid = await loadPublishedPoll();
+      if (!initPid) initPid = publishedPid;
+
+      if (!initPid){
+        if (!($("#pollId").value || "").trim()) quickNext();
+        initPid = ($("#pollId").value || "").trim();
+      }else{
+        $("#pollId").value = initPid;
+      }
+
+      if (initPid){
+        $("#btnOpenFront").href = `topic-poll.html?poll=${encodeURIComponent(initPid)}`;
+        try{ await loadPoll(); }catch(e){ console.warn(e); }
+      }else{
+        $("#btnOpenFront").href = "topic-poll.html";
+      }
+
+      renderCandidates();
+    });
+  
+    // ---- Global error handler: show friendly message for Firestore permission issues
+    window.addEventListener("unhandledrejection", (ev) => {
+      const e = ev.reason;
+      const msg = (e && (e.message || e.toString())) ? (e.message || e.toString()) : "";
+      const code = e && e.code ? String(e.code) : "";
+      if (code.includes("permission") || msg.includes("Missing or insufficient permissions")) {
+        setMsg("err", "❌ Firestore 權限不足：請更新 Firestore rules，加入 kb_topic_polls 的存取規則（並重新部署規則）。");
+      }
+    });
+
+</script>
+</body>
+</html>

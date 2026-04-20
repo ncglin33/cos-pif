@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>後台管理 - 批次匯入原料資料</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .container { max-width: 900px; }
+        .card { margin-bottom: 1.5rem; }
+        #drop-zone {
+            border: 2px dashed var(--line);
+            border-radius: .75rem;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        #drop-zone.dragover {
+            background-color: var(--brand-bg-subtle);
+            border-color: var(--brand);
+        }
+        #file-info { margin-top: 1rem; color: var(--muted); }
+        #log-container {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: .5rem;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="no-print">
+        <div class="wrap">
+            <h1><a href="dashboard.html" style="color: inherit; text-decoration: none;">管理後台</a></h1>
+            <div class="controls header-right">
+                <div id="user-info" style="display: inline-block; margin-left: 1rem;"></div>
+                <button id="btnSignOut" class="btn btn-danger">登出</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <header>
+            <h2>批次匯入理化資料</h2>
+            <p class="subtitle">透過上傳 CSV 或 JSON 檔案，快速新增或更新 `cosmetic_toxics` 資料庫中的原料數據。</p>
+        </header>
+
+        <div class="card">
+            <h3>檔案格式說明</h3>
+            <p>請確保您的檔案符合以下格式。第一行必須是標頭。`inciName` 是唯一必要的欄位。</p>
+            <ul>
+                <li><strong>CSV 格式</strong>: 使用逗號分隔，UTF-8 編碼。 <a href="example.csv" download>下載CSV範例</a></li>
+                <li><strong>JSON 格式</strong>: 一個包含多個物件的陣列。 <a href="example.json" download>下載JSON範例</a></li>
+            </ul>
+            <p><strong>支援的欄位 (鍵值):</strong></p>
+            <code>inciName, cas, state, color, odor, solubility_water, ph, melting_point, boiling_point, flash_point, density, viscosity</code>
+        </div>
+
+        <div class="card">
+            <h3>上傳檔案</h3>
+            <div id="drop-zone">
+                <p><i class="fa-solid fa-upload"></i> 將檔案拖曳至此，或點擊選擇檔案</p>
+                <input type="file" id="file-input" accept=".csv,.json,text/csv" hidden>
+                <div id="file-info">尚未選擇檔案</div>
+            </div>
+            <div style="margin-top: 1rem; text-align: right;">
+                <button id="btn-import" class="btn primary" disabled>開始匯入</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>匯入日誌</h3>
+            <div id="log-container">日誌將顯示於此...</div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js";
+        import { auth } from "./firebase-config.js";
+
+        const $ = sel => document.querySelector(sel);
+
+        let fileToImport = null;
+        let parsedRecords = [];
+
+        function startApp() {
+            onAuthStateChanged(auth, user => {
+                if (user) {
+                    setupUI(user);
+                    document.body.style.opacity = '1';
+                } else {
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+
+        function setupUI(user) {
+            $('#user-info').textContent = user.email;
+            $('#btnSignOut').addEventListener('click', () => {
+                signOut(auth).then(() => {
+                    alert('您已成功登出。');
+                    window.location.href = 'login.html';
+                });
+            });
+
+            const dropZone = $('#drop-zone');
+            const fileInput = $('#file-input');
+            const fileInfo = $('#file-info');
+            const btnImport = $('#btn-import');
+
+            dropZone.addEventListener('click', () => fileInput.click());
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFile(files[0]);
+                }
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFile(e.target.files[0]);
+                }
+            });
+
+            function handleFile(file) {
+                if (!file) return;
+                if (file && (file.type === 'text/csv' || file.name.endsWith('.csv') || file.type === 'application/json')) {
+                    fileToImport = file;
+                    fileInfo.textContent = `已選擇檔案: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+                    btnImport.disabled = false;
+                    log(`準備解析檔案: ${file.name}`);
+                    parseFile(file);
+                } else {
+                    fileToImport = null;
+                    parsedRecords = [];
+                    fileInfo.textContent = '錯誤：請選擇 .csv 或 .json 檔案。';
+                    btnImport.disabled = true;
+                }
+            }
+
+            function parseFile(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        if (file.name.endsWith('.json')) {
+                            parsedRecords = JSON.parse(e.target.result);
+                        } else if (file.name.endsWith('.csv')) {
+                            // Basic CSV to JSON conversion
+                            const lines = e.target.result.split(/\r\n|\n/);
+                            const headers = lines[0].split(',').map(h => h.trim());
+                            const records = [];
+                            for (let i = 1; i < lines.length; i++) {
+                                const line = lines[i];
+                                if (!line.trim()) continue;
+                                const values = line.split(',').map(v => v.trim());
+                                const record = {};
+                                for (let j = 0; j < headers.length; j++) {
+                                    record[headers[j]] = values[j];
+                                }
+                                records.push(record);
+                            }
+                            parsedRecords = records;
+                        }
+                        log(`檔案解析成功，共發現 ${parsedRecords.length} 筆記錄。`, 'success');
+                        btnImport.disabled = parsedRecords.length === 0;
+                    } catch (err) {
+                        log(`檔案解析失敗: ${err.message}`, 'error');
+                        parsedRecords = [];
+                        btnImport.disabled = true;
+                    }
+                };
+                reader.readAsText(file, 'UTF-8');
+            }
+
+            btnImport.addEventListener('click', handleImport);
+        }
+
+        async function handleImport() {
+            if (parsedRecords.length === 0) {
+                log('沒有可匯入的資料。', 'error');
+                return;
+            }
+
+            const btn = $('#btn-import');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 正在匯入...';
+
+            log(`開始呼叫後端函式，準備匯入 ${parsedRecords.length} 筆資料...`);
+
+            try {
+                const functions = getFunctions(auth.app, 'asia-east1');
+                const batchImportPhysChem = httpsCallable(functions, 'batchImportPhysChem');
+                
+                const result = await batchImportPhysChem({ records: parsedRecords });
+
+                if (result.data.success) {
+                    log(result.data.message, 'success');
+                    if (result.data.errors && result.data.errors.length > 0) {
+                        log(`--------- 匯入失敗的記錄 ---------`, 'error');
+                        result.data.errors.forEach(err => {
+                            log(`記錄: ${JSON.stringify(err.record)}, 錯誤: ${err.error}`, 'error');
+                        });
+                    }
+                } else {
+                    throw new Error(result.data.error || '後端匯入失敗。');
+                }
+            } catch (error) {
+                log(`匯入時發生嚴重錯誤: ${error.message}`, 'error');
+                console.error(error);
+            }
+
+            btn.disabled = false;
+            btn.textContent = '開始匯入';
+        }
+
+        function log(message, type = 'info') {
+            const logContainer = $('#log-container');
+            const entry = document.createElement('div');
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            if(type === 'error') entry.style.color = '#ff8a8a';
+            if(type === 'success') entry.style.color = '#8aff8a';
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        startApp();
+    </script>
+</body>
+</html>

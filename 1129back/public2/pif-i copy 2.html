@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的 PIF - CosPIF 智慧科技整合系統</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--line-color);
+        }
+
+        .grid-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.8rem; /* Increased gap */
+        }
+
+        .project-card {
+            background-color: #ffffff;
+            border: 1px solid var(--line-color);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
+        }
+
+        .project-card .card-body {
+            padding: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .project-card .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .card-info {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .info-item:not(:last-child) {
+            margin-bottom: 0.75rem;
+        }
+
+        .info-item i {
+            margin-right: 0.75rem;
+            width: 16px;
+            text-align: center;
+            color: var(--primary-color-light);
+        }
+
+        .card-footer {
+            display: flex;
+            background-color: #f9fafb;
+            border-top: 1px solid var(--line-color);
+        }
+
+        .btn-action {
+            flex: 1 1 0%;
+            text-align: center;
+            padding: 0.8rem 1rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+            color: var(--primary-color);
+        }
+
+        .btn-action:not(:last-child) {
+            border-right: 1px solid var(--line-color);
+        }
+        
+        .btn-action:hover {
+            background-color: #eef2ff; /* Light primary hover */
+        }
+        
+        .btn-action.secondary {
+             color: var(--secondary-color);
+        }
+        
+        .btn-action.secondary:hover {
+             background-color: #f0f9ff; /* Light secondary hover */
+        }
+
+    </style>
+</head>
+<body style="opacity: 0; transition: opacity 0.4s ease-in-out;">
+
+    <header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo"><i class="fa-solid fa-shield-halved"></i> CosPIF</a>
+                <ul class="nav-links">
+                    <li><a href="pif-i.html" class="active">我的PIF</a></li>
+                    <li><a href="company.html">新增廠商</a></li>
+                    <li><a href="companies.html">廠商資料庫</a></li>
+                </ul>
+                <div class="nav-actions" style="display: flex; align-items: center;">
+                    <span id="welcome-message" style="margin-right: 1.5rem; color: var(--text-muted);"></span>
+                    <button id="btnSignOut" class="btn-login btn-danger">登出</button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="page-header">
+                <h2>PIFs文件櫃</h2>
+                <a href="pif01.html" class="btn-submit"><i class="fa-solid fa-plus"></i> 新建立PIF文件</a>
+            </div>
+
+            <div id="pif-grid" class="grid-view"></div>
+
+            <div id="loading-state" class="card" style="text-align: center; padding: 4rem;">
+                <i class="fa-solid fa-spinner fa-spin fa-2x" style="margin-bottom: 1rem;"></i>
+                <p>正在從資料庫載入PIF文件櫃...</p>
+            </div>
+
+            <div id="empty-state" class="card" style="display: none; text-align: center; padding: 4rem;">
+                <i class="fa-solid fa-box-open fa-3x" style="margin-bottom: 1rem; color: #cbd5e1;"></i>
+                <h2>尚無任何PIF文件</h2>
+                <p>點擊上方的「新建立PIF文件」來開始您的第一個專案吧！</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 CosPIF 化妝品智慧科技系統. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { auth, db } from './firebase-config.js';
+
+        const welcomeMsg = document.getElementById('welcome-message');
+        const grid = document.getElementById('pif-grid');
+        const loadingState = document.getElementById('loading-state');
+        const emptyState = document.getElementById('empty-state');
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const userName = user.displayName || user.email;
+                welcomeMsg.textContent = `歡迎, ${userName}!`;
+                document.body.style.opacity = '1';
+                await loadPifProjects(user);
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+
+        document.getElementById('btnSignOut').addEventListener('click', () => {
+            signOut(auth).then(() => {
+                window.location.href = 'login.html';
+            }).catch((error) => {
+                console.error('Sign out error', error);
+                alert('登出時發生錯誤。');
+            });
+        });
+
+        async function loadPifProjects(user) {
+            try {
+                // MODIFIED: Added a where clause to only query for projects created by the current user.
+                const q = query(collection(db, "pifs"), where("createdBy", "==", user.uid));
+                const querySnapshot = await getDocs(q);
+                
+                loadingState.style.display = 'none';
+
+                if (querySnapshot.empty) {
+                    emptyState.style.display = 'block';
+                } else {
+                    grid.innerHTML = '';
+                    querySnapshot.forEach((doc) => {
+                        const pif = doc.data();
+                        const card = createPifCard(doc.id, pif);
+                        grid.appendChild(card);
+                    });
+                }
+            } catch (error) {
+                console.error("Error loading PIF projects: ", error);
+                loadingState.innerHTML = `<div class="card error"><p>載入專案時發生錯誤: ${error.message}</p></div>`;
+            }
+        }
+
+        function createPifCard(docId, pifData) {
+            const card = document.createElement('div');
+            card.className = 'project-card';
+
+            const pifId = pifData.pifId || '無 ID';
+            const productName = pifData.productName || '未命名產品';
+            const companyName = pifData.companyName || '未命名公司';
+
+            const queryParams = `?id=${encodeURIComponent(docId)}&companyName=${encodeURIComponent(companyName)}&productName=${encodeURIComponent(productName)}`;
+
+            card.innerHTML = `
+                <div class="card-body">
+                    <h3 class="card-title">${productName}</h3>
+                    <ul class="card-info">
+                        <li class="info-item">
+                            <i class="fa-solid fa-building"></i>
+                            <span>${companyName}</span>
+                        </li>
+                        <li class="info-item">
+                            <i class="fa-solid fa-barcode"></i>
+                            <span>${pifId}</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <a href="pifs.html${queryParams}" class="btn-action"><i class="fa-solid fa-folder-open"></i> 開啟PIF</a>
+                    <a href="pif01-1.html${queryParams}" class="btn-action secondary"><i class="fa-solid fa-file-lines"></i> 預覽封面</a>
+                </div>
+            `;
+            return card;
+        }
+    </script>
+</body>
+</html>

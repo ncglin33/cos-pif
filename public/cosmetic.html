@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>化妝品知識庫總覽 - CosPIF 智慧科技整合系統</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { background:#f9fafb; }
+    .page-header{ background:#fff; padding:2rem 0; border-bottom:1px solid #e5e7eb; margin-bottom:1.5rem; }
+    .page-header .container{ display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; }
+    .page-header h1{ margin:0; font-size:1.8rem; }
+    .page-header p{ margin:.25rem 0 0; color:#6b7280; max-width:760px; }
+    .back-link{ display:inline-flex; align-items:center; gap:.5rem; color:#4b5563; text-decoration:none; font-size:.9rem; white-space:nowrap; }
+    .back-link:hover{ color:#111827; }
+
+    .qa-container .container{ max-width:1100px; }
+    .qa-toolbar{ background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:1rem; box-shadow:0 4px 6px -1px rgb(0 0 0 / .05), 0 2px 4px -2px rgb(0 0 0 / .05); margin-bottom:1rem; }
+    .qa-toolbar-top{ display:flex; gap:.8rem; align-items:center; flex-wrap:wrap; }
+    .qa-search{ flex:1 1 360px; display:flex; align-items:center; gap:.55rem; border:1px solid #d1d5db; background:#f9fafb; border-radius:999px; padding:.55rem .8rem; }
+    .qa-search i{ color:#6b7280; }
+    .qa-search input{ flex:1; border:none; outline:none; background:transparent; font-size:.95rem; }
+    .qa-actions{ display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+    .pill{ display:inline-flex; align-items:center; gap:.4rem; border:1px solid #d1d5db; background:#fff; color:#111827; border-radius:999px; padding:.45rem .75rem; font-size:.85rem; cursor:pointer; user-select:none; }
+    .pill:hover{ background:#eff6ff; border-color:#2563eb; color:#2563eb; }
+    .pill.active{ background:#2563eb; border-color:#2563eb; color:#fff; }
+    .qa-toolbar-bottom{ margin-top:.75rem; display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap; color:#6b7280; font-size:.88rem; border-top:1px solid #f3f4f6; padding-top:.75rem; }
+
+    .qa-layout{ display:grid; grid-template-columns:280px 1fr; gap:1rem; align-items:start; }
+    .qa-side{ background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:1rem; box-shadow:0 4px 6px -1px rgb(0 0 0 / .05), 0 2px 4px -2px rgb(0 0 0 / .05); position:sticky; top:16px; max-height:calc(100vh - 40px); overflow:auto; }
+    .side-title{ display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin:0 0 .6rem; font-size:1rem; }
+    .side-sub{ color:#6b7280; font-size:.85rem; margin:0 0 .8rem; }
+    .cat-list{ list-style:none; padding:0; margin:0; }
+    .cat-item{ display:flex; align-items:center; justify-content:space-between; gap:.5rem; padding:.5rem .6rem; border-radius:10px; cursor:pointer; border:1px solid transparent; }
+    .cat-item:hover{ background:#f9fafb; border-color:#e5e7eb; }
+    .cat-item.active{ background:#eff6ff; border-color:#bfdbfe; }
+    .cat-name{ display:flex; align-items:center; gap:.5rem; color:#111827; font-size:.92rem; min-width:0; }
+    .cat-name span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .cat-badge{ font-size:.78rem; color:#374151; background:#f3f4f6; border:1px solid #e5e7eb; padding:.1rem .5rem; border-radius:999px; flex-shrink:0; }
+
+    .qa-list{ background:#fff; border:1px solid #e5e7eb; border-radius:14px; box-shadow:0 4px 6px -1px rgb(0 0 0 / .05), 0 2px 4px -2px rgb(0 0 0 / .05); overflow:hidden; }
+    .qa-item{ border-bottom:1px solid #f3f4f6; padding:.25rem 0; }
+    .qa-item:last-child{ border-bottom:none; }
+    details.qa-item summary{ list-style:none; cursor:pointer; padding:1rem 1.05rem; display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; }
+    details.qa-item summary::-webkit-details-marker { display:none; }
+    .q-left{ display:flex; gap:.8rem; min-width:0; }
+    .q-icon{ width:34px; height:34px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; background:#eff6ff; border:1px solid #bfdbfe; color:#2563eb; flex-shrink:0; margin-top:.1rem; }
+    .q-text{ min-width:0; }
+    .q-title{ margin:0; font-size:1rem; color:#111827; line-height:1.35; word-break:break-word; }
+    .q-meta{ margin-top:.35rem; display:flex; flex-wrap:wrap; gap:.4rem; align-items:center; color:#6b7280; font-size:.82rem; }
+    .tag{ display:inline-flex; align-items:center; gap:.35rem; padding:.12rem .5rem; border-radius:999px; border:1px solid #e5e7eb; background:#f9fafb; color:#374151; font-size:.78rem; }
+    .q-right{ display:flex; align-items:center; gap:.5rem; flex-shrink:0; color:#6b7280; font-size:.85rem; margin-top:.15rem; }
+    .score-pill{ display:none; border:1px solid #c7d2fe; background:#eef2ff; color:#4338ca; border-radius:999px; padding:.12rem .5rem; font-size:.75rem; }
+    .show-score .score-pill{ display:inline-flex; }
+    .answer{ padding:0 1.05rem 1.05rem; color:#374151; line-height:1.7; white-space:pre-wrap; word-break:break-word; }
+    .empty{ padding:1.2rem 1.05rem; color:#6b7280; font-size:.92rem; }
+
+    .ai-box{ margin-top:1rem; background:#fff; border:1px dashed #d1d5db; border-radius:14px; padding:1rem; color:#4b5563; font-size:.9rem; }
+    .ai-box h3{ margin:0 0 .35rem; font-size:.98rem; color:#111827; }
+    .ai-box p{ margin:.35rem 0 0; }
+    .ai-box code{ background:#f3f4f6; padding:.12rem .35rem; border-radius:6px; border:1px solid #e5e7eb; font-size:.85rem; }
+
+    
+
+    .ai-summary-controls{ display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; margin-top:.6rem; }
+    .ai-prompt{
+      width:100%;
+      margin-top:.6rem;
+      border:1px solid #e5e7eb;
+      border-radius:12px;
+      padding:.6rem .75rem;
+      min-height:64px;
+      resize:vertical;
+      background:#f9fafb;
+      outline:none;
+    }
+    .ai-summary-out{
+      margin-top:.6rem;
+      padding:.75rem;
+      border:1px solid #e5e7eb;
+      border-radius:12px;
+      background:#f9fafb;
+      white-space:pre-wrap;
+      line-height:1.65;
+      color:#111827;
+      display:none;
+    }
+    .ai-summary-out.show{ display:block; }
+    .ai-summary-links{
+      margin-top:.5rem;
+      display:flex;
+      gap:.4rem;
+      flex-wrap:wrap;
+    }
+    .ai-summary-tip{ margin-top:.45rem; font-size:.82rem; color:#6b7280; }
+
+@media (max-width: 980px){
+      .qa-layout{ grid-template-columns:1fr; }
+      .qa-side{ position:relative; top:auto; max-height:none; }
+    }
+  
+    /* ====== Floating AI Chat (ChatGPT-style UI) ====== */
+    .chat-fab{
+      position:fixed; right:18px; bottom:18px; z-index:9999;
+      width:56px; height:56px; border-radius:999px; border:none;
+      background:#111827; color:#fff; cursor:pointer;
+      box-shadow:0 18px 36px rgba(0,0,0,.18);
+      display:inline-flex; align-items:center; justify-content:center;
+    }
+    .chat-fab:hover{ transform: translateY(-1px); }
+    .chat-panel{
+      position:fixed; right:18px; bottom:88px; z-index:9999;
+      width:min(420px, calc(100vw - 36px));
+      height:min(560px, calc(100vh - 140px));
+      background:#fff; border:1px solid #e5e7eb; border-radius:16px;
+      box-shadow:0 18px 48px rgba(0,0,0,.18);
+      display:none; flex-direction:column; overflow:hidden;
+    }
+    .chat-panel.open{ display:flex; }
+    .chat-header{
+      padding:.8rem 1rem; border-bottom:1px solid #f3f4f6;
+      display:flex; align-items:flex-start; justify-content:space-between; gap:.75rem;
+    }
+    .chat-title strong{ display:inline-flex; align-items:center; gap:.45rem; font-size:1rem; color:#111827; }
+    .chat-sub{ margin-top:.2rem; font-size:.82rem; color:#6b7280; line-height:1.3; }
+    .chat-tools{
+      padding:.55rem .75rem; border-bottom:1px solid #f3f4f6;
+      display:flex; gap:.5rem; flex-wrap:wrap; background:#fff;
+    }
+    .chat-messages{
+      flex:1; overflow:auto; padding:1rem;
+      background:#f9fafb;
+    }
+    .chat-msg{
+      max-width:88%;
+      padding:.6rem .75rem; border-radius:14px;
+      border:1px solid #e5e7eb; background:#fff;
+      margin:.15rem 0 .55rem;
+      white-space:pre-wrap; word-break:break-word; line-height:1.55; color:#111827;
+    }
+    .chat-msg.user{ margin-left:auto; background:#eff6ff; border-color:#bfdbfe; }
+    .chat-msg.bot{ margin-right:auto; }
+    .chat-meta{
+      font-size:.74rem; color:#6b7280; margin-top:.2rem;
+    }
+    .chat-input{
+      padding:.75rem; border-top:1px solid #f3f4f6;
+      display:flex; gap:.55rem; align-items:flex-end; background:#fff;
+    }
+    .chat-input textarea{
+      flex:1; resize:none;
+      border:1px solid #d1d5db; border-radius:12px;
+      padding:.55rem .7rem; font-size:.95rem; line-height:1.35;
+      min-height:44px; max-height:140px; outline:none;
+      background:#fff;
+    }
+    .chat-send{
+      border:none; border-radius:12px; padding:.6rem .9rem;
+      background:#2563eb; color:#fff; cursor:pointer;
+      display:inline-flex; align-items:center; justify-content:center; gap:.35rem;
+      height:44px;
+    }
+    .chat-send:disabled{ opacity:.6; cursor:not-allowed; }
+    .chat-footnote{
+      padding:.55rem .75rem; font-size:.78rem; color:#6b7280;
+      border-top:1px solid #f3f4f6; background:#fff;
+    }
+    .chat-footnote code{ background:#f3f4f6; padding:.12rem .35rem; border-radius:6px; border:1px solid #e5e7eb; }
+
+
+    .chat-tool-inline{
+      display:inline-flex; align-items:center; gap:.45rem;
+      border:1px solid #d1d5db; background:#fff; color:#111827;
+      border-radius:999px; padding:.35rem .6rem; font-size:.85rem;
+    }
+    .chat-tool-inline input[type="number"]{
+      width:64px; border:none; outline:none; background:transparent;
+      font-size:.9rem; padding:0; text-align:center;
+    }
+    .chat-tool-inline select{
+      border:none; outline:none; background:transparent;
+      font-size:.9rem;
+    }
+    .chat-links{ margin-top:.35rem; display:flex; flex-wrap:wrap; gap:.35rem; }
+    .chat-link{
+      display:inline-flex; align-items:center; gap:.35rem;
+      padding:.18rem .5rem; border-radius:999px;
+      border:1px solid #e5e7eb; background:#fff; color:#2563eb;
+      font-size:.78rem; cursor:pointer; user-select:none;
+    }
+    .chat-link:hover{ background:#eff6ff; border-color:#bfdbfe; }
+
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <nav>
+        <a href="index.html" class="logo">
+          <img src="img/cospif-logo.png" alt="CosPIF Logo">
+        </a>
+        <ul class="nav-links">
+          <li><a href="index.html#features">核心功能</a></li>
+          <li><a href="index.html#about">關於我們</a></li>
+          <li><a href="news-list.html">最新消息</a></li>
+          <li><a href="qa-list.html">QA 知識庫</a></li>
+          <li><a href="cosmetic.html">化妝品常識</a></li>
+          <li><a href="cosmetic-pro.html">化妝品專業</a></li>
+          <li><a href="kb-issue.html">化妝品智慧月刊</a></li>
+          <li><a href="contact.html">聯絡我們</a></li>
+        </ul>
+        <a href="login.html" class="btn-login">登入系統</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="page-header">
+    <div class="container">
+      <div>
+        <h1>化妝品知識庫總覽</h1>
+        <p>提供化妝品原料、配方、功效宣稱、法規與安全評估等知識整理。支援智慧搜尋、分類索引與快速定位。</p>
+      </div>
+      <a href="index.html#news-qa" class="back-link"><i class="fa-solid fa-arrow-left"></i> 返回首頁</a>
+    </div>
+  </section>
+
+  <main class="qa-container">
+    <div class="container">
+      <div class="qa-toolbar">
+        <div class="qa-toolbar-top">
+          <div class="qa-search" title="可輸入關鍵字或完整問題">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input id="searchInput" type="text" placeholder="搜尋知識庫（例如：INCI、SPF、防腐、敏感肌、酸類…）">
+          </div>
+
+          <div class="qa-actions">
+            <button id="smartBtn" class="pill active" type="button" title="以相似度智慧排序，適合中英文混合與不精準關鍵字">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> 智慧排序
+            </button>
+            <button id="showScoreBtn" class="pill" type="button" title="顯示智慧排序分數（方便檢查比對結果）">
+              <i class="fa-solid fa-gauge-high"></i> 顯示分數
+            </button>
+            <button id="clearBtn" class="pill" type="button">
+              <i class="fa-solid fa-eraser"></i> 清除
+            </button>
+          </div>
+        </div>
+
+        <div class="qa-toolbar-bottom">
+          <div id="infoLeft">載入中…</div>
+          <div id="infoRight">提示：可用分類索引縮小範圍，再用搜尋更快找到答案。</div>
+        </div>
+      </div>
+
+      <div class="qa-layout">
+        <aside class="qa-side">
+          <div class="side-title">
+            <span><i class="fa-solid fa-folder-tree"></i> 分類索引</span>
+            <span class="cat-badge" id="catCount">0</span>
+          </div>
+          <p class="side-sub">點選分類後，右側只顯示該分類的 QA。</p>
+          <ul class="cat-list" id="catList"></ul>
+        </aside>
+
+        <section class="qa-main">
+          <div class="qa-list" id="qaList">
+            <div class="empty">載入中…</div>
+          </div>
+
+          
+          <div class="ai-box" id="aiSummaryBox">
+            <h3><i class="fa-solid fa-robot"></i> AI 小幫手（知識整理）</h3>
+            <p>
+              按下「<strong>AI 幫我整理</strong>」會呼叫 Firebase Callable：<code>qaChat</code>，
+              並帶入「目前分類 + 目前搜尋結果前 N 筆資料」作為參考，產出更像客服的彙整回答。
+            </p>
+
+            <div class="ai-summary-controls">
+              <span class="chat-tool-inline" title="引用 QA 範圍（前 N 筆）">
+                <i class="fa-solid fa-list-ol"></i> 引用
+                <input id="sumTopK" type="number" min="1" max="20" value="8">
+              </span>
+
+              <span class="chat-tool-inline" title="回覆格式">
+                <i class="fa-solid fa-pen"></i>
+                <select id="sumFormat">
+                  <option value="bullets" selected>條列</option>
+                  <option value="steps">步驟</option>
+                  <option value="plain">段落</option>
+                  <option value="markdown">Markdown</option>
+                </select>
+              </span>
+
+              <button id="sumRefsToggle" class="pill active" type="button" title="是否在回答末尾附上參考 QA（並提供可點選定位的連結）">
+                <i class="fa-solid fa-link"></i> CosPIF回答
+              </button>
+
+              <button id="sumRefNoToggle" class="pill active" type="button" title="是否在參考QA中顯示 QA 編號">
+                <i class="fa-solid fa-hashtag"></i> 附QA#
+              </button>
+
+              <button id="sumFreeToggle" class="pill active" type="button" title="自由回答：不受限 QA 資料庫（仍可選擇是否使用QA作為參考）">
+  <i class="fa-solid fa-comment-dots"></i> chatgpt回答
+</button>
+
+<button id="sumUseQaToggle" class="pill" type="button" title="是否使用目前候選 QA 作為參考（關閉＝完全不使用QA，純 AI 回答）">
+  <i class="fa-solid fa-book"></i> CosPIF回答
+</button>
+
+<button id="aiSummarizeBtn" class="pill active" type="button" title="依目前分類/搜尋結果，請 AI 彙整回答">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> AI 整理回覆
+              </button>
+
+              <button id="aiToChatBtn" class="pill" type="button" title="把這個問題帶到右下角聊天室繼續追問">
+                <i class="fa-solid fa-comment-dots"></i> 在聊天室繼續
+              </button>
+            </div>
+
+            <textarea id="aiPrompt" class="ai-prompt" placeholder="可選：輸入你想整理的問題（留空則依目前分類/搜尋自動整理）"></textarea>
+
+            <div id="aiSummaryOut" class="ai-summary-out"></div>
+            <div id="aiSummaryLinks" class="ai-summary-links"></div>
+
+            <div class="ai-summary-tip">
+              提示：若按鈕無反應，通常是 <code>qaChat</code> 尚未部署、Functions 區域不一致、或後端需登入驗證。
+            </div>
+          </div>
+
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 CosPIF 化妝品 PIF 智慧科技整合系統. 勝美生技有限公司 All Rights Reserved.</p>
+    </div>
+  </footer>
+
+  
+  <!-- Floating AI Chat (requires Firebase Callable Function: qaChat) -->
+  <button id="chatFab" class="chat-fab" type="button" title="AI 客服（ChatGPT）" aria-label="開啟 AI 客服">
+    <i class="fa-solid fa-comment-dots"></i>
+  </button>
+
+  <div id="chatPanel" class="chat-panel" role="dialog" aria-label="AI 客服（ChatGPT）">
+    <div class="chat-header">
+      <div class="chat-title">
+        <strong><i class="fa-solid fa-robot"></i> AI 客服</strong>
+        <div class="chat-sub">會參考「目前分類 + 搜尋結果前 N 筆 QA」回覆（N 可在下方調整）。</div>
+      </div>
+      <button id="chatClose" class="pill" type="button"><i class="fa-solid fa-xmark"></i> 關閉</button>
+    </div>
+
+    
+    <div class="chat-tools">
+      <button id="chatUseSearch" class="pill" type="button" title="把目前搜尋欄文字帶入對話框"><i class="fa-solid fa-magnifying-glass"></i> 用目前搜尋字串</button>
+      <button id="chatUseExample" class="pill" type="button" title="插入一段示範提問（你可再改）"><i class="fa-solid fa-lightbulb"></i> 示範提問</button>
+
+      <span class="chat-tool-inline" title="引用 QA 範圍（前 N 筆）">
+        <i class="fa-solid fa-list-ol"></i> 引用
+        <input id="chatTopK" type="number" min="1" max="20" value="8">
+      </span>
+
+      <span class="chat-tool-inline" title="回覆格式">
+        <i class="fa-solid fa-pen"></i>
+        <select id="chatFormat">
+          <option value="bullets" selected>條列</option>
+          <option value="steps">步驟</option>
+          <option value="plain">段落</option>
+          <option value="markdown">Markdown</option>
+        </select>
+      </span>
+
+      <button id="chatRefsToggle" class="pill active" type="button" title="是否在回答末尾附上參考 QA（並提供可點選定位的連結）"><i class="fa-solid fa-link"></i> 參考QA</button>
+      <button id="chatRefNoToggle" class="pill active" type="button" title="是否在參考QA中顯示 QA 編號"><i class="fa-solid fa-hashtag"></i> 附QA#</button>
+      <button id="chatFreeToggle" class="pill active" type="button" title="自由回答：不受限 QA 資料庫（仍可選擇是否使用QA作為參考）"><i class="fa-solid fa-comment-dots"></i> chatgpt回答</button>
+<button id="chatUseQaToggle" class="pill" type="button" title="是否使用目前候選 QA 作為參考（關閉＝完全不使用QA，純 AI 回答）"><i class="fa-solid fa-book"></i> CosPIF回答</button>
+
+<button id="chatClearChat" class="pill" type="button"><i class="fa-solid fa-trash"></i> 清空對話</button>
+    </div>
+
+    <div id="chatMsgs" class="chat-messages"></div>
+
+    <div class="chat-input">
+      <textarea id="chatText" placeholder="輸入問題…（Enter 送出、Shift+Enter 換行）"></textarea>
+      <button id="chatSend" class="chat-send" type="button" title="送出">
+        <i class="fa-solid fa-paper-plane"></i>
+      </button>
+    </div>
+
+    <div class="chat-footnote">
+      提醒：不要把 AI 的 API Key 放在前端；請用後端 Callable Function <code>qaChat</code> 轉接。
+    </div>
+  </div>
+
+
+  <script type="module">
+    import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getFunctions, httpsCallable, connectFunctionsEmulator } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js";
+    import { db } from "./firebase-config.js";
+
+    // ===== Firebase Functions (Callable) =====
+    // Default to deployed functions in asia-east1.
+    // If you are running Firebase Emulator (e.g., Hosting preview on port 9000/5000/localhost),
+    // it will automatically connect to Functions emulator at port 5001.
+    const functions = getFunctions(undefined, "asia-east1");
+    // ===== Cosmetic KB collection (default) =====
+    const DEFAULT_KB_COLLECTION = "cosmetic_knowledge";
+    const KB_COLLECTION = (() => {
+      try {
+        const url = new URL(window.location.href);
+        return url.searchParams.get("col") || DEFAULT_KB_COLLECTION;
+      } catch (e) {
+        return DEFAULT_KB_COLLECTION;
+      }
+    })();
+
+
+    // IMPORTANT: Never auto-connect emulator on HTTPS (e.g. Cloud Workstations preview),
+    // because Functions emulator is HTTP and will be blocked as Mixed Content.
+    // Auto-connect only on local dev (localhost) or when explicitly enabled via ?emu=1.
+    try {
+      const url = new URL(location.href);
+      const isLocalhost =
+        location.hostname === "localhost" ||
+        location.hostname === "127.0.0.1" ||
+        location.hostname === "[::1]";
+
+      const defaultEmu =
+        isLocalhost &&
+        (location.port === "5000" || location.port === "9000" || location.port === "8080");
+
+      const useEmu = url.searchParams.get("emu") === "1" || defaultEmu;
+
+      if (useEmu) {
+        connectFunctionsEmulator(functions, "localhost", 5001);
+        console.info("[qaChat] Functions emulator enabled (http://localhost:5001).");
+      }
+    } catch (e) {}
+
+    const qaChatCallable = httpsCallable(functions, "qaChat");
+
+    const elSearch = document.getElementById('searchInput');
+    const elSmartBtn = document.getElementById('smartBtn');
+    const elShowScoreBtn = document.getElementById('showScoreBtn');
+    const elClearBtn = document.getElementById('clearBtn');
+    const elInfoLeft = document.getElementById('infoLeft');
+    const elInfoRight = document.getElementById('infoRight');
+    const elCatList = document.getElementById('catList');
+    const elCatCount = document.getElementById('catCount');
+    const elQaList = document.getElementById('qaList');
+
+    let qaAll = [];
+    let currentCategory = 'ALL';
+    let smartMode = true;
+    let showScore = false;
+
+    function normalizeText(str) {
+      return (str || "").toLowerCase().replace(/\s+/g, "").trim();
+    }
+    function charSetSimilarity(a, b) {
+      const s1 = new Set(a);
+      const s2 = new Set(b);
+      if (!s1.size || !s2.size) return 0;
+      let inter = 0;
+      for (const ch of s1) if (s2.has(ch)) inter++;
+      const union = new Set([...s1, ...s2]).size;
+      return union ? inter / union : 0;
+    }
+    function scoreQa(queryNorm, qaItem) {
+      const qNorm = normalizeText(qaItem.question);
+      const aNorm = normalizeText(qaItem.answer);
+      if (!qNorm && !aNorm) return 0;
+      let score = 0;
+      if (qNorm.includes(queryNorm) || queryNorm.includes(qNorm)) score += 2;
+      score += charSetSimilarity(queryNorm, qNorm) * 3;
+      score += charSetSimilarity(queryNorm, aNorm) * 1.5;
+      const meta = normalizeText((qaItem.category || '') + ' ' + (qaItem.tags || []).join(' '));
+      if (meta && (meta.includes(queryNorm) || queryNorm.includes(meta))) score += 0.8;
+      score += charSetSimilarity(queryNorm, meta) * 0.8;
+      return score;
+    }
+
+    function parseTags(item) {
+      if (Array.isArray(item.tags)) return item.tags.filter(Boolean).map(String);
+      if (typeof item.tags === 'string') {
+        return item.tags.split(/[，,;；|/]/).map(s => s.trim()).filter(Boolean);
+      }
+      return [];
+    }
+    function normalizeCategory(raw){
+      if (raw == null) return '';
+      let s = String(raw).trim();
+      if (!s) return '';
+      // remove extra spaces
+      s = s.replace(/\s+/g,'');
+      // common normalization (繁簡/同義)
+      if (s.includes('防晒') || s.includes('防曬')) return '防曬';
+      if (s.includes('保湿') || s.includes('保濕')) return '保濕';
+      if (s.includes('美白') || s.includes('亮白')) return '美白';
+      if (s.includes('抗老') || s.includes('抗皺') || s.includes('抗衰') || s.includes('緊緻')) return '抗老化';
+      if (s.includes('頭髮') || s.includes('头发') || s.toLowerCase().includes('hair')) return '頭髮';
+      return s;
+    }
+
+    function getCategory(item){
+      const c = (item?.category ?? item?.['類別'] ?? item?.group ?? item?.module ?? item?.type ?? '');
+      const norm = normalizeCategory(c);
+      return (norm || '未分類').toString();
+    }
+    function fmtTime(ts){
+      try{
+        if (!ts) return '';
+        const d = ts.toDate ? ts.toDate() : (ts instanceof Date ? ts : null);
+        if (!d) return '';
+        return d.toISOString().slice(0,10);
+      }catch(e){ return ''; }
+    }
+    function escapeHtml(str){
+      return (str || '').toString()
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;')
+        .replace(/'/g,'&#039;');
+    }
+
+    function tryParseAnswerJson(raw){
+      if (typeof raw !== 'string') return null;
+
+      // Some environments may prepend a BOM or zero-width chars; strip them.
+      let s = raw.replace(/^\uFEFF/, '').trim();
+      if (!s) return null;
+
+      // remove code fences if any
+      s = s.replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/,'').trim();
+
+      // Try to isolate a JSON-looking chunk (may be incomplete if truncated by token limit)
+      const i = s.indexOf('{');
+      let chunk = (i >= 0) ? s.slice(i) : s;
+
+      // If we do have a closing brace, try strict JSON parse first
+      const j = chunk.lastIndexOf('}');
+      if (j >= 0){
+        const maybeObj = chunk.slice(0, j+1);
+        try{
+          const obj = JSON.parse(maybeObj);
+          if (obj && typeof obj === 'object' && typeof obj.answer === 'string') return obj;
+          // sometimes the model returns a JSON string that contains a JSON object
+          if (typeof obj === 'string'){
+            try{
+              const obj2 = JSON.parse(obj);
+              if (obj2 && typeof obj2 === 'object' && typeof obj2.answer === 'string') return obj2;
+            }catch(_){}
+          }
+        }catch(_){}
+      }
+
+      // best-effort regex extraction (handles invalid or truncated JSON)
+      let m = chunk.match(/["']answer["']\s*:\s*["']([\s\S]*?)["']\s*(?:,|\}|$)/);
+      if (!m){
+        // truncated: no closing quote / brace
+        m = chunk.match(/["']answer["']\s*:\s*["']([\s\S]*)$/);
+      }
+      if (m){
+        let ans = m[1];
+        // remove trailing envelope fragments if present
+        ans = ans.replace(/["']\s*\}\s*$/, '');
+        // unescape common sequences
+        ans = ans
+          .replace(/\\n/g, '\n')
+          .replace(/\\r/g, '\r')
+          .replace(/\\t/g, '\t')
+          .replace(/\\"/g, '"')
+          .replace(/\\\\/g, '\\');
+        return { answer: ans };
+      }
+
+      // final fallback: if it looks like {"answer":"..."} just strip the envelope
+      if (/^\s*\{\s*["']answer["']\s*:\s*["']/.test(s)){
+        let t = s.replace(/^\s*\{\s*["']answer["']\s*:\s*["']/, '');
+        t = t.replace(/["']\s*\}\s*$/, '');
+        t = t
+          .replace(/\\n/g, '\n')
+          .replace(/\\r/g, '\r')
+          .replace(/\\t/g, '\t')
+          .replace(/\\"/g, '"')
+          .replace(/\\\\/g, '\\');
+        return { answer: t };
+      }
+
+      return null;
+    }
+
+
+    function renderCategories(list){
+      const map = new Map();
+      list.forEach(x => map.set(x.category, (map.get(x.category) || 0) + 1));
+      const cats = Array.from(map.entries())
+        .sort((a,b) => (b[1]-a[1]) || a[0].localeCompare(b[0], 'zh-Hant'));
+      elCatCount.textContent = String(cats.length + 1);
+      elCatList.innerHTML = '';
+
+      const mk = (name, count, icon='fa-layer-group') => {
+        const li = document.createElement('li');
+        li.className = 'cat-item' + (currentCategory === name ? ' active' : '');
+        li.innerHTML = `
+          <div class="cat-name">
+            <i class="fa-solid ${icon}"></i>
+            <span>${escapeHtml(name === 'ALL' ? '全部' : name)}</span>
+          </div>
+          <span class="cat-badge">${count}</span>
+        `;
+        li.addEventListener('click', () => {
+          currentCategory = name;
+          const u = new URL(location.href);
+          if (name === 'ALL') u.searchParams.delete('cat');
+          else u.searchParams.set('cat', name);
+          history.replaceState(null, '', u.toString());
+          renderCategories(list);
+          renderList();
+        });
+        return li;
+      };
+
+      elCatList.appendChild(mk('ALL', list.length, 'fa-rectangle-list'));
+      cats.forEach(([name, count]) => elCatList.appendChild(mk(name, count)));
+    }
+
+    function filterByCategory(list){
+      if (currentCategory === 'ALL') return list;
+      return list.filter(x => x.category === currentCategory);
+    }
+
+    function computeResults(keywordOverride = null){
+      const keyword = ((keywordOverride != null) ? String(keywordOverride) : (elSearch.value || '')).trim();
+      const kwNorm = normalizeText(keyword);
+      let base = filterByCategory(qaAll);
+
+      if (!kwNorm){
+        base = base.slice().sort((a,b) => {
+          const ta = (a.updatedAt && a.updatedAt.toMillis) ? a.updatedAt.toMillis() : 0;
+          const tb = (b.updatedAt && b.updatedAt.toMillis) ? b.updatedAt.toMillis() : 0;
+          return tb - ta;
+        });
+        return { keyword, list: base.map(x => ({...x, _score: 0})) };
+      }
+
+      if (smartMode){
+        const scored = base.map(item => ({...item, _score: scoreQa(kwNorm, item)}))
+          .filter(x => x._score > 0.25)
+          .sort((a,b) => b._score - a._score);
+        return { keyword, list: scored };
+      }
+
+      const list = base.filter(x => {
+        const all = ((x.question||'') + ' ' + (x.answer||'') + ' ' + (x.category||'') + ' ' + (x.tags||[]).join(' ')).toLowerCase();
+        return all.includes(keyword.toLowerCase());
+      }).map(x => ({...x, _score: 0}));
+
+      return { keyword, list };
+    }
+
+    function renderList(){
+      const { keyword, list } = computeResults();
+      const totalInCat = filterByCategory(qaAll).length;
+
+      let info = `共 ${qaAll.length} 筆 QA`;
+      if (currentCategory !== 'ALL') info += `｜分類：${currentCategory}（${totalInCat} 筆）`;
+      if (keyword) info += `｜搜尋「${keyword}」結果：${list.length} 筆`;
+      elInfoLeft.textContent = info;
+
+      if (keyword && smartMode){
+        elInfoRight.textContent = '智慧排序：可嘗試加入「章節號 / 功能 / 錯誤訊息」關鍵字（例如：PIF16、CSV、permission-denied）。';
+      } else if (keyword && !smartMode){
+        elInfoRight.textContent = '一般篩選：使用「包含字串」比對，建議輸入更精準關鍵字。';
+      } else {
+        elInfoRight.textContent = '提示：可用分類索引縮小範圍，再用搜尋更快找到答案。';
+      }
+
+      elQaList.classList.toggle('show-score', showScore);
+
+      if (!list.length){
+        elQaList.innerHTML = `<div class="empty">找不到相符的 QA。你可以：<br>1) 切換「智慧排序」<br>2) 改用更短的關鍵字（如：PIF、上傳、匯入）<br>3) 先選分類再搜尋</div>`;
+        return;
+      }
+
+      const MAX = 200;
+      const toShow = list.slice(0, MAX);
+
+      elQaList.innerHTML = '';
+      const frag = document.createDocumentFragment();
+
+      toShow.forEach((item) => {
+        const details = document.createElement('details');
+        details.className = 'qa-item';
+        details.id = `qa-${item.id}`;
+
+        const updated = fmtTime(item.updatedAt || item.createdAt);
+        const tags = (item.tags || []).slice(0, 6);
+        const scoreTxt = item._score ? item._score.toFixed(2) : '0.00';
+
+        details.innerHTML = `
+          <summary>
+            <div class="q-left">
+              <div class="q-icon"><i class="fa-solid fa-circle-question"></i></div>
+              <div class="q-text">
+                <p class="q-title">${escapeHtml(item.question || '(未填寫問題)')}</p>
+                <div class="q-meta">
+                  <span class="tag"><i class="fa-solid fa-folder"></i> ${escapeHtml(item.category || '未分類')}</span>
+                  ${updated ? `<span class="tag"><i class="fa-regular fa-clock"></i> ${escapeHtml(updated)}</span>` : ''}
+                  ${tags.map(t => `<span class="tag"><i class="fa-solid fa-tag"></i> ${escapeHtml(t)}</span>`).join('')}
+                </div>
+              </div>
+            </div>
+            <div class="q-right">
+              <span class="score-pill">Score ${scoreTxt}</span>
+              <i class="fa-solid fa-chevron-down"></i>
+            </div>
+          </summary>
+          <div class="answer">${escapeHtml(item.answer || '(未填寫答案)')}</div>
+        `;
+
+        details.addEventListener('toggle', () => {
+          if (details.open) {
+            const u = new URL(location.href);
+            u.hash = details.id;
+            history.replaceState(null, '', u.toString());
+          }
+        });
+
+        frag.appendChild(details);
+      });
+
+      elQaList.appendChild(frag);
+
+      if (list.length > MAX){
+        const more = document.createElement('div');
+        more.className = 'empty';
+        more.textContent = `已顯示前 ${MAX} 筆（共 ${list.length} 筆）。請再縮小分類或加上更精準關鍵字。`;
+        elQaList.appendChild(more);
+      }
+    }
+
+    async function loadAllQa(){
+      try{
+        elQaList.innerHTML = '<div class="empty">載入中…</div>';
+        const snap = await getDocs(collection(db, KB_COLLECTION));
+        qaAll = snap.docs.map(d => {
+          const data = d.data() || {};
+          const category = getCategory(data);
+
+          // cosmetic_knowledge schema (from cs-import):
+          // { category, ingredientName, benefits, mechanism, notes }
+          const ingredientName = (data.ingredientName || data.name || data.title || data.question || '').toString().trim();
+          const benefits = (data.benefits || data.function || data.purpose || data['功用'] || '').toString().trim();
+          const mechanism = (data.mechanism || data['作用機制'] || '').toString().trim();
+          const notes = (data.notes || data.note || data['其他說明'] || '').toString().trim();
+
+          // Backward-compatible fields used by the existing UI:
+          const question = (data.question || ingredientName).toString().trim();
+
+          let answer = (data.answer || '').toString().trim();
+          if (!answer) {
+            const parts = [];
+            if (benefits) parts.push(`【功用】${benefits}`);
+            if (mechanism) parts.push(`【作用機制】${mechanism}`);
+            if (notes) parts.push(`【其他說明】${notes}`);
+            answer = parts.join('\n');
+          }
+
+          const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : null;
+          const updatedAt = data.updatedAt?.toDate ? data.updatedAt.toDate() : null;
+
+          return {
+            id: d.id,
+            category,
+            question,
+            answer,
+            tags: parseTags(data),
+            createdAt,
+            updatedAt,
+            ingredientName,
+            benefits,
+            mechanism,
+            notes
+          };
+        }).filter(x => (x.question || x.answer || x.benefits || x.mechanism || x.notes));
+
+        qaAll.sort((a,b) => {
+          const ta = (a.updatedAt && a.updatedAt.toMillis) ? a.updatedAt.toMillis() : ((a.createdAt && a.createdAt.toMillis) ? a.createdAt.toMillis() : 0);
+          const tb = (b.updatedAt && b.updatedAt.toMillis) ? b.updatedAt.toMillis() : ((b.createdAt && b.createdAt.toMillis) ? b.createdAt.toMillis() : 0);
+          return tb - ta;
+        });
+
+        const sp = new URLSearchParams(location.search);
+        const q = sp.get('q') || '';
+        const cat = sp.get('cat') || 'ALL';
+        if (q) elSearch.value = q;
+        currentCategory = cat;
+
+        renderCategories(qaAll);
+        renderList();
+
+        if (location.hash){
+          const target = document.querySelector(location.hash);
+          if (target && target.tagName.toLowerCase() === 'details'){
+            target.open = true;
+            target.scrollIntoView({ behavior:'smooth', block:'start' });
+          }
+        }
+      }catch(err){
+        console.error('Error loading QA:', err);
+        const msg = (err && err.code === 'permission-denied')
+          ? '權限不足，無法讀取 QA 知識庫。請檢查 Firestore 安全規則。'
+          : '讀取 QA 時發生錯誤，請稍後再試。';
+        elQaList.innerHTML = `<div class="empty">${msg}</div>`;
+        elInfoLeft.textContent = '載入失敗';
+      }
+    }
+
+    let t = null;
+    elSearch.addEventListener('input', () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        const u = new URL(location.href);
+        const val = (elSearch.value || '').trim();
+        if (val) u.searchParams.set('q', val);
+        else u.searchParams.delete('q');
+        history.replaceState(null, '', u.toString());
+        renderList();
+      }, 120);
+    });
+
+    elSmartBtn.addEventListener('click', () => {
+      smartMode = !smartMode;
+      elSmartBtn.classList.toggle('active', smartMode);
+      renderList();
+    });
+
+    elShowScoreBtn.addEventListener('click', () => {
+      showScore = !showScore;
+      elShowScoreBtn.classList.toggle('active', showScore);
+      renderList();
+    });
+
+    elClearBtn.addEventListener('click', () => {
+      elSearch.value = '';
+      currentCategory = 'ALL';
+      smartMode = true;
+      showScore = false;
+      elSmartBtn.classList.add('active');
+      elShowScoreBtn.classList.remove('active');
+
+      const u = new URL(location.href);
+      u.searchParams.delete('q');
+      u.searchParams.delete('cat');
+      u.hash = '';
+      history.replaceState(null, '', u.toString());
+
+      renderCategories(qaAll);
+      renderList();
+    });
+
+    /* ====== Floating AI Chat (ChatGPT-style UI) ====== */
+    const elChatFab = document.getElementById('chatFab');
+    const elChatPanel = document.getElementById('chatPanel');
+    const elChatClose = document.getElementById('chatClose');
+    const elChatMsgs = document.getElementById('chatMsgs');
+    const elChatText = document.getElementById('chatText');
+    const elChatSend = document.getElementById('chatSend');
+    const elChatUseSearch = document.getElementById('chatUseSearch');
+    const elChatUseExample = document.getElementById('chatUseExample');
+    const elChatClearChat = document.getElementById('chatClearChat');
+    const elChatTopK = document.getElementById('chatTopK');
+    const elChatFormat = document.getElementById('chatFormat');
+    const elChatRefsToggle = document.getElementById('chatRefsToggle');
+    const elChatRefNoToggle = document.getElementById('chatRefNoToggle');
+    const elChatFreeToggle = document.getElementById('chatFreeToggle');
+    const elChatUseQaToggle = document.getElementById('chatUseQaToggle');
+
+    
+    const elSumTopK = document.getElementById('sumTopK');
+    const elSumFormat = document.getElementById('sumFormat');
+    const elSumRefsToggle = document.getElementById('sumRefsToggle');
+    const elSumRefNoToggle = document.getElementById('sumRefNoToggle');
+    const elSumFreeToggle = document.getElementById('sumFreeToggle');
+    const elSumUseQaToggle = document.getElementById('sumUseQaToggle');
+    const elAiPrompt = document.getElementById('aiPrompt');
+    const elAiSummarizeBtn = document.getElementById('aiSummarizeBtn');
+    const elAiToChatBtn = document.getElementById('aiToChatBtn');
+    const elAiSummaryOut = document.getElementById('aiSummaryOut');
+    const elAiSummaryLinks = document.getElementById('aiSummaryLinks');
+const CHAT_STORE_KEY = 'cospif_qa_chat_msgs_v1';
+    const CHAT_OPEN_KEY = 'cospif_qa_chat_open_v1';
+    const CHAT_OPT_KEY = 'cospif_qa_chat_opts_v1';
+    let chatBusy = false;
+    let chatMsgs = [];
+
+    function loadChatHistory(){
+      try{
+        const raw = sessionStorage.getItem(CHAT_STORE_KEY);
+        if (!raw) return;
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) chatMsgs = arr.slice(-30);
+      }catch(e){}
+    }
+    function saveChatHistory(){
+      try{
+        sessionStorage.setItem(CHAT_STORE_KEY, JSON.stringify(chatMsgs.slice(-30)));
+      }catch(e){}
+    }
+
+    
+    // ====== Shared chat options (used by both「AI 幫我整理」與右下角聊天室) ======
+    const OPT_DEFAULTS = { topK: 8, format: 'bullets', includeRefs: true, includeRefNos: true, strictKB: false, useQA: false };
+
+    function _clampInt(v, min, max, fallback){
+      const n = parseInt(v, 10);
+      if (Number.isFinite(n)) return Math.max(min, Math.min(max, n));
+      return fallback;
+    }
+
+    function readOptsFromStore(){
+      let o = null;
+      try{
+        const raw = localStorage.getItem(CHAT_OPT_KEY);
+        if (raw) o = JSON.parse(raw);
+      }catch(e){}
+
+      const topK = _clampInt(o?.topK, 1, 20, OPT_DEFAULTS.topK);
+      const format = (o?.format || OPT_DEFAULTS.format).toString();
+      const includeRefs = (o?.includeRefs === false) ? false : true;
+      const includeRefNos = (o?.includeRefNos === false) ? false : true;
+      
+      const strictKB = (o && typeof o.strictKB === 'boolean') ? o.strictKB : OPT_DEFAULTS.strictKB;
+      const useQA = (o && typeof o.useQA === 'boolean') ? o.useQA : OPT_DEFAULTS.useQA;
+return { topK, format, includeRefs, includeRefNos, strictKB, useQA };
+    }
+
+    function writeOptsToStore(opts){
+      try{ localStorage.setItem(CHAT_OPT_KEY, JSON.stringify(opts)); }catch(e){}
+    }
+
+    function applyOptsToChatUI(opts){
+      if (elChatTopK) elChatTopK.value = String(_clampInt(opts.topK, 1, 20, OPT_DEFAULTS.topK));
+      if (elChatFormat) elChatFormat.value = (opts.format || OPT_DEFAULTS.format).toString();
+      if (elChatRefsToggle) elChatRefsToggle.classList.toggle('active', opts.includeRefs !== false);
+      if (elChatRefNoToggle) elChatRefNoToggle.classList.toggle('active', opts.includeRefNos !== false);
+// open-mode toggles
+try{
+  const free = (opts.strictKB === true) ? false : true;
+  if (elChatFreeToggle) elChatFreeToggle.classList.toggle('active', free);
+  if (elChatUseQaToggle) elChatUseQaToggle.classList.toggle('active', opts.useQA === true);
+}catch(e){}
+    }
+
+    function applyOptsToSummaryUI(opts){
+      if (elSumTopK) elSumTopK.value = String(_clampInt(opts.topK, 1, 20, OPT_DEFAULTS.topK));
+      if (elSumFormat) elSumFormat.value = (opts.format || OPT_DEFAULTS.format).toString();
+      if (elSumRefsToggle) elSumRefsToggle.classList.toggle('active', opts.includeRefs !== false);
+      if (elSumRefNoToggle) elSumRefNoToggle.classList.toggle('active', opts.includeRefNos !== false);
+// open-mode toggles
+try{
+  const free = (opts.strictKB === true) ? false : true;
+  if (elSumFreeToggle) elSumFreeToggle.classList.toggle('active', free);
+  if (elSumUseQaToggle) elSumUseQaToggle.classList.toggle('active', opts.useQA === true);
+}catch(e){}
+    }
+
+    function syncOptUIFromStore(){
+      const opts = readOptsFromStore();
+      applyOptsToChatUI(opts);
+      applyOptsToSummaryUI(opts);
+      return opts;
+    }
+
+    function readOptsFromChatUI(){
+      const topK = _clampInt(elChatTopK?.value, 1, 20, OPT_DEFAULTS.topK);
+      const format = (elChatFormat?.value || OPT_DEFAULTS.format).toString();
+      const includeRefs = elChatRefsToggle?.classList.contains('active') ?? OPT_DEFAULTS.includeRefs;
+      const includeRefNos = elChatRefNoToggle?.classList.contains('active') ?? OPT_DEFAULTS.includeRefNos;
+      const free = elChatFreeToggle?.classList.contains('active') ?? true;
+      const strictKB = !free;
+      const useQA = elChatUseQaToggle?.classList.contains('active') ?? OPT_DEFAULTS.useQA;
+      return { topK, format, includeRefs, includeRefNos, strictKB, useQA };
+    }
+
+    function readOptsFromSummaryUI(){
+      const topK = _clampInt(elSumTopK?.value, 1, 20, OPT_DEFAULTS.topK);
+      const format = (elSumFormat?.value || OPT_DEFAULTS.format).toString();
+      const includeRefs = elSumRefsToggle?.classList.contains('active') ?? OPT_DEFAULTS.includeRefs;
+      const includeRefNos = elSumRefNoToggle?.classList.contains('active') ?? OPT_DEFAULTS.includeRefNos;
+      const free = elSumFreeToggle?.classList.contains('active') ?? true;
+      const strictKB = !free;
+      const useQA = elSumUseQaToggle?.classList.contains('active') ?? OPT_DEFAULTS.useQA;
+      return { topK, format, includeRefs, includeRefNos, strictKB, useQA };
+    }
+
+    // 保留既有函式名稱，讓舊呼叫也能工作
+    function _readChatOpts(){
+      const opts = readOptsFromChatUI();
+      applyOptsToChatUI(opts);
+      writeOptsToStore(opts);
+      applyOptsToSummaryUI(opts);
+      return opts;
+    }
+
+    // Make it global-safe (module scope friendly)
+    window.loadChatOptions = function loadChatOptions(){
+      syncOptUIFromStore();
+    };
+
+    function saveChatOptions(){
+      const opts = readOptsFromChatUI();
+      writeOptsToStore(opts);
+      applyOptsToChatUI(opts);
+      applyOptsToSummaryUI(opts);
+    }
+
+
+    function setChatOpen(open){
+      elChatPanel.classList.toggle('open', !!open);
+      try{ localStorage.setItem(CHAT_OPEN_KEY, open ? '1' : '0'); }catch(e){}
+      if (open) setTimeout(() => elChatText?.focus(), 50);
+    }
+
+    
+    function openQaByRef(ref){
+  try{
+    if (!ref) return;
+
+    // 1) Try by Firestore doc id
+    let el = document.getElementById('qa-' + ref);
+
+    // 2) Fallback: try by QA no (numeric)
+    if (!el){
+      const no = Number(ref);
+      if (Number.isFinite(no)){
+        const found = qaAll.find(x => Number(x.no) === no);
+        if (found?.id) el = document.getElementById('qa-' + found.id);
+      }
+    }
+
+    if (el && el.tagName.toLowerCase() === 'details'){
+      el.open = true;
+      el.scrollIntoView({ behavior:'smooth', block:'start' });
+      // close chat panel to avoid covering content (optional)
+      setChatOpen(false);
+    }
+  }catch(e){}
+}
+
+    function renderChat(){
+      elChatMsgs.innerHTML = '';
+      const frag = document.createDocumentFragment();
+
+      chatMsgs.forEach(m => {
+        const wrap = document.createElement('div');
+        wrap.className = 'chat-msg ' + (m.role === 'user' ? 'user' : 'bot');
+        wrap.textContent = m.text || '';
+        frag.appendChild(wrap);
+
+        if (m.meta){
+          const meta = document.createElement('div');
+          meta.className = 'chat-meta ' + (m.role === 'user' ? 'user' : 'bot');
+          meta.textContent = m.meta;
+          meta.style.marginLeft = (m.role === 'user') ? 'auto' : '0';
+          meta.style.maxWidth = '88%';
+          frag.appendChild(meta);
+        }
+
+        if (Array.isArray(m.links) && m.links.length){
+          const box = document.createElement('div');
+          box.className = 'chat-links';
+          box.style.marginLeft = (m.role === 'user') ? 'auto' : '0';
+          box.style.maxWidth = '88%';
+
+          m.links.forEach(l => {
+            const btn = document.createElement('span');
+            btn.className = 'chat-link';
+            btn.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square"></i> ' + (l.label || 'QA');
+            btn.title = l.title || '';
+            btn.addEventListener('click', () => openQaByRef(l.id));
+            box.appendChild(btn);
+          });
+
+          frag.appendChild(box);
+        }
+      });
+
+      elChatMsgs.appendChild(frag);
+      elChatMsgs.scrollTop = elChatMsgs.scrollHeight;
+    }
+
+    function pushChat(role, text, meta = '', links = null){
+      const msg = { role, text: (text||'').toString(), meta: meta || '' };
+      if (Array.isArray(links) && links.length) msg.links = links;
+      chatMsgs.push(msg);
+      chatMsgs = chatMsgs.slice(-30);
+      saveChatHistory();
+      renderChat();
+    }
+
+    function setChatBusy(isBusy){
+      chatBusy = !!isBusy;
+      elChatSend.disabled = chatBusy;
+      elChatText.disabled = chatBusy;
+    }
+
+    
+    async function callQaChat(userMessage){
+      const keyword = (elSearch.value || '').trim();
+// Retrieval keyword (only affects which QA candidates are selected for useQA=true)
+const searchKw = (elSearch.value || '').trim();
+const msgKwRaw = (userMessage || '').toString().trim();
+let retrieveKw = searchKw;
+if (!retrieveKw && msgKwRaw) retrieveKw = msgKwRaw.slice(0, 80);
+const results = computeResults(retrieveKw || null);
+
+      const opts = syncOptUIFromStore();
+
+      const candidates = (results.list || []).slice(0, opts.topK).map(x => ({
+        id: x.id || '',
+        no: (x.no ?? null),
+        question: x.question || '',
+        answer: x.answer || '',
+        category: x.category || '',
+        tags: Array.isArray(x.tags) ? x.tags.slice(0, 8) : []
+      }));
+
+      // 將前端聊天紀錄帶給後端（多輪對話用）
+      const history = (chatMsgs || [])
+        .filter(m => m && (m.role === 'user' || m.role === 'bot') && (m.text || '').toString().trim())
+        .filter(m => !String(m.text).includes('（思考中'))
+        .slice(-12)
+        .map(m => ({
+          role: (m.role === 'bot') ? 'assistant' : 'user',
+          content: (m.text || '').toString()
+        }));
+
+      const resp = await qaChatCallable({
+        message: userMessage,
+        candidates,
+        history,
+        options: { topK: opts.topK, format: opts.format, includeRefs: opts.includeRefs, includeRefNos: opts.includeRefNos, strictKB: opts.strictKB, useQA: opts.useQA },
+
+        // 下面這些是額外資訊（後端可不使用，但保留方便你之後擴充 prompt）
+        search: keyword,
+        category: currentCategory,
+        smartMode: smartMode
+      });
+
+      const data = resp?.data || {};
+      let reply = (data.reply ?? data.answer ?? data.text ?? '').toString().trim();
+      let used = (data?.meta && Array.isArray(data.meta.used)) ? data.meta.used : [];
+
+      // If backend accidentally returns a JSON string (e.g. {"answer":"...","refs":[...]})
+      // parse it and display only the "answer" text.
+      const parsed = tryParseAnswerJson(reply);
+      if (parsed && typeof parsed.answer === 'string') {
+        reply = parsed.answer.toString().trim();
+        if ((!used || used.length === 0) && Array.isArray(parsed.refs)) used = parsed.refs;
+      }
+
+      return { reply, used, success: data.success !== false };
+    }
+
+
+    // ====== AI Summary panel (「AI 幫我整理」) ======
+    function setSummaryBusy(isBusy){
+      if (!elAiSummarizeBtn) return;
+      elAiSummarizeBtn.disabled = !!isBusy;
+    }
+
+    function showAiSummaryLoading(){
+      if (!elAiSummaryOut) return;
+      elAiSummaryOut.textContent = 'AI 整理中…';
+      elAiSummaryOut.classList.add('show');
+      if (elAiSummaryLinks) elAiSummaryLinks.innerHTML = '';
+    }
+
+    function renderAiSummary(reply, used){
+      if (elAiSummaryOut){
+        elAiSummaryOut.textContent = (reply || '（沒有回傳內容）').toString();
+        elAiSummaryOut.classList.add('show');
+      }
+      if (elAiSummaryLinks){
+        elAiSummaryLinks.innerHTML = '';
+        const opts = readOptsFromStore();
+        const links = [];
+        if (opts.includeRefs === false){
+          // do not show reference links
+        }else
+        if (Array.isArray(used)){
+          used.slice(0, 12).forEach((u, i) => {
+            const id = u?.id || u?.docId || u?.qaId || u?.refId || '';
+            const no = (u?.no ?? u?.qaNo ?? null);
+            if (!id && no == null) return;
+            links.push({
+              id: (id || String(no)),
+              label: (opts.includeRefNos !== false)
+                ? ((no != null) ? `QA #${no}` : `QA ${i+1}`)
+                : `參考${i+1}`,
+              title: (u?.question || u?.q || '').toString()
+            });
+          });
+        }
+        links.forEach(l => {
+          const btn = document.createElement('span');
+          btn.className = 'chat-link';
+          btn.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square"></i> ' + l.label;
+          btn.title = l.title || '';
+          btn.addEventListener('click', () => openQaByRef(l.id));
+          elAiSummaryLinks.appendChild(btn);
+        });
+      }
+    }
+
+    async function runAiSummarize(){
+      // 先把「AI 幫我整理」區塊的參數存回 store，並同步到聊天室 UI
+      const opts = readOptsFromSummaryUI();
+      writeOptsToStore(opts);
+      applyOptsToChatUI(opts);
+      applyOptsToSummaryUI(opts);
+
+      const keyword = (elSearch.value || '').trim();
+      const userPrompt = (elAiPrompt?.value || '').trim();
+      const prompt = userPrompt || `請依照目前分類「${currentCategory}」與搜尋字串「${keyword || '（無）'}」，整理最可能需要的答案與下一步操作；必要時補充常見原因與排查清單。請用「${opts.format}」格式回覆。`;
+
+      setSummaryBusy(true);
+      showAiSummaryLoading();
+
+      try{
+        const { reply, used } = await callQaChat(prompt);
+        renderAiSummary(reply, used);
+      }catch(err){
+        console.error(err);
+        const errMsg = (err && (err.message || err.toString())) ? (err.message || err.toString()) : String(err);
+        renderAiSummary(`無法呼叫 AI（qaChat）。\n\n錯誤訊息：${errMsg}`);
+      }finally{
+        setSummaryBusy(false);
+      }
+    }
+
+    
+    async function sendChat(){
+      const msg = (elChatText.value || '').trim();
+      if (!msg || chatBusy) return;
+
+      pushChat('user', msg);
+      elChatText.value = '';
+      setChatBusy(true);
+
+      // placeholder
+      pushChat('bot', '（思考中…）');
+
+      try{
+        const { reply, used } = await callQaChat(msg);
+
+        // remove placeholder
+        chatMsgs.pop();
+
+        const opts = syncOptUIFromStore();
+        let metaLine = '';
+        let links = null;
+
+        if (opts.includeRefs && Array.isArray(used) && used.length){
+          // 顯示與提供定位連結（依候選 QA 的 docId）
+          const labels = used.map(u => {
+            if (u.no != null && String(u.no).trim() !== '') return `QA#${u.no}`;
+            if (u.id) return `QA:${String(u.id).slice(0,6)}…`;
+            return `引用${u.ref}`;
+          });
+          metaLine = opts.includeRefNos !== false
+            ? `引用：${labels.join('、')}（點選可定位）`
+            : `引用：${used.length} 筆 QA（點選可定位）`;
+
+          links = used
+            .map((u, idx) => ({
+              id: u.id || (u.no != null ? String(u.no) : (u.ref != null ? String(u.ref) : '')) ,
+              label: (opts.includeRefNos !== false)
+                ? ((u.no != null && String(u.no).trim() !== '') ? `QA#${u.no}` : (u.id ? `QA:${String(u.id).slice(0,6)}…` : (u.ref != null ? `引用${u.ref}` : '引用')))
+                : `參考${idx+1}`,
+              title: u.question || ''
+            }))
+            .filter(l => l && l.id);
+        }
+
+        pushChat('bot', reply || '（沒有回傳內容，請確認後端 qaChat 是否已部署，且 return { success:true, reply, meta } ）', metaLine, links);
+
+      }catch(err){
+        console.error(err);
+        // remove placeholder
+        chatMsgs.pop();
+
+        const errMsg = (err && (err.message || err.toString())) ? (err.message || err.toString()) : String(err);
+        const hint = `無法呼叫 AI。常見原因：
+1) 尚未部署 Firebase Callable Function：qaChat
+2) Functions 區域不一致（前端 getFunctions(...) 與後端 region）
+3) 權限/登入限制（後端 onCall 內有驗證時）
+4) 後端 AI 金鑰未設定（例如 OPENAI_API_KEY / functions config openai.key）
+
+錯誤訊息：${errMsg}`;
+        pushChat('bot', hint);
+      }finally{
+        setChatBusy(false);
+      }
+    }
+
+    // UI events
+    elChatFab?.addEventListener('click', () => setChatOpen(!elChatPanel.classList.contains('open')));
+    elChatClose?.addEventListener('click', () => setChatOpen(false));
+
+    elChatUseSearch?.addEventListener('click', () => {
+      const s = (elSearch.value || '').trim();
+      if (s) elChatText.value = s;
+      else elChatText.value = '我想了解：';
+      elChatText.focus();
+    });
+
+    elChatUseExample?.addEventListener('click', () => {
+      elChatText.value = '我在 PIF16 上傳 PDF 失敗，出現 permission-denied。請依 CosPIF 的流程告訴我可能原因與排查步驟（含 Firestore/Storage 規則方向）。';
+      elChatText.focus();
+    });
+
+    
+    // options controls（同步到 localStorage，並讓「AI 幫我整理」與聊天室共用）
+    elChatTopK?.addEventListener('input', () => { saveChatOptions(); });
+    elChatTopK?.addEventListener('change', () => { saveChatOptions(); });
+    elChatFormat?.addEventListener('change', () => { saveChatOptions(); });
+    elChatRefsToggle?.addEventListener('click', () => {
+      elChatRefsToggle.classList.toggle('active');
+      saveChatOptions();
+    });
+    elChatRefNoToggle?.addEventListener('click', () => {
+      elChatRefNoToggle.classList.toggle('active');
+      saveChatOptions();
+    });
+
+elChatFreeToggle?.addEventListener('click', () => {
+  elChatFreeToggle.classList.toggle('active');
+  saveChatOptions();
+});
+elChatUseQaToggle?.addEventListener('click', () => {
+  elChatUseQaToggle.classList.toggle('active');
+  saveChatOptions();
+});
+
+
+    // summary controls
+    elSumTopK?.addEventListener('input', () => {
+      const opts = readOptsFromSummaryUI();
+      writeOptsToStore(opts);
+      applyOptsToChatUI(opts);
+      applyOptsToSummaryUI(opts);
+    });
+    elSumTopK?.addEventListener('change', () => {
+      const opts = readOptsFromSummaryUI();
+      writeOptsToStore(opts);
+      applyOptsToChatUI(opts);
+      applyOptsToSummaryUI(opts);
+    });
+    elSumFormat?.addEventListener('change', () => {
+      const opts = readOptsFromSummaryUI();
+      writeOptsToStore(opts);
+      applyOptsToChatUI(opts);
+      applyOptsToSummaryUI(opts);
+    });
+    elSumRefsToggle?.addEventListener('click', () => {
+      elSumRefsToggle.classList.toggle('active');
+      const opts = readOptsFromSummaryUI();
+      writeOptsToStore(opts);
+      applyOptsToChatUI(opts);
+      applyOptsToSummaryUI(opts);
+    });
+
+    elSumRefNoToggle?.addEventListener('click', () => {
+      elSumRefNoToggle.classList.toggle('active');
+      const opts = readOptsFromSummaryUI();
+      writeOptsToStore(opts);
+      applyOptsToChatUI(opts);
+      applyOptsToSummaryUI(opts);
+    });
+
+elSumFreeToggle?.addEventListener('click', () => {
+  elSumFreeToggle.classList.toggle('active');
+  const opts = readOptsFromSummaryUI();
+  writeOptsToStore(opts);
+  applyOptsToChatUI(opts);
+  applyOptsToSummaryUI(opts);
+});
+elSumUseQaToggle?.addEventListener('click', () => {
+  elSumUseQaToggle.classList.toggle('active');
+  const opts = readOptsFromSummaryUI();
+  writeOptsToStore(opts);
+  applyOptsToChatUI(opts);
+  applyOptsToSummaryUI(opts);
+});
+
+
+    elAiSummarizeBtn?.addEventListener('click', runAiSummarize);
+    elAiToChatBtn?.addEventListener('click', () => {
+      const keyword = (elSearch.value || '').trim();
+      const opts = readOptsFromStore();
+      const userPrompt = (elAiPrompt?.value || '').trim();
+      const prompt = userPrompt || `請依照目前分類「${currentCategory}」與搜尋字串「${keyword || '（無）'}」，整理最可能需要的答案與下一步操作；必要時補充常見原因與排查清單。請用「${opts.format}」格式回覆。`;
+      setChatOpen(true);
+      if (elChatText) elChatText.value = prompt;
+      elChatText?.focus();
+    });
+elChatClearChat?.addEventListener('click', () => {
+      chatMsgs = [];
+      saveChatHistory();
+      renderChat();
+      pushChat('bot', '已清空對話。你可以直接提問，我會優先參考右側 QA 檢索結果。');
+    });
+
+    elChatSend?.addEventListener('click', sendChat);
+
+    elChatText?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey){
+        e.preventDefault();
+        sendChat();
+      }
+    });
+
+    // Init chat
+    loadChatHistory();
+    window.loadChatOptions?.();
+    _readChatOpts();
+    if (!chatMsgs.length){
+      pushChat('bot', '你好！我可以用「目前分類 + 搜尋結果前 8 筆 QA」來整理答案。你可以直接問：例如「PIF07 雲端儲存怎麼做？」');
+    }else{
+      renderChat();
+    }
+    try{
+      const open = localStorage.getItem(CHAT_OPEN_KEY) === '1';
+      if (open) setChatOpen(true);
+    }catch(e){}
+
+    loadAllQa();
+  </script>
+</body>
+</html>

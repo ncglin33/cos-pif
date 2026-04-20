@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>後台管理 - 批次匯入化妝品知識庫</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    .container { max-width: 1600px; }
+    .card { margin-bottom: 1.5rem; }
+
+    #drop-zone{
+      border: 2px dashed var(--line);
+      border-radius: .75rem;
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: background-color .2s, border-color .2s;
+    }
+    #drop-zone.dragover{
+      background-color: var(--brand-bg-subtle);
+      border-color: var(--brand);
+    }
+    #file-info{ margin-top: 1rem; color: var(--muted); }
+    #preview-zone{ display: none; }
+
+    #preview-cards-container{
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 1.5rem;
+    }
+    .data-card{
+      background: #fff;
+      border-radius: .75rem;
+      border: 1px solid var(--line);
+      box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+      display: flex;
+      flex-direction: column;
+      transition: box-shadow .2s;
+    }
+    .data-card:hover{
+      box-shadow:
+        0 4px 6px -1px rgb(0 0 0 / 0.1),
+        0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+    .data-card-header{
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--line);
+      background: #f9fafb;
+      cursor: pointer;
+    }
+    .data-card-header h4{
+      margin: 0;
+      font-size: 1.1rem;
+      color: var(--ink);
+      word-break: break-word;
+      line-height: 1.3;
+    }
+    .data-card-body{
+      padding: 1.25rem;
+      flex-grow: 1;
+    }
+    .data-field{ margin-bottom: 1.1rem; }
+    .data-field:last-child{ margin-bottom: 0; }
+
+    .data-field-label{
+      font-weight: 600;
+      font-size: .8rem;
+      color: var(--muted);
+      margin-bottom: .25rem;
+      display: block;
+    }
+    .data-field-value{
+      font-size: .9rem;
+      padding: .5rem;
+      border-radius: .375rem;
+      transition: background-color .2s;
+      cursor: pointer;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 38px;
+      width: 100%;
+    }
+    .data-field-value:hover{ background-color: #f0f8ff; }
+
+    #status-message{
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: .5rem;
+      text-align: center;
+      display: none;
+    }
+    .status-success{ background-color: var(--ok-bg); color: var(--ok-text); }
+    .status-error{ background-color: var(--error-bg); color: var(--error-text); }
+    .status-warning{
+      background-color: #fff7ed;
+      color: #9a3412;
+      border: 1px solid #fdba74;
+      padding: 0.9rem 1rem;
+      border-radius: 10px;
+      margin-top: 1rem;
+      font-weight: 600;
+    }
+
+    #manual-input{
+      width: 100%;
+      min-height: 140px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: .85rem;
+    }
+
+    .pill{
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: .25rem .6rem;
+      font-size: .8rem;
+      color: var(--muted);
+      background: #fff;
+      margin-right: .35rem;
+      margin-bottom: .35rem;
+    }
+    .muted{ color: var(--muted); }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace; }
+  </style>
+</head>
+
+<body>
+  <header class="no-print">
+    <div class="wrap">
+      <h1><a href="admin.html" style="color:inherit; text-decoration:none;">管理後台</a></h1>
+      <div class="controls header-right">
+        <div id="user-info" style="display:inline-block; margin-left:1rem;"></div>
+        <button id="btnSignOut" class="btn btn-danger">登出</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <header>
+      <h2>批次匯入化妝品知識庫</h2>
+      <p class="subtitle">
+        上傳匯入檔案 / 貼上文字 → 預覽與修正 → 檢查無誤後寫入 Firestore 的 <span class="mono">cosmetic_knowledge</span> 集合。
+      </p>
+      <div class="muted" style="margin-top:.75rem;">
+        <span class="pill"><i class="fa-solid fa-tag"></i> 類別</span>
+        <span class="pill"><i class="fa-solid fa-flask"></i> 成分名稱</span>
+        <span class="pill"><i class="fa-solid fa-wand-magic-sparkles"></i> 功用</span>
+        <span class="pill"><i class="fa-solid fa-diagram-project"></i> 作用機制</span>
+        <span class="pill"><i class="fa-solid fa-note-sticky"></i> 其他說明</span>
+        <span class="pill"><i class="fa-solid fa-circle-question"></i> 相關問題</span>
+        <span class="pill"><i class="fa-solid fa-comment-dots"></i> 相關問答</span>
+        <span class="pill"><i class="fa-solid fa-key"></i> 關鍵字</span>
+      </div>
+    </header>
+
+    <div class="card">
+      <h3>步驟一：下載範本、上傳檔案或貼上文字</h3>
+      <p>
+        請確保 CSV 標頭包含所有欄位：<span class="mono">category,ingredientName,benefits,mechanism,notes,question,answer,keywords</span>；
+        其中 <strong>ingredientName</strong> 為必要欄位。
+      </p>
+
+      <div style="margin-bottom:1rem;">
+        <button id="btn-download-template" class="btn">
+          <i class="fa-solid fa-download"></i> 下載知識庫 CSV 範本
+        </button>
+      </div>
+
+      <div id="drop-zone">
+        <p><i class="fa-solid fa-upload"></i> 將 CSV 檔案拖曳至此，或點擊選擇</p>
+        <input type="file" id="file-input" accept=".csv,text/csv" hidden>
+        <div id="file-info">尚未選擇檔案</div>
+      </div>
+
+      <hr style="margin:1.5rem 0;">
+      <h4>或直接貼上 CSV 內容</h4>
+      <textarea id="manual-input" class="form-control" placeholder="在此貼上 CSV 內容，第一行必須是標頭 (category,ingredientName,benefits,mechanism,notes,question,answer,keywords)…"></textarea>
+      <div style="margin-top:.75rem;">
+        <button id="btn-import-text" class="btn">
+          <i class="fa-solid fa-file-import"></i> 匯入文字到預覽
+        </button>
+      </div>
+    </div>
+
+    <div id="preview-zone" class="card">
+      <h3>步驟二：預覽並修正</h3>
+      <p>
+        可直接點擊卡片內欄位進行修改。系統將以 <span class="mono">category + ingredientName</span> 產生唯一識別碼；
+        若同一組合在 CSV 出現多筆，匯入時會以 <strong>最後一筆</strong> 覆蓋/更新。
+      </p>
+
+      <div id="preview-cards-container"></div>
+
+      <div id="status-message"></div>
+
+      <div style="margin-top:1.5rem; text-align:right;">
+        <button id="btn-confirm-write" class="btn primary">
+          <i class="fa-solid fa-check-double"></i> 確認並寫入知識庫
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { doc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { db, auth } from './firebase-config.js';
+
+    const $ = (sel) => document.querySelector(sel);
+
+    // ✅ Firestore collection
+    const COLLECTION_NAME = 'cosmetic_knowledge';
+
+    // ✅ 欄位定義（CSV 標頭也是這些）
+    const CS_FIELDS = ['category', 'ingredientName', 'benefits', 'mechanism', 'notes', 'question', 'answer', 'keywords'];
+    const REQUIRED_FIELDS = ['ingredientName'];
+
+    // ✅ 類別白名單（可依需求擴充）
+    const ALLOWED_CATEGORIES = new Set(['保濕', '美白', '防曬', '抗老化', '頭髮']);
+
+    let parsedRecords = [];
+
+    function startApp(){
+      onAuthStateChanged(auth, (user) => {
+        if (user){
+          setupUI(user);
+          document.body.style.opacity = '1';
+        } else {
+          window.location.href = 'login.html';
+        }
+      });
+    }
+
+    function setupUI(user){
+      $('#user-info').textContent = user.email;
+      $('#btnSignOut').addEventListener('click', () => signOut(auth));
+      $('#btn-download-template').addEventListener('click', downloadTemplate);
+
+      const dropZone = $('#drop-zone');
+      const fileInput = $('#file-input');
+
+      dropZone.addEventListener('click', () => fileInput.click());
+      dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+      dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+      });
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length) handleFile(e.target.files[0]);
+      });
+
+      $('#btn-import-text').addEventListener('click', () => loadFromCsvText($('#manual-input').value));
+      $('#btn-confirm-write').addEventListener('click', handleConfirmAndWrite);
+      $('#preview-cards-container').addEventListener('click', handleCardClick);
+    }
+
+    function downloadTemplate(){
+      // UTF-8 BOM for Excel
+      const header = CS_FIELDS.join(',') + '\n';
+      const example =
+        '保濕,"Sodium Hyaluronate","保濕、潤滑、改善乾燥","大分子抓水，形成鎖水膜","可補充分子量、濃度","玻尿酸是什麼？","玻尿酸是一種存在於人體結締組織中的多醣。","保濕,玻尿酸,透明質酸"\n' +
+        '美白,"Niacinamide","提亮、均勻膚色、減少暗沉","抑制黑色素體轉移至角質細胞","常見濃度 2–5%，注意與高酸配方的刺激性","菸鹼醯胺的功效？","菸鹼醯胺是維生素B3的衍生物，有助於改善多種皮膚問題。","美白,維他命B3,菸鹼醯胺"\n';
+
+      const blob = new Blob(["\uFEFF" + header + example], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'cosmetic_knowledge_template.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function handleFile(file){
+      if (!file.name.toLowerCase().endsWith('.csv')){
+        alert('錯誤：請選擇 .csv 檔案。');
+        return;
+      }
+      $('#file-info').textContent = `已選擇檔案: ${file.name}`;
+      const reader = new FileReader();
+      reader.onload = (e) => loadFromCsvText(e.target.result);
+      reader.readAsText(file, 'UTF-8');
+    }
+
+    function loadFromCsvText(rawText){
+      try{
+        let text = (rawText || '').trim();
+        if (!text) throw new Error('CSV 內容是空的。');
+
+        // Remove BOM if present
+        if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+
+        const rows = parseCsv(text);
+        if (rows.length < 2) throw new Error('CSV 內容需要包含標頭和至少一筆資料。');
+
+        const headers = rows[0].map(h => String(h).trim());
+        // ingredientName required
+        if (!headers.includes('ingredientName')){
+          throw new Error("CSV 標頭中必須包含 'ingredientName' 欄位。");
+        }
+
+        const headerMap = {};
+        headers.forEach((h, i) => headerMap[h] = i);
+
+        parsedRecords = rows.slice(1).map(values => {
+          if (values.length === 1 && String(values[0]).trim() === '') return null;
+
+          const record = {};
+          CS_FIELDS.forEach(field => {
+            const idx = headerMap[field];
+            record[field] = (idx !== undefined && values[idx] !== undefined) ? String(values[idx]).trim() : '';
+          });
+
+          // category normalize (keep empty allowed, but warn later)
+          record.category = record.category || '';
+
+          return record;
+        }).filter(Boolean);
+
+        if (!parsedRecords.length) throw new Error('找不到有效的資料筆。');
+
+        const analysis = analyzeImport(parsedRecords);
+        showImportWarnings(analysis);
+
+        renderPreviewCards(parsedRecords);
+      } catch (err){
+        alert(`解析失敗: ${err.message}`);
+        parsedRecords = [];
+        $('#preview-zone').style.display = 'none';
+      }
+    }
+
+    // ✅ Robust-ish CSV parser (supports quotes, escaped quotes, CRLF)
+    function parseCsv(text){
+      const rows = [];
+      let row = [];
+      let field = '';
+      let i = 0;
+      let inQuotes = false;
+
+      const pushField = () => { row.push(field); field = ''; };
+
+      while (i < text.length){
+        const c = text[i];
+
+        if (inQuotes){
+          if (c === '"'){
+            // escaped quote
+            if (text[i+1] === '"'){ field += '"'; i += 2; continue; }
+            inQuotes = false; i++; continue;
+          }
+          field += c; i++; continue;
+        }
+
+        if (c === '"'){
+          inQuotes = true; i++; continue;
+        }
+
+        if (c === ','){
+          pushField(); i++; continue;
+        }
+
+        if (c === '\n' || c === '\r'){
+          // handle CRLF
+          if (c === '\r' && text[i+1] === '\n') i++;
+          pushField();
+          rows.push(row);
+          row = [];
+          i++; continue;
+        }
+
+        field += c;
+        i++;
+      }
+
+      pushField();
+      rows.push(row);
+
+      // Trim trailing empty lines
+      while (rows.length && rows[rows.length-1].every(v => String(v).trim() === '')){
+        rows.pop();
+      }
+      return rows;
+    }
+
+    function analyzeImport(records){
+      const keyCounts = new Map();
+      let missingIngredient = 0;
+      const invalidCategorySet = new Set();
+
+      records.forEach(r => {
+        const ing = (r.ingredientName || '').trim();
+        if (!ing) missingIngredient++;
+
+        const cat = (r.category || '').trim();
+        if (cat && !ALLOWED_CATEGORIES.has(cat)) invalidCategorySet.add(cat);
+
+        const key = `${cat}||${ing}`.trim();
+        if (!ing) return;
+        keyCounts.set(key, (keyCounts.get(key) || 0) + 1);
+      });
+
+      const dupKeys = [...keyCounts.entries()]
+        .filter(([, c]) => c > 1)
+        .map(([key, count]) => ({ key, count }));
+
+      return {
+        dupKeys,
+        invalidCategories: [...invalidCategorySet],
+        missingIngredient
+      };
+    }
+
+    function showImportWarnings(analysis){
+      const msgEl = $('#status-message');
+      const parts = [];
+
+      if (analysis.missingIngredient){
+        parts.push(`偵測到 <strong>${analysis.missingIngredient}</strong> 筆缺少 <strong>ingredientName</strong>（匯入時會跳過）。`);
+      }
+      if (analysis.dupKeys && analysis.dupKeys.length){
+        parts.push(`偵測到 <strong>${analysis.dupKeys.length}</strong> 組重複（同一 category + ingredientName 多筆）。匯入時會以 <strong>最後一筆</strong> 覆蓋/更新。`);
+      }
+      if (analysis.invalidCategories && analysis.invalidCategories.length){
+        parts.push(`偵測到不在建議清單的類別：<strong>${analysis.invalidCategories.join(', ')}</strong>。仍可匯入，但建議使用：保濕 / 美白 / 防曬 / 抗老化 / 頭髮。`);
+      }
+
+      if (!parts.length){
+        msgEl.className = '';
+        msgEl.innerHTML = '';
+        msgEl.style.display = 'none';
+        return;
+      }
+
+      msgEl.className = 'status-warning';
+      msgEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ${parts.join('<br>')}`;
+      msgEl.style.display = 'block';
+    }
+
+    function renderPreviewCards(records){
+      const labelMap = {
+        category: '類別',
+        ingredientName: '成分名稱',
+        benefits: '功用',
+        mechanism: '作用機制',
+        notes: '其他說明',
+        question: '相關問題',
+        answer: '相關問答',
+        keywords: '關鍵字'
+      };
+
+      $('#preview-cards-container').innerHTML = records.map((record, rowIndex) => {
+        const body = CS_FIELDS
+          .filter(f => f !== 'ingredientName')
+          .map(f => `
+            <div class="data-field">
+              <label class="data-field-label">${labelMap[f] || f}</label>
+              <div class="data-field-value" data-row-index="${rowIndex}" data-field="${f}">
+                ${escapeHtml(record[f] || '')}
+              </div>
+            </div>
+          `).join('');
+
+        return `
+          <div class="data-card" data-row-index="${rowIndex}">
+            <div class="data-card-header">
+              <h4 data-row-index="${rowIndex}" data-field="ingredientName">
+                ${escapeHtml(record.ingredientName || '[缺少成分名稱]')}
+              </h4>
+            </div>
+            <div class="data-card-body">${body}</div>
+          </div>
+        `;
+      }).join('');
+
+      $('#preview-zone').style.display = 'block';
+    }
+
+    function handleCardClick(e){
+      const t = e.target;
+      if (t.matches('.data-card-header h4, .data-field-value')) makeEditable(t);
+    }
+
+    function makeEditable(element){
+      if (element.querySelector('textarea')) return;
+
+      const rowIndex = Number(element.dataset.rowIndex);
+      const field = element.dataset.field;
+      const currentValue = element.textContent;
+
+      element.innerHTML = '';
+      const textarea = document.createElement('textarea');
+      textarea.className = 'form-control';
+      textarea.style.minHeight = (field === 'ingredientName' || field === 'category') ? '60px' : '120px';
+      textarea.value = currentValue.trim();
+      element.appendChild(textarea);
+
+      textarea.focus();
+      textarea.select();
+
+      const saveChanges = () => {
+        parsedRecords[rowIndex][field] = textarea.value.trim();
+        element.innerHTML = escapeHtml(parsedRecords[rowIndex][field] || '');
+      };
+
+      textarea.addEventListener('blur', saveChanges, { once: true });
+      textarea.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' && (ev.metaKey || ev.ctrlKey)){
+          ev.preventDefault();
+          textarea.blur();
+        } else if (ev.key === 'Escape'){
+          textarea.value = currentValue;
+          textarea.blur();
+        }
+      });
+    }
+
+    function getDocId(category, ingredientName){
+      const key = `${(category || '').trim()}|${(ingredientName || '').trim()}`;
+      if (!key.trim()) return `cs_${Date.now()}`;
+      // stable 32-bit hash
+      let hash = 0;
+      for (let i = 0; i < key.length; i++){
+        hash = ((hash << 5) - hash) + key.charCodeAt(i);
+        hash |= 0;
+      }
+      return `cs_${Math.abs(hash).toString(16)}`;
+    }
+
+    async function handleConfirmAndWrite(){
+      if (!parsedRecords.length) return alert('沒有資料可寫入。');
+
+      const btn = $('#btn-confirm-write');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中...';
+
+      try{
+        const batch = writeBatch(db);
+        let written = 0;
+        let skipped = 0;
+
+        parsedRecords.forEach(record => {
+          // Required check
+          const ing = (record.ingredientName || '').trim();
+          if (!ing){ skipped++; return; }
+
+          const cat = (record.category || '').trim();
+          const docId = getDocId(cat, ing);
+          const ref = doc(db, COLLECTION_NAME, docId);
+
+          const dataToSet = {
+            updatedAt: new Date().toISOString()
+          };
+          CS_FIELDS.forEach(field => {
+            dataToSet[field] = (record[field] || '').trim();
+          });
+
+          batch.set(ref, dataToSet, { merge: true });
+          written++;
+        });
+
+        await batch.commit();
+
+        $('#status-message').className = 'status-success';
+        $('#status-message').innerHTML =
+          `<i class="fa-solid fa-check-circle"></i> 成功！已寫入/更新 ${written} 筆；跳過 ${skipped} 筆（缺少 ingredientName）。`;
+      } catch (error){
+        console.error('Write error:', error);
+        $('#status-message').className = 'status-error';
+        $('#status-message').innerHTML = `<i class="fa-solid fa-exclamation-triangle"></i> 寫入失敗：${escapeHtml(error.message || String(error))}`;
+      }
+
+      $('#status-message').style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-check-double"></i> 確認並寫入知識庫';
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    startApp();
+    document.body.style.opacity = '0';
+  </script>
+</body>
+</html>

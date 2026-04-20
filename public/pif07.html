@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>PIF 07｜使用方法、部位、用量、頻率及族群</title>
+<link crossorigin="anonymous" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" referrerpolicy="no-referrer" rel="stylesheet"/>
+<link href="/style.css" rel="stylesheet"/>
+<style>
+    html { scroll-behavior: smooth; }
+    body { background-color: #f0f2f5; }
+
+    .container {
+      padding: 1rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header.page-header {
+      margin-bottom: 0.75rem;
+    }
+
+    header.page-header h2 {
+      margin: 0;
+      font-size: 1.4rem;
+      letter-spacing: .5px;
+    }
+
+    header.page-header .subtitle {
+      margin: 0.3rem 0 0;
+      font-size: .9rem;
+      color: var(--muted);
+    }
+
+    .wrap {
+      margin-top: 0.5rem;
+      padding: 1rem 1.25rem;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    }
+
+    .bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 16px;
+    }
+
+    button, .btn {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      color: var(--fg);
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    button:hover {
+      border-color: #c3c7cc;
+    }
+
+    input, select, textarea {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      color: var(--fg);
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-size: 13px;
+    }
+
+    textarea { resize: vertical; }
+
+    .foot {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .badge {
+      display: inline-block;
+      border: 1px solid var(--line);
+      padding: 2px 6px;
+      border-radius: 6px;
+      color: #0b57d0;
+      background: #eef4ff;
+      margin-left: 8px;
+    }
+
+    #app-container.loading { visibility: hidden; }
+    #message-container { padding: 20px; text-align: center; }
+
+    /* 卡片排版 */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .usage-card {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    }
+
+    .usage-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .index-pill {
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      background: #e2e8f0;
+      border-radius: 999px;
+      padding: 2px 8px;
+    }
+
+    .field-group { margin-top: 6px; }
+
+    .field-group label {
+      display: block;
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 2px;
+    }
+
+    .field-inline {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .help {
+      font-size: 13px;
+      color: #475569;
+      margin-top: 16px;
+    }
+
+    .right { text-align: right; }
+
+    /* 收合式多選 */
+    .select-details {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 4px 8px;
+      background: #f9fafb;
+      font-size: 13px;
+    }
+
+    .select-details[open] { background: #ffffff; }
+
+    .select-details summary {
+      list-style: none;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .select-details summary::-webkit-details-marker { display: none; }
+
+    .select-summary-label {
+      color: #64748b;
+      margin-right: 4px;
+    }
+
+    .select-summary-values { color: #111827; }
+
+    .select-details select {
+      margin-top: 4px;
+      width: 100%;
+      min-height: 96px;
+    }
+
+    #upload-status-pdf {
+      display: none;
+      padding: .75rem 1.25rem;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      font-weight: 500;
+      text-align: center;
+      font-size: 13px;
+    }
+
+    #upload-status-pdf i { margin-right: .5rem; }
+    .status-info { background: #e0e7ff; color: #3730a3; }
+    .status-success { background: #dcfce7; color: #166534; }
+    .status-error { background: #fee2e2; color: #991b1b; }
+
+    .muted { color: var(--muted); font-size: 12px; }
+
+    /* =============================
+       列印專用頂端區（PIF07 版）
+       ============================= */
+    .print-only { display: none; }
+
+    #print-header {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin: 0 0 12px 0;
+      background: #fff;
+    }
+
+    .print-header-grid {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .ph-left { flex: 1; min-width: 0; }
+    .ph-right { text-align: right; min-width: 220px; }
+
+    .ph-title {
+      font-size: 1.28rem;
+      font-weight: 800;
+      letter-spacing: .3px;
+      color: #111827;
+      margin: 0 0 4px 0;
+      line-height: 1.2;
+    }
+
+    .ph-sub {
+      font-size: .98rem;
+      color: #111827;
+      line-height: 1.35;
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    .ph-label {
+      font-weight: 700;
+      color: #374151;
+    }
+
+    /* =============================
+       列印設定
+       ============================= */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 10mm;
+      }
+
+      body {
+        background: #ffffff !important;
+      }
+
+      /* 只列印 app-container 內容 */
+      body * { visibility: hidden; }
+      #app-container,
+      #app-container * { visibility: visible; }
+      #app-container {
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
+      }
+
+      /* 隱藏所有標記為 noprint / no-print 的元素 */
+      .noprint, .noprint *,
+      .no-print, .no-print * {
+        display: none !important;
+      }
+
+      /* 顯示列印專用頂端 */
+      .print-only { display: block !important; }
+
+      .card-grid {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+
+      .usage-card {
+        box-shadow: none;
+        border: 1px solid #ccc;
+        padding: 6px 8px;
+        font-size: 11px;
+        page-break-inside: avoid;
+      }
+
+      .usage-card-header { margin-bottom: 4px; }
+
+      .field-group label {
+        font-size: 11px;
+        font-weight: bold;
+        margin-bottom: 1px;
+      }
+
+      input, select, textarea {
+        border: none;
+        padding: 0;
+        font-size: 11px;
+      }
+
+      .select-details {
+        border: none;
+        padding: 0;
+      }
+
+      .select-details select {
+        border: none;
+        padding: 0;
+        min-height: auto;
+      }
+
+      /* 列印頂端字級微調 */
+      .ph-title { font-size: 1.24rem !important; }
+      .ph-sub { font-size: .95rem !important; }
+
+      /* 保險：畫面用 header 一律不印出 */
+      header.page-header { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+<!-- 全站導覽＋PIF 頂端條：比照 PIF10 -->
+<pif-nav class="noprint"></pif-nav>
+<top-bar class="noprint"></top-bar>
+<div class="container">
+<status-bar class="noprint"></status-bar>
+<div id="message-container" style="display:none;"></div>
+<div class="loading" id="app-container">
+<!-- 列印專用頂端（PIF07 標題 / PIFID / 產品 / 公司） -->
+<div class="print-only" id="print-header">
+<div class="print-header-grid">
+<div class="ph-left">
+<div class="ph-title" id="printTitle"></div>
+<p class="ph-sub" id="printProductName"></p>
+</div>
+<div class="ph-right">
+<p class="ph-sub">
+<span class="ph-label">PIFID：</span>
+<span id="printPifId"></span>
+</p>
+<p class="ph-sub" id="printCompanyName"></p>
+</div>
+</div>
+</div>
+<!-- 畫面頂端標題（不印出） -->
+<header class="page-header noprint">
+<h2>07 使用方法、部位、用量、頻率及族群</h2>
+<p class="subtitle" id="screen-subtitle">
+          此處填寫的資料將用於 PIF 最終報告。所有變更會自動儲存至雲端。
+        </p>
+</header>
+<div class="wrap" id="editor">
+<!-- 工具列（列印、匯入匯出等） -->
+<div class="bar noprint">
+<button id="btnPrint">列印本頁</button>
+<button id="btnUploadPdf">上傳本頁 PDF</button>
+<input accept="application/pdf" id="pdfUploader" style="display:none;" type="file"/>
+<button id="btnAdd">新增一列</button>
+<button id="btnSample">載入範例</button>
+<label class="btn" for="fileJson">匯入 JSON</label>
+<input accept="application/json,.json" id="fileJson" style="display:none" type="file">
+<button id="btnExportJson">匯出 JSON</button>
+<button id="btnExportCsv">匯出 CSV</button>
+<button id="btnClearAll">清除此頁雲端資料</button>
+<span class="muted" id="autosaveTip">變更會自動儲存至雲端</span>
+</input></div>
+<div class="noprint" id="upload-status-pdf"></div>
+<div class="card-grid" id="card-container"></div>
+<div class="foot">
+          注意：0–3歲及孕婦/哺乳期婦女對象，需於安全性評估報告最終確認。
+          若為淋洗類產品，可註明建議接觸時間(如1–2分鐘)。
+        </div>
+<div style="margin-top:18px">
+<div class="help">快速產生摘要文字:</div>
+<textarea id="summary" placeholder="點擊按鈕以自動產生摘要..." rows="4" style="width:100%;margin-top:6px"></textarea>
+<div class="right noprint" style="margin-top:8px">
+<button id="btnMakeSummary">產生摘要</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script type="module">
+    
+    import { auth, db, storage } from "./firebase-config.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { ref, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+    import '/components.js';
+
+    
+    const el = sel => document.querySelector(sel);
+    const ce = (tag, cls) => {
+      const n = document.createElement(tag);
+      if (cls) n.className = cls;
+      return n;
+    };
+
+    // 透過 <status-bar> 顯示狀態（比照 PIF10）
+    const showStatus = (message, type = 'info', duration = 3000) => {
+      customElements.whenDefined('status-bar')
+        .then(() => {
+          const bar = document.querySelector('status-bar');
+          if (bar && typeof bar.show === 'function') {
+            bar.show(message, type, duration);
+          }
+        })
+        .catch(() => {});
+    };
+
+    const POPS = ['成人','青少年(12–18)','兒童(3–12)','嬰幼兒(0–3)','孕婦','哺乳期婦女','敏感肌膚','一般大眾'];
+    const SITES = ['臉部全部','眼周','唇部','頸部','頭皮','毛髮','手部','身體','腋下','足部','私密處','全身','口周','鼻外部'];
+    const DOSE_UNITS = ['泵','滴','mL','g','FTU','片','噴'];
+    const FREQ_UNITS = ['次/日','次/週','每2日一次','需要時(PRN)'];
+    const CONTACT = ['免水洗(Leave-on)','水洗式','短時間接觸'];
+
+    const state = {
+      items: [],
+      user: null,
+      pifId: null,
+      productName: '',
+      unsubscribe: null,
+      saveTimeout: null,
+      hasUnsavedChanges: false
+    };
+
+    function showMessage(msg){
+      el('#message-container').innerHTML = msg;
+      el('#message-container').style.display = 'block';
+      el('#app-container').classList.add('loading');
+    }
+
+    function showApp(){
+      el('#message-container').style.display = 'none';
+      el('#app-container').classList.remove('loading');
+    }
+
+    function showSavedTip(message){
+      const tip = el('#autosaveTip');
+      if (!tip) return;
+      tip.textContent = message;
+      clearTimeout(tip._t);
+      tip._t = setTimeout(() => {
+        tip.textContent = '變更會自動儲存至雲端';
+      }, 2000);
+    }
+
+    function defaultRow(){
+      return {
+        product: state.productName || '',
+        population: [],
+        sites: [],
+        method: '',
+        dose_value: '',
+        dose_unit: '泵',
+        freq_value: 1,
+        freq_unit: '次/日',
+        contact: '免水洗(Leave-on)',
+        contact_time_min: '',
+        notes: ''
+      };
+    }
+
+    function debounceSave(){
+      clearTimeout(state.saveTimeout);
+      state.hasUnsavedChanges = true;
+      showStatus('有未儲存的變更，準備同步至雲端...', 'loading');
+      showSavedTip('儲存中...');
+      state.saveTimeout = setTimeout(savePifData, 1200);
+    }
+
+    async function savePifData(){
+      if (!state.user || !state.pifId) {
+        showStatus('尚未登入或缺少 PIF ID，無法儲存。', 'error', 5000);
+        return;
+      }
+      try{
+        showStatus('正在儲存至雲端...', 'loading');
+        const docRef = doc(db, 'pifs', state.pifId);
+        await setDoc(docRef, { pif07_data: state.items }, { merge:true });
+        state.hasUnsavedChanges = false;
+        showSavedTip('已同步至雲端');
+        showStatus('資料已成功儲存！', 'success');
+      }catch(err){
+        console.error(err);
+        showStatus(`儲存失敗: ${err.message}`, 'error', -1);
+        showMessage(`儲存失敗: ${err.message}`);
+      }
+    }
+
+    function updateMultiSummary(detailsEl, values, placeholder){
+      const span = detailsEl.querySelector('.select-summary-values');
+      span.textContent = values.length ? values.join('、') : placeholder;
+    }
+
+    function render(){
+      const container = el('#card-container');
+      container.innerHTML = '';
+      if (!state.items) state.items = [];
+
+      state.items.forEach((row, idx) => {
+        const card = ce('div','usage-card');
+
+        const header = ce('div','usage-card-header');
+        const indexPill = ce('div','index-pill');
+        indexPill.textContent = `項目 ${idx+1}`;
+        header.appendChild(indexPill);
+
+        const delBtn = ce('button','noprint');
+        delBtn.textContent = '刪除';
+        delBtn.onclick = () => {
+          state.items.splice(idx,1);
+          render();
+          debounceSave();
+        };
+        header.appendChild(delBtn);
+        card.appendChild(header);
+
+        // 產品名稱
+        const fgProd = ce('div','field-group');
+        const labProd = ce('label'); labProd.textContent = '產品名稱';
+        const iProd = ce('input');
+        iProd.type = 'text';
+        iProd.value = row.product || state.productName || '';
+        iProd.placeholder = state.productName || '產品名稱';
+        iProd.oninput = () => { row.product = iProd.value; debounceSave(); };
+        fgProd.append(labProd, iProd);
+        card.appendChild(fgProd);
+
+        // 對象 (多選 + 收合)
+        const fgPop = ce('div','field-group');
+        const labPop = ce('label'); labPop.textContent = '對象';
+        const detailsPop = ce('details','select-details');
+        const sumPop = ce('summary');
+        const spanPopLabel = ce('span','select-summary-label');
+        spanPopLabel.textContent = '已選對象：';
+        const spanPopValues = ce('span','select-summary-values');
+        sumPop.append(spanPopLabel, spanPopValues);
+        detailsPop.appendChild(sumPop);
+
+        const selPop = ce('select');
+        selPop.multiple = true; selPop.size = 6;
+        POPS.forEach(p=>{
+          const o = ce('option'); o.value=p; o.textContent=p;
+          if ((row.population||[]).includes(p)) o.selected = true;
+          selPop.appendChild(o);
+        });
+        selPop.onchange = () => {
+          row.population = Array.from(selPop.selectedOptions).map(o=>o.value);
+          updateMultiSummary(detailsPop, row.population, '尚未選擇');
+          debounceSave();
+          detailsPop.open = false;
+        };
+        detailsPop.appendChild(selPop);
+        updateMultiSummary(detailsPop, row.population||[], '尚未選擇');
+        fgPop.append(labPop, detailsPop);
+        card.appendChild(fgPop);
+
+        // 使用部位 (多選 + 收合)
+        const fgSite = ce('div','field-group');
+        const labSite = ce('label'); labSite.textContent = '使用部位';
+        const detailsSite = ce('details','select-details');
+        const sumSite = ce('summary');
+        const spanSiteLabel = ce('span','select-summary-label');
+        spanSiteLabel.textContent = '已選部位：';
+        const spanSiteValues = ce('span','select-summary-values');
+        sumSite.append(spanSiteLabel, spanSiteValues);
+        detailsSite.appendChild(sumSite);
+
+        const selSite = ce('select');
+        selSite.multiple = true; selSite.size = 6;
+        SITES.forEach(s=>{
+          const o = ce('option'); o.value=s; o.textContent=s;
+          if ((row.sites||[]).includes(s)) o.selected = true;
+          selSite.appendChild(o);
+        });
+        selSite.onchange = () => {
+          row.sites = Array.from(selSite.selectedOptions).map(o=>o.value);
+          updateMultiSummary(detailsSite, row.sites, '尚未選擇');
+          debounceSave();
+          detailsSite.open = false;
+        };
+        detailsSite.appendChild(selSite);
+        updateMultiSummary(detailsSite, row.sites||[], '尚未選擇');
+        fgSite.append(labSite, detailsSite);
+        card.appendChild(fgSite);
+
+        // 使用方法
+        const fgMethod = ce('div','field-group');
+        const labMethod = ce('label'); labMethod.textContent = '使用方法';
+        const taMethod = ce('textarea');
+        taMethod.rows = 3;
+        taMethod.value = row.method || '';
+        taMethod.placeholder = '例：潔膚後，取適量塗抹於臉部及頸部肌膚，避開眼周及唇部。';
+        taMethod.oninput = () => { row.method = taMethod.value; debounceSave(); };
+        fgMethod.append(labMethod, taMethod);
+        card.appendChild(fgMethod);
+
+        // 使用量
+        const fgDose = ce('div','field-group');
+        const labDose = ce('label'); labDose.textContent = '使用量';
+        const doseWrap = ce('div','field-inline');
+        const iDoseVal = ce('input');
+        iDoseVal.type='number'; iDoseVal.min='0'; iDoseVal.step='0.1'; iDoseVal.style.width='90px';
+        iDoseVal.value = row.dose_value;
+        iDoseVal.placeholder='數值';
+        iDoseVal.oninput = () => { row.dose_value = iDoseVal.value; debounceSave(); };
+        const selDoseUnit = ce('select');
+        DOSE_UNITS.forEach(u=>{
+          const o = ce('option'); o.value=u; o.textContent=u;
+          if (row.dose_unit === u) o.selected = true;
+          selDoseUnit.appendChild(o);
+        });
+        selDoseUnit.onchange = () => { row.dose_unit = selDoseUnit.value; debounceSave(); };
+        doseWrap.append(iDoseVal, selDoseUnit);
+        fgDose.append(labDose, doseWrap);
+        card.appendChild(fgDose);
+
+        // 頻率
+        const fgFreq = ce('div','field-group');
+        const labFreq = ce('label'); labFreq.textContent = '頻率';
+        const freqWrap = ce('div','field-inline');
+        const iFreqVal = ce('input');
+        iFreqVal.type='number'; iFreqVal.min='0'; iFreqVal.step='1'; iFreqVal.style.width='90px';
+        iFreqVal.value = row.freq_value;
+        iFreqVal.placeholder='數值';
+        const selFreqUnit = ce('select');
+        FREQ_UNITS.forEach(u=>{
+          const o = ce('option'); o.value=u; o.textContent=u;
+          if (row.freq_unit === u) o.selected = true;
+          selFreqUnit.appendChild(o);
+        });
+        const syncFreq = () => { iFreqVal.disabled = selFreqUnit.value === '需要時(PRN)'; };
+        iFreqVal.oninput = () => { row.freq_value = Number(iFreqVal.value || 0); debounceSave(); };
+        selFreqUnit.onchange = () => { row.freq_unit = selFreqUnit.value; syncFreq(); debounceSave(); };
+        syncFreq();
+        freqWrap.append(iFreqVal, selFreqUnit);
+        fgFreq.append(labFreq, freqWrap);
+        card.appendChild(fgFreq);
+
+        // 接觸類型
+        const fgContact = ce('div','field-group');
+        const labContact = ce('label'); labContact.textContent = '接觸類型';
+        const contactWrap = ce('div','field-inline');
+        const selContact = ce('select');
+        CONTACT.forEach(c=>{
+          const o = ce('option'); o.value=c; o.textContent=c;
+          if (row.contact === c) o.selected = true;
+          selContact.appendChild(o);
+        });
+        const iContactTime = ce('input');
+        iContactTime.type='number'; iContactTime.min='0'; iContactTime.step='0.5'; iContactTime.style.width='110px';
+        iContactTime.value = row.contact_time_min;
+        iContactTime.placeholder='時間(分鐘)';
+        selContact.onchange = () => { row.contact = selContact.value; debounceSave(); };
+        iContactTime.oninput = () => { row.contact_time_min = iContactTime.value; debounceSave(); };
+        contactWrap.append(selContact, iContactTime);
+        fgContact.append(labContact, contactWrap);
+        card.appendChild(fgContact);
+
+        // 備註
+        const fgNote = ce('div','field-group');
+        const labNote = ce('label'); labNote.textContent = '備註';
+        const taNotes = ce('textarea');
+        taNotes.rows = 3;
+        taNotes.value = row.notes || '';
+        taNotes.placeholder = '例：避免使用於傷口處。敏感肌膚建議進行貼膚測試。';
+        taNotes.oninput = () => { row.notes = taNotes.value; debounceSave(); };
+        fgNote.append(labNote, taNotes);
+        card.appendChild(fgNote);
+
+        container.appendChild(card);
+      });
+    }
+
+    function loadPifData(pifId){
+      if (state.unsubscribe) state.unsubscribe();
+      const docRef = doc(db, 'pifs', pifId);
+
+      showStatus('正在從雲端讀取資料...', 'loading');
+      state.unsubscribe = onSnapshot(docRef, snap => {
+        if (snap.exists()){
+          const data = snap.data();
+          state.items = data.pif07_data || [defaultRow()];
+
+          if (state.productName){
+            let changed = false;
+            state.items.forEach(r=>{
+              if (!r.product){
+                r.product = state.productName;
+                changed = true;
+              }
+            });
+            if (changed) savePifData();
+          }
+
+          render();
+          showApp();
+          showSavedTip('資料已從雲端同步');
+          state.hasUnsavedChanges = false;
+          showStatus('資料已從雲端同步', 'success');
+        }else{
+          const msg = `錯誤：找不到 PIF 文件 (ID: ${pifId})。`;
+          showMessage(msg);
+          showStatus(msg, 'error', -1);
+        }
+      }, err => {
+        console.error(err);
+        const msg = `讀取資料時發生錯誤: ${err.message}`;
+        showMessage(msg);
+        showStatus(msg, 'error', -1);
+      });
+    }
+
+    
+    // ✅ 安全解碼：避免字串包含 % 造成 decodeURIComponent 例外
+    const safeDecode = (v = "") => {
+      if (v == null) return "";
+      try { return decodeURIComponent(v); } catch (e) { return String(v); }
+    };
+
+onAuthStateChanged(auth, user => {
+      if (user){
+        state.user = user;
+        const urlParams = new URLSearchParams(window.location.search);
+        const pifId = urlParams.get('id');
+        const companyName = safeDecode(urlParams.get('companyName') || '');
+        const productName = safeDecode(urlParams.get('productName') || '');
+        state.productName = productName || '';
+
+        // 列印頂端文字
+        const titleEl = document.getElementById('printTitle');
+        if (titleEl){
+          const raw = document.title || '';
+          const stripped = raw.replace(/^PIF\\s*07\\s*｜\\s*/i,'').trim();
+          titleEl.textContent = `PIF07 ${stripped || '使用方法、部位、用量、頻率及族群'}`;
+        }
+        const pifEl = document.getElementById('printPifId');
+        if (pifEl) pifEl.textContent = pifId || '';
+        const prodEl = document.getElementById('printProductName');
+        if (prodEl) prodEl.textContent = productName || '';
+        const compEl = document.getElementById('printCompanyName');
+        if (compEl) compEl.textContent = companyName || '';
+
+        // 畫面頂端 subtitle 補公司/產品
+        const screenSub = document.getElementById('screen-subtitle');
+        if (screenSub && companyName && productName){
+          screenSub.textContent = `${companyName} - ${productName}｜此處填寫的資料將用於 PIF 最終報告，並會自動儲存至雲端。`;
+        }
+
+        // top-bar 設定
+        const topBar = document.querySelector('top-bar');
+        if (topBar){
+          customElements.whenDefined('top-bar').then(()=>{
+            topBar.setInfo(pifId || '', companyName, productName,
+              'PIF 07 使用方法、部位、用量、頻率及族群');
+            topBar.setUser(user);
+          });
+        }
+
+        document.body.addEventListener('logout-request', () => signOut(auth));
+
+        if (pifId){
+          state.pifId = pifId;
+          loadPifData(pifId);
+        }else{
+          const msg = '錯誤：網址中缺少 PIF ID。請從主頁點擊 PIF 報告進入。';
+          showMessage(msg);
+          showStatus(msg, 'error', -1);
+        }
+      }else{
+        state.user = null;
+        state.pifId = null;
+        state.productName = '';
+        if (state.unsubscribe) state.unsubscribe();
+        state.items = [];
+        render();
+        showMessage('請先登入以編輯 PIF 報告。<br><a href="/login.html">點此登入</a>');
+        showStatus('尚未登入', 'error', -1);
+      }
+    });
+
+    // 其他按鈕
+    el('#btnAdd').addEventListener('click', () => {
+      if (!state.items) state.items = [];
+      state.items.push(defaultRow());
+      render();
+      debounceSave();
+    });
+
+    el('#btnClearAll').addEventListener('click', async () => {
+      if (confirm('您確定要刪除此頁面在雲端的所有資料嗎？此操作無法復原！')){
+        state.items = [defaultRow()];
+        render();
+        await savePifData();
+      }
+    });
+
+    window.addEventListener('beforeunload', (e) => {
+      if (state.hasUnsavedChanges){
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+
+    function makeSummary(){
+      if (!state.items.length){ el('#summary').value=''; return; }
+      const lines = state.items.map((r,i)=>{
+        const prod = r.product ? `《${r.product}》－` : '';
+        const pop = (r.population||[]).length ? r.population.join('、') : '一般使用者';
+        const site = (r.sites||[]).length ? r.sites.join('、') : '指定部位';
+        const dose = (r.dose_value ? r.dose_value : '適量') + (r.dose_unit||'');
+        const freq = (r.freq_unit==='需要時(PRN)') ? '需要時使用'
+                    : `${r.freq_value||1}${r.freq_unit}`;
+        const ct = (r.contact==='水洗式' && r.contact_time_min)
+          ? `, 建議接觸時間 ${r.contact_time_min}分鐘後洗淨` : '';
+        const note = r.notes ? `(${r.notes})` : '';
+        return `${i+1}. ${prod}${pop}－${site}：${r.method||'依產品標示使用'}；每次約 ${dose}，${freq}，${r.contact}${ct}${note}。`;
+      });
+      el('#summary').value = lines.join('\\n');
+    }
+    el('#btnMakeSummary').addEventListener('click', makeSummary);
+
+    function sample(){
+      if (!confirm('您確定要載入範例資料嗎？目前的資料將會被覆寫。')) return;
+      state.items = [
+        {
+          product:'保濕精華液',
+          population:['成人','敏感肌膚'],
+          sites:['臉部全部','頸部'],
+          method:'潔膚及化妝水後，取2泵，避開眼唇周圍，均勻塗抹於全臉及頸部。',
+          dose_value:2,
+          dose_unit:'泵',
+          freq_value:2,
+          freq_unit:'次/日',
+          contact:'免水洗(Leave-on)',
+          contact_time_min:'',
+          notes:'初次使用建議在耳後/手臂內側進行24小時貼膚測試。'
+        },
+        {
+          product:'抗屑洗髮精',
+          population:['一般大眾'],
+          sites:['頭皮','毛髮'],
+          method:'用溫水充分濕潤頭髮後，取約10mL於掌心，搓揉起泡後按摩頭皮60–120秒，再以清水徹底洗淨。',
+          dose_value:10,
+          dose_unit:'mL',
+          freq_value:1,
+          freq_unit:'次/日',
+          contact:'水洗式',
+          contact_time_min:'2',
+          notes:'油性頭皮可視需要增加至每日2次。'
+        }
+      ];
+      render();
+      debounceSave();
+    }
+    el('#btnSample').addEventListener('click', sample);
+
+    function exportJSON(){
+      const blob = new Blob([JSON.stringify(state.items,null,2)],
+                            {type:'application/json;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `pif07_data_${state.pifId || 'export'}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+    el('#btnExportJson').addEventListener('click', exportJSON);
+
+    function exportCSV(){
+      const header = ['產品名稱','對象','使用部位','使用方法',
+                      '使用量數值','使用量單位',
+                      '頻率數值','頻率單位',
+                      '接觸類型','接觸時間(分鐘)','備註'];
+      const rows = state.items.map(r=>[
+        r.product||'',
+        (r.population||[]).join('; '),
+        (r.sites||[]).join('; '),
+        r.method||'',
+        r.dose_value||'',
+        r.dose_unit||'',
+        r.freq_unit==='需要時(PRN)'?'':(r.freq_value||''),
+        r.freq_unit||'',
+        r.contact||'',
+        r.contact_time_min||'',
+        r.notes||''
+      ]);
+      const csvEscape = v => {
+        const s = String(v==null? '' : v);
+        return (s.includes('"') || s.includes(',') || s.includes('\\n') || s.includes('\\r'))
+          ? '"' + s.replace(/"/g,'""') + '"' : s;
+      };
+      const csv = [header,...rows].map(r=>r.map(csvEscape).join(',')).join('\\n');
+      const BOM = new Uint8Array([0xEF,0xBB,0xBF]);
+      const blob = new Blob([BOM,csv],{type:'text/csv;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `pif07_data_${state.pifId || 'export'}.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+    el('#btnExportCsv').addEventListener('click', exportCSV);
+
+    el('#fileJson').addEventListener('change', e => {
+      const f = e.target.files[0];
+      if (!f) return;
+      const fr = new FileReader();
+      fr.onload = () => {
+        try{
+          const arr = JSON.parse(fr.result);
+          if (Array.isArray(arr) &&
+              confirm('您確定要匯入 JSON 檔案嗎？目前的資料將會被覆寫。')){
+            state.items = arr;
+            render();
+            debounceSave();
+          }
+        }catch(err){ alert('JSON 解析失敗: ' + err.message); }
+      };
+      fr.readAsText(f,'utf-8');
+      e.target.value = '';
+    });
+
+    el('#btnPrint').addEventListener('click', () => window.print());
+
+    // PDF 上傳（同 pif10 流程，但路徑 07.pdf）
+    const uploadStatusEl = el('#upload-status-pdf');
+
+    function setUploadStatusPdf(msg, cls){
+      if (!msg || cls === 'none'){
+        uploadStatusEl.style.display = 'none';
+      }else{
+        uploadStatusEl.innerHTML = msg;
+        uploadStatusEl.className = `noprint ${cls}`;
+        uploadStatusEl.style.display = 'block';
+      }
+    }
+
+    function uploadMainPdf(file){
+      if (!state.pifId) return;
+      const btn = el('#btnUploadPdf');
+      const storagePath = `pifs/${state.pifId}/07.pdf`;
+      const task = uploadBytesResumable(ref(storage, storagePath), file);
+      btn.disabled = true;
+      task.on('state_changed',
+        snap => {
+          const progress = snap.bytesTransferred / snap.totalBytes * 100;
+          setUploadStatusPdf(
+            `<i class="fa-solid fa-upload"></i> 正在上傳 PDF... ${Math.round(progress)}%`,
+            'status-info'
+          );
+        },
+        err => {
+          console.error(err);
+          setUploadStatusPdf(
+            `<i class="fa-solid fa-triangle-exclamation"></i> PDF 上傳失敗: ${err.code}`,
+            'status-error'
+          );
+          btn.disabled = false;
+        },
+        () => {
+          setUploadStatusPdf(
+            '<i class="fa-solid fa-check-circle"></i> PDF 已成功上傳！',
+            'status-success'
+          );
+          btn.disabled = false;
+          el('#pdfUploader').value = '';
+          setTimeout(()=>setUploadStatusPdf('', 'none'), 5000);
+        }
+      );
+    }
+
+    function handlePdfUpload(e){
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.type !== 'application/pdf'){
+        alert('請僅上傳 PDF 檔案。');
+        return;
+      }
+      uploadMainPdf(file);
+    }
+
+    el('#btnUploadPdf').addEventListener('click', () => el('#pdfUploader').click());
+    el('#pdfUploader').addEventListener('change', handlePdfUpload);
+  </script>
+</body>
+</html>

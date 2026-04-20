@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PIF 12｜微生物檢測報告</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<style>
+  .container { max-width: 1100px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 1rem; }
+  .card h3 { margin: 0; padding: 1rem 1.1rem; border-bottom: 1px solid var(--line); font-size: 1.05rem; }
+  .card .body { padding: 1rem 1.1rem; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  label { display: block; font-size: .9rem; color: var(--muted); margin-bottom: 4px; }
+  .table { width: 100%; border-collapse: collapse; }
+  .table th, .table td { border-top: 1px solid var(--line); padding: .6rem .5rem; text-align: left; vertical-align: top; }
+  .table th { background: #f8fafc; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: .85rem; }
+  .badge.ok { color: #166534; background: #dcfce7; border: 1px solid #a7f3d0; }
+  .badge.bad { color: #991b1b; background: #fee2e2; border: 1px solid #fecaca; }
+  .footer { padding: .8rem 1.1rem; border-top: 1px dashed var(--line); color: var(--muted); font-size: .9rem; }
+
+  #upload-status-pdf { 
+      display: none; 
+      padding: 0.75rem 1.25rem; 
+      margin-top: 1rem; 
+      border-radius: 8px; 
+      font-weight: 500; 
+      text-align: center; 
+  }
+  .status-info { background-color: #e0e7ff; color: #3730a3; }
+  .status-success { background-color: #dcfce7; color: #166534; }
+  .status-error { background-color: #fee2e2; color: #991b1b; }
+  #upload-status-pdf i { margin-right: 0.5rem; }
+
+  @media print {
+      body { font-size: 9.5px; }
+      .noprint { display: none !important; }
+      .container { max-width: 100%; padding: 0; }
+      .card { border: 1px solid #ccc; padding: 0; break-inside: avoid; }
+      .card h3 { padding: .8rem 1rem; }
+      .card .body { padding: .8rem 1rem; }
+      textarea { border: none !important; background: transparent !important; }
+      #summary-print { display: block !important; white-space: pre-wrap; border: 1px solid #e5e7eb; padding: 8px 10px; }
+      .table thead { display: table-header-group; }
+  }
+</style>
+</head>
+<body>
+
+<pif-nav></pif-nav>
+<top-bar></top-bar>
+
+<div class="container">
+  <status-bar></status-bar>
+
+  <div class="toolbar noprint">
+    <button id="btnSave" class="primary"><i class="fa-solid fa-cloud-arrow-up"></i> 儲存變更</button>
+    <button id="addRow"><i class="fa-solid fa-plus"></i> 新增項目</button>
+    <button id="resetCat2">套用類別2</button>
+    <button id="resetCat1">套用類別1</button>
+    <button id="clearAll">清空結果</button>
+    <div style="flex-grow:1"></div>
+    <button id="btnUploadPdf"><i class="fa-solid fa-file-arrow-up"></i> 上傳本頁 PDF</button>
+    <input type="file" id="pdfUploader" accept="application/pdf" style="display:none;">
+    <button id="btnExportCSV"><i class="fa-solid fa-file-export"></i> 匯出 CSV</button>
+    <button id="btnPrint"><i class="fa-solid fa-print"></i> 列印</button>
+  </div>
+  <div id="upload-status-pdf" class="noprint"></div>
+
+  <div class="card">
+    <h3>基本資訊</h3>
+    <div class="body">
+      <div class="two-col">
+        <div>
+          <label>產品名稱</label>
+          <input id="productName" type="text" placeholder="請輸入產品名稱" readonly>
+        </div>
+        <div>
+          <label>批號 / 樣品編號</label>
+          <input id="lot" type="text" placeholder="請輸入批號或樣品編號">
+        </div>
+        <div>
+          <label>產品類別 (影響允收)</label>
+          <select id="category">
+            <option value="cat2">類別2：一般化粧品</option>
+            <option value="cat1">類別1：眼周/嬰幼兒/黏膜等</option>
+            <option value="custom">自訂</option>
+          </select>
+        </div>
+        <div>
+          <label>檢測實驗室/地點</label>
+          <input id="lab" type="text" placeholder="例如：自有品保實驗室">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+      <h3>檢測條件與結果</h3>
+      <div class="body">
+          <div class="two-col">
+              <div><label>培養條件</label><input id="incub" type="text"></div>
+              <div><label>中和劑/稀釋液</label><input id="neutral" type="text"></div>
+          </div>
+          <div id="itemsHost" style="margin-top:1rem;"></div>
+          <div class="footer">輸入數值可用「0」、「&lt;100」、「不得檢出」、「陰性」等格式；判定將即時更新。</div>
+      </div>
+  </div>
+
+  <div class="card">
+      <h3>摘要與簽核</h3>
+      <div class="body">
+          <label>試驗摘要與判定</label>
+          <textarea id="summary" rows="6" placeholder="摘要將自動帶入每一列的結果與判定，可自行補充敘述"></textarea>
+          <div id="summary-print" class="print-only" style="display:none;"></div>
+          <hr style="border:none; border-top: 1px dashed var(--line); margin: 1rem 0;">
+          <div class="two-col">
+              <div><label>檢測人員 / 日期</label>
+                  <div class="two-col" style="gap:8px"><input id="tester" type="text" placeholder="姓名"><input id="testDate" type="date"></div>
+              </div>
+              <div><label>複核人員 / 日期</label>
+                  <div class="two-col" style="gap:8px"><input id="reviewer" type="text" placeholder="姓名"><input id="reviewDate" type="date"></div>
+              </div>
+          </div>
+      </div>
+  </div>
+</div>
+
+<script type="module">
+import { auth, db, storage } from "./firebase-config.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { ref, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+import "./components.js";
+
+const byId = id => document.getElementById(id);
+const showStatus = (message, type, duration) => customElements.whenDefined('status-bar').then(() => document.querySelector('status-bar').show(message, type, duration));
+
+let pifId, user, pifDocRef, companyName, pifProductName;
+
+const state = {
+  product: { name: "", lot: "", category: 'cat2', lab:"", incub: "TAMC 30–35℃/48–72h；指定菌依選擇性培養條件", neutral: "", testDate: "", reviewDate: "", tester: "", reviewer: "" },
+  items: [],
+  summary: ""
+};
+
+async function initPage() {
+    const params = new URLSearchParams(window.location.search);
+    pifId = params.get("id");
+    companyName = params.get("companyName");
+    pifProductName = params.get("productName");
+
+    onAuthStateChanged(auth, u => {
+        user = u;
+        if (user) {
+            pifDocRef = doc(db, 'pifs', pifId);
+            setupPage();
+            loadData();
+        } else {
+            window.location.href = 'login.html';
+        }
+    });
+}
+
+function setupPage() {
+    if (!pifId) {
+        showStatus("錯誤：URL 中缺少 PIF ID。", "error", -1);
+        document.querySelector('.container').innerHTML = '<p style="text-align:center; padding: 2rem;">無效的連結，請返回主控台重新進入。</p>';
+        return;
+    }
+
+    customElements.whenDefined('top-bar').then(() => {
+        const topBar = document.querySelector('top-bar');
+        topBar.setInfo(pifId, companyName, pifProductName, "12 微生物檢測報告");
+        topBar.setUser(user);
+    });
+    document.body.addEventListener('logout-request', () => auth.signOut());
+    bindEvents();
+}
+
+async function loadData() {
+    showStatus("正在載入資料...", "loading", 0);
+    try {
+        const docSnap = await getDoc(pifDocRef);
+        if (docSnap.exists() && docSnap.data().pif12) {
+            const data = docSnap.data().pif12;
+            Object.assign(state.product, data.product || {});
+            state.items = data.items || [];
+            state.summary = data.summary || "";
+        } 
+        if(state.items.length === 0) {
+            applyCategoryPreset('cat2'); 
+        }
+        state.product.name = pifProductName; 
+        render();
+        showStatus("資料載入完成！", "success");
+    } catch (error) {
+        console.error("Load error:", error);
+        showStatus(`載入失敗: ${error.message}`, "error", -1);
+        if(state.items.length === 0) applyCategoryPreset('cat2');
+        render();
+    }
+}
+
+async function saveData() {
+    showStatus("正在儲存變更...", "loading", 0);
+    byId('btnSave').disabled = true;
+    try {
+        syncStateFromUI();
+        await setDoc(pifDocRef, { 
+            pif12: { product: state.product, items: state.items, summary: state.summary },
+            lastModified: serverTimestamp()
+        }, { merge: true });
+        showStatus("所有變更已成功儲存！", "success");
+    } catch (error) {
+        console.error("Save error:", error);
+        showStatus(`儲存失敗: ${error.message}`, "error", -1);
+    } finally {
+        byId('btnSave').disabled = false;
+    }
+}
+
+function syncStateFromUI() {
+    state.product.name = byId('productName').value;
+    state.product.lot = byId('lot').value;
+    state.product.category = byId('category').value;
+    state.product.lab = byId('lab').value;
+    state.product.incub = byId('incub').value;
+    state.product.neutral = byId('neutral').value;
+    state.product.tester = byId('tester').value;
+    state.product.testDate = byId('testDate').value;
+    state.product.reviewer = byId('reviewer').value;
+    state.product.reviewDate = byId('reviewDate').value;
+    state.summary = byId('summary').value;
+}
+
+function render() {
+    byId('productName').value = pifProductName;
+    byId('lot').value = state.product.lot || "";
+    byId('category').value = state.product.category || "cat2";
+    byId('lab').value = state.product.lab || "";
+    byId('incub').value = state.product.incub || "TAMC 30–35℃/48–72h；指定菌依選擇性培養條件";
+    byId('neutral').value = state.product.neutral || "";
+    byId('tester').value = state.product.tester || "";
+    byId('testDate').value = state.product.testDate || "";
+    byId('reviewer').value = state.product.reviewer || "";
+    byId('reviewDate').value = state.product.reviewDate || "";
+    byId('summary').value = state.summary || "";
+    renderItems();
+}
+
+function renderItems() {
+    const host = byId("itemsHost");
+    host.innerHTML = '<table class="table"><thead><tr><th style="width:30%">檢測項目</th><th style="width:22%">允收/規格</th><th style="width:12%">單位</th><th style="width:16%">結果</th><th style="width:10%">判定</th><th class="noprint" style="width:10%">操作</th></tr></thead><tbody id="rowsBody"></tbody></table>';
+    const tbody = byId('rowsBody');
+    tbody.innerHTML = state.items.map((it, i) => {
+        const isPass = judge(it);
+        return `<tr id="row-${i}">
+            <td><input type="text" value="${it.name || ''}" oninput="onItemChange(${i}, 'name', this.value)"></td>
+            <td><input type="text" value="${it.spec || ''}" oninput="onItemChange(${i}, 'spec', this.value)"></td>
+            <td><input type="text" value="${it.unit || ''}" oninput="onItemChange(${i}, 'unit', this.value)"></td>
+            <td><input type="text" value="${it.value || ''}" oninput="onItemChange(${i}, 'value', this.value)"></td>
+            <td class="judge-cell">${isPass ? '<span class="badge ok">合格</span>' : '<span class="badge bad">不合格</span>'}</td>
+            <td class="noprint"><button onclick="delRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
+        </tr>`;
+    }).join('');
+    updateSummary();
+}
+
+function judge(it) {
+    const specFn = buildSpecFn((it.spec || "").trim());
+    return specFn(it.value);
+}
+
+function buildSpecFn(specText) {
+    if (!specText) return () => true;
+    const raw = specText.trim();
+    if (/(不得檢出|陰性|未檢出|ABSENT|NEGATIVE|=0)/i.test(raw)) {
+        return (v) => {
+            const txt = String(v || "").toUpperCase();
+            if (/(不得檢出|陰性|未檢出|ABSENT|NEGATIVE)/.test(txt)) return true;
+            const n = num(v);
+            return n !== null ? n === 0 : false;
+        };
+    }
+    const m = raw.replace(/\s+/g, '').match(/^(≤|<|=|≥|>)\s*(\d+(?:\.\d+)?)/i);
+    if (m) {
+        const op = m[1];
+        const lim = Number(m[2]);
+        return (v) => {
+            const n = num(v);
+            if (n === null) return false;
+            if (op === '≤') return n <= lim;
+            if (op === '<') return n < lim;
+            if (op === '=') return n === lim;
+            if (op === '≥') return n >= lim;
+            if (op === '>') return n > lim;
+            return false;
+        };
+    }
+    return () => true;
+}
+
+function num(v) {
+    if (v === null || v === undefined) return null;
+    let t = String(v).trim().replace(/[，,]/g, '').replace(/[<=>＝≤≥]/g, '').replace(/[^0-9.\-]/g, '').trim();
+    if (t === '') return null;
+    const n = Number(t);
+    return Number.isFinite(n) ? n : null;
+}
+
+function updateRow(i) {
+    const row = byId(`row-${i}`);
+    if (!row) return;
+    const it = state.items[i];
+    const isPass = judge(it);
+    const cell = row.querySelector('.judge-cell');
+    if (cell) {
+        cell.innerHTML = isPass ? '<span class="badge ok">合格</span>' : '<span class="badge bad">不合格</span>';
+    }
+}
+
+function updateSummary() {
+    syncStateFromUI();
+    const lines = state.items.map(it => `• ${it.name}：結果「${it.value || '—'}」，允收「${it.spec || '—'}」，判定${judge(it) ? '合格' : '不合格'}`);
+    const txt = lines.join("\n");
+    byId('summary').value = txt;
+    byId('summary-print').textContent = txt;
+    state.summary = txt;
+}
+
+window.onItemChange = (i, key, value) => {
+    if (state.items[i]) {
+        state.items[i][key] = value;
+        updateRow(i);
+        updateSummary();
+    }
+};
+
+window.delRow = (i) => {
+    state.items.splice(i, 1);
+    renderItems();
+};
+
+function addRow() {
+    state.items.push({ name: "", spec: "", unit: "", value: "" });
+    renderItems();
+}
+
+function clearAll() {
+    state.items.forEach(it => it.value = "");
+    renderItems();
+}
+
+function applyCategoryPreset(cat) {
+    const template = [
+        { name: "總生菌數 (TAMC)", spec: (cat === 'cat1') ? "≤ 100" : "≤ 1000", unit: "cfu/g", value: "" },
+        { name: "金黃色葡萄球菌 (S. aureus)", spec: "不得檢出", unit: "—", value: "陰性" },
+        { name: "綠膿桿菌 (P. aeruginosa)", spec: "不得檢出", unit: "—", value: "陰性" },
+        { name: "大腸桿菌 (E. coli)", spec: "不得檢出", unit: "—", value: "陰性" },
+        { name: "白色念珠菌 (C. albicans)", spec: "不得檢出", unit: "—", value: "陰性" }
+    ];
+    if (state.items.length === 0) {
+        state.items = template;
+    } else {
+        state.items.forEach(it => {
+            const match = template.find(t => t.name === it.name);
+            if (match) it.spec = match.spec;
+        });
+    }
+    state.product.category = cat;
+    byId('category').value = cat;
+    renderItems();
+}
+
+function exportCSV() {
+    syncStateFromUI();
+    const rows = [['檢測項目', '允收/規格', '單位', '結果', '判定']];
+    state.items.forEach(it => rows.push([it.name || '', it.spec || '', it.unit || '', it.value || '', judge(it) ? '合格' : '不合格']));
+    const csv = rows.map(r => r.map(x => '"' + String(x).replace(/"/g, '""') + '"').join(',')).join('\n');
+    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `pif12_微生物報告_${pifId}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+function printPage(){
+    syncStateFromUI();
+    byId('summary-print').textContent = byId('summary').value;
+    window.print();
+}
+
+function handlePdfUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+        showStatus("請僅上傳 PDF 檔案。", "warning");
+        return;
+    }
+    uploadMainPdf(file, `pifs/${pifId}/12.pdf`);
+}
+
+function uploadMainPdf(file, storagePath) {
+    const uploadTask = uploadBytesResumable(ref(storage, storagePath), file);
+    const button = byId('btnUploadPdf');
+    button.disabled = true;
+
+    uploadTask.on('state_changed', 
+        (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            setUploadStatusPdf(`<i class="fa-solid fa-upload"></i> 正在上傳 PDF... ${Math.round(progress)}%`, 'status-info');
+        }, 
+        (error) => {
+            console.error("Main PDF Upload failed:", error);
+            setUploadStatusPdf(`<i class="fa-solid fa-triangle-exclamation"></i> PDF 上傳失敗: ${error.code}`, 'status-error');
+            button.disabled = false;
+        }, 
+        () => {
+            setUploadStatusPdf('<i class="fa-solid fa-check-circle"></i> PDF 已成功上傳！儀表板狀態將會更新。', 'status-success');
+            button.disabled = false;
+            byId('pdfUploader').value = '';
+            setTimeout(() => setUploadStatusPdf('', 'none'), 5000);
+        }
+    );
+}
+
+function setUploadStatusPdf(msg, styleClass) {
+    const statusEl = byId('upload-status-pdf');
+    if (!msg || styleClass === 'none') {
+        statusEl.style.display = 'none';
+    } else {
+        statusEl.innerHTML = msg;
+        statusEl.className = `noprint ${styleClass}`;
+        statusEl.style.display = 'block';
+    }
+}
+
+function bindEvents() {
+    byId('btnSave').addEventListener('click', saveData);
+    byId('addRow').addEventListener('click', addRow);
+    byId('resetCat1').addEventListener('click', () => applyCategoryPreset('cat1'));
+    byId('resetCat2').addEventListener('click', () => applyCategoryPreset('cat2'));
+    byId('category').addEventListener('change', (e) => applyCategoryPreset(e.target.value));
+    byId('clearAll').addEventListener('click', clearAll);
+    byId('btnExportCSV').addEventListener('click', exportCSV);
+    byId('btnPrint').addEventListener('click', printPage);
+    
+    byId('btnUploadPdf').addEventListener('click', () => byId('pdfUploader').click());
+    byId('pdfUploader').addEventListener('change', handlePdfUpload);
+}
+
+initPage();
+</script>
+</body>
+</html>

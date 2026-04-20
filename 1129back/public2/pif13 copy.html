@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+    <html lang="zh-Hant">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>13 防腐效能試驗報告</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+      <link rel="stylesheet" href="style.css">
+      <style>
+        :root{ --line:#e5e7eb; --ink:#111827; --muted:#6b7280; --brand:#2563eb; --soft:#f8fafc; }
+        *{box-sizing:border-box}
+        body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans TC",Arial; color:var(--ink); margin:0; background:#f9fafb;}
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px;}
+        h1,h2,h3{ margin: 0; font-weight: 600;}
+        h1{ font-size:22px; margin-bottom: 10px;}
+        h2{font-size:18px; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--line);}
+        h3{ font-size: 16px; margin-bottom: 12px;}
+        .toolbar{position:sticky; top:80px; z-index: 10; background:#ffffffcc; backdrop-filter: blur(8px); border:1px solid var(--line); padding:8px; border-radius:10px; display:flex; gap:8px; margin-bottom:12px; flex-wrap: wrap;}
+        .toolbar button{padding:8px 12px; border:1px solid var(--line); background:#fff; border-radius:8px; cursor:pointer; font-size: 14px; display: inline-flex; align-items: center; gap: 6px;}
+        .toolbar button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .toolbar .primary{background:var(--brand); color:#fff; border-color:var(--brand)}
+        .card{border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; background: #fff;}
+        .grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:12px;}
+        .grid .field { display: flex; flex-direction: column; }
+        label{margin-bottom: 4px; color:var(--muted); font-size: 14px;}
+        input,select,textarea{width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:8px; font-size:14px;}
+        input[readonly], input:disabled, select:disabled, textarea:disabled { background: #f3f4f6; color: #6b7280; cursor: not-allowed;}
+        table{width:100%; border-collapse:collapse; margin-top:8px;}
+        th,td{border:1px solid var(--line); padding:6px 8px; text-align:center; vertical-align:middle; overflow:visible}
+        th{background:var(--soft)}
+        td.left{text-align:left}
+        .small{font-size:12px; color:var(--muted)}
+        .good{color:#065f46; background:#ecfdf5; border:1px solid #d1fae5; padding:4px 8px; border-radius:8px; display:inline-block}
+        .bad{color:#7f1d1d; background:#fef2f2; border:1px solid #fee2e2; padding:4px 8px; border-radius:8px; display:inline-block}
+        
+        /* Attachment Styles */
+        #attachmentsList { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;}
+        .attachment-card { border: 1px solid var(--line); border-radius: 8px; background-color: white; overflow: hidden;}
+        .attachment-card .preview-box { height: 180px; background: #f0f0f0; display:flex; align-items:center; justify-content:center; text-align:center; color: var(--muted); position: relative;}
+        .attachment-card .preview-box img { width: 100%; height: 100%; object-fit: cover; }
+        .attachment-card .pdf-placeholder { font-size: 2rem; color: #e53e3e; text-decoration: none; display: flex; flex-direction: column; gap: 8px;}
+        .attachment-card .details { padding: 12px; }
+        .attachment-card .details input, .attachment-card .details textarea { margin-bottom: 8px; }
+        .attachment-card .footer { padding: 8px 12px; background: var(--soft); display:flex; justify-content:space-between; align-items:center; font-size: 12px;}
+        .attachment-card .filename { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 10px;}
+
+        /* PDF Upload */
+        #pdfUploadStatus { margin-top: 10px; font-size: 14px; }
+        .progress-bar { width: 100%; background-color: #e0e0e0; border-radius: 4px; overflow: hidden; height: 8px; margin-top: 4px; }
+        .progress-bar-fill { height: 100%; width: 0; background-color: #4caf50; transition: width 0.3s; }
+
+        @media print{
+          .noprint{display:none !important}
+        }
+      </style>
+    </head>
+    <body>
+      <pif-nav></pif-nav>
+      <top-bar>
+        <div slot="actions">
+            <button id="btnSave" class="primary"><i class="fa-solid fa-cloud-arrow-up"></i> 儲存至雲端</button>
+            <button id="btnUploadPdf"><i class="fa-solid fa-file-pdf"></i> 上傳本頁 PDF</button>
+            <input type="file" id="pdfFilePicker" accept=".pdf" style="display: none;">
+            <button onclick="window.print()"><i class="fa-solid fa-print"></i> 列印 / PDF</button>
+        </div>
+      </top-bar>
+
+      <div class="container">
+        <status-bar></status-bar>
+
+        <div class="card">
+          <h1>13 防腐效能試驗報告</h1>
+          <div id="pdfUploadStatus" class="noprint"></div>
+          <div class="grid">
+            <div class="field"><label>PIF 編號</label><input id="pifId" readonly></div>
+            <div class="field"><label>廠商名稱</label><input id="companyName" readonly></div>
+            <div class="field"><label>產品名稱</label><input id="productName" readonly></div>
+            <div class="field"><label>報告編號</label><input id="reportNo" placeholder="例：PIF-13-2025-001"></div>
+            <div class="field"><label>參考標準</label>
+              <select id="standard">
+                <option value="ISO11930A">ISO 11930 Criteria A（預設）</option>
+                <option value="EP_A">Ph. Eur. Criteria A</option>
+                <option value="USP51">USP &lt;51&gt;</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>微生物挑戰測試結果</h2>
+          <div style="overflow-x: auto;">
+            <table id="tbl">
+              <thead>
+                <tr>
+                  <th style="width:28%">微生物</th> <th>類型</th> <th>0d (t0)</th> <th>7d</th> <th>&Delta;(7d)</th> <th>14d</th> <th>&Delta;(14d)</th> <th>28d</th> <th>&Delta;(28d)</th> <th>判定</th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+          <div class="small" id="criteriaHint" style="margin-top: 8px;"></div>
+        </div>
+
+        <div class="card">
+          <h2>人員資料</h2>
+          <div class="grid">
+            <div class="field"><label>檢測人員</label><input id="tester" placeholder="姓名"></div>
+            <div class="field"><label>檢測日期</label><input id="testDate" type="date"></div>
+            <div class="field"><label>複核人員</label><input id="reviewer" placeholder="姓名"></div>
+            <div class="field"><label>複核日期</label><input id="reviewDate" type="date"></div>
+          </div>
+        </div>
+
+        <div class="card noprint">
+            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h2>附件</h2>
+                <button id="btnAddAttachment" class="primary"><i class="fa-solid fa-plus"></i> 新增附件</button>
+            </div>
+            <div id="attachmentsList"></div>
+        </div>
+    </div>
+
+      <script type="module">
+        import { auth, db, storage } from "./firebase-config.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+        import "./components.js";
+
+        const byId = id => document.getElementById(id);
+        const showStatus = (message, type, duration) => customElements.whenDefined('status-bar').then(() => document.querySelector('status-bar').show(message, type, duration));
+        
+        let pifId, user, pif_docRef, companyName, productName, pdfSummaryUrl;
+        let initialAttachments = [];
+        let hasPermission = false;
+
+        const PRESETS = {
+          ISO11930A:{ label:'ISO 11930 Criteria A', bacteria:{'7d':3, '14d':'NI', '28d':'NI'}, yeast:{'7d':1, '14d':'NI', '28d':'NI'}, mold:{'7d':1, '14d':'NI', '28d':'NI'} },
+          EP_A:{ label:'Ph. Eur. Criteria A', bacteria:{'7d':2, '14d':3, '28d':'NI14'}, yeast:{'14d':2, '28d':'NI14'}, mold:{'14d':2, '28d':'NI14'} },
+          USP51:{ label:'USP <51>', bacteria:{'14d':3, '28d':5 }, yeast:{'14d':1, '28d':3 }, mold:{'14d':1, '28d':3 } }
+        };
+
+        let organisms = [], attachments = [];
+
+        function initPage() {
+            const params = new URLSearchParams(window.location.search);
+            pifId = params.get("id");
+            companyName = params.get("companyName");
+            productName = params.get("productName");
+
+            if (!pifId) {
+                showStatus("錯誤：URL 中缺少 PIF ID。", "error", -1);
+                document.querySelector('.container').innerHTML = '<p class="muted" style="text-align: center; padding: 2rem;">無效的連結。</p>';
+                return;
+            }
+            
+            const topBar = document.querySelector('top-bar');
+            customElements.whenDefined('top-bar').then(()=> {
+                topBar.setInfo(pifId, companyName, productName, "13 防腐效能試驗報告");
+            });
+
+            onAuthStateChanged(auth, async u => {
+                user = u;
+                if (user) {
+                    const tokenResult = await user.getIdTokenResult();
+                    user.claims = tokenResult.claims;
+                    customElements.whenDefined('top-bar').then(() => {
+                        document.querySelector('top-bar').setUser(user);
+                    });
+                    pif_docRef = doc(db, 'pifs', pifId);
+                    loadData();
+                } else {
+                    window.location.href = '/';
+                }
+            });
+
+            document.body.addEventListener('logout-request', () => {
+                auth.signOut().then(() => {
+                    window.location.href = '/';
+                });
+            });
+
+            byId('btnSave').addEventListener('click', saveData);
+            byId('btnAddAttachment').addEventListener('click', addAttachment);
+            byId('btnUploadPdf').addEventListener('click', () => byId('pdfFilePicker').click());
+            byId('pdfFilePicker').addEventListener('change', uploadPifPdf);
+        }
+
+        async function loadData() {
+            showStatus("正在從雲端載入資料...", "loading", 0);
+            try {
+                const pif_snap = await getDoc(pif_docRef);
+                const pifData = pif_snap.exists() ? pif_snap.data() : null;
+
+                if (!pifData) {
+                    throw new Error("找不到對應的 PIF 文件。");
+                }
+
+                hasPermission = checkPermissions(pifData, user);
+                if (!hasPermission) {
+                    setReadOnlyMode();
+                }
+
+                const cloudData = pifData.pif13;
+
+                if (cloudData) {
+                    updateUI(cloudData);
+                    organisms = JSON.parse(JSON.stringify(cloudData.organisms || createDefaultOrganisms()));
+                    attachments = (cloudData.attachments || []).map(att => ({ ...att, id: crypto.randomUUID() }));
+                    initialAttachments = JSON.parse(JSON.stringify(attachments)); 
+                    pdfSummaryUrl = cloudData.pdfSummaryUrl;
+                    showStatus(hasPermission ? "成功從雲端載入資料。" : "唯讀模式：您沒有此文件的編輯權限。", hasPermission ? "success" : "info", hasPermission ? 3000 : -1);
+                } else {
+                    const year = new Date().getFullYear();
+                    const randomNum = Math.floor(1000 + Math.random() * 9000);
+                    updateUI({ pifId, companyName, productName, reportNo: `PIF-13-${year}-${randomNum}` });
+                    organisms = createDefaultOrganisms();
+                    showStatus("這是一份新文件，尚未儲存。", "info");
+                }
+                buildTable();
+                renderAttachments();
+            } catch (error) {
+                console.error("Load Data Error:", error);
+                showStatus(`載入資料時發生錯誤: ${error.message}`, "error", -1);
+            }
+        }
+
+        async function saveData() {
+            if (!hasPermission) {
+                showStatus("您沒有權限儲存變更。", "error");
+                return;
+            }
+
+            const btnSave = byId('btnSave');
+            showStatus("正在儲存變更至雲端...", "loading", 0);
+            btnSave.disabled = true;
+
+            const deletedAttachments = initialAttachments.filter(initial => !attachments.some(current => current.id === initial.id));
+            for (const att of deletedAttachments) {
+                if (att.storagePath) {
+                    try {
+                        await deleteObject(ref(storage, att.storagePath));
+                    } catch (error) {
+                        console.error("Failed to delete file from storage:", error);
+                    }
+                }
+            }
+
+            const dataToSave = {
+                pifId, companyName, productName,
+                reportNo: byId('reportNo').value, standard: byId('standard').value,
+                tester: byId('tester').value, testDate: byId('testDate').value,
+                reviewer: byId('reviewer').value, reviewDate: byId('reviewDate').value,
+                organisms: organisms,
+                attachments: attachments.map(({ id, ...rest }) => rest),
+                pdfSummaryUrl: pdfSummaryUrl || null,
+            };
+
+            try {
+                await setDoc(pif_docRef, { pif13: dataToSave, lastModified: serverTimestamp() }, { merge: true });
+                initialAttachments = JSON.parse(JSON.stringify(attachments));
+                showStatus("所有變更已成功儲存！", "success");
+            } catch (error) {
+                console.error("Save Data Error:", error);
+                showStatus(`儲存失敗: ${error.message}`, "error", -1);
+            } finally {
+                btnSave.disabled = false;
+            }
+        }
+
+        function checkPermissions(pifData, user) {
+            if (user.claims && user.claims.admin === true) return true;
+            if (pifData && pifData.owner === user.uid) return true;
+            if (pifData && Array.isArray(pifData.editors) && pifData.editors.includes(user.email)) return true;
+            return false;
+        }
+
+        function setReadOnlyMode() {
+            document.querySelectorAll('input, select, textarea').forEach(el => {
+                if (!el.readOnly) { 
+                   el.disabled = true;
+                }
+            });
+            byId('btnSave').style.display = 'none';
+            byId('btnAddAttachment').style.display = 'none';
+            byId('btnUploadPdf').style.display = 'none';
+        }
+
+        function createDefaultOrganisms(){
+            return [
+                {name:'Staphylococcus aureus (ATCC 6538)', type:'bacteria', counts:{}},
+                {name:'Escherichia coli (ATCC 8739)', type:'bacteria', counts:{}},
+                {name:'Pseudomonas aeruginosa (ATCC 9027)', type:'bacteria', counts:{}},
+                {name:'Candida albicans (ATCC 10231)', type:'yeast', counts:{}},
+                {name:'Aspergillus brasiliensis (ATCC 16404)', type:'mold', counts:{}}
+            ];
+        }
+
+        function updateUI(data) {
+            if (!data) return;
+            byId('pifId').value = data.pifId || '';
+            byId('companyName').value = data.companyName || '';
+            byId('productName').value = data.productName || '';
+            byId('reportNo').value = data.reportNo || '';
+            byId('standard').value = data.standard || 'ISO11930A';
+            byId('tester').value = data.tester || '';
+            byId('testDate').value = data.testDate || '';
+            byId('reviewer').value = data.reviewer || '';
+            byId('reviewDate').value = data.reviewDate || '';
+            
+            pdfSummaryUrl = data.pdfSummaryUrl;
+            updatePdfUploadStatus();
+        }
+
+        function buildTable(){
+          const tb = byId('tbody');
+          tb.innerHTML='';
+          organisms.forEach((o,idx)=>{
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="left">${o.name}</td>
+                <td>${o.type === 'bacteria' ? '細菌' : o.type === 'yeast' ? '酵母' : '黴菌'}</td>
+                <td><input type="number" step="0.01" style="width:6em" data-idx="${idx}" data-tp="0d" value="${o.counts['0d'] || ''}"></td>
+                <td><input type="number" step="0.01" style="width:6em" data-idx="${idx}" data-tp="7d" value="${o.counts['7d'] || ''}"></td>
+                <td id="delta_${idx}_7d">—</td>
+                <td><input type="number" step="0.01" style="width:6em" data-idx="${idx}" data-tp="14d" value="${o.counts['14d'] || ''}"></td>
+                <td id="delta_${idx}_14d">—</td>
+                <td><input type="number" step="0.01" style="width:6em" data-idx="${idx}" data-tp="28d" value="${o.counts['28d'] || ''}"></td>
+                <td id="delta_${idx}_28d">—</td>
+                <td id="judge_${idx}">—</td>
+            `;
+            tb.appendChild(tr);
+          });
+          
+          tb.addEventListener('input', e => {
+              if(e.target.matches('input[type="number"]')){
+                  const {idx, tp} = e.target.dataset;
+                  const value = e.target.value;
+                  organisms[idx].counts[tp] = value === '' ? null : Number(value);
+                  recalcRow(idx);
+              }
+          });
+
+          byId('standard').addEventListener('change', () => {
+            organisms.forEach((_,i)=>recalcRow(i));
+            updateCriteriaHint();
+          });
+
+          updateCriteriaHint();
+          organisms.forEach((_,i)=>recalcRow(i));
+        }
+
+        function recalcRow(idx){
+          const o = organisms[idx];
+          const t0 = o.counts['0d'];
+          const judgeCell = byId(`judge_${idx}`);
+          const std = byId('standard').value;
+          const rules = PRESETS[std][o.type] || {};
+          let pass = true, why=[];
+
+          ['7d','14d','28d'].forEach(tp => {
+            const cell = byId(`delta_${idx}_${tp}`);
+            if(!cell) return;
+            if(t0==null || o.counts[tp]==null) { cell.textContent='—'; return; }
+            cell.textContent = (t0 - o.counts[tp]).toFixed(2);
+          });
+
+          if(t0==null || isNaN(t0)){ pass=false; why.push('缺t0'); }
+          else {
+             for(const k of ['7d','14d','28d']){
+                if(!rules[k]) continue;
+                const rule = rules[k], v = o.counts[k], d = t0 - v;
+                if(typeof rule === 'number' && (v == null || d < rule)) { pass=false; why.push(`${k} Δlog < ${rule}`); }
+             }
+             if((rules['14d']==='NI' && o.counts['14d'] > o.counts['7d']) || (rules['28d']==='NI' && o.counts['28d'] > o.counts['14d'])) { pass=false; why.push('計數上升');}
+             if(rules['28d']==='NI14' && o.counts['28d'] > o.counts['14d']) { pass=false; why.push('28d>14d');}
+          }
+          judgeCell.innerHTML = pass ? '<span class="good">通過</span>' : `<span class="bad">不通過</span><div class="small">${why.join(';')}</div>`;
+        }
+
+        function updateCriteriaHint(){
+          const p = PRESETS[byId('standard').value];
+          byId('criteriaHint').textContent = `標準: ${p.label} | 細菌: ${JSON.stringify(p.bacteria)} | 酵母/黴菌: ${JSON.stringify(p.yeast)}`;
+        }
+
+        // --- PDF Summary Upload ---
+        function uploadPifPdf(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const storagePath = `pifs/${pifId}/pif13_summary.pdf`;
+            const storageRef = ref(storage, storagePath);
+            const uploadTask = uploadBytesResumable(storageRef, file);
+            const statusDiv = byId('pdfUploadStatus');
+
+            statusDiv.innerHTML = `
+                <span>PDF 上傳中...</span>
+                <div class="progress-bar"><div class="progress-bar-fill"></div></div>
+                <span id="uploadPercentage">0%</span>
+            `;
+
+            uploadTask.on('state_changed', 
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    statusDiv.querySelector('.progress-bar-fill').style.width = progress + '%';
+                    statusDiv.querySelector('#uploadPercentage').textContent = Math.round(progress) + '%';
+                }, 
+                (error) => {
+                    console.error("Upload failed:", error);
+                    showStatus('PDF 上傳失敗', 'error');
+                    statusDiv.innerHTML = `<span class="bad">上傳失敗</span>`;
+                }, 
+                async () => {
+                    pdfSummaryUrl = await getDownloadURL(uploadTask.snapshot.ref);
+                    updatePdfUploadStatus();
+                    showStatus('PDF 上傳成功！請記得儲存變更。', 'success');
+                    await saveData(); // Automatically save after upload
+                }
+            );
+        }
+
+        function updatePdfUploadStatus() {
+            const statusDiv = byId('pdfUploadStatus');
+            if (pdfSummaryUrl) {
+                statusDiv.innerHTML = `
+                    <span class="good">PDF 已上傳</span> 
+                    <a href="${pdfSummaryUrl}" target="_blank">預覽 <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                `;
+            } else {
+                statusDiv.innerHTML = '';
+            }
+        }
+
+        // --- Attachments --- 
+        function renderAttachments(){
+            const listEl = byId('attachmentsList');
+            listEl.innerHTML = '';
+            attachments.forEach(att => {
+                const card = document.createElement('div');
+                card.className = 'attachment-card';
+                card.dataset.id = att.id;
+                card.innerHTML = `
+                    <div class="preview-box"></div>
+                    <div class="details">
+                        <input type="text" placeholder="附件標題" class="title-input" value="${att.title || ''}">
+                        <textarea placeholder="備註" rows="2" class="notes-input">${att.notes || ''}</textarea>
+                        <label class="primary upload-label" style="cursor:pointer; text-align:center; padding: 8px; border-radius: 6px; display: block;"><i class="fa-solid fa-upload"></i> 上傳/更換檔案<input type="file" hidden class="file-input" accept="image/*,.pdf"></label>
+                    </div>
+                    <div class="footer">
+                        <span class="filename"></span>
+                        <button class="danger small delete-btn"><i class="fa-solid fa-trash"></i> 刪除</button>
+                    </div>
+                `;
+                listEl.appendChild(card);
+                renderPreview(card, att);
+
+                card.querySelector('.title-input').addEventListener('input', (e) => findAttachment(att.id).title = e.target.value);
+                card.querySelector('.notes-input').addEventListener('input', (e) => findAttachment(att.id).notes = e.target.value);
+                card.querySelector('.file-input').addEventListener('change', (e) => handleFileUpload(e, att.id));
+                card.querySelector('.delete-btn').addEventListener('click', () => deleteAttachment(att.id));
+            });
+            if (!hasPermission) {
+                document.querySelectorAll('.delete-btn, .upload-label').forEach(el => el.style.display = 'none');
+            }
+        }
+
+        function addAttachment(){
+            if (!hasPermission) return;
+            const newAtt = { id: crypto.randomUUID(), title: '新附件', notes: '' };
+            attachments.unshift(newAtt);
+            renderAttachments();
+        }
+
+        async function handleFileUpload(event, id) {
+            if (!hasPermission) return;
+            const file = event.target.files[0];
+            if (!file) return;
+            const card = byId('attachmentsList').querySelector(`[data-id="${id}"]`);
+            const previewBox = card.querySelector('.preview-box');
+            previewBox.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 上傳中...`;
+
+            const filePath = `pifs/${pifId}/pif13/${id}-${file.name.replace(/[^a-zA-Z0-9_.-]/g, '_')}`.replace(/ /g, '_');
+            try {
+                const uploadResult = await uploadBytes(ref(storage, filePath), file);
+                const downloadURL = await getDownloadURL(uploadResult.ref);
+                const att = findAttachment(id);
+                Object.assign(att, { storagePath: filePath, downloadURL, filename: file.name, fileKind: file.type.startsWith('image/') ? 'image' : 'pdf' });
+                renderPreview(card, att);
+            } catch (error) {
+                previewBox.textContent = '上傳失敗';
+                showStatus('檔案上傳失敗', 'error');
+                console.error("Upload failed", error);
+            }
+        }
+
+        function renderPreview(card, att) {
+            const previewBox = card.querySelector('.preview-box');
+            const filenameEl = card.querySelector('.filename');
+            if (att.downloadURL) {
+                previewBox.innerHTML = att.fileKind === 'image' ? 
+                    `<a href="${att.downloadURL}" target="_blank"><img src="${att.downloadURL}"></a>` :
+                    `<a href="${att.downloadURL}" target="_blank" class="pdf-placeholder"><i class="fa-solid fa-file-pdf"></i><span>PDF 文件</span></a>`;
+            } else {
+                previewBox.textContent = '待上傳';
+            }
+            filenameEl.textContent = att.filename || '';
+        }
+
+        function deleteAttachment(id) {
+            if (!hasPermission) return;
+            if (!confirm('確定要刪除這個附件嗎？')) return;
+            attachments = attachments.filter(a => a.id !== id);
+            renderAttachments();
+        }
+        
+        const findAttachment = (id) => attachments.find(a => a.id === id);
+
+        initPage();
+      </script>
+    </body>
+    </html>

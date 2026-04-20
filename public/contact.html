@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>聯絡我們 - CosPIF 智能合規系統</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    /* 參考 price-eva 的卡片與雙欄設計語言 :contentReference[oaicite:3]{index=3} */
+    .contact-container{
+      min-height: calc(100vh - 140px);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 2rem 1rem;
+    }
+    .contact-card{
+      max-width: 960px;
+      width: 100%;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.15);
+      padding: 2rem 2.5rem;
+    }
+    .contact-title{
+      font-size: 1.6rem;
+      margin-bottom: .5rem;
+      display:flex;
+      align-items:center;
+      gap: .6rem;
+    }
+    .contact-subtitle{
+      color:#6b7280;
+      font-size:.95rem;
+      margin-bottom:1.5rem;
+    }
+    .contact-grid{
+      display:grid;
+      grid-template-columns: minmax(0,1.1fr) minmax(0,1fr);
+      gap: 1.75rem;
+    }
+    @media (max-width:768px){
+      .contact-card{ padding: 1.5rem 1.25rem; }
+      .contact-grid{ grid-template-columns: 1fr; }
+    }
+
+    .panel{
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      background: #f9fafb;
+      text-align:left;
+    }
+    .panel h3{
+      font-size: 1.05rem;
+      margin-bottom: .75rem;
+    }
+
+    .form-row{ margin-bottom: 1rem; }
+    .form-row label{
+      display:block;
+      font-size:.9rem;
+      margin-bottom:.35rem;
+      color:#374151;
+    }
+    .form-row input[type="text"],
+    .form-row input[type="tel"],
+    .form-row input[type="email"],
+    .form-row select{
+      width:100%;
+      padding:.5rem .6rem;
+      border-radius:8px;
+      border:1px solid #d1d5db;
+      font-size:.95rem;
+      background:#fff;
+    }
+    .form-row textarea{
+      width:100%;
+      padding:.55rem .6rem;
+      border-radius:8px;
+      border:1px solid #d1d5db;
+      font-size:.95rem;
+      background:#fff;
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .hint{
+      font-size:.82rem;
+      color:#6b7280;
+      margin-top:.25rem;
+    }
+
+    .btn-submit{
+      margin-top: .25rem;
+      margin-right: .5rem;
+      padding: .6rem 1.3rem;
+      border-radius: 999px;
+      border: none;
+      background: #ec4899;
+      color:#fff;
+      font-size:.9rem;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:.4rem;
+    }
+    .btn-submit:hover{ background:#db2777; }
+    .btn-submit:disabled{
+      background:#f9a8d4;
+      cursor:not-allowed;
+    }
+
+    .btn-ghost{
+      margin-top: .25rem;
+      padding: .55rem 1.1rem;
+      border-radius: 999px;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      font-size: .85rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+    }
+    .btn-ghost:hover{ background:#f3f4f6; }
+
+    .status-badge{
+      padding:.3rem .8rem;
+      border-radius:999px;
+      font-weight:600;
+      font-size:.9rem;
+      display:inline-flex;
+      align-items:center;
+      gap:.5rem;
+    }
+    .status-badge.new{ background:#feefc3; color:#7a5f02; }
+    .status-badge.in_progress{ background:#dbeafe; color:#1e40af; }
+    .status-badge.closed{ background:#dcfce7; color:#166534; }
+    .status-table{
+      width:100%;
+      border-collapse: collapse;
+      font-size:.9rem;
+    }
+    .status-table th,
+    .status-table td{
+      padding:.45rem 0;
+      border-bottom:1px dashed #e5e7eb;
+      text-align:left;
+      vertical-align: top;
+    }
+    .status-table th{
+      width: 120px;
+      color:#6b7280;
+      font-weight:500;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container">
+      <nav>
+        <a href="index.html" class="logo"><i class="fa-solid fa-shield-halved"></i> CosPIF</a>
+        <ul class="nav-links">
+          <li><a href="index.html#features">核心功能</a></li>
+          <li><a href="index.html#about">關於我們</a></li>
+          <li><a href="price-eva.html">功效評估價格</a></li>
+          <li><a href="contact.html">聯絡我們</a></li>
+        </ul>
+        <a href="login.html" class="btn-login">登入系統</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="contact-container">
+      <!-- 填寫表單 -->
+      <div id="contact-view" class="contact-card">
+        <h2 class="contact-title"><i class="fa-solid fa-envelope-open-text"></i> 聯絡我們</h2>
+        <p class="contact-subtitle">
+          歡迎留下您的需求。我們將依內容指派專案或客服人員回覆。
+        </p>
+
+        <div class="contact-grid">
+          <!-- Left: Form -->
+          <div class="panel">
+            <h3><i class="fa-solid fa-pen-to-square"></i> 聯絡資訊</h3>
+
+            <form id="contact-form">
+              <div class="form-row">
+                <label for="vendor-name">廠商／單位名稱</label>
+                <input type="text" id="vendor-name" placeholder="例：嘉南藥理大學 / XXX有限公司">
+              </div>
+
+              <div class="form-row">
+                <label for="company-tax-id">公司統編（選填）</label>
+                <input type="text" id="company-tax-id" placeholder="例：12345678">
+                <div style="margin-top:.35rem;display:flex;align-items:center;gap:.45rem;">
+                  <input type="checkbox" id="no-tax-id-toggle">
+                  <span class="hint">尚無統編，改用「手機號碼」歸戶</span>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <label for="contact-name">聯絡人姓名<span style="color:#ef4444;"> *</span></label>
+                <input type="text" id="contact-name" placeholder="例：王小明">
+              </div>
+
+              <div class="form-row">
+                <label for="contact-phone">電話／手機<span style="color:#ef4444;"> *</span></label>
+                <input type="tel" id="contact-phone" placeholder="例：09xx-xxx-xxx">
+                <div class="hint">若勾選「尚無統編」，將以此手機進行公司歸戶。</div>
+              </div>
+
+              <div class="form-row">
+                <label for="contact-email">聯絡 Email<span style="color:#ef4444;"> *</span></label>
+                <input type="email" id="contact-email" placeholder="例：contact@example.com">
+              </div>
+
+              <div class="form-row">
+                <label for="contact-type">諮詢類型<span style="color:#ef4444;"> *</span></label>
+                <select id="contact-type">
+                  <option value="">請選擇</option>
+                  <option value="system">系統功能／帳號問題</option>
+                  <option value="pif_flow">PIF 流程／合作諮詢</option>
+                  <option value="price">功效／安全評估報價</option>
+                  <option value="bug">問題回報／改善建議</option>
+                  <option value="other">其他</option>
+                </select>
+              </div>
+
+              <div class="form-row">
+                <label for="subject">主旨<span style="color:#ef4444;"> *</span></label>
+                <input type="text" id="subject" placeholder="例：想了解 PIF 服務流程與導入方式">
+              </div>
+
+              <div class="form-row">
+                <label for="message">訊息內容<span style="color:#ef4444;"> *</span></label>
+                <textarea id="message" placeholder="請描述您的需求、產品類別、預估時程或遇到的問題"></textarea>
+              </div>
+
+              <button id="submit-btn" class="btn-submit" type="submit">
+                <i class="fa-solid fa-paper-plane"></i> 送出訊息
+              </button>
+              <button class="btn-ghost" type="button" id="clear-btn">
+                <i class="fa-solid fa-eraser"></i> 清空
+              </button>
+
+              <p id="submission-status" class="hint" style="display:none;"></p>
+            </form>
+          </div>
+
+          <!-- Right: Notes / Promise -->
+          <div class="panel">
+            <h3><i class="fa-solid fa-circle-info"></i> 我們會如何處理</h3>
+            <ul style="margin:0; padding-left: 1.1rem; font-size:.92rem; color:#374151;">
+              <li style="margin-bottom:.5rem;">以您提供的 Email 與電話為主要回覆管道。</li>
+              <li style="margin-bottom:.5rem;">若涉及「功效/安全評估」或 PIF 專案，我們可能會安排專人與您確認產品類別與時程。</li>
+              <li style="margin-bottom:.5rem;">如您已使用公司歸戶（統編或手機），後續案件會更容易整合至同一家公司。</li>
+            </ul>
+            <hr style="border:none;border-top:1px dashed #e5e7eb;margin:1rem 0;">
+            <div style="font-size:.88rem;color:#6b7280;">
+              提醒：本頁不會要求您提供配方機密。若需進一步技術討論，會以正式流程與保密機制另行對接。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 提交後可用 ?id=xxx 查詢 -->
+      <div id="status-view" class="contact-card" style="display:none;">
+        <h2 class="contact-title"><i class="fa-solid fa-inbox"></i> 聯絡單狀態</h2>
+        <p id="status-loading" class="contact-subtitle">正在載入您的聯絡單資料…</p>
+
+        <div id="status-display" style="display:none;">
+          <table class="status-table">
+            <tbody>
+              <tr><th>聯絡單編號</th><td id="st-id">-</td></tr>
+              <tr><th>送出時間</th><td id="st-date">-</td></tr>
+              <tr><th>目前狀態</th><td id="st-badge">-</td></tr>
+
+              <tr><th>廠商／單位</th><td id="st-vendor">-</td></tr>
+              <tr><th>公司歸戶</th><td id="st-company">-</td></tr>
+              <tr><th>聯絡人</th><td id="st-name">-</td></tr>
+              <tr><th>電話</th><td id="st-phone">-</td></tr>
+              <tr><th>Email</th><td id="st-email">-</td></tr>
+
+              <tr><th>諮詢類型</th><td id="st-type">-</td></tr>
+              <tr><th>主旨</th><td id="st-subject">-</td></tr>
+              <tr><th>內容</th><td id="st-message">-</td></tr>
+            </tbody>
+          </table>
+
+          <p class="hint" style="margin-top:.9rem;">
+            您可以將此頁加入書籤以便追蹤。若需補充資訊，建議引用此聯絡單編號。
+          </p>
+
+          <a href="contact.html" class="btn-submit" style="background:#3b82f6;">
+            <i class="fa-solid fa-plus"></i> 建立新的聯絡單
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 CosPIF 化妝品智慧科技系統. All Rights Reserved.</p>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { collection, addDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    // Views
+    const contactView = document.getElementById('contact-view');
+    const statusView = document.getElementById('status-view');
+
+    // Form fields
+    const form = document.getElementById('contact-form');
+    const vendorNameInput = document.getElementById('vendor-name');
+    const companyTaxIdInput = document.getElementById('company-tax-id');
+    const noTaxIdToggle = document.getElementById('no-tax-id-toggle');
+
+    const contactNameInput = document.getElementById('contact-name');
+    const contactPhoneInput = document.getElementById('contact-phone');
+    const contactEmailInput = document.getElementById('contact-email');
+
+    const contactTypeInput = document.getElementById('contact-type');
+    const subjectInput = document.getElementById('subject');
+    const messageInput = document.getElementById('message');
+
+    const submitBtn = document.getElementById('submit-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const statusEl = document.getElementById('submission-status');
+
+    let currentUser = null;
+    onAuthStateChanged(auth, (user) => { currentUser = user || null; });
+
+    function isValidEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+    function isValidCompanyTaxId(taxId) {
+      return /^\d{8}$/.test((taxId || '').trim());
+    }
+    function isValidTWMobile(mobile) {
+      return /^09\d{8}$/.test((mobile || '').trim());
+    }
+
+    function showStatus(msg, isError=false) {
+      statusEl.style.display = 'block';
+      statusEl.style.color = isError ? '#b91c1c' : '#065f46';
+      statusEl.textContent = msg;
+    }
+
+    function syncNoTaxUI() {
+      const on = !!noTaxIdToggle.checked;
+      companyTaxIdInput.disabled = on;
+      if (on) companyTaxIdInput.value = '';
+    }
+
+    if (noTaxIdToggle && companyTaxIdInput) {
+      noTaxIdToggle.addEventListener('change', syncNoTaxUI);
+      syncNoTaxUI();
+    }
+
+    clearBtn?.addEventListener('click', () => {
+      form.reset();
+      syncNoTaxUI();
+      statusEl.style.display = 'none';
+    });
+
+    async function submitContact(e){
+      e.preventDefault();
+
+      const vendorName = (vendorNameInput.value || '').trim();
+      const companyTaxId = (companyTaxIdInput.value || '').trim();
+      const noTax = !!noTaxIdToggle.checked;
+
+      const contactName = (contactNameInput.value || '').trim();
+      const contactPhone = (contactPhoneInput.value || '').trim();
+      const contactEmail = (contactEmailInput.value || '').trim();
+
+      const contactType = (contactTypeInput.value || '').trim();
+      const subject = (subjectInput.value || '').trim();
+      const message = (messageInput.value || '').trim();
+
+      if (!contactName) return showStatus('請填寫「聯絡人姓名」。', true), contactNameInput.focus();
+      if (!contactPhone) return showStatus('請填寫「電話／手機」。', true), contactPhoneInput.focus();
+      if (!contactEmail) return showStatus('請填寫「聯絡 Email」。', true), contactEmailInput.focus();
+      if (!isValidEmail(contactEmail)) return showStatus('「聯絡 Email」格式不正確。', true), contactEmailInput.focus();
+      if (!contactType) return showStatus('請選擇「諮詢類型」。', true), contactTypeInput.focus();
+      if (!subject) return showStatus('請填寫「主旨」。', true), subjectInput.focus();
+      if (!message) return showStatus('請填寫「訊息內容」。', true), messageInput.focus();
+
+      // 公司歸戶（參考 price-eva 的概念，但此頁採「有填才驗」的較友善模式）
+      let companyKey = null;
+      let companyKeyType = null;
+      let companyMobileKey = null;
+
+      if (noTax) {
+        if (!contactPhone || !isValidTWMobile(contactPhone)) {
+          return showStatus('您已勾選「尚無統編」，請填寫有效的手機號碼（09 開頭 10 碼）。', true),
+                 contactPhoneInput.focus();
+        }
+        companyKey = contactPhone;
+        companyKeyType = 'mobile';
+        companyMobileKey = contactPhone;
+      } else if (companyTaxId) {
+        if (!isValidCompanyTaxId(companyTaxId)) {
+          return showStatus('「公司統編」格式似乎不正確，請輸入 8 碼數字。', true),
+                 companyTaxIdInput.focus();
+        }
+        companyKey = companyTaxId;
+        companyKeyType = 'taxId';
+      }
+
+      // 快取公司歸戶代碼，延續 price-eva 的公司歸戶使用習慣 :contentReference[oaicite:4]{index=4}
+      try {
+        if (companyKey) localStorage.setItem('cospif_companyKey', companyKey);
+      } catch(e){}
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 送出中...';
+      showStatus('正在送出您的訊息…');
+
+      try {
+        const payload = {
+          vendorName: vendorName || null,
+          companyTaxId: companyKeyType === 'taxId' ? companyTaxId : null,
+          companyMobileKey: companyKeyType === 'mobile' ? companyMobileKey : null,
+          companyKeyType,
+          companyKey,
+
+          contactName,
+          contactPhone,
+          contactEmail,
+          contactType,
+          subject,
+          message,
+
+          status: 'new',
+          url: window.location.href.split('?')[0],
+
+          submittedBy: currentUser?.uid || null,
+          submittedEmail: currentUser?.email || null,
+          submittedAt: serverTimestamp()
+        };
+
+        const docRef = await addDoc(collection(db, 'contact_messages'), payload);
+
+        // 與 price-eva 類似：導向帶 id 的狀態頁概念 :contentReference[oaicite:5]{index=5}
+        window.location.href = `${window.location.pathname}?id=${docRef.id}`;
+
+      } catch (err) {
+        console.error(err);
+        showStatus('送出失敗：' + (err?.message || '未知錯誤'), true);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> 送出訊息';
+      }
+    }
+
+    form?.addEventListener('submit', submitContact);
+
+    function badgeHTML(status){
+      const map = {
+        new: '<i class="fa-solid fa-clock"></i> 新建立',
+        in_progress: '<i class="fa-solid fa-headset"></i> 處理中',
+        closed: '<i class="fa-solid fa-circle-check"></i> 已結案'
+      };
+      const label = map[status] || status || 'new';
+      return `<span class="status-badge ${status || 'new'}">${label}</span>`;
+    }
+
+    async function displayStatus(id){
+      contactView.style.display = 'none';
+      statusView.style.display = 'block';
+
+      const loadingEl = document.getElementById('status-loading');
+      const displayEl = document.getElementById('status-display');
+
+      try{
+        const ref = doc(db, 'contact_messages', id);
+        const snap = await getDoc(ref);
+
+        if (!snap.exists()){
+          loadingEl.textContent = '找不到此聯絡單資料，請確認連結是否正確。';
+          return;
+        }
+
+        const data = snap.data() || {};
+
+        document.getElementById('st-id').textContent = snap.id;
+        document.getElementById('st-date').textContent =
+          data.submittedAt?.toDate().toLocaleString('zh-TW') || 'N/A';
+
+        const badgeCell = document.getElementById('st-badge');
+        badgeCell.innerHTML = badgeHTML(data.status);
+
+        document.getElementById('st-vendor').textContent = data.vendorName || '—';
+        document.getElementById('st-company').textContent =
+          data.companyTaxId ? data.companyTaxId :
+          (data.companyKeyType === 'mobile' && data.companyKey ? `手機：${data.companyKey}` : '—');
+
+        document.getElementById('st-name').textContent = data.contactName || '—';
+        document.getElementById('st-phone').textContent = data.contactPhone || '—';
+        document.getElementById('st-email').textContent = data.contactEmail || '—';
+
+        const typeMap = {
+          system: '系統功能／帳號問題',
+          pif_flow: 'PIF 流程／合作諮詢',
+          price: '功效／安全評估報價',
+          bug: '問題回報／改善建議',
+          other: '其他'
+        };
+        document.getElementById('st-type').textContent = typeMap[data.contactType] || data.contactType || '—';
+
+        document.getElementById('st-subject').textContent = data.subject || '—';
+        document.getElementById('st-message').textContent = data.message || '—';
+
+        loadingEl.style.display = 'none';
+        displayEl.style.display = 'block';
+
+      } catch(err){
+        console.error(err);
+        loadingEl.textContent = '載入狀態時發生錯誤：' + (err?.message || '未知錯誤');
+      }
+    }
+
+    // init
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+
+      if (id) {
+        displayStatus(id);
+      } else {
+        contactView.style.display = 'block';
+        statusView.style.display = 'none';
+
+        // 若先前已設定公司歸戶代碼，嘗試自動帶入（延續 price-eva 的體驗）
+        try {
+          const cachedKey = (localStorage.getItem('cospif_companyKey') || '').trim();
+          if (cachedKey) {
+            if (/^\d{8}$/.test(cachedKey) && companyTaxIdInput && !companyTaxIdInput.value) {
+              companyTaxIdInput.value = cachedKey;
+              if (noTaxIdToggle) noTaxIdToggle.checked = false;
+            } else if (/^09\d{8}$/.test(cachedKey) && contactPhoneInput && !contactPhoneInput.value) {
+              contactPhoneInput.value = cachedKey;
+              if (noTaxIdToggle) noTaxIdToggle.checked = true;
+            }
+            syncNoTaxUI();
+          }
+        } catch(e){}
+      }
+    });
+  </script>
+</body>
+</html>

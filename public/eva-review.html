@@ -1,0 +1,763 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>功效試算申請審核</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .cell-wrap {
+            max-width: 240px;
+            white-space: normal;
+            word-break: break-word;
+        }
+        .cell-sm {
+            font-size: .85rem;
+            color: var(--text-muted);
+        }
+        .status-rejected {
+            color: var(--danger-color);
+            font-weight: 700;
+        }
+
+        /* ====== Edit Modal ====== */
+        #edit-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.35);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            z-index: 9999;
+        }
+
+        #edit-modal .modal-card {
+            background: #fff;
+            border-radius: 14px;
+            max-width: 560px;
+            width: 100%;
+            box-shadow: 0 16px 40px rgba(0,0,0,.2);
+            padding: 1.25rem 1.5rem;
+        }
+
+        #edit-modal .modal-title {
+            font-size: 1.15rem;
+            margin-bottom: .75rem;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        #edit-modal .form-row {
+            margin-bottom: 1rem;
+        }
+
+        #edit-modal label {
+            display: block;
+            font-size: .9rem;
+            margin-bottom: .35rem;
+            color: #374151;
+        }
+
+        #edit-modal select,
+        #edit-modal textarea {
+            width: 100%;
+            padding: .5rem .6rem;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            font-size: .95rem;
+            background: #fff;
+        }
+
+        #edit-modal textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        #edit-modal .checkbox-inline {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            font-size: .95rem;
+        }
+
+        #edit-modal .hint {
+            font-size: .82rem;
+            color: var(--text-muted);
+            margin-top: .35rem;
+        }
+
+        #edit-modal .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: .5rem;
+            margin-top: 1rem;
+        }
+
+        @media print {
+            #edit-modal { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="container">
+        <nav>
+            <a href="index.html" class="logo"><i class="fa-solid fa-shield-halved"></i> CosPIF</a>
+            <ul id="nav-links" class="nav-links">
+                <li><a href="pif-i.html">我的專案</a></li>
+            </ul>
+            <div class="nav-actions" style="display: flex; align-items: center;">
+                <span id="user-info" style="margin-right: 1.5rem; color: var(--text-muted);"></span>
+                <button id="btnSignOut" class="btn-login btn-danger">登出</button>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<div class="main-content">
+    <div class="page-header">
+        <h1><i class="fa-solid fa-calculator"></i> 功效試算申請審核</h1>
+        <p class="text-muted">
+            上方為「待審核案件」，下方為「已審核案件」（<code>eva_submissions</code>）。
+            待審核核准/駁回時會要求填寫「管理備註」，並一併寄出通知信。
+            <br>※ 通知信優先寄送至「聯絡 Email」，若未填則寄至「申請人 Email」。
+            <br>※ 已審核案件可按「編修」更新狀態/管理備註，並可選擇是否重寄通知信（含管理備註）。
+        </p>
+    </div>
+
+    <div id="admin-only-content" style="display: none;">
+        <!-- 待審核案件 -->
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title" style="margin-bottom: 0.75rem;">待審核案件</h2>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>申請編號</th>
+                            <th>廠商名稱</th>
+                            <th>聯絡人</th>
+                            <th>電話</th>
+                            <th>聯絡 Email</th>
+                            <th>申請備註</th>
+                            <th>申請人 Email</th>
+                            <th>設定摘要</th>
+                            <th>每產品合計 (元)</th>
+                            <th>總金額 (元)</th>
+                            <th>試算頁面</th>
+                            <th style="width: 200px;">操作</th>
+                        </tr>
+                        </thead>
+                        <tbody id="evaPendingTbody"></tbody>
+                    </table>
+                </div>
+                <div id="evaPendingStatus" class="status-bar">正在載入待審核案件...</div>
+            </div>
+        </div>
+
+        <!-- 已審核案件 -->
+        <div class="card" style="margin-top: 1.5rem;">
+            <div class="card-body">
+                <h2 class="card-title" style="margin-bottom: 0.25rem;">已審核案件</h2>
+                <p class="text-muted" style="margin-bottom: 0.75rem;">
+                    包含狀態為「approved / rejected」之案件。按「編修」可修改狀態與管理備註，
+                    並可勾選是否重寄通知信（含管理備註）。
+                </p>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>申請編號</th>
+                            <th>廠商名稱</th>
+                            <th>聯絡人</th>
+                            <th>電話</th>
+                            <th>聯絡 Email</th>
+                            <th>申請備註</th>
+                            <th>申請人 Email</th>
+                            <th>摘要</th>
+                            <th>狀態</th>
+                            <th>每產品合計 (元)</th>
+                            <th>總金額 (元)</th>
+                            <th>審核資訊</th>
+                            <th>管理備註</th>
+                            <th style="width: 160px;">操作</th>
+                        </tr>
+                        </thead>
+                        <tbody id="evaReviewedTbody"></tbody>
+                    </table>
+                </div>
+                <div id="evaReviewedStatus" class="status-bar">正在載入已審核案件...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="permission-denied" class="card" style="display: none; text-align: center; padding: 3rem;">
+        <div class="card-body">
+            <h2 style="color: var(--danger-color);">
+                <i class="fa-solid fa-exclamation-triangle"></i> 權限不足
+            </h2>
+            <p>只有管理員才能存取此頁面。</p>
+            <a href="pif-i.html" class="btn-submit">返回我的專案</a>
+        </div>
+    </div>
+</div>
+
+<!-- ====== Edit Modal ====== -->
+<div id="edit-modal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+        <div class="modal-title" id="edit-modal-title">
+            <i class="fa-solid fa-pen-to-square"></i> 編修審核資料
+        </div>
+
+        <div class="form-row">
+            <label for="edit-id">申請編號</label>
+            <input id="edit-id" type="text" readonly
+                   style="width:100%; padding:.5rem .6rem; border-radius:8px; border:1px solid #e5e7eb; background:#f9fafb;">
+        </div>
+
+        <div class="form-row">
+            <label for="edit-status">狀態</label>
+            <select id="edit-status">
+                <option value="approved">已核准</option>
+                <option value="rejected">已駁回</option>
+                <option value="pending">審核中</option>
+            </select>
+        </div>
+
+        <div class="form-row">
+            <label for="edit-admin-note">管理備註（可寫估算結果與建議）</label>
+            <textarea id="edit-admin-note" placeholder="例：本案不含議價項目估算為 XXX 元；若要進行有效性評估建議受試者數..."></textarea>
+        </div>
+
+        <div class="form-row">
+            <label class="checkbox-inline">
+                <input type="checkbox" id="edit-resend">
+                重寄通知信（含管理備註）
+            </label>
+            <div class="hint">
+                通知信優先寄至「聯絡 Email」，若無則寄至「申請人 Email」。
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button id="edit-cancel" class="btn-secondary btn-sm">取消</button>
+            <button id="edit-save" class="btn-success btn-sm">
+                <i class="fa-solid fa-save"></i> 儲存
+            </button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import {
+        collection,
+        getDocs,
+        getDoc,
+        doc,
+        updateDoc,
+        addDoc,
+        serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { auth, db } from './firebase-config.js';
+
+    const $ = sel => document.querySelector(sel);
+
+    let currentUser = null;
+    let isAdmin = false;
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentUser = user;
+            $('#user-info').textContent = `歡迎, ${user.displayName || user.email}`;
+            $('#btnSignOut').addEventListener('click', () =>
+                auth.signOut().then(() => window.location.href = 'login.html')
+            );
+
+            try {
+                const idTokenResult = await user.getIdTokenResult(true);
+                isAdmin = idTokenResult.claims.admin === true;
+                renderNavLinks();
+                if (isAdmin) {
+                    $('#admin-only-content').style.display = 'block';
+                    await loadEvaSubmissions();
+                } else {
+                    $('#permission-denied').style.display = 'block';
+                }
+            } catch (error) {
+                console.error("Permission check failed:", error);
+                const ps = $('#evaPendingStatus');
+                const rs = $('#evaReviewedStatus');
+                if (ps) ps.textContent = '無法驗證您的權限。';
+                if (rs) rs.textContent = '無法驗證您的權限。';
+                $('#permission-denied').style.display = 'block';
+            }
+        } else {
+            window.location.href = 'login.html';
+        }
+    });
+
+    function renderNavLinks() {
+        if (isAdmin) {
+            const adminLinks = `
+                <li><a href="vendors.html">廠商資料庫</a></li>
+                <li><a href="review.html">廠商申請審核</a></li>
+                <li><a href="eva-review.html" class="active">功效試算審核</a></li>
+            `;
+            $('#nav-links').insertAdjacentHTML('beforeend', adminLinks);
+        }
+    }
+
+    function formatCurrency(n) {
+        return (n || 0).toLocaleString('zh-TW', { maximumFractionDigits: 0 });
+    }
+
+    function formatDateTime(date) {
+        if (!date) return '—';
+        const d = (date instanceof Date) ? date : date.toDate ? date.toDate() : null;
+        if (!d) return '—';
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const hh = String(d.getHours()).padStart(2, '0');
+        const mi = String(d.getMinutes()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+    }
+
+    function escapeHtml(str) {
+        return (str || '').replace(/[&<>"']/g, s => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+        }[s] || s));
+    }
+
+    function safeCell(value, max = 60) {
+        const v = (value ?? '').toString().trim();
+        if (!v) return '—';
+        const clipped = v.length > max ? v.slice(0, max) + '…' : v;
+        return escapeHtml(clipped);
+    }
+
+    function toSafeHtmlWithBr(text) {
+        const t = (text ?? '').toString().trim();
+        if (!t) return '';
+        return escapeHtml(t).replace(/\n/g, '<br>');
+    }
+
+    function buildSummary(sub) {
+        const tests = [];
+        if (sub.includeSpfLab)   tests.push('體外 SPF');
+        if (sub.includeSpfHuman) tests.push('人體 SPF');
+        if (sub.includePaHuman)  tests.push('PA');
+        if (sub.includeMoist)    tests.push('有效性評估');
+        if (sub.includeWhite)    tests.push('安全性評估');
+
+        return `
+            產品數量：${sub.productCount ?? '-'}<br>
+            項目：${tests.length ? tests.join('、') : '(未勾選)'}
+        `;
+    }
+
+    async function loadEvaSubmissions() {
+        const pendingStatusEl  = $('#evaPendingStatus');
+        const pendingTbody     = $('#evaPendingTbody');
+        const reviewedStatusEl = $('#evaReviewedStatus');
+        const reviewedTbody    = $('#evaReviewedTbody');
+
+        if (pendingStatusEl)  pendingStatusEl.textContent  = '正在載入待審核案件...';
+        if (reviewedStatusEl) reviewedStatusEl.textContent = '正在載入已審核案件...';
+
+        pendingTbody.innerHTML  = '';
+        reviewedTbody.innerHTML = '';
+
+        try {
+            const snap = await getDocs(collection(db, "eva_submissions"));
+            const pending  = [];
+            const reviewed = [];
+
+            snap.forEach(docSnap => {
+                const data = docSnap.data();
+                const rec  = { id: docSnap.id, ...data };
+                if (!data.status || data.status === 'pending') pending.push(rec);
+                else reviewed.push(rec);
+            });
+
+            const sortBySubmittedDesc = (a, b) => {
+                const ta = a.submittedAt && a.submittedAt.toMillis ? a.submittedAt.toMillis() : 0;
+                const tb = b.submittedAt && b.submittedAt.toMillis ? b.submittedAt.toMillis() : 0;
+                return tb - ta;
+            };
+            pending.sort(sortBySubmittedDesc);
+            reviewed.sort(sortBySubmittedDesc);
+
+            // ====== 待審核 ======
+            if (pending.length === 0) {
+                pendingTbody.innerHTML =
+                    '<tr><td colspan="12" style="text-align: center; padding: 2rem; color: var(--text-muted);">目前沒有待審核的功效試算申請。</td></tr>';
+                if (pendingStatusEl) pendingStatusEl.textContent = '目前沒有待審核的功效試算申請。';
+            } else {
+                for (const sub of pending) {
+                    const tr = pendingTbody.insertRow();
+
+                    const summary = buildSummary(sub);
+                    const url = sub.url ? `${sub.url}?id=${sub.id}` : '';
+
+                    // 用 dataset 避免欄位改動導致 index 失效
+                    tr.dataset.id = sub.id;
+                    tr.dataset.email = sub.submittedEmail || '';
+                    tr.dataset.contactEmail = sub.contactEmail || '';
+                    tr.dataset.url = url || '';
+                    tr.dataset.adminNote = sub.adminNote || '';
+
+                    tr.innerHTML = `
+                        <td><span class="text-sm">${sub.id}</span></td>
+                        <td>${safeCell(sub.vendorName)}</td>
+                        <td>${safeCell(sub.contactName)}</td>
+                        <td>${safeCell(sub.contactPhone)}</td>
+                        <td>${safeCell(sub.contactEmail)}</td>
+                        <td class="cell-wrap">${safeCell(sub.note, 120)}</td>
+                        <td>${sub.submittedEmail || '-'}</td>
+                        <td><span class="text-sm">${summary}</span></td>
+                        <td>${formatCurrency(sub.perProduct || 0)}</td>
+                        <td>${formatCurrency(sub.grandTotal || 0)}</td>
+                        <td>
+                            ${url
+                                ? `<a href="${url}" target="_blank" class="btn-link"><i class="fa-solid fa-up-right-from-square"></i> 開啟試算頁</a>`
+                                : '-'}
+                        </td>
+                        <td>
+                            <button class="btn-success btn-sm approve-btn">
+                                <i class="fa-solid fa-check"></i> 核准
+                            </button>
+                            <button class="btn-danger btn-sm reject-btn">
+                                <i class="fa-solid fa-times"></i> 駁回
+                            </button>
+                        </td>
+                    `;
+                }
+
+                pendingTbody.querySelectorAll('.approve-btn')
+                    .forEach(btn => btn.addEventListener('click', handleReview));
+                pendingTbody.querySelectorAll('.reject-btn')
+                    .forEach(btn => btn.addEventListener('click', handleReview));
+
+                if (pendingStatusEl) pendingStatusEl.textContent = `共 ${pending.length} 筆待審核功效試算。`;
+            }
+
+            // ====== 已審核 ======
+            if (reviewed.length === 0) {
+                reviewedTbody.innerHTML =
+                    '<tr><td colspan="14" style="text-align: center; padding: 2rem; color: var(--text-muted);">尚無已審核案件。</td></tr>';
+                if (reviewedStatusEl) reviewedStatusEl.textContent = '尚無已審核案件。';
+            } else {
+                for (const sub of reviewed) {
+                    const tr = reviewedTbody.insertRow();
+
+                    tr.dataset.id = sub.id;
+
+                    let statusLabel = sub.status || '—';
+                    if (sub.status === 'approved') statusLabel = '已核准';
+                    if (sub.status === 'rejected') statusLabel = '已駁回';
+
+                    const summary = buildSummary(sub);
+                    const reviewedAtText = formatDateTime(sub.reviewedAt);
+                    const adminNoteText = sub.adminNote ? escapeHtml(sub.adminNote) : '—';
+
+                    const statusClass = (sub.status === 'rejected') ? 'status-rejected' : '';
+
+                    tr.innerHTML = `
+                        <td><span class="text-sm">${sub.id}</span></td>
+                        <td>${safeCell(sub.vendorName)}</td>
+                        <td>${safeCell(sub.contactName)}</td>
+                        <td>${safeCell(sub.contactPhone)}</td>
+                        <td>${safeCell(sub.contactEmail)}</td>
+                        <td class="cell-wrap">${safeCell(sub.note, 120)}</td>
+                        <td>${sub.submittedEmail || '-'}</td>
+                        <td><span class="text-sm">${summary}</span></td>
+                        <td class="${statusClass}">${statusLabel}</td>
+                        <td>${formatCurrency(sub.perProduct || 0)}</td>
+                        <td>${formatCurrency(sub.grandTotal || 0)}</td>
+                        <td><span class="text-sm">${reviewedAtText}</span></td>
+                        <td class="cell-wrap"><span class="text-sm">${adminNoteText}</span></td>
+                        <td>
+                            <button class="btn-secondary btn-sm edit-btn">
+                                <i class="fa-solid fa-pen"></i> 編修
+                            </button>
+                        </td>
+                    `;
+                }
+
+                reviewedTbody.querySelectorAll('.edit-btn')
+                    .forEach(btn => btn.addEventListener('click', (e) => {
+                        const row = e.currentTarget.closest('tr');
+                        openEditModalById(row.dataset.id);
+                    }));
+
+                if (reviewedStatusEl) reviewedStatusEl.textContent = `共 ${reviewed.length} 筆已審核案件。`;
+            }
+
+        } catch (error) {
+            console.error("Error loading eva_submissions:", error);
+            if (pendingStatusEl)  pendingStatusEl.textContent  = `載入失敗：${error.message}`;
+            if (reviewedStatusEl) reviewedStatusEl.textContent = `載入失敗：${error.message}`;
+            pendingTbody.innerHTML =
+                `<tr><td colspan="12" style="text-align: center; color: var(--danger-color);">${error.message}</td></tr>`;
+            reviewedTbody.innerHTML =
+                `<tr><td colspan="14" style="text-align: center; color: var(--danger-color);">${error.message}</td></tr>`;
+        }
+    }
+
+    // 待審核：核准 / 駁回（會要求管理備註，並寄出）
+    async function handleReview(e) {
+        const btn = e.currentTarget;
+        const isApproved = btn.classList.contains('approve-btn');
+        const row = btn.closest('tr');
+        const id = row.dataset.id;
+        const actionText = isApproved ? '核准' : '駁回';
+
+        const applicantEmail = row.dataset.email;
+        const contactEmail = row.dataset.contactEmail;
+        const notifyTo = contactEmail || applicantEmail;  // 優先聯絡 Email
+        const submissionUrl = row.dataset.url;
+        const existingNote = row.dataset.adminNote || '';
+
+        if (!notifyTo) {
+            alert('錯誤：找不到可通知的 Email（聯絡 Email / 申請人 Email）。');
+            return;
+        }
+
+        // 先填管理備註（會放入通知信）
+        const adminNote = prompt(
+            `請輸入「管理備註」（將會包含在通知信中，可寫估算結果與建議）：`,
+            existingNote
+        );
+        if (adminNote === null) return;
+
+        if (!confirm(
+            `確定要${actionText}申請編號 ${id} 的功效試算嗎？\n\n` +
+            `這會寄送一封通知信給：${notifyTo}`
+        )) return;
+
+        // UI feedback
+        row.querySelectorAll('button').forEach(b => b.disabled = true);
+        btn.parentElement.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 處理中...`;
+
+        try {
+            const submissionRef = doc(db, 'eva_submissions', id);
+            const newStatus = isApproved ? 'approved' : 'rejected';
+            const statusText = isApproved ? '已核准' : '已駁回';
+
+            await updateDoc(submissionRef, {
+                status: newStatus,
+                adminNote: (adminNote || '').trim(),
+                reviewedBy: currentUser.uid,
+                reviewedAt: serverTimestamp()
+            });
+
+            const adminNoteHtml = toSafeHtmlWithBr(adminNote);
+
+            const emailContent = {
+                to: notifyTo,
+                message: {
+                    subject: `【CosPIF 系統通知】您的功效試算申請「${id}」已${statusText}`,
+                    html: `
+                        <p>您好：</p>
+                        <p>您透過 CosPIF 系統提交的功效評估試算申請（編號：<strong>${id}</strong>）已經由管理員審核完畢。</p>
+                        <p>審核結果：<strong>${statusText}</strong></p>
+
+                        <p>
+                            <strong>聯絡 Email：</strong> ${escapeHtml(contactEmail || '—')}<br>
+                            <strong>申請人 Email：</strong> ${escapeHtml(applicantEmail || '—')}
+                        </p>
+
+                        ${adminNoteHtml ? `
+                            <hr>
+                            <p><strong>管理備註／估算結果與建議：</strong><br>${adminNoteHtml}</p>
+                        ` : ''}
+
+                        <p>您可以點擊下方連結，隨時返回試算頁面查看申請狀態與細節：</p>
+                        <p><a href="${submissionUrl || '#'}">${submissionUrl || '返回試算頁'}</a></p>
+                        <p>此為系統自動發送的郵件，請勿直接回覆。</p>
+                        <br>
+                        <p>CosPIF 智慧科技整合系統 敬上</p>
+                    `,
+                },
+            };
+            await addDoc(collection(db, "mail"), emailContent);
+
+            alert(`申請已成功${actionText}！通知信已加入發送佇列。`);
+            await loadEvaSubmissions();
+
+        } catch (error) {
+            console.error(`${actionText} failed:`, error);
+            alert(`${actionText} 失敗：${error.message}`);
+            await loadEvaSubmissions();
+        }
+    }
+
+    // ====== Edit Modal Logic（已審核編修 + 可勾選重寄通知信） ======
+    const editModal = document.getElementById('edit-modal');
+    const editIdInput = document.getElementById('edit-id');
+    const editStatusSel = document.getElementById('edit-status');
+    const editNoteTa = document.getElementById('edit-admin-note');
+    const editResendChk = document.getElementById('edit-resend');
+    const editCancelBtn = document.getElementById('edit-cancel');
+    const editSaveBtn = document.getElementById('edit-save');
+
+    let editingId = null;
+    let editingData = null;
+
+    function openModal() {
+        editModal.style.display = 'flex';
+        editModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeModal() {
+        editModal.style.display = 'none';
+        editModal.setAttribute('aria-hidden', 'true');
+        editingId = null;
+        editingData = null;
+        editResendChk.checked = false;
+        editSaveBtn.disabled = false;
+        editSaveBtn.innerHTML = '<i class="fa-solid fa-save"></i> 儲存';
+    }
+
+    // 點背景關閉
+    editModal.addEventListener('click', (e) => {
+        if (e.target === editModal) closeModal();
+    });
+    editCancelBtn.addEventListener('click', closeModal);
+
+    async function openEditModalById(id) {
+        try {
+            editingId = id;
+            editIdInput.value = id;
+            editResendChk.checked = false;
+
+            openModal();
+            editSaveBtn.disabled = true;
+            editSaveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 載入中...';
+
+            const submissionRef = doc(db, 'eva_submissions', id);
+            const snap = await getDoc(submissionRef);
+
+            if (!snap.exists()) {
+                alert('找不到這筆申請資料。');
+                closeModal();
+                return;
+            }
+
+            editingData = snap.data();
+            editStatusSel.value = editingData.status || 'approved';
+            editNoteTa.value = editingData.adminNote || '';
+
+            editSaveBtn.disabled = false;
+            editSaveBtn.innerHTML = '<i class="fa-solid fa-save"></i> 儲存';
+            editNoteTa.focus();
+        } catch (err) {
+            console.error('openEditModalById error:', err);
+            alert(`載入編修資料失敗：${err.message}`);
+            closeModal();
+        }
+    }
+
+    async function handleEditSave() {
+        if (!editingId || !editingData) return;
+
+        const newStatus = editStatusSel.value;
+        const newNote = (editNoteTa.value || '').trim();
+        const wantResend = editResendChk.checked;
+
+        editSaveBtn.disabled = true;
+        editSaveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 儲存中...';
+
+        try {
+            const submissionRef = doc(db, 'eva_submissions', editingId);
+
+            await updateDoc(submissionRef, {
+                status: newStatus,
+                adminNote: newNote,
+                reviewedBy: currentUser.uid,
+                reviewedAt: serverTimestamp()
+            });
+
+            // 視需要重寄通知信
+            let notifyTo = '';
+            if (wantResend) {
+                const contactEmail = (editingData.contactEmail || '').trim();
+                const applicantEmail = (editingData.submittedEmail || '').trim();
+                notifyTo = contactEmail || applicantEmail;
+
+                if (!notifyTo) {
+                    alert('找不到可通知的 Email（聯絡 Email / 申請人 Email）。');
+                } else {
+                    const statusTextMap = {
+                        approved: '已核准',
+                        rejected: '已駁回',
+                        pending: '審核中'
+                    };
+                    const statusText = statusTextMap[newStatus] || newStatus;
+
+                    const submissionUrl = editingData.url ? `${editingData.url}?id=${editingId}` : '';
+                    const adminNoteHtml = toSafeHtmlWithBr(newNote);
+
+                    const emailContent = {
+                        to: notifyTo,
+                        message: {
+                            subject: `【CosPIF 系統通知】您的功效試算申請「${editingId}」審核狀態更新`,
+                            html: `
+                                <p>您好：</p>
+                                <p>您透過 CosPIF 系統提交的功效評估試算申請（編號：<strong>${editingId}</strong>）審核資料已更新。</p>
+                                <p>目前狀態：<strong>${statusText}</strong></p>
+
+                                <p>
+                                    <strong>聯絡 Email：</strong> ${escapeHtml(contactEmail || '—')}<br>
+                                    <strong>申請人 Email：</strong> ${escapeHtml(applicantEmail || '—')}
+                                </p>
+
+                                ${adminNoteHtml ? `
+                                    <hr>
+                                    <p><strong>管理備註／估算結果與建議：</strong><br>${adminNoteHtml}</p>
+                                ` : ''}
+
+                                <p>您可以點擊下方連結，隨時返回試算頁面查看申請狀態與細節：</p>
+                                <p><a href="${submissionUrl || '#'}">${submissionUrl || '返回試算頁'}</a></p>
+                                <p>此為系統自動發送的郵件，請勿直接回覆。</p>
+                                <br>
+                                <p>CosPIF 智慧科技整合系統 敬上</p>
+                            `,
+                        },
+                    };
+
+                    await addDoc(collection(db, "mail"), emailContent);
+                }
+            }
+
+            closeModal();
+            await loadEvaSubmissions();
+
+            if (wantResend && notifyTo) {
+                alert(`已更新審核資料並重寄通知信至：${notifyTo}`);
+            } else if (wantResend && !notifyTo) {
+                alert('已更新審核資料（但未找到可重寄的 Email）。');
+            } else {
+                alert('已更新審核資料。');
+            }
+
+        } catch (err) {
+            console.error('handleEditSave error:', err);
+            alert(`儲存失敗：${err.message}`);
+            editSaveBtn.disabled = false;
+            editSaveBtn.innerHTML = '<i class="fa-solid fa-save"></i> 儲存';
+        }
+    }
+
+    editSaveBtn.addEventListener('click', handleEditSave);
+</script>
+</body>
+</html>

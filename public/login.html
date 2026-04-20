@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登入 - CosPIF 智慧科技整合系統</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo"><i class="fa-solid fa-shield-halved"></i> CosPIF</a>
+                <ul class="nav-links">
+                    <li><a href="index.html#features">核心功能</a></li>
+                    <li><a href="index.html#about">關於我們</a></li>
+                    <li><a href="contact.html">聯絡我們</a></li>
+                </ul>
+                <a href="login.html" class="btn-login">登入系統</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="auth-container">
+            <div class="auth-card">
+                <h2 class="auth-title">會員登入</h2>
+                <p class="subtitle" style="color: #666; margin-bottom: 2rem;">登入您的 CosPIF 帳戶</p>
+                <form id="login-form">
+                    <div id="status" class="form-message"></div>
+                    <div class="form-group">
+                        <label for="email">電子郵件</label>
+                        <input type="email" id="email" required autocomplete="email" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="password">密碼</label>
+                        <input type="password" id="password" required autocomplete="current-password" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="company-tax-id">公司統編（選填）</label>
+                        <input type="text" id="company-tax-id" autocomplete="off" class="form-control" placeholder="例：12345678">
+                        <div class="form-hint" style="font-size:0.82rem;color:#6b7280;margin-top:.25rem;">
+                            若為首次使用公司歸戶功能，建議填寫統編以便彙整貴公司所有申請案。
+                        </div>
+                    </div>
+
+                     <div class="extra-links" style="text-align: right; margin-top: -1rem; margin-bottom: 1.5rem; font-size: 0.9rem;">
+                        <a href="/forgot-password.html">忘記密碼？</a>
+                    </div>
+                    <button type="submit" id="submit-btn" class="btn-submit">登入</button>
+                </form>
+                <div class="auth-switch">
+                    <p>還沒有帳戶？ <a href="/register.html">立即註冊</a></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 CosPIF 化妝品智慧科技系統. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    
+    <script>
+        (function () {
+            const form = document.getElementById('login-form');
+            const companyInput = document.getElementById('company-tax-id');
+
+            function isValidCompanyTaxId(taxId) {
+                return /^\d{8}$/.test((taxId || '').trim());
+            }
+
+            if (form && companyInput) {
+                form.addEventListener('submit', function () {
+                    const taxId = (companyInput.value || '').trim();
+                    if (!taxId) return;
+
+                    if (!isValidCompanyTaxId(taxId)) {
+                        // 登入本身仍可進行，但提醒使用者統編格式
+                        const status = document.getElementById('status');
+                        if (status) {
+                            status.textContent = '公司統編格式似乎不正確（需 8 碼數字）。若不確定可先留空。';
+                            status.className = 'form-message error';
+                        }
+                        return;
+                    }
+
+                    try {
+                        localStorage.setItem('cospif_companyKey', taxId);
+                    } catch (e) {}
+                }, true); // capture: 讓我們的處理優先於 login.js
+            }
+        })();
+    </script>
+
+    <script type="module" src="./login.js"></script>
+</body>
+</html>

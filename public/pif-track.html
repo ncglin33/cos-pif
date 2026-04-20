@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PIF 進度追蹤 - CosPIF</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { background: #f9fafb; }
+
+        .track-wrap {
+            max-width: 1100px;
+            margin: 2rem auto 3rem;
+            padding: 0 1rem;
+        }
+
+        .track-hero {
+            background: #fff;
+            border: 1px solid var(--line-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            padding: 1.5rem 1.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .track-hero h1 {
+            font-size: 1.5rem;
+            margin: 0 0 .35rem 0;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+        .track-hero p {
+            margin: 0;
+            color: var(--text-muted);
+        }
+
+        .track-search {
+            display: flex;
+            gap: .5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        .track-search input {
+            flex: 1 1 260px;
+            padding: .6rem .75rem;
+            border-radius: 10px;
+            border: 1px solid #d1d5db;
+            font-size: 1rem;
+            background: #fff;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+        .track-search button {
+            padding: .6rem 1.1rem;
+            border-radius: 10px;
+            border: none;
+            background: var(--primary-color);
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+        }
+        .track-search button:disabled {
+            background: #c7d2fe;
+            cursor: not-allowed;
+        }
+
+        .panel {
+            background: #fff;
+            border: 1px solid var(--line-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .panel h2 {
+            font-size: 1.15rem;
+            margin: 0 0 .75rem 0;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 170px 1fr;
+            gap: .35rem .75rem;
+            font-size: .95rem;
+        }
+        .info-grid .k {
+            color: var(--text-muted);
+        }
+        .info-grid .v {
+            word-break: break-word;
+        }
+        @media (max-width: 640px) {
+            .info-grid { grid-template-columns: 1fr; }
+            .info-grid .k { font-weight: 600; margin-top: .5rem; }
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            padding: .25rem .65rem;
+            border-radius: 999px;
+            font-size: .85rem;
+            font-weight: 600;
+        }
+        .badge.pending { background: #fef3c7; color: #92400e; }
+        .badge.approved { background: #dcfce7; color: #166534; }
+        .badge.rejected { background: #fee2e2; color: #991b1b; }
+
+        .note-box {
+            background: #f8fafc;
+            border: 1px dashed #e5e7eb;
+            border-radius: 10px;
+            padding: .85rem 1rem;
+            white-space: pre-wrap;
+        }
+
+        /* ===== PIF module progress cards (light version based on pifs page logic) ===== */
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1rem;
+        }
+        .m-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            background: #fff;
+            padding: 1rem 1.1rem;
+            display: flex;
+            flex-direction: column;
+            gap: .6rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,.03);
+        }
+        .m-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: .5rem;
+        }
+        .m-no {
+            background: #eef2ff;
+            color: #3730a3;
+            border-radius: 999px;
+            padding: .15rem .6rem;
+            font-size: .78rem;
+            font-weight: 600;
+        }
+        .m-status {
+            font-size: .78rem;
+            font-weight: 600;
+            border-radius: 999px;
+            padding: .15rem .5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: .3rem;
+        }
+        .m-status.not_started { color:#6b7280; background:#f3f4f6; }
+        .m-status.completed { color:#16a34a; background:#dcfce7; }
+        .m-title {
+            font-size: 1rem;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+        .m-actions {
+            margin-top: .2rem;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .m-actions a {
+            font-size: .85rem;
+            text-decoration: none;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .status-bar {
+            font-size: .9rem;
+            color: var(--text-muted);
+        }
+        .status-error { color: var(--danger-color); }
+
+        .photo-list {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: .5rem;
+        }
+        @media (max-width: 720px){
+            .photo-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        .photo-item{
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #fff;
+        }
+        .photo-item img{
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            display: block;
+        }
+        .photo-item a{
+            display: block;
+            padding: .3rem .45rem;
+            font-size: .75rem;
+            color: #2563eb;
+            text-decoration: none;
+            word-break: break-word;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="container">
+        <nav>
+            <a href="index.html" class="logo">
+                <i class="fa-solid fa-shield-halved"></i> CosPIF
+            </a>
+            <ul class="nav-links">
+                <li><a href="pif-wish.html">PIF 意願調查</a></li>
+                <li><a href="pif-track.html" class="active">PIF 進度追蹤</a></li>
+            </ul>
+            <a href="login.html" class="btn-login">登入系統</a>
+        </nav>
+    </div>
+</header>
+
+<main class="track-wrap">
+    <section class="track-hero">
+        <h1><i class="fa-solid fa-route"></i> PIF 進度追蹤</h1>
+        <p>請輸入「追蹤序號」查詢意願表審核結果與後續 PIF 製作進度。</p>
+        <div class="track-search">
+            <input id="codeInput" type="text" placeholder="例：PIF251206AB" autocomplete="off" />
+            <button id="btnSearch"><i class="fa-solid fa-magnifying-glass"></i> 查詢</button>
+        </div>
+        <div id="searchHint" class="status-bar" style="margin-top:.6rem;"></div>
+    </section>
+
+    <section id="panel-intent" class="panel" style="display:none;">
+        <h2><i class="fa-solid fa-file-signature"></i> 意願表審核狀態</h2>
+        <div class="info-grid">
+            <div class="k">追蹤序號</div><div class="v" id="v-code">—</div>
+            <div class="k">申請編號</div><div class="v" id="v-docid">—</div>
+            <div class="k">提交時間</div><div class="v" id="v-submitted">—</div>
+            <div class="k">審核狀態</div><div class="v" id="v-status">—</div>
+            <div class="k">審核時間</div><div class="v" id="v-reviewed">—</div>
+
+            <div class="k">廠商名稱</div><div class="v" id="v-vendor">—</div>
+            <div class="k">聯絡人</div><div class="v" id="v-contact">—</div>
+            <div class="k">電話</div><div class="v" id="v-phone">—</div>
+            <div class="k">聯絡 Email</div><div class="v" id="v-email">—</div>
+
+            <div class="k">品名</div><div class="v" id="v-product">—</div>
+            <div class="k">希望完成時間</div><div class="v" id="v-desired">—</div>
+
+            <div class="k">背面標籤文字</div><div class="v" id="v-label-text">—</div>
+            <div class="k">背面標籤照片</div><div class="v" id="v-label-photos">—</div>
+            <div class="k">廠商備註</div><div class="v" id="v-note">—</div>
+        </div>
+
+        <div style="margin-top:1rem;">
+            <div class="k" style="color:var(--text-muted); margin-bottom:.35rem;">管理備註</div>
+            <div id="v-admin-note" class="note-box">—</div>
+        </div>
+    </section>
+
+    <section id="panel-progress" class="panel" style="display:none;">
+        <h2><i class="fa-solid fa-list-check"></i> PIF 模組完成進度</h2>
+        <div id="progressMeta" class="status-bar" style="margin-bottom:.75rem;"></div>
+        <div id="moduleGrid" class="module-grid"></div>
+        <div id="progressStatus" class="status-bar" style="margin-top:.75rem;"></div>
+    </section>
+
+</main>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2025 CosPIF 化妝品智慧科技系統. All Rights Reserved.</p>
+    </div>
+</footer>
+
+<script type="module">
+    import { db, storage } from './firebase-config.js';
+    import {
+        collection,
+        getDocs,
+        query,
+        where
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import {
+        ref as storageRef,
+        getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+
+    const COLLECTION = "pif_intent_submissions";
+
+    const codeInput = document.getElementById('codeInput');
+    const btnSearch = document.getElementById('btnSearch');
+    const searchHint = document.getElementById('searchHint');
+
+    const panelIntent = document.getElementById('panel-intent');
+    const panelProgress = document.getElementById('panel-progress');
+
+    const moduleGrid = document.getElementById('moduleGrid');
+    const progressMeta = document.getElementById('progressMeta');
+    const progressStatus = document.getElementById('progressStatus');
+
+    const setText = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = (text ?? '—') || '—';
+    };
+
+    function formatDateTime(ts) {
+        if (!ts) return '—';
+        try {
+            const d = ts.toDate ? ts.toDate() : new Date(ts);
+            return d.toLocaleString('zh-TW');
+        } catch {
+            return '—';
+        }
+    }
+
+    function renderStatusBadge(status) {
+        const s = status || 'pending';
+        const map = {
+            pending: { text: '審核中', icon: 'fa-clock', cls: 'pending' },
+            approved: { text: '已核准', icon: 'fa-check-circle', cls: 'approved' },
+            rejected: { text: '已駁回', icon: 'fa-times-circle', cls: 'rejected' },
+        };
+        const m = map[s] || map.pending;
+        return `<span class="badge ${m.cls}"><i class="fa-solid ${m.icon}"></i> ${m.text}</span>`;
+    }
+
+    function renderPhotoList(urls) {
+        if (!Array.isArray(urls) || urls.length === 0) return '—';
+        const wrapper = document.createElement('div');
+        wrapper.className = 'photo-list';
+        urls.forEach((u, i) => {
+            const item = document.createElement('div');
+            item.className = 'photo-item';
+            item.innerHTML = `
+                <img src="${u}" alt="背面標籤照片 ${i + 1}">
+                <a href="${u}" target="_blank" rel="noopener">開啟照片 ${i + 1}</a>
+            `;
+            wrapper.appendChild(item);
+        });
+        return wrapper;
+    }
+
+    function clearPanels() {
+        panelIntent.style.display = 'none';
+        panelProgress.style.display = 'none';
+        moduleGrid.innerHTML = '';
+        progressMeta.textContent = '';
+        progressStatus.textContent = '';
+    }
+
+    async function findSubmissionByCode(codeUpper) {
+        const q = query(
+            collection(db, COLLECTION),
+            where("trackingCodeUpper", "==", codeUpper)
+        );
+        const snap = await getDocs(q);
+        if (snap.empty) return null;
+        const docSnap = snap.docs[0];
+        return { id: docSnap.id, ...docSnap.data() };
+    }
+
+    async function initializePifModules() {
+        const modulesRef = collection(db, "pif_modules");
+        const snapshot = await getDocs(modulesRef);
+        const modules = [];
+        snapshot.forEach(d => modules.push(d.data()));
+        return modules.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+    }
+
+    async function checkPdfStatus(pifId, rawModuleId) {
+        const moduleId = (rawModuleId || '').toString().replace(/PIF\s*/i, '');
+        const pdfPath = `pifs/${pifId}/${moduleId}.pdf`;
+        const pdfRef = storageRef(storage, pdfPath);
+
+        try {
+            const url = await getDownloadURL(pdfRef);
+            return { status: 'completed', url };
+        } catch (error) {
+            if (error.code === 'storage/object-not-found') {
+                return { status: 'not_started', url: null };
+            }
+            console.error(`Error checking PDF status for ${pdfPath}:`, error);
+            return { status: 'not_started', url: null };
+        }
+    }
+
+    function renderModuleCard(mod, statusObj) {
+        const no = mod.no || '';
+        const title = mod.title || '未命名';
+        const status = statusObj.status;
+        const url = statusObj.url;
+
+        const statusText = status === 'completed' ? '已完成' : '尚未完成';
+        const dotIcon = status === 'completed' ? 'fa-circle-check' : 'fa-circle';
+        const statusCls = status === 'completed' ? 'completed' : 'not_started';
+
+        const a = url ? `<a href="${url}" target="_blank" rel="noopener"><i class="fa-solid fa-download"></i> 下載 PDF</a>` : '';
+
+        const div = document.createElement('div');
+        div.className = 'm-card';
+        div.innerHTML = `
+            <div class="m-head">
+                <span class="m-no">${no}</span>
+                <span class="m-status ${statusCls}">
+                    <i class="fa-solid ${dotIcon}"></i> ${statusText}
+                </span>
+            </div>
+            <div class="m-title">${title}</div>
+            <div class="m-actions">${a}</div>
+        `;
+        return div;
+    }
+
+    async function renderProgress(pifId, vendorName, productName) {
+        panelProgress.style.display = 'block';
+        progressMeta.textContent = `對應 PIF ID：${pifId}／${vendorName || ''} ${productName ? '｜' + productName : ''}`;
+
+        progressStatus.textContent = '正在讀取模組清單與完成狀態...';
+        moduleGrid.innerHTML = '';
+
+        try {
+            const modules = await initializePifModules();
+            if (!modules.length) {
+                progressStatus.textContent = '找不到 PIF 模組設定（pif_modules）。';
+                return;
+            }
+
+            let completedCount = 0;
+
+            for (const mod of modules) {
+                const st = await checkPdfStatus(pifId, mod.no);
+                if (st.status === 'completed') completedCount += 1;
+                moduleGrid.appendChild(renderModuleCard(mod, st));
+            }
+
+            progressStatus.textContent = `完成度：${completedCount} / ${modules.length}`;
+
+        } catch (err) {
+            console.error(err);
+            progressStatus.textContent = `載入進度失敗：${err.message}`;
+            progressStatus.classList.add('status-error');
+        }
+    }
+
+    async function doSearch() {
+        const raw = (codeInput.value || '').trim();
+        const codeUpper = raw.toUpperCase();
+
+        if (!codeUpper) {
+            searchHint.textContent = '請輸入追蹤序號。';
+            return;
+        }
+
+        clearPanels();
+        searchHint.textContent = '查詢中...';
+        btnSearch.disabled = true;
+
+        try {
+            const sub = await findSubmissionByCode(codeUpper);
+
+            if (!sub) {
+                searchHint.textContent = '查無此追蹤序號，請確認是否輸入正確。';
+                return;
+            }
+
+            searchHint.textContent = '查詢成功。';
+            panelIntent.style.display = 'block';
+
+            setText('v-code', sub.trackingCode || codeUpper);
+            setText('v-docid', sub.id);
+            setText('v-submitted', formatDateTime(sub.submittedAt));
+
+            const statusCell = document.getElementById('v-status');
+            statusCell.innerHTML = renderStatusBadge(sub.status);
+
+            setText('v-reviewed', formatDateTime(sub.reviewedAt));
+
+            setText('v-vendor', sub.vendorName);
+            setText('v-contact', sub.contactName);
+            setText('v-phone', sub.contactPhone);
+            setText('v-email', sub.contactEmail);
+
+            setText('v-product', sub.productName);
+            setText('v-desired', sub.desiredFinishDate);
+
+            setText('v-label-text', sub.labelInfo || '—');
+
+            const photoCell = document.getElementById('v-label-photos');
+            photoCell.innerHTML = '';
+            const photoList = renderPhotoList(sub.labelPhotoUrls);
+            if (typeof photoList === 'string') {
+                photoCell.textContent = photoList;
+            } else {
+                photoCell.appendChild(photoList);
+            }
+
+            setText('v-note', sub.note);
+
+            const adminNoteEl = document.getElementById('v-admin-note');
+            adminNoteEl.textContent = (sub.adminNote || '').trim() || '—';
+
+            // 若已核准且有對應 PIF ID，顯示模組完成進度
+            const pifId = (sub.pifId || '').trim();
+            if (sub.status === 'approved' && pifId) {
+                await renderProgress(pifId, sub.vendorName, sub.productName);
+            } else if (sub.status === 'approved' && !pifId) {
+                panelProgress.style.display = 'block';
+                progressMeta.textContent = '此案已核准，但尚未綁定對應的 PIF ID。';
+                progressStatus.textContent = '請待管理端建立/綁定 PIF 專案後，即可在此頁看到各模組完成進度。';
+            }
+
+        } catch (err) {
+            console.error(err);
+            searchHint.textContent = `查詢失敗：${err.message}`;
+        } finally {
+            btnSearch.disabled = false;
+        }
+    }
+
+    btnSearch.addEventListener('click', doSearch);
+    codeInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') doSearch();
+    });
+
+    // Auto search if code provided in URL
+    document.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+        if (code) {
+            codeInput.value = code;
+            doSearch();
+        }
+    });
+</script>
+</body>
+</html>

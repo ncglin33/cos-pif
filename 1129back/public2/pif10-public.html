@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIF 10 - 成分毒理資料查詢 (公開測試)</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="pifs.css">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+    <header class="toolbar">
+        <h1>PIF 10 - 成分毒理資料查詢 (公開測試)</h1>
+    </header>
+
+    <main>
+        <section id="toxic-query-section">
+            <h2>查詢成分資料</h2>
+            <div class="form-container">
+                <input type="text" id="search-input" placeholder="輸入 INCI 或中文名稱關鍵字...">
+                <button id="search-button">查詢</button>
+                <select id="collection-select">
+                    <option value="ingredients">預設成分庫 (ingredients)</option>
+                    <option value="Import1">舊資料庫 (Import1)</option>
+                </select>
+            </div>
+            <div id="search-results-container">
+                <p id="results-message">請輸入關鍵字以開始查詢。</p>
+                <div id="results-table-wrapper"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Cosmetic PIF Management System - Public Test Page</p>
+    </footer>
+
+    <!-- The auth guard script 'pif_common.js' is intentionally removed for public testing -->
+    <script type="module" src="pif10.js"></script>
+</body>
+</html>

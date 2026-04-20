@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>會員註冊 - CosPIF 智慧科技整合系統</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo"><i class="fa-solid fa-shield-halved"></i> CosPIF</a>
+                <ul class="nav-links">
+                    <li><a href="index.html#features">核心功能</a></li>
+                    <li><a href="#">關於我們</a></li>
+                    <li><a href="#">聯絡我們</a></li>
+                </ul>
+                <a href="login.html" class="btn-login">登入系統</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="auth-container">
+            <div class="auth-card">
+                <h2 class="auth-title">建立您的 CosPIF 帳戶</h2>
+                <form id="register-form">
+                    <div id="status" class="form-message"></div>
+                    <div class="form-group">
+                        <label for="name">姓名 *</label>
+                        <input type="text" id="name" required class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="company">公司名稱 *</label>
+                        <input type="text" id="company" required class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">電子郵件 *</label>
+                        <input type="email" id="email" required class="form-control" autocomplete="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="password">密碼 * (至少 6 位數)</label>
+                        <input type="password" id="password" required minlength="6" class="form-control" autocomplete="new-password">
+                    </div>
+                    <button type="submit" id="submit-btn" class="btn-submit">註冊</button>
+                </form>
+                <div class="auth-switch">
+                    <p>已經有帳戶了？ <a href="login.html">立即登入</a></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 CosPIF 化妝品智慧科技整合系統. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { auth, db } from './firebase-config.js';
+        import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const form = document.getElementById('register-form');
+        const statusEl = document.getElementById('status');
+        const submitBtn = document.getElementById('submit-btn');
+        
+        function showStatus(message, type = 'info') {
+            statusEl.textContent = message;
+            statusEl.className = `form-message ${type}`;
+            if (type === 'success') {
+                statusEl.style.color = 'green';
+            } else if (type === 'error') {
+                statusEl.style.color = 'red';
+            }
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            submitBtn.disabled = true; // Disable button on submit
+            showStatus('正在處理註冊...', 'info');
+
+            const name = document.getElementById('name').value.trim();
+            const company = document.getElementById('company').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!name || !company || !email || !password) {
+                showStatus('所有欄位都是必要的。', 'error');
+                submitBtn.disabled = false; // Re-enable button
+                return;
+            }
+
+            try {
+                // Step 1: Create user in Firebase Auth
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                showStatus('認證成功，正在建立使用者資料...', 'info');
+
+                // Step 2: Create user document in Firestore to trigger review process
+                await setDoc(doc(db, 'users', user.uid), {
+                    name: name,
+                    company: company,
+                    email: email,
+                    role: 'member',
+                    status: 'pending', // This status should be watched by your backend function
+                    createdAt: serverTimestamp()
+                });
+
+                form.reset();
+                submitBtn.style.display = 'none'; // Hide button on success
+                showStatus('註冊申請成功！請等待管理員審核您的帳戶。審核通過後，您將可以登入。', 'success');
+
+            } catch (error) {
+                console.error('Registration Error:', error);
+                let errorMessage = '發生未知的錯誤，註冊失敗。';
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage = '此電子郵件已被註冊，請使用其他郵件或直接登入。';
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = '密碼強度不足，請使用至少 6 位數的密碼。';
+                } else if (error.message) {
+                    errorMessage = `註冊失敗: ${error.message}`;
+                }
+                showStatus(errorMessage, 'error');
+                submitBtn.disabled = false; // Re-enable button on failure
+            }
+        });
+    </script>
+</body>
+</html>

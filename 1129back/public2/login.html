@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登入 - CosPIF 智慧科技整合系統</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo"><i class="fa-solid fa-shield-halved"></i> CosPIF</a>
+                <ul class="nav-links">
+                    <li><a href="index.html#features">核心功能</a></li>
+                    <li><a href="#">關於我們</a></li>
+                    <li><a href="#">聯絡我們</a></li>
+                </ul>
+                <a href="login.html" class="btn-login">登入系統</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="auth-container">
+            <div class="auth-card">
+                <h2 class="auth-title">會員登入</h2>
+                <p class="subtitle" style="color: #666; margin-bottom: 2rem;">登入您的 CosPIF 帳戶</p>
+                <form id="login-form">
+                    <div id="status" class="form-message"></div>
+                    <div class="form-group">
+                        <label for="email">電子郵件</label>
+                        <input type="email" id="email" required autocomplete="email" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="password">密碼</label>
+                        <input type="password" id="password" required autocomplete="current-password" class="form-control">
+                    </div>
+                     <div class="extra-links" style="text-align: right; margin-top: -1rem; margin-bottom: 1.5rem; font-size: 0.9rem;">
+                        <a href="/forgot-password.html">忘記密碼？</a>
+                    </div>
+                    <button type="submit" id="submit-btn" class="btn-submit">登入</button>
+                </form>
+                <div class="auth-switch">
+                    <p>還沒有帳戶？ <a href="/register.html">立即註冊</a></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 CosPIF 化妝品智慧科技系統. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script type="module" src="./login.js"></script>
+</body>
+</html>

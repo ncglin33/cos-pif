@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PIF 01 產品基本資料</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="style.css">
+    
+  <style>
+  body {
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+    background-color: #f8f9fa; /* Lighter gray background */
+  }
+
+  .main-content {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 2rem auto;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 44px 6px rgba(0,0,0,0.1);
+  }
+
+  .form-section {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .form-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color, #6d28d9);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .form-grid-2-col {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+  
+  .form-grid-3-col {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+
+  .vendor-section {
+      background-color: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: var(--border-radius-lg);
+      margin-top: 1rem;
+  }
+
+  .vendor-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .vendor-card {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    background-color: #fff;
+    position: relative;
+    padding: 1.5rem;
+    transition: box-shadow 0.2s;
+    page-break-inside: avoid;
+  }
+
+  .vendor-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  .vendor-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .vendor-card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-dark);
+  }
+
+  .vendor-card .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    column-gap: 1.5rem;
+    row-gap: 1rem;
+  }
+  
+  .form-group-full {
+    grid-column: 1 / -1;
+  }
+
+  /* PDF Upload Status Styles */
+  #upload-status-pdf {
+      display: none;
+      padding: 0.75rem 1.25rem;
+      margin-top: 0.5rem;
+      border-radius: 8px;
+      font-weight: 500;
+      text-align: right;
+      font-size: 0.9rem;
+  }
+  .status-info { background-color: #e0e7ff; color: #3730a3; }
+  .status-success { background-color: #dcfce7; color: #166534; }
+  .status-error { background-color: #fee2e2; color: #991b1b; }
+  #upload-status-pdf i { margin-right: 0.5rem; }
+
+  @media print {
+    body {
+        background-color: #fff;
+        opacity: 1;
+    }
+    header, .page-actions, .no-print {
+        display: none !important;
+    }
+    .main-content {
+        box-shadow: none;
+        border: none;
+        margin: 0;
+        padding: 0;
+        max-width: 100%;
+    }
+    .form-section {
+        border-color: #dee2e6;
+    }
+    .vendor-section {
+        background-color: #fff;
+        padding: 0;
+        border: 1px solid #dee2e6;
+    }
+  }
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+  </style>
+
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <!-- 換成新 LOGO 圖檔，會吃 style.css 的 nav .logo img 設定 -->
+                <a href="index.html" class="logo">
+                    <img src="img/cospif-logo.png" alt="CosPIF Logo">
+                </a>
+                <ul class="nav-links">
+                    <li><a href="pif-i.html">我的PIF</a></li>
+                    <li><a href="vendors.html">廠商資料庫</a></li>
+                </ul>
+                <div class="nav-actions" style="display: flex; align-items: center;">
+                    <span id="user-info" style="margin-right: 1.5rem; color: var(--text-muted);"></span>
+                    <button id="btnSignOut" class="btn-login btn-danger">登出</button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+<div id="app-container" style="display: none;">
+    <div class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 id="page-title">01 產品基本資料</h1>
+                <p id="project-subtitle" class="text-muted"></p>
+            </div>
+            <div class="page-actions">
+                <button id="btnPrint" class="btn-secondary"><i class="fa-solid fa-print"></i> 列印</button>
+                <button id="btnUploadPdf" class="btn-secondary no-print"><i class="fa-solid fa-file-arrow-up"></i> 上傳最終版PIF(PDF)</button>
+                <input type="file" id="pdfUploader" accept="application/pdf" class="no-print" style="display:none">
+                <button id="btnSave" class="btn-submit"><i class="fa-solid fa-cloud-arrow-up"></i> 雲端儲存</button>
+            </div>
+        </div>
+        <span id="autosaveHint" class="text-sm text-muted" style="display: block; margin-top: -1rem; margin-bottom: 0.75rem; text-align: right;"></span>
+        <div id="upload-status-pdf" class="no-print"></div>
+
+        <section class="form-section">
+            <h2 class="section-title"><i class="fa-solid fa-file-alt"></i> (1) 產品基本資料</h2>
+            <div class="form-grid-3-col">
+              <div class="form-group">
+                <label for="productName">產品名稱</label>
+                <input type="text" id="productName" class="form-input">
+              </div>
+              <div class="form-group">
+                  <label for="productNameEn">英文品名</label>
+                  <input type="text" id="productNameEn" class="form-input">
+              </div>
+              <div class="form-group">
+                <label for="companyName">公司名稱</label>
+                <input type="text" id="companyName" class="form-input">
+              </div>
+              <div class="form-group">
+                <label for="companyKey">公司統編/歸戶代碼</label>
+                <input type="text" id="companyKey" class="form-input" placeholder="例：73502304（供 client 儀表板歸戶顯示）">
+              </div>
+              <div class="form-group">
+                <label for="pifId">PIF ID</label>
+                <input type="text" id="pifId" class="form-input" readonly placeholder="儲存後自動產生">
+              </div>
+              <div class="form-group">
+                <label for="pifPrefix">PIF 字首</label>
+                <input type="text" id="pifPrefix" class="form-input" placeholder="將依產品類別自動帶入，亦可自行調整" maxlength="2" style="text-transform: uppercase;">
+              </div>
+               <div class="form-group">
+                <label for="prodUse">用途</label>
+                <input id="prodUse" type="text" class="form-input" placeholder="例：防曬、清潔、保濕…">
+              </div>
+              <div class="form-group">
+                <label for="prodWeight">重量</label>
+                <input type="text" id="prodWeight" class="form-input" placeholder="例：100g, 50ml">
+              </div>
+            </div>
+            <div class="form-grid-2-col" style="margin-top: 2rem;">
+               <div class="form-group">
+                    <label for="prodCategory">產品類別</label>
+                    <select id="prodCategory" class="form-input"></select>
+                </div>
+                <div class="form-group">
+                    <label for="prodForm">產品形式</label>
+                    <select id="prodForm" class="form-input"></select>
+                </div>
+            </div>
+            <div class="form-group form-group-full" style="margin-top: 2rem;">
+                <label for="prodRemarks">備註</label>
+                <textarea id="prodRemarks" rows="3" class="form-input"></textarea>
+            </div>
+        </section>
+
+        <section class="form-section">
+            <div class="form-grid-2-col">
+                <div>
+                    <h2 class="section-title"><i class="fa-solid fa-industry"></i> 製造作業場所資訊</h2>
+                    <div class="vendor-section">
+                        <div id="mfgBody" class="vendor-list"></div>
+                         <div style="text-align: right; margin-top: 1rem;">
+                            <button id="btnAddMfg" class="btn-secondary no-print"><i class="fa-solid fa-plus"></i> 新增製造場所</button>
+                         </div>
+                    </div>
+                </div>
+                 <div>
+                    <h2 class="section-title"><i class="fa-solid fa-box-open"></i> 包裝作業場所資訊</h2>
+                    <div class="vendor-section">
+                        <div id="pkgBody" class="vendor-list"></div>
+                        <div style="text-align: right; margin-top: 1rem;">
+                           <button id="btnAddPkg" class="btn-secondary no-print"><i class="fa-solid fa-plus"></i> 新增包裝場所</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="form-section">
+            <h2 class="section-title"><i class="fa-solid fa-user-tie"></i> 產品責任業者資訊</h2>
+            <div class="form-grid-2-col">
+                <div class="form-group">
+                    <label for="makerTax">統一編號</label>
+                    <div class="input-group">
+                    <input id="makerTax" type="text" class="form-input" placeholder="輸入統一編號後點擊查詢">
+                    <button type="button" id="lookup-maker-btn" class="btn-secondary no-print"><i class="fa-solid fa-search"></i> 查詢</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="makerName">責任業者名稱</label>
+                    <input id="makerName" type="text" class="form-input" placeholder="可由統一編號查詢帶入">
+                </div>
+                <div class="form-group form-group-full">
+                    <label for="makerAddr">地址</label>
+                    <textarea id="makerAddr" rows="2" class="form-input" placeholder="可由統一編號查詢帶入"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="makerTel">聯絡電話</label>
+                    <input id="makerTel" type="tel" class="form-input" placeholder="可由統一編號查詢帶入">
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<div id="global-error"></div>
+
+<script type="module">
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    // Removed: import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js";
+    import { ref, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+    import { auth, db, storage } from './firebase-config.js';
+
+    const $ = sel => document.querySelector(sel);
+    const byId = id => document.getElementById(id);
+    // --- Firebase Cloud Function URLs ---
+    // Make sure these match your actual deployed function URLs and region
+    const GENERATE_PIF_ID_URL = 'https://asia-east1-cos-pif.cloudfunctions.net/generatePifId';
+    const CREATE_PIF_PROJECT_URL = 'https://asia-east1-cos-pif.cloudfunctions.net/createPifProject';
+
+
+    // --- Page State & Data ---
+    let pageMode = 'loading'; // loading, create, edit
+    let currentPifId = null;
+    let isSaving = false;
+    // 使用者是否有手動改過 PIF 字首（避免自動覆蓋）
+    let pifPrefixEdited = false;
+    
+    // 14 類別與形式（來源：化粧品範圍及種類表）
+    const CATS=[
+      {n:'洗髮用化粧品類', f:['洗髮精','洗髮乳','洗髮霜','洗髮凝膠','洗髮粉','其他']},
+      {n:'洗臉卸粧用化粧品類', f:['洗面乳','洗面霜','洗面凝膠','洗面泡沫','洗面粉','卸粧油','卸粧乳','卸粧液','其他']},
+      {n:'沐浴用化粧品類', f:['沐浴油','沐浴乳','沐浴凝膠','沐浴泡沫','沐浴粉','浴鹽','其他']},
+      {n:'香皂類', f:['香皂','其他']},
+      {n:'頭髮用化粧品類', f:['頭髮滋養液','護髮乳','護髮霜','護髮凝膠','護髮油','造型噴霧','定型髮霜','髮膠','髮蠟','髮油','潤髮劑','髮表著色劑','染髮劑','脫色/脫染劑','燙髮劑','其他']},
+      {n:'化粧水/油/面霜乳液類', f:['化粧水','化粧用油','保養皮膚用乳液','保養皮膚用乳霜','保養皮膚用凝膠','保養皮膚用油','剃鬍水','剃鬍膏','剃鬍泡沫','剃後化粧水','剃後面霜','護手乳','護手霜','護手凝膠','護手油','助曬乳','助曬霜','助曬凝膠','助曬油','防曬乳','防曬霜','防曬凝膠','防曬油','糊狀(泥膏狀)面膜','面膜','其他']},
+      {n:'香氛用化粧品類', f:['香水','香膏','香粉','爽身粉','腋臭防止劑','其他']},
+      {n:'止汗制臭劑類', f:['止汗劑','制臭劑','其他']},
+      {n:'唇用化粧品類', f:['唇膏','唇蜜','唇油','唇膜','其他']},
+      {n:'覆敷用化粧品類', f:['粉底液','粉底霜','粉膏','粉餅','蜜粉','臉部用彩粧品','定粧定色粉/劑','其他']},
+      {n:'眼部用化粧品類', f:['眼霜','眼膠','眼影','眼線','眼部用卸粧油','眼部用卸粧乳','眼膜','睫毛膏','眉筆','眉粉','眉膏','眉膠','其他']},
+      {n:'指甲用化粧品類', f:['指甲油','指甲油卸除液','指甲用乳','指甲用霜','其他']},
+      {n:'美白牙齒類', f:['牙齒美白劑','牙齒美白牙膏']},
+      {n:'非藥用牙膏、漱口水類', f:['非藥用牙膏','非藥用漱口水']}
+    ];
+
+    // 依「產品類別」自動帶入的 2 碼 PIF 字首
+    // 可之後依需求微調縮寫
+    const CATEGORY_PREFIX = {
+      '洗髮用化粧品類': 'SH',          // Shampoo
+      '洗臉卸粧用化粧品類': 'FC',      // Face Cleanser
+      '沐浴用化粧品類': 'BW',          // Body Wash
+      '香皂類': 'SO',                  // Soap
+      '頭髮用化粧品類': 'HR',          // Hair
+      '化粧水/油/面霜乳液類': 'SK',   // Skin
+      '香氛用化粧品類': 'FR',         // Fragrance
+      '止汗制臭劑類': 'DE',           // Deodorant
+      '唇用化粧品類': 'LP',           // Lip
+      '覆敷用化粧品類': 'MK',         // Make-up
+      '眼部用化粧品類': 'EY',         // Eye
+      '指甲用化粧品類': 'NA',         // Nail
+      '美白牙齒類': 'TW',             // Teeth Whitening
+      '非藥用牙膏、漱口水類': 'OR'     // Oral
+    };
+
+    // --- Firebase Callable Functions ---
+    // Removed: const generatePifId = httpsCallable(functions, 'generatePifId');
+    // Removed: const createPifProject = httpsCallable(functions, 'createPifProject'); // Added this line
+
+    // --- App Initialization ---
+    function startApp() {
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                try {
+                    initializePage();
+                    $('#user-info').textContent = `歡迎, ${user.displayName || user.email}`;
+                    $('#btnSignOut').addEventListener('click', () => { 
+                        signOut(auth).then(() => { 
+                            window.location.href = 'login.html'; 
+                        }); 
+                    });
+                } catch (e) {
+                    console.error("Error during page initialization:", e);
+                    showGlobalError(`頁面初始化錯誤：${e.message}`);
+                }
+                document.body.style.opacity = '1';
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+    }
+
+    async function initializePage() {
+        const urlParams = new URLSearchParams(window.location.search);
+        currentPifId = urlParams.get('id');
+
+        if (currentPifId) {
+            pageMode = 'edit';
+            await loadAndRenderPifData();
+        } else {
+            pageMode = 'create';
+            renderForCreateMode();
+        }
+        
+        setupEventListeners();
+        $('#app-container').style.display = 'block';
+    }
+
+    // --- Data Loading and Rendering ---
+    async function loadAndRenderPifData() {
+        $('#page-title').textContent = '編輯產品資料';
+        const docRef = doc(db, 'pifs', currentPifId);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+            throw new Error(`找不到 PIF 專案 (ID: ${currentPifId})。`);
+        }
+
+        const pifData = docSnap.data();
+        const pif01Data = pifData.pif01 || {};
+
+        document.title = `PIF 01 - ${pifData.productName}`;
+        $('#project-subtitle').textContent = `專案: ${pifData.companyName} - ${pifData.productName}`;
+
+        $('#productName').value = pifData.productName || '';
+        $('#productNameEn').value = pifData.productNameEn || '';
+        $('#companyName').value = pifData.companyName || '';
+        $('#companyKey').value = pifData.companyKey || '';
+        $('#pifId').value = pifData.pifId || currentPifId;
+        $('#productName').readOnly = true;
+        $('#companyName').readOnly = true;
+        $('#companyKey').readOnly = true;
+        $('#pifPrefix').readOnly = true;
+
+        renderForm(pif01Data);
+    }
+
+    function renderForCreateMode() {
+        document.title = "建立新 PIF 專案";
+        $('#page-title').textContent = "建立新 PIF 專案";
+        $('#project-subtitle').textContent = "請填寫以下產品資訊，儲存後將自動產生 PIF ID。";
+        $('#productName').readOnly = false;
+        $('#companyName').readOnly = false;
+        // companyKey 供 client 儀表板歸戶查詢（建議填統編）
+        $('#companyKey').readOnly = false;
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const ck = (urlParams.get('companyKey') || localStorage.getItem('companyKey') || '').trim();
+            if (ck) $('#companyKey').value = ck;
+        } catch(e) {}
+        $('#pifPrefix').readOnly = false;
+        renderForm({});
+    }
+
+    function renderForm(pif01Data) {
+        const defaultMfg = [{ companyName: '', addr: '', country: '', taxId: '' }];
+        const defaultPkg = [{ companyName: '', addr: '', country: '', taxId: '' }];
+
+        const state = {
+            basic: pif01Data.basic || { use: '', category: '', form: '', productNameEn: '', remarks: '', weight: '' },
+            mfg: pif01Data.mfg && pif01Data.mfg.length > 0 ? pif01Data.mfg : defaultMfg,
+            pkg: pif01Data.pkg && pif01Data.pkg.length > 0 ? pif01Data.pkg : defaultPkg,
+            maker: pif01Data.maker || {}
+        };
+
+        $('#prodUse').value = state.basic.use || '';
+        $('#productNameEn').value = state.basic.productNameEn || '';
+        $('#prodWeight').value = state.basic.weight || '';
+        
+        // --- Category & Form Dropdowns ---
+        const catSel=$('#prodCategory'); 
+        catSel.innerHTML='<option value="">— 請選擇類別 —</option>' + CATS.map(function(c){return '<option>'+c.n+'</option>';}).join('');
+        if(state.basic.category){ catSel.value = state.basic.category; }
+        buildFormSelect(state.basic.form);
+        // 建立時依目前類別自動帶入 PIF 字首
+        if (pageMode === 'create') {
+            autoFillPrefixFromCategory();
+        }
+        
+        if (pageMode === 'edit' && currentPifId) {
+            const prefixMatch = currentPifId.match(/^[A-Z]{2}/);
+            if (prefixMatch) {
+                $('#pifPrefix').value = prefixMatch[0];
+            }
+        }
+        
+        renderVendorList('mfg', state.mfg);
+        renderVendorList('pkg', state.pkg);
+        $('#makerName').value = state.maker.companyName || '';
+        $('#makerAddr').value = state.maker.addr || '';
+        $('#makerTel').value = state.maker.tel || '';
+        $('#makerTax').value = state.maker.tax || '';
+        $('#prodRemarks').value = state.basic.remarks || '';
+    }
+    
+    function buildFormSelect(currentFormValue){
+        var formSel=$('#prodForm'); var cat=$('#prodCategory').value; var catObj=CATS.find(function(c){return c.n===cat});
+        if(!catObj){ formSel.innerHTML='<option value="">— 請先選擇類別 —</option>'; formSel.disabled=true; return; }
+        formSel.disabled=false;
+        formSel.innerHTML='<option value="">— 請選擇形式 —</option>' + catObj.f.map(function(n){return '<option>'+n+'</option>';}).join('');
+        if(currentFormValue){ formSel.value = currentFormValue; }
+    }
+
+    // 依選取的「產品類別」自動帶入 2 碼字首
+    function autoFillPrefixFromCategory() {
+        if (pageMode !== 'create') return;             // 只在建立新 PIF 時自動帶入
+        const cat = $('#prodCategory').value;
+        const code = CATEGORY_PREFIX[cat];
+        const prefixInput = $('#pifPrefix');
+        if (!code || !prefixInput) return;
+
+        // 若使用者已經自己改過，且欄位不是空的，就不要硬蓋掉
+        if (pifPrefixEdited && prefixInput.value.trim() !== '') return;
+
+        prefixInput.value = code;
+    }
+
+    // --- UI and Event Listeners ---
+    function setupEventListeners() {
+        $('#btnAddMfg').addEventListener('click', () => addVendorCard('mfg'));
+        $('#btnAddPkg').addEventListener('click', () => addVendorCard('pkg'));
+        $('#btnSave').addEventListener('click', saveController);
+        $('#btnPrint').addEventListener('click', () => window.print());
+        $('#lookup-maker-btn').addEventListener('click', lookupMaker);
+        $('#prodCategory').addEventListener('change', () => {
+            buildFormSelect();
+            autoFillPrefixFromCategory();
+        });
+
+        // 建立模式下，偵測使用者是否手動輸入過 PIF 字首
+        if (pageMode === 'create') {
+            $('#pifPrefix').addEventListener('input', () => {
+                if ($('#pifPrefix').value.trim() !== '') {
+                    pifPrefixEdited = true;
+                }
+            });
+        }
+
+        // PDF 上傳按鈕與檔案選擇器
+        const btnUpload = byId('btnUploadPdf');
+        const inputPdf = byId('pdfUploader');
+        if (btnUpload && inputPdf) {
+            btnUpload.addEventListener('click', () => inputPdf.click());
+            inputPdf.addEventListener('change', handlePdfUpload);
+        }
+    }
+
+    function renderVendorList(kind, items) {
+        const container = $(`#${kind}Body`);
+        container.innerHTML = '';
+        items.forEach(item => addVendorCard(kind, item));
+        updateVendorCardHeaders(kind);
+    }
+
+    function addVendorCard(kind, item = {}) {
+        const container = $(`#${kind}Body`);
+        const card = document.createElement('div');
+        card.className = 'vendor-card';
+        
+        const placeholderName = kind === 'mfg' ? '製造廠' : '包裝廠';
+
+        card.innerHTML = `
+            <div class="vendor-card-header">
+                <h3 class="vendor-card-title">${placeholderName} #${container.children.length + 1}</h3>
+                <button type="button" class="btn-danger btn-sm del-vendor no-print"><i class="fa-solid fa-trash"></i></button>
+            </div>
+            <div class="form-grid">
+                <div class="form-group form-group-full">
+                    <label>廠商查詢 (統一編號)</label>
+                    <div class="input-group">
+                        <input type="text" class="form-input taxId" placeholder="輸入統一編號後點擊查詢" value="${item.taxId || ''}">
+                        <button type="button" class="btn-secondary lookup-row-btn no-print"><i class="fa-solid fa-search"></i> 查詢</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>名稱</label>
+                    <input type="text" class="form-input companyName" placeholder="${placeholderName}名稱" value="${item.companyName || ''}">
+                </div>
+                <div class="form-group">
+                    <label>地址</label>
+                    <input type="text" class="form-input addr" placeholder="廠商地址" value="${item.addr || ''}">
+                </div>
+                <div class="form-group">
+                    <label>國別</label>
+                    <input type="text" class="form-input country" placeholder="國別" value="${item.country || ''}">
+                </div>
+            </div>
+        `;
+
+        container.appendChild(card);
+        
+        card.querySelector('.del-vendor').addEventListener('click', () => {
+            card.remove();
+            updateVendorCardHeaders(kind);
+        });
+        card.querySelector('.lookup-row-btn').addEventListener('click', (e) => lookupTableRow(e));
+        
+        if (container.children.length > 0) {
+            updateVendorCardHeaders(kind);
+        }
+    }
+
+    function updateVendorCardHeaders(kind) {
+        const container = $(`#${kind}Body`);
+        const placeholderName = kind === 'mfg' ? '製造廠' : '包裝廠';
+        Array.from(container.children).forEach((card, index) => {
+            card.querySelector('.vendor-card-title').textContent = `${placeholderName} #${index + 1}`;
+        });
+    }
+
+    // --- Main Save Controller ---
+    async function saveController() {
+        if (isSaving) return;
+        isSaving = true;
+        const btn = $('#btnSave');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 儲存中...';
+        setSaveHint('儲存中...', 'var(--primary-color)');
+
+        try {
+            if (pageMode === 'create') {
+                await createNewPif();
+            } else {
+                await updateExistingPif();
+            }
+        } catch (error) {
+            console.error("Save failed:", error);
+            setSaveHint(`儲存失敗: ${error.message}`, 'var(--danger-color)');
+            alert(`儲存失敗: ${error.message}`);
+        } finally {
+            isSaving = false;
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> 雲端儲存';
+        }
+    }
+
+    async function createNewPif() {
+        const productName = $('#productName').value.trim();
+        const productNameEn = $('#productNameEn').value.trim();
+        const companyName = $('#companyName').value.trim();
+        const companyKey = $('#companyKey').value.trim();
+        const pifPrefix = $('#pifPrefix').value.trim().toUpperCase();
+
+        if (!productName || !companyName) throw new Error("請務必填寫「產品名稱」和「公司名稱」。");
+        if (!companyKey) throw new Error("請務必填寫「公司統編/歸戶代碼」（companyKey），否則 client 儀表板無法顯示案件。");
+        if (!pifPrefix || !/^[A-Z]{2}$/.test(pifPrefix)) throw new Error("請務必填寫 2 位大寫英文字母的「PIF 字首」（可由產品類別自動帶入）。");
+
+        setSaveHint('正在產生專案 ID...');
+        
+        // --- Fetch for generatePifId ---
+        const idResponse = await fetch(GENERATE_PIF_ID_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ prefix: pifPrefix }),
+        });
+
+        if (!idResponse.ok) {
+            const errorData = await idResponse.json();
+            throw new Error(errorData.error || `從後端獲取新 PIF ID 失敗 (HTTP ${idResponse.status})。`);
+        }
+        const idResult = await idResponse.json();
+        
+        if (!idResult.success || !idResult.pifId) {
+            throw new Error(idResult.error || '從後端獲取新 PIF ID 失敗。');
+        }
+        const newPifId = idResult.pifId;
+
+        const fullPifData = {
+            pifId: newPifId,
+            productName: productName,
+            productNameEn: productNameEn,
+            companyName: companyName,
+            companyKey: companyKey,
+            // 進行中案件/付款/成品 PDF 狀態（供 client 儀表板顯示）
+            stage: "in_progress",
+            paymentStatus: "pending",
+            finalPdfReady: false,
+            finalPdfPath: `pifs/${newPifId}/final.pdf`,
+            createdAt: new Date().toISOString(),
+            ownerId: auth.currentUser.uid,
+            pif01: getPif01DataFromForm()
+        };
+
+        setSaveHint('正在建立PIF專案...');
+
+        // --- Fetch for createPifProject ---
+        const idToken = await auth.currentUser.getIdToken();
+        const createResponse = await fetch(CREATE_PIF_PROJECT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${idToken}` // For callable functions converted to HTTP endpoints
+            },
+            body: JSON.stringify(fullPifData),
+        });
+
+        if (!createResponse.ok) {
+            const errorData = await createResponse.json();
+            throw new Error(errorData.error || `建立專案時後端發生錯誤 (HTTP ${createResponse.status})。`);
+        }
+        const createResult = await createResponse.json();
+
+        if (!createResult.success) {
+            throw new Error(createResult.error || '建立專案時後端發生錯誤。');
+        }
+
+        // ✅ 保險：無論後端是否有白名單，都把「歸戶/付款/成品」狀態 merge 回 pifs/{pifId}
+        try {
+            await setDoc(doc(db, "pifs", newPifId), {
+                companyKey,
+                companyName,
+                productName,
+                stage: "in_progress",
+                paymentStatus: "pending",
+                finalPdfReady: false,
+                finalPdfPath: `pifs/${newPifId}/final.pdf`,
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
+        } catch(e) {
+            console.warn("merge case fields failed:", e);
+        }
+
+        setSaveHint('PIF專案建立成功！正在導向授權頁面...', 'var(--success-color)');
+        alert('專案已成功建立！');
+        const params = new URLSearchParams({ id: newPifId, companyName: encodeURIComponent(companyName), productName: encodeURIComponent(productName) });
+        window.location.href = `pif-auth.html?${params.toString()}`; // Modified redirect path
+    }
+
+    async function updateExistingPif() {
+        setSaveHint('正在更新資料...');
+        const pif01Data = getPif01DataFromForm();
+        const docRef = doc(db, "pifs", currentPifId);
+        await setDoc(docRef, { 
+            pif01: pif01Data, 
+            productNameEn: $('#productNameEn').value.trim(),
+            updatedAt: new Date().toISOString() 
+        }, { merge: true });
+        setSaveHint('所有變更已儲存！', 'var(--success-color)');
+    }
+
+    // --- Data Gathering from Form ---
+    function getPif01DataFromForm() {
+        const getVendorData = (card) => ({
+            taxId: card.querySelector('.taxId').value.trim(),
+            companyName: card.querySelector('.companyName').value.trim(),
+            addr: card.querySelector('.addr').value.trim(),
+            country: card.querySelector('.country').value.trim()
+        });
+
+        return {
+            basic: { 
+                use: $('#prodUse').value.trim(),
+                category: $('#prodCategory').value,
+                form: $('#prodForm').value,
+                productNameEn: $('#productNameEn').value.trim(),
+                remarks: $('#prodRemarks').value.trim(),
+                weight: $('#prodWeight').value.trim()
+            },
+            mfg: Array.from($('#mfgBody').querySelectorAll('.vendor-card')).map(getVendorData),
+            pkg: Array.from($('#pkgBody').querySelectorAll('.vendor-card')).map(getVendorData),
+            maker: { 
+                companyName: $('#makerName').value.trim(), 
+                addr: $('#makerAddr').value.trim(), 
+                tel: $('#makerTel').value.trim(), 
+                tax: $('#makerTax').value.trim() 
+            }
+        };
+    }
+
+    // --- Utility Functions ---
+    function setSaveHint(text, color = 'var(--text-muted)') {
+        const hintEl = $('#autosaveHint');
+        hintEl.textContent = text;
+        hintEl.style.color = color;
+    }
+
+    function showGlobalError(message) {
+        $('#app-container').style.display = 'none';
+        $('#global-error').innerHTML = `<strong>錯誤：</strong> ${message}`;
+        $('#global-error').style.display = 'block';
+    }
+    
+    async function lookupTableRow(event) {
+        const btn = event.currentTarget;
+        const card = btn.closest('.vendor-card');
+        const taxIdInput = card.querySelector('.taxId');
+        const nameInput = card.querySelector('.companyName');
+        const addrInput = card.querySelector('.addr');
+        const taxId = taxIdInput.value.trim();
+
+        if (!taxId) { alert('請先輸入統一編號。'); return; }
+        
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+        try {
+            const vendorRef = doc(db, 'vendors', taxId);
+            const docSnap = await getDoc(vendorRef);
+            if (docSnap.exists()) {
+                const vendor = docSnap.data();
+                nameInput.value = vendor.companyName || '';
+                addrInput.value = vendor.address || '';
+            } else {
+                alert('在廠商資料庫中找不到此統一編號的資料。');
+            }
+        } catch (error) {
+            console.error("Error looking up vendor in table: ", error);
+            alert(`查詢時發生錯誤: ${error.message}`);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-search"></i> 查詢';
+        }
+    }
+
+    async function lookupMaker() {
+        const taxId = $('#makerTax').value.trim();
+        if (!taxId) { alert('請先輸入統一編號。'); return; }
+        const lookupBtn = $('#lookup-maker-btn');
+        lookupBtn.disabled = true;
+        lookupBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 查詢中...';
+        try {
+            const vendorRef = doc(db, 'vendors', taxId);
+            const docSnap = await getDoc(vendorRef);
+            if (docSnap.exists()) {
+                const vendor = docSnap.data();
+                $('#makerName').value = vendor.companyName || '';
+                $('#makerAddr').value = vendor.address || '';
+                $('#makerTel').value = vendor.phone || '';
+                alert('廠商資料已成功帶入！');
+            } else {
+                alert('在中央廠商資料庫中找不到此統一編號的資料。');
+            }
+        } catch (error) {
+            console.error("Error looking up vendor: ", error);
+            alert(`查詢時發生錯誤: ${error.message}`);
+        } finally {
+            lookupBtn.disabled = false;
+            lookupBtn.innerHTML = '<i class="fa-solid fa-search"></i> 查詢';
+        }
+    }
+
+    /* === PDF 上傳相關函式 === */
+    function handlePdfUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (file.type !== "application/pdf") {
+            alert("請僅上傳 PDF 檔案。");
+            event.target.value = "";
+            return;
+        }
+        if (!currentPifId) {
+            alert("錯誤：缺少 PIF ID，無法決定 PDF 儲存路徑。請先建立或載入 PIF 專案。");
+            return;
+        }
+        // PIF 01 的標準 PDF 路徑
+        const storagePath = `pifs/${currentPifId}/01.pdf`;
+        uploadMainPdf(file, storagePath);
+    }
+
+    function uploadMainPdf(file, storagePath) {
+        const uploadTask = uploadBytesResumable(ref(storage, storagePath), file);
+        const button = byId('btnUploadPdf');
+        button.disabled = true;
+
+        uploadTask.on('state_changed', 
+            (snapshot) => {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                setUploadStatusPdf(`<i class="fa-solid fa-upload"></i> 正在上傳 PDF... ${Math.round(progress)}%`, 'status-info');
+            }, 
+            (error) => {
+                console.error("Main PDF Upload failed:", error);
+                setUploadStatusPdf(`<i class="fa-solid fa-triangle-exclamation"></i> PDF 上傳失敗: ${error.code}`, 'status-error');
+                button.disabled = false;
+            }, 
+            () => {
+                setUploadStatusPdf('<i class="fa-solid fa-check-circle"></i> PDF 已成功上傳！', 'status-success');
+                button.disabled = false;
+                const input = byId('pdfUploader');
+                if (input) input.value = '';
+                setTimeout(() => setUploadStatusPdf('', 'none'), 5000);
+            }
+        );
+    }
+
+    function setUploadStatusPdf(msg, styleClass) {
+        const statusEl = byId('upload-status-pdf');
+        if (!statusEl) return;
+        if (!msg || styleClass === 'none') {
+            statusEl.style.display = 'none';
+        } else {
+            statusEl.innerHTML = msg;
+            statusEl.className = `no-print ${styleClass}`;
+            statusEl.style.display = 'block';
+        }
+    }
+    /* === PDF 上傳相關函式結束 === */
+
+    startApp();
+</script>
+</body>
+</html>

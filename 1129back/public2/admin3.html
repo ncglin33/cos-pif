@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>會員管理後台</title>
+<style>
+  :root { --brand: #4f46e5; --bg: #f3f4f6; --fg: #111827; --card: #fff; --line: #e5e7eb; }
+  body { font-family: ui-sans-serif, system-ui, sans-serif; background-color: var(--bg); margin: 0; color: var(--fg); }
+  header { background: var(--card); padding: 1rem 2rem; border-bottom: 1px solid var(--line); display:flex; justify-content: space-between; align-items: center; }
+  main { padding: 2rem; }
+  h1 { font-size: 1.5rem; font-weight: 600; margin: 0; }
+  h2 { font-size: 1.25rem; margin-top: 2.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--line); padding-bottom: .5rem; }
+  .user-list { display: grid; gap: 1rem; }
+  .user-card { background: var(--card); border: 1px solid var(--line); border-radius: .5rem; padding: 1rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
+  .user-info { display: flex; flex-direction: column; }
+  .user-info span { font-size: 1rem; font-weight: 500; }
+  .user-info small { font-size: .875rem; color: #6b7280; }
+  .actions button { font-size: .875rem; padding: .4rem .8rem; border-radius: .375rem; cursor: pointer; border: 1px solid transparent; font-weight: 500; transition: all .2s; }
+  .actions button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-approve { background-color: #dcfce7; color: #166534; border-color: #a7f3d0; }
+  .btn-approve:hover { background-color: #a7f3d0; }
+  .btn-reject { background-color: #fee2e2; color: #991b1b; border-color: #fecaca; margin-left: .5rem; }
+  .btn-reject:hover { background-color: #fecaca; }
+  #auth-state { text-align: center; padding: 4rem; background: var(--card); border-radius: .5rem; margin: 2rem; }
+  #user-info { font-size: .875rem; }
+  #user-info a { color: #dc2626; text-decoration: none; font-weight: 500; margin-left: 1rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>會員管理後台</h1>
+  <div id="user-info"></div>
+</header>
+
+<main id="admin-panel" style="display: none;">
+  <section id="pending-section">
+    <h2>待審核使用者</h2>
+    <div id="pending-list" class="user-list">
+      <p>目前沒有待審核的使用者。</p>
+    </div>
+  </section>
+
+  <section id="approved-section">
+    <h2>已核准會員</h2>
+    <div id="approved-list" class="user-list">
+      <p>目前沒有已核准的會員。</p>
+    </div>
+  </section>
+
+  <section id="rejected-section">
+    <h2>已拒絕使用者</h2>
+    <div id="rejected-list" class="user-list">
+      <p>目前沒有已拒絕的使用者。</p>
+    </div>
+  </section>
+</main>
+
+<div id="auth-state">
+  <h2>驗證身分中...</h2>
+  <p>正在確認您的管理員權限，請稍候。</p>
+</div>
+
+<script src="firebase-config.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+  import { getFirestore, doc, getDoc, collection, query, where, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+  // Use the centrally defined config
+  const firebaseConfig = getFirebaseConfig();
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const adminPanel = document.getElementById('admin-panel');
+  const authState = document.getElementById('auth-state');
+  const userInfoEl = document.getElementById('user-info');
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const userDocRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists() && userDoc.data().role === 'admin') {
+        authState.style.display = 'none';
+        adminPanel.style.display = 'block';
+        userInfoEl.innerHTML = `<span>${user.email}</span><a href="#" id="logout-btn">登出</a>`;
+        document.getElementById('logout-btn').addEventListener('click', (e) => { e.preventDefault(); signOut(auth); });
+        setupListeners();
+      } else {
+        showAccessDenied();
+      }
+    } else {
+      showAccessDenied();
+    }
+  });
+
+  function setupListeners() {
+    const statuses = ['pending', 'approved', 'rejected'];
+    statuses.forEach(status => {
+        const q = query(collection(db, "users"), where("status", "==", status));
+        onSnapshot(q, snapshot => {
+            const showActions = status === 'pending';
+            renderUserList(`${status}-list`, snapshot.docs, showActions);
+        });
+    });
+  }
+
+  function renderUserList(elementId, docs, showActions) {
+    const listEl = document.getElementById(elementId);
+    if (!listEl) return; // Guard against element not found
+    if (docs.empty) {
+      listEl.innerHTML = `<p>目前沒有符合條件的使用者。</p>`;
+      return;
+    }
+    listEl.innerHTML = docs.map(doc => {
+      const user = doc.data();
+      return `
+        <div class="user-card" data-id="${doc.id}">
+          <div class="user-info">
+            <span>${user.displayName || '未提供名稱'}</span>
+            <small>${user.email}</small>
+          </div>
+          ${showActions ? `
+          <div class="actions">
+            <button class="btn-approve" data-action="approve">核准</button>
+            <button class="btn-reject" data-action="reject">駁回</button>
+          </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  document.addEventListener('click', async (e) => {
+    const button = e.target;
+    const action = button.dataset.action;
+    if (!action) return;
+
+    const card = button.closest('.user-card');
+    const userId = card.dataset.id;
+    if (!userId) return;
+
+    button.disabled = true;
+    button.textContent = '處理中...';
+
+    const userDocRef = doc(db, "users", userId);
+
+    try {
+        if (action === 'approve') {
+            await updateDoc(userDocRef, { status: 'approved' });
+        }
+
+        if (action === 'reject') {
+            await updateDoc(userDocRef, { status: 'rejected' });
+        }
+    } catch (error) {
+        console.error(`Failed to ${action} user:`, error);
+        // Re-enable button on error
+        button.disabled = false;
+        button.textContent = action === 'approve' ? '核准' : '駁回';
+    }
+    // No need to re-enable on success, as the card will disappear from the list
+  });
+
+  function showAccessDenied() {
+      authState.innerHTML = `
+        <h2>存取被拒</h2>
+        <p>您必須以管理員身分登入才能檢視此頁面。</p>
+        <p><a href="login.html">前往登入</a></p>
+    `;
+    adminPanel.style.display = 'none';
+    authState.style.display = 'block';
+  }
+</script>
+
+</body>
+</html>

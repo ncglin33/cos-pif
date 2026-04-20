@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KB 投稿入口｜線上投稿與修訂</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <style>
+    .container{ max-width: 1750px; }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.85rem 1rem; background:#fff;
+      border:1px solid var(--line); border-radius:16px;
+      margin:.9rem 0 1rem;
+    }
+    .topbar .left{ display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
+    .topbar a{ text-decoration:none; color:var(--ink); font-weight:800; }
+    .badge{
+      display:inline-flex; align-items:center; gap:.35rem;
+      border:1px solid var(--line); border-radius:999px;
+      padding:.25rem .6rem; font-size:.82rem; background:#fff; color:var(--muted);
+    }
+    .layout{ display:grid; grid-template-columns: 430px 1fr; gap: 1rem; align-items:start; }
+    @media (max-width: 1100px){ .layout{ grid-template-columns: 1fr; } }
+
+    .card{
+      background:#fff; border:1px solid var(--line);
+      border-radius:16px; box-shadow:0 1px 3px rgba(0,0,0,.05);
+      padding: 1rem 1rem;
+    }
+
+    .row{ display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+    .grow{ flex: 1 1 auto; min-width: 180px; }
+    .right{ margin-left:auto; }
+    .muted{ color:var(--muted); }
+    .small{ font-size:.86rem; }
+    .kbd{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:.85rem; }
+    .hr{ border:none; border-top:1px solid #eef2f7; margin: .9rem 0; }
+
+    .input, select, textarea{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:.5rem .6rem;
+      font-size:.95rem;
+      outline:none;
+      background:#fff;
+    }
+    textarea{ min-height: 110px; resize: vertical; }
+    .input:focus, select:focus, textarea:focus{
+      border-color:#bfdbfe; box-shadow:0 0 0 3px rgba(59,130,246,.15);
+    }
+
+    .btnx{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius: 12px;
+      padding:.48rem .7rem;
+      cursor:pointer;
+      font-weight:800;
+      display:inline-flex; align-items:center; gap:.4rem;
+    }
+    .btnx:hover{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+    .btn-danger{ border-color:#fecaca; }
+    .btn-danger:hover{ background:#fff1f2; border-color:#fca5a5; color:#b91c1c; }
+    .btn-primary{
+      border-color:#bfdbfe; background:#eff6ff; color:#1d4ed8;
+    }
+    .btn-primary:hover{ background:#dbeafe; border-color:#93c5fd; }
+
+    .ok{
+      padding:.6rem .7rem;
+      border:1px solid #bbf7d0;
+      background:#f0fdf4;
+      border-radius:12px;
+      color:#166534;
+    }
+    .warn{
+      padding:.6rem .7rem;
+      border:1px solid #fde68a;
+      background:#fffbeb;
+      border-radius:12px;
+      color:#92400e;
+    }
+
+    .list{ display:flex; flex-direction:column; gap:.45rem; margin-top:.6rem; }
+    .item{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:.55rem .65rem;
+      cursor:pointer;
+      background:#fff;
+    }
+    .item:hover{ background:#eff6ff; border-color:#bfdbfe; }
+    .item .t{ font-weight:900; display:flex; gap:.45rem; align-items:center; flex-wrap:wrap; }
+    .item .m{ color:var(--muted); font-size:.85rem; margin-top:.15rem; line-height:1.35; }
+
+    .status{
+      display:inline-flex; align-items:center; gap:.35rem;
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:.15rem .55rem;
+      font-size:.82rem;
+      color:var(--muted);
+      background:#fff;
+    }
+
+    .twoCol{ display:grid; grid-template-columns: 1fr 1fr; gap:.8rem; }
+    @media (max-width: 980px){ .twoCol{ grid-template-columns: 1fr; } }
+
+    .pill{
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:.25rem .55rem;
+      background:#fff;
+      color:var(--muted);
+      font-size:.82rem;
+      display:inline-flex;
+      gap:.35rem;
+      align-items:center;
+    }
+
+    .progress{
+      height: 10px;
+      background:#f1f5f9;
+      border:1px solid var(--line);
+      border-radius:999px;
+      overflow:hidden;
+    }
+    .bar{
+      height:100%;
+      width:0%;
+      background:#93c5fd;
+      transition: width .15s ease;
+    }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .disabled{ opacity:.55; pointer-events:none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="left">
+        <a href="index.html"><i class="fa-solid fa-house"></i> 首頁</a>
+        <a href="kb-issue.html"><i class="fa-solid fa-newspaper"></i> 月刊/週刊</a>
+        <span class="badge" id="authBadge">未登入</span>
+        <span class="badge" id="roleBadge">role: —</span>
+      </div>
+      <div class="row">
+        <span class="muted small" id="userInfo"></span>
+        <button class="btnx" id="btnSignOut"><i class="fa-solid fa-right-from-bracket"></i> 登出</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside class="card">
+        <h2 style="margin:.1rem 0 .35rem;">我的投稿</h2>
+        <div class="muted small">
+          新建投稿（Draft）→ 送出（Submitted）→ 審稿（Under review）→ 修訂（Revision）→ 接受/退稿 → 安排發表月份
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row">
+          <input class="input grow" id="qMine" placeholder="搜尋：標題 / 主題 / 狀態 / 投稿編號…" />
+          <button class="btnx" id="btnReload" title="重新載入"><i class="fa-solid fa-rotate"></i></button>
+        </div>
+
+        <div class="row" style="margin-top:.55rem;">
+          <button class="btnx btn-primary" id="btnNew"><i class="fa-solid fa-plus"></i> 新建投稿</button>
+          <span class="muted small" id="mineCount"></span>
+        </div>
+
+        <div class="list" id="mineList"></div>
+        <div id="msg" style="margin-top:.7rem;"></div>
+
+        <div class="hr"></div>
+        <div class="muted small">
+          <div><span class="pill"><i class="fa-solid fa-shield-halved"></i> 權限</span> 作者僅能編輯 <span class="kbd">draft / revision_requested</span>。</div>
+          <div style="margin-top:.35rem;"><span class="pill"><i class="fa-solid fa-file-arrow-up"></i> 上傳</span> 建議 PDF（主文）+ 可選補充檔。</div>
+        </div>
+      </aside>
+
+      <main class="card" id="editorWrap">
+        <div class="row" style="justify-content:space-between;">
+          <div>
+            <h2 style="margin:.1rem 0;">投稿內容</h2>
+            <div class="muted small" id="currentLine">submissionId: —</div>
+          </div>
+          <div class="row">
+            <span class="status" id="statusBadge"><i class="fa-regular fa-circle"></i> —</span>
+            <button class="btnx" id="btnSave"><i class="fa-solid fa-floppy-disk"></i> 儲存草稿</button>
+            <button class="btnx btn-primary" id="btnSubmit"><i class="fa-solid fa-paper-plane"></i> 送出投稿</button>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="twoCol">
+          <div>
+            <label class="muted small">文章標題</label>
+            <input class="input" id="title" placeholder="例如：外泌體於頭皮健康之應用…" />
+          </div>
+          <div>
+            <label class="muted small">文章類型</label>
+            <select id="articleType">
+              <option value="research">研究/原著</option>
+              <option value="review">綜述/回顧</option>
+              <option value="case">案例/實務</option>
+              <option value="regulation">法規/品質</option>
+              <option value="tech">技術/方法</option>
+              <option value="other">其他</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="twoCol" style="margin-top:.65rem;">
+          <div>
+            <label class="muted small">主題（Topic）</label>
+            <input class="input" id="topic" placeholder="例如：頭髮功效/防曬/毒理/理化/外泌體…" />
+          </div>
+          <div>
+            <label class="muted small">關鍵字（逗號分隔）</label>
+            <input class="input" id="keywords" placeholder="例如：exosome, scalp, dandruff…" />
+          </div>
+        </div>
+
+        <div style="margin-top:.65rem;">
+          <label class="muted small">摘要（Abstract）</label>
+          <textarea id="abstract" placeholder="請輸入摘要（可中文/英文）"></textarea>
+        </div>
+
+        <div class="hr"></div>
+
+        <h3 style="margin:.2rem 0;">作者資訊</h3>
+        <div class="muted small">作者欄位可填多位；對外通知將以「通訊作者 Email」為主。</div>
+
+        <div class="twoCol" style="margin-top:.65rem;">
+          <div>
+            <label class="muted small">通訊作者姓名</label>
+            <input class="input" id="corrName" placeholder="姓名" />
+          </div>
+          <div>
+            <label class="muted small">通訊作者 Email</label>
+            <input class="input" id="corrEmail" placeholder="name@example.com" />
+          </div>
+        </div>
+
+        <div style="margin-top:.65rem;">
+          <label class="muted small">作者列表（每行一位：姓名｜單位｜Email 可空）</label>
+          <textarea id="authors" placeholder="例：&#10;王小明｜嘉南藥理大學 藥粧生技產業系｜a@b.com&#10;李小華｜某公司 R&amp;D｜"></textarea>
+        </div>
+
+        <div class="hr"></div>
+
+        <h3 style="margin:.2rem 0;">稿件檔案</h3>
+        <div class="muted small">
+          送出投稿時，至少需要「主文 PDF」。修訂時可再上傳新版（會自動建立版本）。
+        </div>
+
+        <div class="twoCol" style="margin-top:.65rem;">
+          <div>
+            <label class="muted small">主文 PDF（必填）</label>
+            <input class="input" id="manuscriptFile" type="file" accept="application/pdf" />
+            <div class="muted small" style="margin-top:.35rem;" id="manuscriptInfo">（尚未選取檔案）</div>
+          </div>
+          <div>
+            <label class="muted small">補充檔（可選，PDF/圖片/zip）</label>
+            <input class="input" id="suppFiles" type="file" multiple />
+            <div class="muted small" style="margin-top:.35rem;" id="suppInfo">（可不選）</div>
+          </div>
+        </div>
+
+        <div style="margin-top:.65rem;">
+          <div class="row" style="justify-content:space-between;">
+            <label class="muted small">上傳進度</label>
+            <span class="muted small mono" id="uploadPct">0%</span>
+          </div>
+          <div class="progress"><div class="bar" id="uploadBar"></div></div>
+        </div>
+
+        <div class="hr"></div>
+
+        <h3 style="margin:.2rem 0;">修訂（Revision）</h3>
+        <div class="muted small" id="revHint">若編輯要求修訂，這裡會顯示要求內容與截止日。</div>
+
+        <div id="revBox" style="margin-top:.6rem;"></div>
+
+        <div class="hr"></div>
+
+        <h3 style="margin:.2rem 0;">版本與下載</h3>
+        <div class="muted small">每次「送出投稿 / 送出修訂」會建立一個版本紀錄。</div>
+        <div id="versionsBox" style="margin-top:.6rem;"></div>
+
+      </main>
+    </div>
+  </div>
+
+  <script type="module">
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import {
+      collection, doc, getDoc, getDocs, query, where, orderBy, limit,
+      setDoc, updateDoc, addDoc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+    import { db, auth, storage } from "./firebase-config.js";
+
+    const $ = (s) => document.querySelector(s);
+
+    const COL = "kb_submissions";
+
+    let currentUser = null;
+    let mySubmissions = [];
+    let currentId = "";
+    let currentData = null;
+    let canEditThis = false; // per submission status
+
+    function esc(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+    }
+    function msg(html, kind="ok"){
+      $("#msg").innerHTML = `<div class="${kind === "ok" ? "ok" : "warn"}">${html}</div>`;
+      setTimeout(() => { if ($("#msg").innerHTML) $("#msg").innerHTML = ""; }, 4200);
+    }
+    function normalize(s){ return String(s||"").trim(); }
+
+    function parseAuthors(text){
+      const lines = String(text||"").split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+      return lines.map(line => {
+        const parts = line.split("|").map(x => x.trim());
+        return {
+          name: parts[0] || "",
+          affiliation: parts[1] || "",
+          email: parts[2] || ""
+        };
+      }).filter(a => a.name);
+    }
+    function authorsToText(arr){
+      const list = Array.isArray(arr) ? arr : [];
+      return list.map(a => `${a.name||""}|${a.affiliation||""}|${a.email||""}`.replaceAll("||","|")).join("\n");
+    }
+    function kwToArray(s){
+      return normalize(s).split(",").map(x => x.trim()).filter(Boolean).slice(0, 30);
+    }
+
+    function setUploadProgress(pct){
+      const p = Math.max(0, Math.min(100, pct || 0));
+      $("#uploadPct").textContent = `${p.toFixed(0)}%`;
+      $("#uploadBar").style.width = `${p}%`;
+    }
+
+    function computeCanEditByStatus(status){
+      const st = String(status||"").toLowerCase();
+      return (st === "draft" || st === "revision_requested");
+    }
+
+    function statusIcon(st){
+      const s = String(st||"").toLowerCase();
+      if (s === "draft") return "fa-regular fa-pen-to-square";
+      if (s === "submitted") return "fa-solid fa-paper-plane";
+      if (s === "under_review") return "fa-solid fa-magnifying-glass";
+      if (s === "revision_requested") return "fa-solid fa-rotate";
+      if (s === "revised_submitted") return "fa-solid fa-file-circle-check";
+      if (s === "accepted") return "fa-solid fa-circle-check";
+      if (s === "rejected") return "fa-solid fa-circle-xmark";
+      if (s === "published") return "fa-solid fa-newspaper";
+      return "fa-regular fa-circle";
+    }
+
+    function setStatusBadge(st){
+      const s = String(st||"—");
+      $("#statusBadge").innerHTML = `<i class="${statusIcon(s)}"></i> ${esc(s)}`;
+    }
+
+    function setEditor(data){
+      currentData = data ? JSON.parse(JSON.stringify(data)) : null;
+      currentId = data?.id || data?.submissionId || "";
+      $("#currentLine").textContent = currentId ? `submissionId: ${currentId}` : "submissionId: —";
+
+      const d = currentData || {};
+      $("#title").value = d.title || "";
+      $("#articleType").value = d.articleType || "research";
+      $("#topic").value = d.topic || "";
+      $("#keywords").value = (Array.isArray(d.keywords) ? d.keywords.join(", ") : (d.keywords || ""));
+      $("#abstract").value = d.abstract || "";
+
+      $("#corrName").value = d.corresponding?.name || "";
+      $("#corrEmail").value = d.corresponding?.email || (currentUser?.email || "");
+      $("#authors").value = authorsToText(d.authors || []);
+
+      setStatusBadge(d.status || "draft");
+
+      canEditThis = !!d && currentUser && (d.createdByUid === currentUser.uid) && computeCanEditByStatus(d.status);
+      $("#editorWrap").classList.toggle("disabled", !currentUser);
+      // field-level lock
+      const lock = !canEditThis;
+      ["#title","#articleType","#topic","#keywords","#abstract","#corrName","#corrEmail","#authors","#manuscriptFile","#suppFiles"].forEach(sel => {
+        const el = $(sel);
+        if (!el) return;
+        el.disabled = lock;
+      });
+      $("#btnSave").disabled = !canEditThis;
+      $("#btnSubmit").disabled = !canEditThis;
+
+      renderRevisionBox();
+      renderVersions();
+    }
+
+    function renderRevisionBox(){
+      const box = $("#revBox");
+      box.innerHTML = "";
+      const d = currentData || {};
+      if (!d || !currentId){
+        $("#revHint").textContent = "（尚未選取投稿）";
+        return;
+      }
+      const st = String(d.status||"").toLowerCase();
+      if (st !== "revision_requested"){
+        $("#revHint").textContent = "（目前狀態非 revision_requested）";
+        return;
+      }
+
+      const rr = d.revisionRequest || {};
+      const due = rr.dueDate || "";
+      const note = rr.note || "";
+      $("#revHint").textContent = "編輯已要求修訂，請依下列要求提交新版。";
+
+      box.innerHTML = `
+        <div class="warn">
+          <div style="font-weight:900; margin-bottom:.25rem;"><i class="fa-solid fa-rotate"></i> 修訂要求</div>
+          ${due ? `<div class="small">截止日：<span class="kbd">${esc(due)}</span></div>` : ""}
+          ${note ? `<div class="small" style="margin-top:.35rem; white-space:pre-wrap;">${esc(note)}</div>` : ""}
+          <div class="small" style="margin-top:.55rem;">
+            請在上方「主文 PDF」選取新版，必要時也可附上補充檔，然後按「送出投稿」（系統會自動視為修訂版本）。
+          </div>
+        </div>
+      `;
+    }
+
+    async function renderVersions(){
+      const box = $("#versionsBox");
+      box.innerHTML = `<div class="muted small">讀取版本中…</div>`;
+      if (!currentId){
+        box.innerHTML = `<div class="muted small">（尚未選取投稿）</div>`;
+        return;
+      }
+      try{
+        const snaps = await getDocs(query(collection(db, COL, currentId, "versions"), orderBy("versionNo","desc"), limit(25)));
+        const rows = snaps.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (!rows.length){
+          box.innerHTML = `<div class="muted small">（尚無版本，草稿尚未送出）</div>`;
+          return;
+        }
+        box.innerHTML = rows.map(v => {
+          const dt = v.submittedAt?.toDate ? v.submittedAt.toDate() : null;
+          const t = dt ? dt.toLocaleString() : (v.submittedAtIso || "");
+          const man = v.manuscriptUrl ? `<a href="${esc(v.manuscriptUrl)}" target="_blank" rel="noopener">主文PDF</a>` : "";
+          const supp = Array.isArray(v.supplementUrls) && v.supplementUrls.length
+            ? v.supplementUrls.map((u,i) => `<a href="${esc(u)}" target="_blank" rel="noopener">補充${i+1}</a>`).join(" · ")
+            : "";
+          const note = v.note ? `<div class="muted small" style="margin-top:.25rem; white-space:pre-wrap;">${esc(v.note)}</div>` : "";
+          return `
+            <div class="item" style="cursor:default;">
+              <div class="t">
+                <span class="pill"><i class="fa-solid fa-layer-group"></i> v${esc(v.versionNo || "?")}</span>
+                <span class="muted small">${esc(t || "")}</span>
+              </div>
+              <div class="m">
+                ${man}${man && supp ? " · " : ""}${supp}
+                ${v.storagePath ? ` · <span class="mono">${esc(v.storagePath)}</span>` : ""}
+              </div>
+              ${note}
+            </div>
+          `;
+        }).join("");
+      }catch(e){
+        console.error(e);
+        box.innerHTML = `<div class="warn">讀取版本失敗：${esc(e.message || e)}</div>`;
+      }
+    }
+
+    function renderMineList(){
+      const q = normalize($("#qMine").value).toLowerCase();
+      const filtered = !q ? mySubmissions : mySubmissions.filter(x => {
+        const text = `${x.id} ${x.title||""} ${x.topic||""} ${x.status||""} ${x.plannedMonth||""}`.toLowerCase();
+        return text.includes(q);
+      });
+
+      $("#mineCount").textContent = filtered.length ? `共 ${filtered.length} 筆` : "";
+      const box = $("#mineList");
+      box.innerHTML = "";
+      if (!filtered.length){
+        box.innerHTML = `<div class="muted small">（尚無投稿）</div>`;
+        return;
+      }
+
+      filtered.forEach(x => {
+        const div = document.createElement("div");
+        div.className = "item";
+        const st = x.status || "draft";
+        const plan = x.plannedMonth ? ` · 發表：${x.plannedMonth}` : "";
+        div.innerHTML = `
+          <div class="t">
+            <span class="status"><i class="${statusIcon(st)}"></i> ${esc(st)}</span>
+            <span>${esc(x.title || "（未命名）")}</span>
+          </div>
+          <div class="m">${esc([`submissionId:${x.id}`, x.topic ? `topic:${x.topic}` : ""].filter(Boolean).join(" · "))}${esc(plan)}</div>
+        `;
+        div.addEventListener("click", () => openSubmission(x.id));
+        box.appendChild(div);
+      });
+    }
+
+    async function loadMine(){
+      if (!currentUser){
+        mySubmissions = [];
+        renderMineList();
+        setEditor(null);
+        return;
+      }
+      $("#mineList").innerHTML = `<div class="muted small">讀取中…</div>`;
+
+      try{
+        const qy = query(
+          collection(db, COL),
+          where("createdByUid","==", currentUser.uid),
+          limit(50)
+        );
+        const snaps = await getDocs(qy);
+        mySubmissions = snaps.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderMineList();
+
+        // auto open latest
+        const url = new URL(location.href);
+        const sid = url.searchParams.get("sid");
+        if (sid && mySubmissions.some(x => x.id === sid)){
+          await openSubmission(sid);
+        } else if (!currentId && mySubmissions[0]){
+          await openSubmission(mySubmissions[0].id);
+        } else if (!mySubmissions.length){
+          setEditor(null);
+        }
+      }catch(e){
+        console.error(e);
+        msg("讀取我的投稿失敗：" + esc(e.message || e), "warn");
+        $("#mineList").innerHTML = `<div class="warn">讀取失敗：${esc(e.message || e)}</div>`;
+      }
+    }
+
+    async function openSubmission(id){
+      const sid = normalize(id);
+      if (!sid) return;
+      try{
+        const snap = await getDoc(doc(db, COL, sid));
+        if (!snap.exists()){
+          msg("找不到投稿：" + esc(sid), "warn");
+          return;
+        }
+        const data = { id: snap.id, ...snap.data() };
+        // ensure ownership
+        if (data.createdByUid !== currentUser?.uid){
+          msg("此投稿不屬於你，無法開啟。", "warn");
+          return;
+        }
+        setEditor(data);
+        const url = new URL(location.href);
+        url.searchParams.set("sid", sid);
+        history.replaceState({}, "", url.toString());
+      }catch(e){
+        console.error(e);
+        msg("開啟投稿失敗：" + esc(e.message || e), "warn");
+      }
+    }
+
+    async function newSubmission(){
+      if (!currentUser){
+        msg("請先登入。", "warn");
+        return;
+      }
+      const base = {
+        status: "draft",
+        title: "",
+        topic: "",
+        articleType: "research",
+        abstract: "",
+        keywords: [],
+        authors: [],
+        corresponding: { name: "", email: currentUser.email || "" },
+        createdByUid: currentUser.uid,
+        createdByEmail: currentUser.email || "",
+        reviewerInvites: [],
+        reviewerUids: [],
+        assignedReviewerUids: [],
+        currentVersion: 0,
+        plannedMonth: "",
+        scheduledMonth: "",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+      try{
+        const refDoc = await addDoc(collection(db, COL), base);
+        await openSubmission(refDoc.id);
+        await loadMine();
+        msg("已建立草稿");
+      }catch(e){
+        console.error(e);
+        msg("建立草稿失敗：" + esc(e.message || e), "warn");
+      }
+    }
+
+        function collectForm(){
+      const d = {};
+      d.title = normalize($("#title").value);
+      d.articleType = normalize($("#articleType").value) || "research";
+      d.topic = normalize($("#topic").value);
+      d.keywords = kwToArray($("#keywords").value);
+      d.abstract = $("#abstract").value || "";
+      d.corresponding = {
+        name: normalize($("#corrName").value),
+        email: normalize($("#corrEmail").value) || (currentUser?.email || "")
+      };
+      d.authors = parseAuthors($("#authors").value);
+      return d;
+    }
+
+    async function saveDraft(){
+      if (!canEditThis || !currentId) return;
+      try{
+        const d = collectForm();
+        d.updatedAt = serverTimestamp();
+        await updateDoc(doc(db, COL, currentId), d);
+        msg("已儲存草稿");
+        await loadMine();
+        await openSubmission(currentId);
+      }catch(e){
+        console.error(e);
+        msg("儲存失敗：" + esc(e.message || e), "warn");
+      }
+    }
+
+    async function uploadFilesForVersion(sid, versionNo){
+      const manFile = $("#manuscriptFile").files?.[0] || null;
+      if (!manFile) throw new Error("請選取主文 PDF（manuscript）");
+
+      const supp = Array.from($("#suppFiles").files || []);
+
+      const folder = `kb_submissions/${sid}/v${versionNo}`;
+      const safeName = (name) => String(name||"file").replace(/[^\w.\-()]+/g, "_").slice(0, 120);
+
+      setUploadProgress(2);
+
+      // upload manuscript
+      const manPath = `${folder}/${Date.now()}_${safeName(manFile.name)}`;
+      const manRef = ref(storage, manPath);
+      await uploadBytes(manRef, manFile, { contentType: manFile.type || "application/pdf" });
+      setUploadProgress(55);
+      const manuscriptUrl = await getDownloadURL(manRef);
+
+      // upload supplements
+      const supplementUrls = [];
+      for (let i=0;i<supp.length;i++){
+        const f = supp[i];
+        const p = `${folder}/supp_${i+1}_${Date.now()}_${safeName(f.name)}`;
+        const r = ref(storage, p);
+        await uploadBytes(r, f, { contentType: f.type || "application/octet-stream" });
+        const u = await getDownloadURL(r);
+        supplementUrls.push(u);
+        const pct = 60 + Math.round((i+1) / Math.max(1,supp.length) * 35);
+        setUploadProgress(pct);
+      }
+
+      setUploadProgress(100);
+      return { manuscriptUrl, supplementUrls, storagePath: folder };
+    }
+
+    async function submitSubmission(){
+      if (!canEditThis || !currentId) return;
+
+      const d0 = collectForm();
+      if (!d0.title) return msg("請先填寫文章標題", "warn");
+      if (!d0.corresponding?.email) return msg("請填寫通訊作者 Email", "warn");
+
+      const curSt = String(currentData?.status || "draft").toLowerCase();
+      const isRevision = (curSt === "revision_requested");
+
+      $("#btnSubmit").disabled = true;
+      $("#btnSave").disabled = true;
+
+      try{
+        setUploadProgress(0);
+
+        // re-fetch current for latest version number
+        const snap = await getDoc(doc(db, COL, currentId));
+        if (!snap.exists()) throw new Error("投稿不存在（請重新載入）");
+        const cur = snap.data() || {};
+        const nextVer = Number(cur.currentVersion || 0) + 1;
+
+        const { manuscriptUrl, supplementUrls, storagePath } = await uploadFilesForVersion(currentId, nextVer);
+
+        // create version doc
+        const verData = {
+          versionNo: nextVer,
+          manuscriptUrl,
+          supplementUrls,
+          storagePath,
+          submittedAt: serverTimestamp(),
+          submittedAtIso: new Date().toISOString(),
+          note: isRevision ? "Revision submitted" : "Initial submission"
+        };
+        await addDoc(collection(db, COL, currentId, "versions"), verData);
+
+        // update submission doc
+        const newStatus = isRevision ? "revised_submitted" : "submitted";
+        const patch = {
+          ...d0,
+          status: newStatus,
+          currentVersion: nextVer,
+          latestManuscriptUrl: manuscriptUrl,
+          pdfUrl: manuscriptUrl,
+          pdfURL: manuscriptUrl,
+          latestSupplementUrls: supplementUrls,
+          updatedAt: serverTimestamp()
+        };
+        if (!cur.submittedAt && !isRevision) patch.submittedAt = serverTimestamp();
+        if (isRevision) patch.revisedAt = serverTimestamp();
+
+        await updateDoc(doc(db, COL, currentId), patch);
+
+        // clear file inputs
+        $("#manuscriptFile").value = "";
+        $("#suppFiles").value = "";
+        $("#manuscriptInfo").textContent = "（已上傳，已清空選取）";
+        $("#suppInfo").textContent = "（已上傳，已清空選取）";
+
+        msg(isRevision ? "已送出修訂版本" : "已送出投稿");
+        await loadMine();
+        await openSubmission(currentId);
+      }catch(e){
+        console.error(e);
+        msg("送出失敗：" + esc(e.message || e), "warn");
+      }finally{
+        $("#btnSubmit").disabled = false;
+        $("#btnSave").disabled = false;
+        setUploadProgress(0);
+      }
+    }
+
+    // file input labels
+    $("#manuscriptFile").addEventListener("change", () => {
+      const f = $("#manuscriptFile").files?.[0];
+      $("#manuscriptInfo").textContent = f ? `${f.name} (${Math.round(f.size/1024)} KB)` : "（尚未選取檔案）";
+    });
+    $("#suppFiles").addEventListener("change", () => {
+      const files = Array.from($("#suppFiles").files || []);
+      $("#suppInfo").textContent = files.length ? `${files.length} 個檔案：${files.map(f => f.name).slice(0,4).join(", ")}${files.length>4?"…":""}` : "（可不選）";
+    });
+
+    // bind
+    $("#btnReload").addEventListener("click", loadMine);
+    $("#qMine").addEventListener("input", renderMineList);
+    $("#btnNew").addEventListener("click", newSubmission);
+    $("#btnSave").addEventListener("click", saveDraft);
+    $("#btnSubmit").addEventListener("click", () => {
+      const curSt = String(currentData?.status || "draft").toLowerCase();
+      if (curSt === "draft"){
+        if (!confirm("確定送出投稿嗎？送出後將進入審稿流程，作者將無法再直接修改草稿。")) return;
+      }
+      if (curSt === "revision_requested"){
+        if (!confirm("確定送出修訂版本嗎？送出後將進入編輯/複審流程。")) return;
+      }
+      submitSubmission();
+    });
+
+    $("#btnSignOut").addEventListener("click", async () => {
+      try{ await signOut(auth); }catch(e){ console.error(e); }
+      location.href = "login.html";
+    });
+
+    // auth and roles display (for consistency with KB issue editor)
+    async function evaluateRoles(user){
+      if (!user){
+        $("#authBadge").textContent = "未登入";
+        $("#roleBadge").textContent = "role: —";
+        $("#userInfo").textContent = "";
+        return;
+      }
+      $("#authBadge").textContent = "已登入";
+      $("#userInfo").textContent = user.email || "";
+
+      if (typeof window.__kbSubmitForcedRefresh === "undefined") window.__kbSubmitForcedRefresh = false;
+      try{
+        const token = await user.getIdTokenResult(!window.__kbSubmitForcedRefresh);
+        window.__kbSubmitForcedRefresh = true;
+
+        const claims = token?.claims || {};
+        const rolesObj = (claims.roles && typeof claims.roles === "object") ? claims.roles : {};
+        const roles = {
+          admin: !!claims.admin,
+          systemAdmin: !!claims.systemAdmin,
+          secretary: !!claims.secretary,
+          editor: !!claims.editor,
+          reviewer: !!claims.reviewer,
+          client: !!claims.client,
+          ...rolesObj
+        };
+
+        const roleKeys = ["admin","systemAdmin","secretary","editor","reviewer","client"];
+        const roleList = roleKeys.filter(k => !!roles[k]).join(", ");
+        $("#roleBadge").textContent = `role: ${roleList || "（none）"}`;
+      }catch(e){
+        console.error(e);
+        $("#roleBadge").textContent = "role: （讀取失敗）";
+      }
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user || null;
+      await evaluateRoles(currentUser);
+
+      if (!currentUser){
+        msg("請先登入後投稿。", "warn");
+        $("#editorWrap").classList.add("disabled");
+        $("#mineList").innerHTML = `<div class="warn">未登入：請先到 login.html 登入。</div>`;
+        setEditor(null);
+        return;
+      }
+      $("#editorWrap").classList.remove("disabled");
+      await loadMine();
+    });
+  </script>
+</body>
+</html>

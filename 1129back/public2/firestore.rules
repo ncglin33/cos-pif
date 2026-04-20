@@ -1,0 +1,54 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Rules for the 'users' collection
+    match /users/{userId} {
+      // Anyone can create their own user document upon registration.
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // A user can read or update their own data.
+      // An admin can read or update any user's data.
+      allow read, update: if request.auth != null &&
+                          (request.auth.uid == userId ||
+                           (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
+    }
+
+    // Rules for querying the 'users' collection
+    match /users/{document=**} {
+        // Allow list (query) under two conditions:
+        // 1. The user is an admin (for the admin panel).
+        // 2. The query is the specific one used during registration to check for the first user (`limit(1)`).
+        allow list: if request.auth != null &&
+                     (
+                       (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+                       ||
+                       request.query.limit == 1
+                     );
+    }
+
+    // Rules for the 'pifs' collection
+    match /pifs/{pifId} {
+      // Any authenticated user can create a new PIF document.
+      allow create: if request.auth != null;
+
+      // Any authenticated user can read all PIF documents (for the database list page).
+      allow read, list: if request.auth != null;
+
+      // Only the owner of the PIF or an admin can update or delete it.
+      allow update, delete: if request.auth != null &&
+                            (resource.data.ownerId == request.auth.uid ||
+                             (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
+    }
+
+    // Rules for the 'cosmetic_toxics' collection
+    match /cosmetic_toxics/{docId} {
+      // Allow any authenticated user to query the collection (list) and read single documents (get).
+      allow get, list: if request.auth != null;
+    }
+  }
+}

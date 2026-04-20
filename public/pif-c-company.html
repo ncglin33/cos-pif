@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CosPIF 智慧科技整合系統 - Client 儀表板（公司歸戶）</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    /* ========== Client Dashboard Layout ========== */
+    .client-hero {
+      padding: 2.6rem 0 2.2rem;
+      background: linear-gradient(135deg, #0f172a 0%, #111827 45%, #1f2937 100%);
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .client-hero .container {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 2rem;
+      align-items: center;
+    }
+    .client-hero h1 {
+      margin: 0 0 .6rem;
+      font-size: 2rem;
+      letter-spacing: .2px;
+    }
+    .client-hero p {
+      margin: 0 0 1.2rem;
+      opacity: .9;
+      line-height: 1.6;
+    }
+    .client-hero .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+    }
+    .hero-badge {
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.18);
+      padding: .3rem .6rem;
+      border-radius: 999px;
+      font-size: .78rem;
+    }
+    .client-hero .hero-card {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 16px;
+      padding: 1.1rem 1.2rem;
+      backdrop-filter: blur(8px);
+    }
+    .hero-card-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: .55rem 0;
+      border-bottom: 1px dashed rgba(255,255,255,.18);
+    }
+    .hero-card-row:last-child { border-bottom: none; }
+    .hero-card-k {
+      font-size: .85rem;
+      opacity: .85;
+    }
+    .hero-card-v {
+      font-weight: 600;
+      font-size: 1.05rem;
+    }
+
+    /* ========== Quick Actions ========== */
+    .client-section {
+      padding: 2.5rem 0;
+      background: #fff;
+    }
+    .section-title-left {
+      display: flex;
+      align-items: center;
+      gap: .55rem;
+      margin: 0 0 .35rem;
+      font-size: 1.4rem;
+    }
+    .section-subtitle-left {
+      margin: 0 0 1.3rem;
+      color: #6b7280;
+      font-size: .92rem;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.1rem;
+    }
+    .action-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 1.1rem 1.15rem;
+      background: #f9fafb;
+      box-shadow: 0 6px 16px rgba(15,23,42,0.05);
+      display: flex;
+      flex-direction: column;
+      gap: .6rem;
+      min-height: 170px;
+    }
+    .action-card .icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+    }
+    .action-card h3 {
+      margin: 0;
+      font-size: 1.05rem;
+    }
+    .action-card p {
+      margin: 0;
+      color: #4b5563;
+      font-size: .88rem;
+      line-height: 1.5;
+    }
+    .action-card .actions {
+      margin-top: auto;
+      display: flex;
+      gap: .5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      padding: .45rem .85rem;
+      background: #111827;
+      color: #fff;
+      border-radius: 999px;
+      text-decoration: none;
+      font-size: .85rem;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-pill.secondary { background: #2563eb; }
+    .btn-pill.ghost {
+      background: #fff;
+      color: #111827;
+      border: 1px solid #d1d5db;
+    }
+    .btn-pill:hover { filter: brightness(0.97); }
+
+    /* ========== Applications Overview ========== */
+    .apps-section {
+      padding: 2.5rem 0 3rem;
+      background: #f3f4f6;
+    }
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.1rem;
+      margin-bottom: 1.4rem;
+    }
+    .overview-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 1.1rem 1.2rem;
+      box-shadow: 0 6px 16px rgba(15,23,42,0.05);
+    }
+    .overview-card h4 {
+      margin: 0 0 .6rem;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+    }
+    .overview-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: .6rem;
+    }
+    .stat-box {
+      border: 1px dashed #e5e7eb;
+      border-radius: 10px;
+      padding: .6rem .7rem;
+      background: #f9fafb;
+    }
+    .stat-k {
+      font-size: .78rem;
+      color: #6b7280;
+      margin-bottom: .1rem;
+    }
+    .stat-v {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    /* ========== Tables ========== */
+    .table-wrap {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 1rem 1rem .6rem;
+      box-shadow: 0 6px 16px rgba(15,23,42,0.05);
+      margin-bottom: 1.2rem;
+    }
+    .table-wrap h3 {
+      margin: 0 0 .2rem;
+      font-size: 1.1rem;
+    }
+    .table-desc {
+      margin: 0 0 .9rem;
+      color: #6b7280;
+      font-size: .85rem;
+    }
+
+    .table-client {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88rem;
+    }
+    .table-client thead th {
+      text-align: left;
+      padding: .6rem .55rem;
+      background: #f9fafb;
+      border-bottom: 1px solid #e5e7eb;
+      color: #374151;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .table-client tbody td {
+      padding: .6rem .55rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: top;
+    }
+    .table-client tbody tr:hover { background: #fafafa; }
+
+    .cell-wrap {
+      max-width: 260px;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .3rem;
+      padding: .15rem .5rem;
+      border-radius: 999px;
+      font-size: .75rem;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      color: #111827;
+      white-space: nowrap;
+    }
+    .badge.pending {
+      background: #fff7ed;
+      border-color: #fed7aa;
+      color: #9a3412;
+    }
+    .badge.approved {
+      background: #ecfdf5;
+      border-color: #a7f3d0;
+      color: #065f46;
+    }
+    .badge.rejected {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #991b1b;
+      font-weight: 600;
+    }
+
+    .link-plain {
+      color: #2563eb;
+      text-decoration: none;
+    }
+    .link-plain:hover { text-decoration: underline; }
+
+    .status-bar {
+      padding: .55rem .2rem .2rem;
+      color: #6b7280;
+      font-size: .85rem;
+    }
+
+    /* ========== Header Overrides for Logged-in Client ========== */
+    .client-user-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      padding: .35rem .7rem;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 999px;
+      font-size: .82rem;
+      color: #374151;
+    }
+    .btn-logout {
+      margin-left: .6rem;
+      background: #ef4444;
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: .45rem .9rem;
+      font-size: .84rem;
+      cursor: pointer;
+    }
+    .btn-logout:hover { filter: brightness(.97); }
+
+    @media (max-width: 1100px) {
+      .client-hero .container { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 950px) {
+      .action-grid { grid-template-columns: 1fr 1fr; }
+      .overview-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      .action-grid { grid-template-columns: 1fr; }
+      .table-client { font-size: .84rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <nav>
+      <a href="index-c-company.html" class="logo">
+        <img src="img/cospif-logo.png" alt="CosPIF Logo">
+      </a>
+
+      <ul class="nav-links" id="client-nav-links">
+        <li><a href="#actions">快速功能</a></li>
+        <li><a href="#my-apps">我的申請案</a></li>
+        <li><a href="pif-track.html">PIF 進度追蹤</a></li>
+        <li><a href="pif-wish.html">PIF 意願調查</a></li>
+        <li><a href="price-eva.html">功效/安全性/有效性評估</a></li>
+      </ul>
+
+      <div id="client-auth-area">
+        <a href="login.html" class="btn-login">登入系統</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- ===== Client Hero ===== -->
+  <section class="client-hero">
+    <div class="container">
+      <div>
+        <h1>Client 儀表板</h1>
+        <p>
+          此頁專為<strong>Client 登入者</strong>使用。您可用<strong>公司歸戶代碼</strong>彙整與查看貴公司在 CosPIF 的所有申請案狀態，
+          並使用「廠商進度追蹤」機制追蹤 PIF 審核與後續製作進度。<br>
+          <strong>此身分不提供新增 PIF 功能</strong>（由管理端/廠商端建立與綁定）。
+        </p>
+        <div class="hero-badges">
+          <span class="hero-badge"><i class="fa-solid fa-eye"></i> 只讀/追蹤導向</span>
+          <span class="hero-badge"><i class="fa-solid fa-clipboard-check"></i> 審核狀態同步</span>
+          <span class="hero-badge"><i class="fa-solid fa-route"></i> 單一追蹤序號</span>
+        </div>
+      </div>
+      <div class="hero-card">
+        <div class="hero-card-row">
+          <div class="hero-card-k">登入身份</div>
+          <div class="hero-card-v" id="hero-role">Client</div>
+        </div>
+        <div class="hero-card-row">
+          <div class="hero-card-k">登入 Email</div>
+          <div class="hero-card-v" id="hero-email">—</div>
+        </div>
+        <div class="hero-card-row">
+          <div class="hero-card-k">公司歸戶代碼</div>
+          <div class="hero-card-v" id="hero-company">—</div>
+        </div>
+        <div class="hero-card-row">
+          <div class="hero-card-k">資料匹配方式</div>
+          <div class="hero-card-v" style="font-size:.95rem;">以公司歸戶代碼自動歸戶</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Quick Actions ===== -->
+  <section id="actions" class="client-section">
+    <div class="container">
+      <h2 class="section-title-left"><i class="fa-solid fa-bolt"></i> 快速功能</h2>
+      <p class="section-subtitle-left">
+        這些入口讓您快速進入貴公司常用的申請與追蹤流程。
+      </p>
+
+      <div class="action-grid">
+        <div class="action-card">
+          <span class="icon"><i class="fa-solid fa-magnifying-glass-chart"></i></span>
+          <h3>PIF 進度追蹤</h3>
+          <p>使用追蹤序號查詢意願表審核與後續 PIF 模組完成度。</p>
+          <div class="actions">
+            <a class="btn-pill secondary" href="pif-track.html">
+              開啟追蹤 <i class="fa-solid fa-arrow-right"></i>
+            </a>
+            <button class="btn-pill ghost" id="btn-open-track-with-code">
+              直接輸入序號
+            </button>
+          </div>
+        </div>
+
+        <div class="action-card">
+          <span class="icon"><i class="fa-solid fa-clipboard-list"></i></span>
+          <h3>PIF 意願調查</h3>
+          <p>提交品名、背面標籤資訊/照片、聯絡資訊與期望完成時間。</p>
+          <div class="actions">
+            <a class="btn-pill" href="pif-wish.html">
+              前往填寫 <i class="fa-solid fa-pen"></i>
+            </a>
+          </div>
+        </div>
+
+        <div class="action-card">
+          <span class="icon"><i class="fa-solid fa-flask-vial"></i></span>
+          <h3>功效/安全性/有效性評估</h3>
+          <p>試算後可送出審核，管理端會回覆管理備註與建議方案。</p>
+          <div class="actions">
+            <a class="btn-pill" href="price-eva.html">
+              開啟試算 <i class="fa-solid fa-calculator"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Applications ===== -->
+  <section id="my-apps" class="apps-section">
+    <div class="container">
+      <h2 class="section-title-left"><i class="fa-solid fa-layer-group"></i> 我的申請案</h2>
+      <p class="section-subtitle-left">
+        系統會以<strong>公司歸戶代碼</strong>（建議使用統編或既有廠商代碼）彙整貴公司所有申請紀錄。
+        若您是第一次使用本頁，請先在下方完成「公司歸戶設定」。完成後，本頁將自動顯示同公司所有申請案狀態。
+      </p>
+
+      <div class="overview-grid">
+        <div class="overview-card">
+          <h4><i class="fa-solid fa-seedling"></i> PIF 意願調查</h4>
+          <div class="overview-stats">
+            <div class="stat-box">
+              <div class="stat-k">待審核
+      <div class="overview-card" id="company-setup-card" style="border-style:dashed;">
+        <h4><i class="fa-solid fa-building"></i> 公司歸戶設定</h4>
+        <div class="overview-stats" style="grid-template-columns: 1fr;">
+          <div class="stat-box" style="display:flex;align-items:center;justify-content:space-between;gap:.8rem;">
+            <div>
+              <div class="stat-k">目前公司歸戶代碼</div>
+              <div class="stat-v" id="company-key-display">—</div>
+              <div style="font-size:.8rem;color:#6b7280;margin-top:.25rem;">
+                建議填寫統編或管理端提供的公司代碼。
+              </div>
+            </div>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+              <button class="btn-pill ghost" id="btn-edit-company-key">
+                <i class="fa-solid fa-pen"></i> 設定/變更
+              </button>
+              <button class="btn-pill ghost" id="btn-clear-company-key">
+                <i class="fa-solid fa-eraser"></i> 清除
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      </div>
+              <div class="stat-v" id="wish-pending-count">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-k">已核准</div>
+              <div class="stat-v" id="wish-approved-count">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-k">已駁回</div>
+              <div class="stat-v" id="wish-rejected-count">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="overview-card">
+          <h4><i class="fa-solid fa-sun"></i> 功效/安全性/有效性評估申請</h4>
+          <div class="overview-stats">
+            <div class="stat-box">
+              <div class="stat-k">待審核</div>
+              <div class="stat-v" id="eva-pending-count">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-k">已核准</div>
+              <div class="stat-v" id="eva-approved-count">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-k">已駁回</div>
+              <div class="stat-v" id="eva-rejected-count">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PIF Wish Table -->
+      <div class="table-wrap">
+        <h3>PIF 意願調查列表</h3>
+        <p class="table-desc">
+          顯示您/貴公司提交的意願表審核狀態、管理備註與追蹤序號。
+          若管理端已綁定 PIF ID，您可用同一追蹤序號查看 PIF 模組完成進度。
+        </p>
+
+        <div style="overflow-x:auto;">
+          <table class="table-client">
+            <thead>
+              <tr>
+                <th>申請編號</th>
+                <th>品名</th>
+                <th>希望完成時間</th>
+                <th>狀態</th>
+                <th>審核時間</th>
+                <th class="cell-wrap">管理備註</th>
+                <th>追蹤序號</th>
+                <th>追蹤連結</th>
+                <th>對應 PIF ID</th>
+                <th>表單</th>
+              </tr>
+            </thead>
+            <tbody id="wish-tbody"></tbody>
+          </table>
+        </div>
+        <div class="status-bar" id="wish-status">載入中...</div>
+      </div>
+
+      <!-- EVA Table -->
+      <div class="table-wrap">
+        <h3>功效/安全性/有效性評估申請列表</h3>
+        <p class="table-desc">
+          顯示您的試算送審紀錄與管理端回覆。欄位會依您的實際送審資料自動帶出，
+          若某些欄位空白代表該版本前台尚未寫入該欄。
+        </p>
+
+        <div style="overflow-x:auto;">
+          <table class="table-client">
+            <thead>
+              <tr>
+                <th>申請編號</th>
+                <th>廠商名稱</th>
+                <th>聯絡人</th>
+                <th>聯絡 Email</th>
+                <th>狀態</th>
+                <th>審核時間</th>
+                <th class="cell-wrap">管理備註</th>
+                <th>試算金額</th>
+              </tr>
+            </thead>
+            <tbody id="eva-tbody"></tbody>
+          </table>
+        </div>
+        <div class="status-bar" id="eva-status">載入中...</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container">
+    <p>&copy; 2025 CosPIF 化妝品 PIF 智慧科技整合系統. 勝美生技有限公司 All Rights Reserved.</p>
+  </div>
+</footer>
+
+<script type="module">
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { collection, query, where, getDocs, orderBy, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { auth, db } from "./firebase-config.js";
+
+  const $ = (sel) => document.querySelector(sel);
+
+  const COLLECTION_WISH = "pif_intent_submissions";
+  const COLLECTION_EVA  = "eva_submissions";
+
+  // 你可以依你的既有 user/profile 結構調整這兩個候選路徑
+  const PROFILE_PATHS = [
+    (uid) => `client_profiles/${uid}`,
+    (uid) => `users/${uid}`,
+    (uid) => `vendor_profiles/${uid}`
+  ];
+
+  const LS_KEY = "cospif_companyKey";
+
+  function escapeHtml(str) {
+    return (str || '').toString().replace(/[&<>"']/g, s => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[s]));
+  }
+
+  function formatDateTime(ts) {
+    if (!ts) return "—";
+    const d = ts.toDate ? ts.toDate() : (ts instanceof Date ? ts : null);
+    if (!d) return "—";
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+  }
+
+  function statusBadge(status) {
+    const s = status || "pending";
+    if (s === "approved") return `<span class="badge approved"><i class="fa-solid fa-check"></i> 已核准</span>`;
+    if (s === "rejected") return `<span class="badge rejected"><i class="fa-solid fa-xmark"></i> 已駁回</span>`;
+    return `<span class="badge pending"><i class="fa-solid fa-clock"></i> 待審核</span>`;
+  }
+
+  function safeCell(v) {
+    const t = (v ?? '').toString().trim();
+    return t ? escapeHtml(t) : "—";
+  }
+
+  function buildTrackLink(code, trackingUrl) {
+    const c = (code || '').toString().trim();
+    if (!c) return "—";
+    const url = (trackingUrl || '').toString().trim()
+      || `pif-track.html?code=${encodeURIComponent(c)}`;
+    return `<a class="link-plain" href="${url}" target="_blank" rel="noopener">開啟追蹤</a>`;
+  }
+
+  function getCompanyKeyFromLocal() {
+    return (localStorage.getItem(LS_KEY) || "").trim();
+  }
+  function setCompanyKeyToLocal(v) {
+    const val = (v || "").trim();
+    if (val) localStorage.setItem(LS_KEY, val);
+    else localStorage.removeItem(LS_KEY);
+  }
+
+  async function resolveCompanyKey(user) {
+    const fromLocal = getCompanyKeyFromLocal();
+    if (fromLocal) return fromLocal;
+
+    // 依序嘗試從 profile 文件讀取 companyKey/companyTaxId
+    for (const buildPath of PROFILE_PATHS) {
+      try {
+        const ref = doc(db, buildPath(user.uid));
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          const data = snap.data() || {};
+          const key = (data.companyKey || data.companyTaxId || data.taxId || "").toString().trim();
+          if (key) {
+            setCompanyKeyToLocal(key);
+            return key;
+          }
+        }
+      } catch (e) {
+        // ignore path errors
+      }
+    }
+
+    return "";
+  }
+
+  function updateCompanyKeyUI(key) {
+    const display = $("#company-key-display");
+    if (display) display.textContent = key || "—";
+
+    const heroRow = $("#hero-company");
+    if (heroRow) heroRow.textContent = key || "—";
+  }
+
+  function bindCompanyKeyButtons(onChanged) {
+    const editBtn = $("#btn-edit-company-key");
+    const clearBtn = $("#btn-clear-company-key");
+
+    if (editBtn) {
+      editBtn.addEventListener("click", () => {
+        const current = getCompanyKeyFromLocal();
+        const v = prompt("請輸入公司歸戶代碼（建議統編或管理端提供代碼）：", current);
+        if (v === null) return;
+        const val = (v || "").trim();
+        if (!val) {
+          alert("未輸入公司歸戶代碼。");
+          return;
+        }
+        setCompanyKeyToLocal(val);
+        updateCompanyKeyUI(val);
+        onChanged && onChanged(val);
+      });
+    }
+
+    if (clearBtn) {
+      clearBtn.addEventListener("click", () => {
+        if (!confirm("確定要清除公司歸戶代碼？清除後此頁將無法彙整公司案件。")) return;
+        setCompanyKeyToLocal("");
+        updateCompanyKeyUI("");
+        onChanged && onChanged("");
+      });
+    }
+  }
+
+  async function loadWishByCompany(companyKey) {
+    if (!companyKey) return [];
+    const col = collection(db, COLLECTION_WISH);
+
+    const q1 = query(col, where("companyKey", "==", companyKey), orderBy("submittedAt", "desc"));
+    const q2 = query(col, where("companyTaxId", "==", companyKey), orderBy("submittedAt", "desc"));
+
+    const [s1, s2] = await Promise.all([
+      getDocs(q1).catch(() => null),
+      getDocs(q2).catch(() => null)
+    ]);
+
+    const list1 = s1 ? s1.docs.map(d => ({ id: d.id, ...d.data() })) : [];
+    const list2 = s2 ? s2.docs.map(d => ({ id: d.id, ...d.data() })) : [];
+
+    // merge
+    const map = new Map();
+    list1.forEach(x => map.set(x.id, x));
+    list2.forEach(x => map.set(x.id, x));
+    const merged = Array.from(map.values());
+
+    if (!s1 && !s2) {
+      // fallback without orderBy (避免索引尚未建立時完全沒資料)
+      const qFallback = query(col, where("companyKey", "==", companyKey));
+      const sf = await getDocs(qFallback).catch(() => null);
+      return sf ? sf.docs.map(d => ({ id: d.id, ...d.data() })) : [];
+    }
+
+    return merged;
+  }
+
+  async function loadEvaByCompany(companyKey) {
+    if (!companyKey) return [];
+    const col = collection(db, COLLECTION_EVA);
+
+    const q1 = query(col, where("companyKey", "==", companyKey), orderBy("submittedAt", "desc"));
+    const q2 = query(col, where("companyTaxId", "==", companyKey), orderBy("submittedAt", "desc"));
+
+    const [s1, s2] = await Promise.all([
+      getDocs(q1).catch(() => null),
+      getDocs(q2).catch(() => null)
+    ]);
+
+    const list1 = s1 ? s1.docs.map(d => ({ id: d.id, ...d.data() })) : [];
+    const list2 = s2 ? s2.docs.map(d => ({ id: d.id, ...d.data() })) : [];
+
+    const map = new Map();
+    list1.forEach(x => map.set(x.id, x));
+    list2.forEach(x => map.set(x.id, x));
+    const merged = Array.from(map.values());
+
+    if (!s1 && !s2) {
+      const qFallback = query(col, where("companyKey", "==", companyKey));
+      const sf = await getDocs(qFallback).catch(() => null);
+      return sf ? sf.docs.map(d => ({ id: d.id, ...d.data() })) : [];
+    }
+
+    return merged;
+  }
+
+  function updateWishCounts(list) {
+    let pending = 0, approved = 0, rejected = 0;
+    (list || []).forEach(x => {
+      const s = x.status || "pending";
+      if (s === "approved") approved++;
+      else if (s === "rejected") rejected++;
+      else pending++;
+    });
+    $("#wish-pending-count").textContent = pending;
+    $("#wish-approved-count").textContent = approved;
+    $("#wish-rejected-count").textContent = rejected;
+  }
+
+  function updateEvaCounts(list) {
+    let pending = 0, approved = 0, rejected = 0;
+    (list || []).forEach(x => {
+      const s = x.status || "pending";
+      if (s === "approved") approved++;
+      else if (s === "rejected") rejected++;
+      else pending++;
+    });
+    $("#eva-pending-count").textContent = pending;
+    $("#eva-approved-count").textContent = approved;
+    $("#eva-rejected-count").textContent = rejected;
+  }
+
+  function renderWishTable(list) {
+    const tbody = $("#wish-tbody");
+    const statusEl = $("#wish-status");
+    tbody.innerHTML = "";
+
+    if (!list || !list.length) {
+      tbody.innerHTML = `<tr><td colspan="10" style="padding:1.2rem;color:#6b7280;">尚無 PIF 意願調查紀錄。</td></tr>`;
+      statusEl.textContent = "尚無資料。";
+      return;
+    }
+
+    list.sort((a, b) => {
+      const ta = a.submittedAt && a.submittedAt.toMillis ? a.submittedAt.toMillis() : 0;
+      const tb = b.submittedAt && b.submittedAt.toMillis ? b.submittedAt.toMillis() : 0;
+      return tb - ta;
+    });
+
+    list.forEach(sub => {
+      const code = (sub.trackingCode || '').toString().trim();
+      const trackUrl = (sub.trackingUrl || '').toString().trim();
+      const formUrl = `pif-wish.html?id=${encodeURIComponent(sub.id)}`;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><span class="text-sm">${escapeHtml(sub.id)}</span></td>
+        <td>${safeCell(sub.productName)}</td>
+        <td>${safeCell(sub.desiredFinishDate)}</td>
+        <td>${statusBadge(sub.status)}</td>
+        <td>${formatDateTime(sub.reviewedAt)}</td>
+        <td class="cell-wrap">${safeCell(sub.adminNote)}</td>
+        <td>${code ? escapeHtml(code) : "—"}</td>
+        <td>${buildTrackLink(code, trackUrl)}</td>
+        <td>${safeCell(sub.pifId)}</td>
+        <td>
+          <a class="link-plain" href="${formUrl}" target="_blank" rel="noopener">開啟</a>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    statusEl.textContent = `共 ${list.length} 筆意願調查紀錄。`;
+  }
+
+  function renderEvaTable(list) {
+    const tbody = $("#eva-tbody");
+    const statusEl = $("#eva-status");
+    tbody.innerHTML = "";
+
+    if (!list || !list.length) {
+      tbody.innerHTML = `<tr><td colspan="8" style="padding:1.2rem;color:#6b7280;">尚無功效/安全性/有效性評估送審紀錄。</td></tr>`;
+      statusEl.textContent = "尚無資料。";
+      return;
+    }
+
+    list.sort((a, b) => {
+      const ta = a.submittedAt && a.submittedAt.toMillis ? a.submittedAt.toMillis() : 0;
+      const tb = b.submittedAt && b.submittedAt.toMillis ? b.submittedAt.toMillis() : 0;
+      return tb - ta;
+    });
+
+    list.forEach(sub => {
+      const amount = sub.totalAmount ?? sub.total ?? sub.amount ?? "—";
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><span class="text-sm">${escapeHtml(sub.id)}</span></td>
+        <td>${safeCell(sub.vendorName)}</td>
+        <td>${safeCell(sub.contactName)}</td>
+        <td>${safeCell(sub.contactEmail)}</td>
+        <td>${statusBadge(sub.status)}</td>
+        <td>${formatDateTime(sub.reviewedAt)}</td>
+        <td class="cell-wrap">${safeCell(sub.adminNote || sub.reviewNote || sub.managerNote)}</td>
+        <td>${safeCell(amount)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    statusEl.textContent = `共 ${list.length} 筆評估送審紀錄。`;
+  }
+
+  function renderClientAuthArea(user) {
+    const area = $("#client-auth-area");
+    area.innerHTML = `
+      <span class="client-user-pill">
+        <i class="fa-solid fa-user"></i>
+        <span>${escapeHtml(user.displayName || user.email)}</span>
+      </span>
+      <button class="btn-logout" id="btn-client-logout">登出</button>
+    `;
+    $("#btn-client-logout").addEventListener("click", async () => {
+      try {
+        await signOut(auth);
+        window.location.href = "login.html";
+      } catch (e) {
+        alert("登出失敗：" + e.message);
+      }
+    });
+  }
+
+  function bindQuickTrackBtn() {
+    const btn = $("#btn-open-track-with-code");
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+      const code = prompt("請輸入追蹤序號：");
+      if (!code) return;
+      const url = `pif-track.html?code=${encodeURIComponent(code.trim())}`;
+      window.open(url, "_blank");
+    });
+  }
+
+  bindQuickTrackBtn();
+
+  async function loadAllCompanyData(companyKey) {
+    if (!companyKey) {
+      $("#wish-tbody").innerHTML = `<tr><td colspan="10" style="padding:1.2rem;color:#6b7280;">請先設定公司歸戶代碼。</td></tr>`;
+      $("#eva-tbody").innerHTML  = `<tr><td colspan="8" style="padding:1.2rem;color:#6b7280;">請先設定公司歸戶代碼。</td></tr>`;
+      $("#wish-status").textContent = "尚未設定公司歸戶代碼。";
+      $("#eva-status").textContent  = "尚未設定公司歸戶代碼。";
+      updateWishCounts([]);
+      updateEvaCounts([]);
+      return;
+    }
+
+    try {
+      $("#wish-status").textContent = "載入中...";
+      $("#eva-status").textContent = "載入中...";
+
+      const [wishList, evaList] = await Promise.all([
+        loadWishByCompany(companyKey).catch(err => { console.warn("loadWishByCompany failed:", err); return []; }),
+        loadEvaByCompany(companyKey).catch(err => { console.warn("loadEvaByCompany failed:", err); return []; })
+      ]);
+
+      updateWishCounts(wishList);
+      updateEvaCounts(evaList);
+
+      renderWishTable(wishList);
+      renderEvaTable(evaList);
+
+    } catch (err) {
+      console.error("Company dashboard load error:", err);
+      $("#wish-status").textContent = "載入意願調查失敗。";
+      $("#eva-status").textContent = "載入評估申請失敗。";
+    }
+  }
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    $("#hero-email").textContent = user.email || "—";
+    renderClientAuthArea(user);
+
+    // 公司歸戶
+    let companyKey = await resolveCompanyKey(user);
+    updateCompanyKeyUI(companyKey);
+
+    bindCompanyKeyButtons(async (newKey) => {
+      companyKey = newKey;
+      await loadAllCompanyData(companyKey);
+    });
+
+    // 若尚未設定，公司卡片會引導使用者自行設定
+    await loadAllCompanyData(companyKey);
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>活動/課程報名表</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#0f1a30;
+      --card2:#0c162a;
+      --text:#e8eefc;
+      --muted:#a9b7d6;
+      --line:rgba(255,255,255,.12);
+      --accent:#7dd3fc;
+      --ok:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --shadow: 0 10px 30px rgba(0,0,0,.25);
+      --radius: 18px;
+      --radius2: 14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1200px 700px at 10% 10%, rgba(125,211,252,.18), transparent 55%),
+                  radial-gradient(900px 600px at 90% 0%, rgba(52,211,153,.14), transparent 50%),
+                  linear-gradient(180deg, #070b14, var(--bg));
+      color:var(--text);
+    }
+    a{color:inherit}
+    .wrap{max-width:1080px;margin:0 auto;padding:18px 14px 60px}
+    .topbar{
+      display:flex; align-items:center; gap:12px;
+      position:sticky; top:0; z-index:10;
+      padding:14px 0;
+      background: linear-gradient(180deg, rgba(7,11,20,.92), rgba(7,11,20,.55), transparent);
+      backdrop-filter: blur(10px);
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px; border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      border-radius: 999px;
+      box-shadow: var(--shadow);
+    }
+    .logo{
+      width:34px;height:34px;border-radius:10px;
+      background: linear-gradient(135deg, rgba(125,211,252,.9), rgba(52,211,153,.85));
+      display:grid; place-items:center;
+      color:#08101f; font-weight:800;
+    }
+    .brand .t1{font-weight:800; letter-spacing:.5px}
+    .brand .t2{font-size:12px;color:var(--muted);margin-top:2px}
+    .grid{
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap:14px;
+      margin-top:10px;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr}
+    }
+    .card{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:14px 16px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .card .hd h2{margin:0;font-size:16px}
+    .card .bd{padding:14px 16px}
+    .pill{
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      white-space:nowrap;
+    }
+    .row{display:grid; grid-template-columns: 1fr 1fr; gap:10px}
+    @media (max-width: 560px){ .row{grid-template-columns:1fr} }
+    label{display:block; font-size:12px; color: var(--muted); margin:10px 0 6px}
+    input, select, textarea{
+      width:100%;
+      padding:11px 12px;
+      border-radius: 12px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.22);
+      color: var(--text);
+      outline:none;
+    }
+    textarea{min-height:88px;resize:vertical}
+    input::placeholder, textarea::placeholder{color:rgba(169,183,214,.7)}
+    .hint{margin-top:6px;font-size:12px;color:var(--muted);line-height:1.5}
+    .btnbar{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px}
+    button{
+      border:1px solid var(--line);
+      background: rgba(125,211,252,.12);
+      color: var(--text);
+      padding:11px 14px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-weight:700;
+    }
+    button.secondary{background: rgba(255,255,255,.06)}
+    button.danger{background: rgba(251,113,133,.14)}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .msg{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius: 14px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      font-size:13px;
+      line-height:1.55;
+    }
+    .msg.ok{border-color: rgba(52,211,153,.45); background: rgba(52,211,153,.10)}
+    .msg.warn{border-color: rgba(251,191,36,.45); background: rgba(251,191,36,.10)}
+    .msg.bad{border-color: rgba(251,113,133,.5); background: rgba(251,113,133,.10)}
+    .small{font-size:12px;color:var(--muted);line-height:1.55}
+    .kv{
+      display:grid; grid-template-columns: 120px 1fr;
+      gap:8px 10px;
+      padding:12px;
+      border:1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(0,0,0,.18);
+    }
+    .kv div:nth-child(odd){color:var(--muted);font-size:12px}
+    .kv div:nth-child(even){font-size:13px}
+    .overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center; justify-content:center;
+      z-index:100;
+    }
+    .overlay .box{
+      width:min(520px, calc(100% - 28px));
+      border-radius: 18px;
+      border:1px solid var(--line);
+      background: rgba(15,26,48,.92);
+      box-shadow: var(--shadow);
+      padding:16px;
+    }
+    .spinner{
+      width:22px;height:22px;border-radius:50%;
+      border:3px solid rgba(255,255,255,.22);
+      border-top-color: rgba(125,211,252,.9);
+      animation: spin 1s linear infinite;
+      display:inline-block; vertical-align:middle; margin-right:10px;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .footer{margin-top:14px;color:var(--muted);font-size:12px;line-height:1.65}
+    .check{
+      display:flex; gap:10px; align-items:flex-start;
+      padding:10px 12px; border:1px solid var(--line);
+      border-radius: 14px; background: rgba(255,255,255,.03);
+      margin-top:10px;
+    }
+    .check input{width:18px;height:18px;margin-top:2px}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">R</div>
+        <div>
+          <div class="t1">報名系統</div>
+          <div class="t2">活動 / 推廣教育班 通用版</div>
+        </div>
+      </div>
+      <div style="flex:1"></div>
+      <span class="pill" id="envPill">Firestore：events / registrations</span>
+    </div>
+
+    <div class="grid">
+      <!-- 左：表單 -->
+      <div class="card">
+        <div class="hd">
+          <h2>報名資料</h2>
+          <span class="pill" id="openPill">載入中…</span>
+        </div>
+        <div class="bd">
+          <label>選擇活動 / 課程（來自 Firestore events）</label>
+          <select id="eventSelect">
+            <option value="">載入中…</option>
+          </select>
+          <div class="hint">可用 URL 預選：<span class="mono">?eventId=xxx</span></div>
+
+          <div class="row">
+            <div>
+              <label>姓名 *</label>
+              <input id="name" placeholder="請輸入姓名" autocomplete="name" />
+            </div>
+            <div>
+              <label>手機 *</label>
+              <input id="phone" placeholder="09xxxxxxxx" inputmode="tel" autocomplete="tel" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>Email</label>
+              <input id="email" placeholder="example@mail.com" inputmode="email" autocomplete="email" />
+            </div>
+            <div>
+              <label>身分證/護照末四碼（選填）</label>
+              <input id="id4" placeholder="用於核對（可不填）" maxlength="4" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>單位 / 公司（選填）</label>
+              <input id="org" placeholder="學校 / 公司 / 機構" />
+            </div>
+            <div>
+              <label>職稱（選填）</label>
+              <input id="title" placeholder="例：藥師 / 講師 / 研發" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>報名人數 *</label>
+              <input id="count" type="number" min="1" step="1" value="1" />
+              <div class="hint">若為多人團報，建議另於備註寫明同行名單。</div>
+            </div>
+            <div>
+              <label>飲食需求（選填）</label>
+              <select id="diet">
+                <option value="">無</option>
+                <option value="vegetarian">素食</option>
+                <option value="no_beef">不吃牛</option>
+                <option value="no_pork">不吃豬</option>
+                <option value="allergy">過敏（請備註）</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:12px;background:rgba(0,0,0,.10)">
+            <div class="hd">
+              <h2 style="font-size:14px;margin:0">發票/收據資訊（選填）</h2>
+              <span class="pill">台灣常用</span>
+            </div>
+            <div class="bd" style="padding-top:10px">
+              <label>需要收據/發票？</label>
+              <select id="invoiceType">
+                <option value="none">不需要</option>
+                <option value="2">二聯式（個人）</option>
+                <option value="3">三聯式（公司）</option>
+              </select>
+
+              <div class="row" id="invoiceRow" style="display:none">
+                <div>
+                  <label>抬頭 *</label>
+                  <input id="invoiceTitle" placeholder="個人姓名 或 公司全名" />
+                </div>
+                <div>
+                  <label>統一編號（公司三聯才需）</label>
+                  <input id="taxId" placeholder="8碼" inputmode="numeric" maxlength="8" />
+                </div>
+              </div>
+
+              <label>付款方式（選填）</label>
+              <select id="payMethod">
+                <option value="">未指定</option>
+                <option value="onsite">現場繳費</option>
+                <option value="bank">匯款/轉帳</option>
+                <option value="card_pending">線上刷卡（待串接）</option>
+              </select>
+            </div>
+          </div>
+
+          <label>備註（選填）</label>
+          <textarea id="note" placeholder="例如：同行名單、過敏項目、需要無障礙協助…"></textarea>
+
+          <div class="check">
+            <input type="checkbox" id="agree" />
+            <div class="small">
+              我已閱讀並同意個資蒐集與使用目的（用於本活動聯繫、名單管理、收據/發票處理）。
+              <div class="hint">你可將此段文字改為校內/公司版的個資告知內容。</div>
+            </div>
+          </div>
+
+          <div class="btnbar">
+            <button id="submitBtn">送出報名</button>
+            <button class="secondary" id="resetBtn" type="button">清除重填</button>
+          </div>
+
+          <div id="msgBox" class="msg" style="display:none"></div>
+
+          <div class="footer">
+            <div>資料寫入：<span class="mono">registrations</span>，並以交易更新：<span class="mono">events/{eventId}.enrolled</span></div>
+            <div>若要更嚴格防刷/限流，建議改成 Cloud Functions Callable 由後端寫入。</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右：活動資訊 / 回執 -->
+      <div class="card">
+        <div class="hd">
+          <h2>活動資訊</h2>
+          <span class="pill" id="seatPill">—</span>
+        </div>
+        <div class="bd">
+          <div id="eventInfo" class="kv">
+            <div>標題</div><div>請先選擇活動</div>
+            <div>日期</div><div>—</div>
+            <div>地點</div><div>—</div>
+            <div>費用</div><div>—</div>
+            <div>名額</div><div>—</div>
+            <div>說明</div><div>—</div>
+          </div>
+
+          <div id="receipt" class="msg ok" style="display:none;margin-top:12px">
+            <div style="font-weight:800">✅ 已完成報名</div>
+            <div style="margin-top:6px">
+              報名序號：<span class="mono" id="regIdText">—</span><br/>
+              建議截圖保存（或由管理端另行發送通知）。
+            </div>
+          </div>
+
+          <div class="msg warn" style="margin-top:12px">
+            <div style="font-weight:800">管理端建議</div>
+            <div class="small" style="margin-top:6px">
+              你可以搭配下方提供的 <span class="mono">event-admin.html</span> 管理頁，
+              進行名單檢視、狀態更新、CSV 匯出。
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="overlay" id="overlay">
+    <div class="box">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="spinner"></span>
+        <div style="font-weight:800" id="overlayTitle">處理中…</div>
+      </div>
+      <div class="hint" id="overlayHint" style="margin-top:8px">請稍候</div>
+    </div>
+  </div>
+
+  <script type="module">
+    // ====== 1) Firebase 設定（請改成你的） ======
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // ====== 2) Firebase SDK ======
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getFirestore, collection, doc, getDoc, getDocs, query, where, orderBy,
+      runTransaction, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // ====== 3) DOM ======
+    const el = (id) => document.getElementById(id);
+    const overlay = el("overlay");
+    const overlayTitle = el("overlayTitle");
+    const overlayHint = el("overlayHint");
+    const eventSelect = el("eventSelect");
+    const openPill = el("openPill");
+    const seatPill = el("seatPill");
+    const eventInfo = el("eventInfo");
+    const msgBox = el("msgBox");
+    const receipt = el("receipt");
+    const regIdText = el("regIdText");
+
+    const fields = {
+      name: el("name"),
+      phone: el("phone"),
+      email: el("email"),
+      id4: el("id4"),
+      org: el("org"),
+      title: el("title"),
+      count: el("count"),
+      diet: el("diet"),
+      invoiceType: el("invoiceType"),
+      invoiceTitle: el("invoiceTitle"),
+      taxId: el("taxId"),
+      payMethod: el("payMethod"),
+      note: el("note"),
+      agree: el("agree")
+    };
+
+    const invoiceRow = el("invoiceRow");
+    fields.invoiceType.addEventListener("change", () => {
+      invoiceRow.style.display = (fields.invoiceType.value === "none") ? "none" : "grid";
+    });
+
+    // ====== 4) 狀態 ======
+    let eventsMap = new Map(); // eventId -> event data
+    let selectedEventId = "";
+
+    function showOverlay(title, hint="") {
+      overlayTitle.textContent = title;
+      overlayHint.textContent = hint || "請稍候";
+      overlay.style.display = "flex";
+    }
+    function hideOverlay(){ overlay.style.display = "none"; }
+
+    function showMsg(type, text){
+      msgBox.className = "msg " + (type || "");
+      msgBox.textContent = text;
+      msgBox.style.display = "block";
+    }
+    function clearMsg(){ msgBox.style.display = "none"; msgBox.textContent = ""; msgBox.className = "msg"; }
+
+    function fmtDate(v){
+      if(!v) return "—";
+      // 允許 Firestore Timestamp / ISO string / yyyy-mm-dd
+      try{
+        if (typeof v === "string") return v;
+        if (v.toDate) return v.toDate().toISOString().slice(0,10);
+      }catch(e){}
+      return String(v);
+    }
+
+    function renderEventInfo(data){
+      const title = data?.title || "—";
+      const date = (data?.startDate || data?.endDate)
+        ? `${fmtDate(data?.startDate)}${data?.endDate ? " ~ " + fmtDate(data?.endDate) : ""}`
+        : "—";
+      const location = data?.location || "—";
+      const fee = (data?.fee ?? "") === "" ? "—" : (Number.isFinite(data.fee) ? `NT$ ${data.fee}` : String(data.fee));
+      const cap = Number(data?.capacity ?? 0);
+      const enrolled = Number(data?.enrolled ?? 0);
+      const remain = cap > 0 ? Math.max(0, cap - enrolled) : null;
+      const capText = cap > 0 ? `${enrolled} / ${cap}${remain !== null ? `（剩餘 ${remain}）` : ""}` : "未設定";
+      const desc = data?.description ? String(data.description) : "—";
+
+      eventInfo.innerHTML = `
+        <div>標題</div><div>${escapeHtml(title)}</div>
+        <div>日期</div><div>${escapeHtml(date)}</div>
+        <div>地點</div><div>${escapeHtml(location)}</div>
+        <div>費用</div><div>${escapeHtml(fee)}</div>
+        <div>名額</div><div>${escapeHtml(capText)}</div>
+        <div>說明</div><div>${escapeHtml(desc)}</div>
+      `;
+
+      if (cap > 0){
+        seatPill.textContent = remain === 0 ? "已額滿" : `剩餘 ${remain}`;
+      }else{
+        seatPill.textContent = "未設定名額";
+      }
+
+      const isOpen = data?.isOpen === true;
+      openPill.textContent = isOpen ? "開放報名" : "未開放";
+      openPill.style.borderColor = isOpen ? "rgba(52,211,153,.55)" : "rgba(251,113,133,.55)";
+      openPill.style.background = isOpen ? "rgba(52,211,153,.10)" : "rgba(251,113,133,.10)";
+    }
+
+    function escapeHtml(s){
+      return String(s ?? "").replace(/[&<>"']/g, (m) => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      })[m]);
+    }
+
+    // ====== 5) 載入活動 ======
+    async function loadEvents(){
+      showOverlay("載入活動清單…", "從 Firestore events 讀取");
+      clearMsg();
+      receipt.style.display = "none";
+
+      try{
+        const qy = query(
+          collection(db, "events"),
+          where("isOpen", "in", [true, false]) // 允許載入全部活動（但會標示是否開放）
+        );
+        const snap = await getDocs(qy);
+
+        const arr = [];
+        eventsMap = new Map();
+
+        snap.forEach(d => {
+          const data = d.data();
+          eventsMap.set(d.id, data);
+          arr.push({ id:d.id, ...data });
+        });
+
+        // 簡單排序：有 startDate 的往前；其餘按 title
+        arr.sort((a,b)=>{
+          const da = fmtDate(a.startDate);
+          const dbb = fmtDate(b.startDate);
+          if (da !== "—" && dbb !== "—") return da.localeCompare(dbb);
+          if (da !== "—") return -1;
+          if (dbb !== "—") return 1;
+          return String(a.title||"").localeCompare(String(b.title||""));
+        });
+
+        eventSelect.innerHTML = `<option value="">請選擇活動 / 課程</option>` + arr.map(e=>{
+          const isOpen = e.isOpen === true;
+          const tag = isOpen ? "（開放）" : "（未開放）";
+          const date = e.startDate ? fmtDate(e.startDate) : "";
+          const title = e.title || "(未命名活動)";
+          return `<option value="${e.id}">${escapeHtml(date ? (date+" - "+title) : title)} ${tag}</option>`;
+        }).join("");
+
+        // URL 預選 eventId
+        const params = new URLSearchParams(location.search);
+        const pre = params.get("eventId");
+        if (pre && eventsMap.has(pre)){
+          eventSelect.value = pre;
+          onPickEvent(pre);
+        }else{
+          renderEventInfo(null);
+        }
+
+        hideOverlay();
+      }catch(err){
+        console.error(err);
+        hideOverlay();
+        showMsg("bad", "活動清單載入失敗：請確認 Firebase 設定、Firestore 權限，以及 events 集合是否存在。");
+        eventSelect.innerHTML = `<option value="">（載入失敗）</option>`;
+      }
+    }
+
+    function onPickEvent(id){
+      selectedEventId = id;
+      receipt.style.display = "none";
+      clearMsg();
+      const data = eventsMap.get(id);
+      renderEventInfo(data);
+    }
+
+    eventSelect.addEventListener("change", (e)=>{
+      const id = e.target.value;
+      if (!id){ selectedEventId = ""; renderEventInfo(null); return; }
+      onPickEvent(id);
+    });
+
+    // ====== 6) 送出報名（交易：檢查名額 + 寫入報名 + 更新已報名） ======
+    async function submit(){
+      clearMsg();
+      receipt.style.display = "none";
+
+      if (!selectedEventId){
+        showMsg("warn","請先選擇活動 / 課程。");
+        return;
+      }
+
+      const eventData = eventsMap.get(selectedEventId);
+      if (!eventData){
+        showMsg("bad","活動資料不存在，請重新整理頁面。");
+        return;
+      }
+
+      // 必填檢核
+      const name = fields.name.value.trim();
+      const phone = fields.phone.value.trim();
+      const count = Math.max(1, parseInt(fields.count.value || "1", 10));
+
+      if (!name) return showMsg("warn","請填寫姓名。");
+      if (!phone) return showMsg("warn","請填寫手機。");
+      if (!Number.isFinite(count) || count < 1) return showMsg("warn","報名人數需為 1 以上整數。");
+      if (!fields.agree.checked) return showMsg("warn","請先勾選同意個資蒐集與使用。");
+
+      const invoiceType = fields.invoiceType.value;
+      const invoiceTitle = fields.invoiceTitle.value.trim();
+      const taxId = fields.taxId.value.trim();
+
+      if (invoiceType !== "none"){
+        if (!invoiceTitle) return showMsg("warn","你選擇需要收據/發票，請填寫抬頭。");
+        if (invoiceType === "3" && taxId && !/^\d{8}$/.test(taxId)) return showMsg("warn","統一編號需為 8 碼數字。");
+        if (invoiceType === "3" && !taxId) return showMsg("warn","三聯式需填寫統一編號。");
+      }
+
+      showOverlay("送出報名中…", "正在檢查名額並寫入 Firestore");
+
+      const eventRef = doc(db, "events", selectedEventId);
+
+      try{
+        const regId = await runTransaction(db, async (tx) => {
+          const eventSnap = await tx.get(eventRef);
+          if (!eventSnap.exists()) throw new Error("活動不存在");
+
+          const e = eventSnap.data();
+          if (e.isOpen !== true) throw new Error("此活動目前未開放報名");
+
+          const cap = Number(e.capacity ?? 0);
+          const enrolled = Number(e.enrolled ?? 0);
+          if (cap > 0 && (enrolled + count) > cap){
+            throw new Error("名額不足或已額滿");
+          }
+
+          // 建立 registrations doc（使用預先產生的 doc id，才能在 transaction 內 set）
+          const regRef = doc(collection(db, "registrations"));
+
+          const payload = {
+            eventId: selectedEventId,
+            eventTitle: e.title || "",
+            attendee: {
+              name,
+              phone,
+              email: fields.email.value.trim(),
+              id4: fields.id4.value.trim(),
+              org: fields.org.value.trim(),
+              jobTitle: fields.title.value.trim()
+            },
+            attendeeCount: count,
+            diet: fields.diet.value || "",
+            invoice: {
+              type: invoiceType,          // none / 2 / 3
+              title: invoiceTitle || "",
+              taxId: taxId || ""
+            },
+            paymentMethod: fields.payMethod.value || "",
+            note: fields.note.value.trim(),
+            status: "submitted",          // submitted / confirmed / cancelled / paid ...
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            meta: {
+              userAgent: navigator.userAgent,
+              referrer: document.referrer || "",
+              page: location.href
+            }
+          };
+
+          tx.set(regRef, payload);
+
+          // 更新活動已報名
+          const newEnrolled = enrolled + count;
+          tx.update(eventRef, { enrolled: newEnrolled, updatedAt: serverTimestamp() });
+
+          return regRef.id;
+        });
+
+        hideOverlay();
+
+        // 重新抓一次活動（顯示最新剩餘名額）
+        try{
+          const fresh = await getDoc(eventRef);
+          if (fresh.exists()){
+            eventsMap.set(selectedEventId, fresh.data());
+            renderEventInfo(fresh.data());
+          }
+        }catch(_){}
+
+        regIdText.textContent = regId;
+        receipt.style.display = "block";
+        showMsg("ok","已成功送出報名！如需變更/取消，請聯絡主辦單位並提供報名序號。");
+      }catch(err){
+        console.error(err);
+        hideOverlay();
+        showMsg("bad", "送出失敗：" + (err?.message || "請稍後再試") );
+      }
+    }
+
+    el("submitBtn").addEventListener("click", submit);
+    el("resetBtn").addEventListener("click", ()=>{
+      fields.name.value = "";
+      fields.phone.value = "";
+      fields.email.value = "";
+      fields.id4.value = "";
+      fields.org.value = "";
+      fields.title.value = "";
+      fields.count.value = "1";
+      fields.diet.value = "";
+      fields.invoiceType.value = "none";
+      invoiceRow.style.display = "none";
+      fields.invoiceTitle.value = "";
+      fields.taxId.value = "";
+      fields.payMethod.value = "";
+      fields.note.value = "";
+      fields.agree.checked = false;
+      clearMsg();
+      receipt.style.display = "none";
+    });
+
+    // init
+    await loadEvents();
+  </script>
+</body>
+</html>
