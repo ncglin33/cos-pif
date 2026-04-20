@@ -1,7 +1,7 @@
 {
   "scripts": {
     "build": "echo 'No build step required'",
-    "start": "npx serve -s public"
+    "start": "npx serve public"
   },
   "dependencies": {
     "google-auth-library": "^10.5.0",
