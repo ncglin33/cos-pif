@@ -3,6 +3,15 @@
     "backendId": "cos-pif",
     "rootDir": "."
   },
+  "hosting": {
+    "site": "cos-pif",
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  },
   "firestore": {
     "database": "(default)",
     "location": "us-central1",
